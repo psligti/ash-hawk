@@ -1,0 +1,11 @@
+{
+  "include": [
+    "ash_hawk",
+    "tests"
+  ],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "strict",
+  "stubPath": "",
+  "venvPath": ".",
+  "venv": ".venv"
+}

@@ -1,0 +1,88 @@
+[build-system]
+requires = ["uv_build >=0.9.26,<0.10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "ash-hawk"
+version = "0.1.0"
+description = "Ash Hawk - Python evaluation harness for AI agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+  {name = "Ash Hawk Contributors", email = "ashhawk@example.com"}
+]
+keywords = ["ai", "evaluation", "agents", "testing", "cli"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Testing",
+]
+
+dependencies = [
+  "aiofiles>=24.0",
+  "aiohttp>=3.10",
+  "aiobotocore>=2.15",
+  "aiosqlite>=0.20",
+  "asyncpg>=0.29",
+  "click>=8.0",
+  "dawn-kestrel>=0.1.0",
+  "jinja2>=3.0",
+  "pydantic>=2.12",
+  "pydantic-settings>=2.0",
+  "pyyaml>=6.0",
+  "rich>=13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.8.0",
+  "pytest-asyncio>=0.23",
+  "pytest-cov>=4.0",
+  "pytest>=7.0",
+  "ruff>=0.1.0",
+]
+
+[project.scripts]
+ash-hawk = "ash_hawk.cli.main:cli"
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pytest-asyncio",
+  "ruff",
+  "mypy",
+  "moto[server]>=5.1.21",
+]
+
+[tool.uv.sources]
+dawn-kestrel = { path = "../dawn-kestrel", editable = true }
+
+[tool.uv.build-backend]
+module-root = ""
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP"]
+ignore = ["F401", "F841", "E501", "E402", "W291", "W293", "UP035", "UP007", "UP006", "UP045", "E712", "E721", "F811"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["F821"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=ash_hawk --cov-report=term-missing"
+asyncio_mode = "auto"
