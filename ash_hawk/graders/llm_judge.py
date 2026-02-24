@@ -153,6 +153,10 @@ class JudgeConfig(pd.BaseModel):
     max_transcript_length: int = pd.Field(
         default=10000, ge=0, description="Max characters of transcript to include"
     )
+    expected_output: str | dict[str, Any] | None = pd.Field(
+        default=None,
+        description="Expected output constraints (e.g., must_contain keywords) for evaluation",
+    )
 
     model_config = pd.ConfigDict(extra="forbid")
 
@@ -305,6 +309,7 @@ class LLMJudgeGrader(Grader):
         self,
         trial: EvalTrial,
         transcript: EvalTranscript,
+        spec: GraderSpec | None = None,
     ) -> str:
         """Build the judge prompt with task and response context."""
         prompt_info = self._load_prompt()
@@ -315,7 +320,28 @@ class LLMJudgeGrader(Grader):
         elif isinstance(task_input, dict):
             task_input = json.dumps(task_input, indent=2)
 
+        # Read expected_output from spec.config if provided (injected by trial executor)
         expected_output = "Not provided"
+        if spec is not None and spec.config:
+            eo = spec.config.get("expected_output")
+            if eo is not None:
+                if isinstance(eo, dict):
+                    # Format expected output with must_contain and other constraints
+                    parts = []
+                    if "must_contain" in eo:
+                        parts.append(f"Response MUST contain these keywords: {', '.join(eo['must_contain'])}")
+                    if "exact_match" in eo:
+                        parts.append(f"Response MUST exactly match: {eo['exact_match']}")
+                    if "regex" in eo:
+                        parts.append(f"Response MUST match pattern: {eo['regex']}")
+                    if parts:
+                        expected_output = "\n".join(parts)
+                    else:
+                        expected_output = json.dumps(eo, indent=2)
+                elif isinstance(eo, str):
+                    expected_output = eo
+                else:
+                    expected_output = str(eo)
 
         agent_response = self._format_agent_response(transcript)
         transcript_context = (
@@ -741,7 +767,7 @@ class LLMJudgeGrader(Grader):
                 self._prompt_info = None  # Reset prompt cache
 
         try:
-            prompt = self._build_judge_prompt(trial, transcript)
+            prompt = self._build_judge_prompt(trial, transcript, spec)
             prompt_info = self._load_prompt()
 
             # Run N judges

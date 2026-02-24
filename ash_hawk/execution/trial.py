@@ -334,7 +334,7 @@ class TrialExecutor:
         results: list[GraderResult] = []
 
         for spec in task.grader_specs:
-            results.append(await self._run_grader_spec(trial, transcript, spec, registry))
+            results.append(await self._run_grader_spec(trial, transcript, spec, registry, task))
 
         return results
 
@@ -344,9 +344,10 @@ class TrialExecutor:
         transcript: EvalTranscript,
         spec: GraderSpec,
         registry: GraderRegistry,
+        task: EvalTask,
     ) -> GraderResult:
         if spec.grader_type == "composite":
-            return await self._run_composite_grader(trial, transcript, spec, registry)
+            return await self._run_composite_grader(trial, transcript, spec, registry, task)
 
         grader = registry.get(spec.grader_type)
         if grader is None:
@@ -358,14 +359,26 @@ class TrialExecutor:
             )
 
         started = time.time()
+        
+        # Inject expected_output into spec config for graders that need it (e.g., llm_judge)
+        enriched_config = dict(spec.config)
+        if task.expected_output is not None and "expected_output" not in enriched_config:
+            enriched_config["expected_output"] = task.expected_output
+        enriched_spec = GraderSpec(
+            grader_type=spec.grader_type,
+            config=enriched_config,
+            weight=spec.weight,
+            required=spec.required,
+            timeout_seconds=spec.timeout_seconds,
+        )
         try:
-            if spec.timeout_seconds is not None:
+            if enriched_spec.timeout_seconds is not None:
                 result = await asyncio.wait_for(
-                    grader.grade(trial, transcript, spec),
-                    timeout=spec.timeout_seconds,
+                    grader.grade(trial, transcript, enriched_spec),
+                    timeout=enriched_spec.timeout_seconds,
                 )
             else:
-                result = await grader.grade(trial, transcript, spec)
+                result = await grader.grade(trial, transcript, enriched_spec)
             duration = time.time() - started
             return result.model_copy(update={"execution_time_seconds": duration})
         except asyncio.TimeoutError:
@@ -391,6 +404,7 @@ class TrialExecutor:
         transcript: EvalTranscript,
         spec: GraderSpec,
         registry: GraderRegistry,
+        task: EvalTask,
     ) -> GraderResult:
         nested_specs_data = spec.config.get("graders")
         if not isinstance(nested_specs_data, list):
@@ -414,7 +428,7 @@ class TrialExecutor:
         nested_results: list[GraderResult] = []
         for nested_spec in nested_specs:
             nested_results.append(
-                await self._run_grader_spec(trial, transcript, nested_spec, registry)
+                await self._run_grader_spec(trial, transcript, nested_spec, registry, task)
             )
 
         mode_raw = spec.config.get("mode", spec.config.get("aggregation", "weighted"))
