@@ -189,6 +189,52 @@ class TestLLMJudgeGrader:
         assert output.passed is False
         assert "Failed to parse" in output.reasoning
 
+    def test_parse_judge_output_with_nested_answer_payload(self):
+        grader = LLMJudgeGrader()
+        raw = json.dumps(
+            {
+                "answer": {
+                    "overall_score": 4,
+                    "explanation": "Solid response with minor gaps",
+                }
+            }
+        )
+        output = grader._parse_judge_output(raw)
+        assert output.score == 0.75
+        assert output.passed is True
+        assert "Solid response" in output.reasoning
+
+    def test_parse_judge_output_with_dimension_score_objects(self):
+        grader = LLMJudgeGrader()
+        raw = json.dumps(
+            {
+                "factual_accuracy": {"score": 0.8, "explanation": "Accurate"},
+                "logical_soundness": {"score": 0.6, "explanation": "Mostly logical"},
+                "completeness": {"score": 0.7, "explanation": "Complete enough"},
+            }
+        )
+        output = grader._parse_judge_output(raw)
+        assert output.score == pytest.approx(0.7, rel=0.001)
+        assert output.passed is True
+        assert output.breakdown is not None
+        assert output.breakdown["factual_accuracy"] == 0.8
+
+    def test_parse_judge_output_nested_passed_overrides_score(self):
+        grader = LLMJudgeGrader()
+        raw = json.dumps(
+            {
+                "answer": {
+                    "overall_score": 5,
+                    "passed": False,
+                    "reasoning": "Critical issue present",
+                }
+            }
+        )
+        output = grader._parse_judge_output(raw)
+        assert output.score == 1.0
+        assert output.passed is False
+        assert output.reasoning == "Critical issue present"
+
     def test_aggregate_consensus_single(self):
         grader = LLMJudgeGrader()
         output = JudgeOutput(score=0.8, passed=True, reasoning="Good")

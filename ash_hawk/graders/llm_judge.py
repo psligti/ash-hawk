@@ -360,25 +360,69 @@ class LLMJudgeGrader(Grader):
                 issues=["Judge output was not valid JSON"],
             )
 
+        normalized = self._normalize_judge_payload(data)
+
         try:
-            return JudgeOutput(**data)
+            return JudgeOutput(**normalized)
         except pd.ValidationError as e:
             logger.warning(f"Judge output validation failed: {e}")
-            # Try to salvage what we can - handle various output formats
             score = self._extract_score(data)
-            passed = data.get(
-                "passed", data.get("is_correct", score >= self._config.pass_threshold)
-            )
+            passed = self._extract_passed(data, score)
             reasoning = self._extract_reasoning(data)
+            breakdown = self._extract_breakdown(data)
+
+            issues = data.get("issues", [str(e)])
+            if not isinstance(issues, list):
+                issues = [str(issues)]
+
+            strengths = data.get("strengths", [])
+            if not isinstance(strengths, list):
+                strengths = [str(strengths)]
 
             return JudgeOutput(
                 score=score,
                 passed=passed,
                 reasoning=reasoning,
-                breakdown=data.get("breakdown"),
-                issues=data.get("issues", [str(e)]),
-                strengths=data.get("strengths", []),
+                breakdown=breakdown,
+                issues=issues,
+                strengths=strengths,
             )
+
+    def _normalize_judge_payload(self, data: dict[str, Any]) -> dict[str, Any]:
+        payload: dict[str, Any] = dict(data)
+
+        score = payload.get("score")
+        if not isinstance(score, (int, float)):
+            score = self._extract_score(data)
+        score = self._normalize_score(float(score))
+        payload["score"] = score
+
+        passed = payload.get("passed")
+        if not isinstance(passed, bool):
+            passed = self._extract_passed(data, score)
+        payload["passed"] = passed
+
+        reasoning = payload.get("reasoning")
+        if not isinstance(reasoning, str) or not reasoning.strip():
+            reasoning = self._extract_reasoning(data)
+        payload["reasoning"] = reasoning
+
+        if not isinstance(payload.get("breakdown"), dict):
+            breakdown = self._extract_breakdown(data)
+            if breakdown:
+                payload["breakdown"] = breakdown
+
+        issues = payload.get("issues", [])
+        if not isinstance(issues, list):
+            issues = [str(issues)]
+        payload["issues"] = issues
+
+        strengths = payload.get("strengths", [])
+        if not isinstance(strengths, list):
+            strengths = [str(strengths)]
+        payload["strengths"] = strengths
+
+        return payload
 
     def _extract_embedded_scores(self, text: str) -> list[float]:
         """Extract scores embedded in text like '(Score: 1.0)' or '**Score: 5/5**'."""
@@ -490,7 +534,69 @@ class LLMJudgeGrader(Grader):
                 if normalized:
                     return sum(normalized) / len(normalized)
 
+        breakdown = self._extract_breakdown(data)
+        if breakdown:
+            values = list(breakdown.values())
+            return sum(values) / len(values)
+
         return 0.0
+
+    def _extract_passed(self, data: dict[str, Any], score: float) -> bool:
+        if isinstance(data.get("passed"), bool):
+            return data["passed"]
+
+        if isinstance(data.get("is_correct"), bool):
+            return data["is_correct"]
+
+        for key in ("answer", "result", "evaluation", "overall_assessment"):
+            nested = data.get(key)
+            if isinstance(nested, dict):
+                if isinstance(nested.get("passed"), bool):
+                    return nested["passed"]
+                if isinstance(nested.get("is_correct"), bool):
+                    return nested["is_correct"]
+
+        return score >= self._config.pass_threshold
+
+    def _extract_breakdown(self, data: dict[str, Any]) -> dict[str, float] | None:
+        def normalize_score(value: float) -> float:
+            if value > 1.0:
+                return min(1.0, max(0.0, (value - 1) / 4))
+            return max(0.0, min(1.0, value))
+
+        breakdown = data.get("breakdown")
+        if isinstance(breakdown, dict):
+            normalized_breakdown: dict[str, float] = {}
+            for key, value in breakdown.items():
+                if isinstance(value, (int, float)):
+                    normalized_breakdown[str(key)] = normalize_score(float(value))
+                elif isinstance(value, dict) and isinstance(value.get("score"), (int, float)):
+                    normalized_breakdown[str(key)] = normalize_score(float(value["score"]))
+            if normalized_breakdown:
+                return normalized_breakdown
+
+        extracted: dict[str, float] = {}
+        for key, value in data.items():
+            lowered = str(key).lower()
+            if isinstance(value, (int, float)) and any(
+                token in lowered for token in ("score", "accuracy", "quality", "correctness")
+            ):
+                extracted[str(key)] = normalize_score(float(value))
+            elif isinstance(value, dict) and isinstance(value.get("score"), (int, float)):
+                extracted[str(key)] = normalize_score(float(value["score"]))
+
+        answer = data.get("answer")
+        if isinstance(answer, dict):
+            for key, value in answer.items():
+                lowered = str(key).lower()
+                if isinstance(value, (int, float)) and any(
+                    token in lowered for token in ("score", "accuracy", "quality", "correctness")
+                ):
+                    extracted[str(key)] = normalize_score(float(value))
+                elif isinstance(value, dict) and isinstance(value.get("score"), (int, float)):
+                    extracted[str(key)] = normalize_score(float(value["score"]))
+
+        return extracted or None
 
     def _extract_reasoning(self, data: dict[str, Any]) -> str:
         """Extract reasoning from various output formats."""
