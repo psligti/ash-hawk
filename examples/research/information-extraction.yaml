@@ -1,0 +1,136 @@
+template_type: research
+name: information-extraction
+description: Information extraction and groundedness evaluation
+version: "1.0.0"
+tags:
+  - research
+  - needle-in-haystack
+  - groundedness
+
+groundedness_check: true
+coverage_threshold: 0.8
+accuracy_threshold: 0.9
+
+groundedness_config:
+  require_source_citations: true
+  citation_format: bracket
+  min_sources_required: 1
+  allow_inference: true
+  max_ungrounded_claims: 0
+
+tasks:
+  - id: find-api-key-location
+    description: Find where API key is stored in config files
+    question: "In which configuration file and line is the API key for the payment service defined?"
+    sources:
+      - id: config-app
+        title: app_config.yaml
+        content: |
+          database:
+            host: localhost
+            port: 5432
+          logging:
+            level: INFO
+        contains_answer: false
+      - id: config-services
+        title: services_config.yaml
+        content: |
+          payment_service:
+            endpoint: https://api.payments.example.com
+            api_key: pk_live_abc123xyz789
+            timeout: 30
+          email_service:
+            endpoint: https://api.email.example.com
+        contains_answer: true
+        relevance_score: 1.0
+      - id: config-env
+        title: .env.example
+        content: |
+          DATABASE_URL=postgres://localhost/mydb
+          SECRET_KEY=your-secret-key
+          DEBUG=false
+        contains_answer: false
+    expected_output: "services_config.yaml, line 3 (payment_service.api_key)"
+    needle_config:
+      needle: API key for payment service
+      expected_answer: "services_config.yaml"
+      distractors:
+        - SECRET_KEY in .env
+        - database credentials
+
+  - id: extract-error-code
+    description: Find specific error code in log files
+    question: "What is the error code for the authentication timeout issue?"
+    sources:
+      - id: log-auth
+        title: auth.log
+        content: |
+          2024-01-15 10:23:45 INFO  Authentication attempt for user@example.com
+          2024-01-15 10:23:46 ERROR AUTH_TIMEOUT_8472: Authentication request timed out after 30s
+          2024-01-15 10:23:46 INFO  Retrying authentication...
+          2024-01-15 10:23:50 INFO  Authentication successful
+        contains_answer: true
+      - id: log-api
+        title: api.log
+        content: |
+          2024-01-15 10:24:00 INFO  API request received
+          2024-01-15 10:24:01 ERROR RATE_LIMIT_9021: Rate limit exceeded
+          2024-01-15 10:24:02 INFO  Request queued for retry
+        contains_answer: false
+      - id: log-system
+        title: system.log
+        content: |
+          2024-01-15 10:20:00 INFO  System health check passed
+          2024-01-15 10:25:00 INFO  Memory usage: 45%
+        contains_answer: false
+    expected_output: "AUTH_TIMEOUT_8472"
+    needle_config:
+      needle: authentication timeout error code
+      expected_answer: "AUTH_TIMEOUT_8472"
+      distractors:
+        - RATE_LIMIT_9021
+
+  - id: summarize-q3-revenue
+    description: Extract Q3 revenue from financial report
+    question: "What was the total revenue for Q3 2024?"
+    sources:
+      - id: report-q1
+        title: Q1 2024 Financial Report
+        content: |
+          Quarter 1 2024 Financial Summary
+          Revenue: $2,450,000
+          Expenses: $1,890,000
+          Net Income: $560,000
+        contains_answer: false
+      - id: report-q2
+        title: Q2 2024 Financial Report
+        content: |
+          Quarter 2 2024 Financial Summary
+          Revenue: $2,780,000
+          Expenses: $2,100,000
+          Net Income: $680,000
+        contains_answer: false
+      - id: report-q3
+        title: Q3 2024 Financial Report
+        content: |
+          Quarter 3 2024 Financial Summary
+          Revenue: $3,125,000
+          Expenses: $2,340,000
+          Net Income: $785,000
+          YoY Growth: 15%
+        contains_answer: true
+      - id: report-annual
+        title: Annual Summary 2023
+        content: |
+          Annual Revenue 2023: $9,200,000
+          Total Expenses: $7,100,000
+          Annual Growth: 12%
+        contains_answer: false
+    expected_output: "$3,125,000"
+    needle_config:
+      needle: Q3 2024 revenue
+      expected_answer: "$3,125,000"
+      distractors:
+        - "$2,450,000 (Q1)"
+        - "$2,780,000 (Q2)"
+        - "$9,200,000 (2023 annual)"

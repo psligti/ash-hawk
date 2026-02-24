@@ -1,0 +1,25 @@
+id: demo
+name: Demo
+description: Sample evaluation suite
+version: 1.0.0
+tasks:
+- id: task-001
+  description: Simple greeting task
+  input: Hello! Please respond with a greeting.
+  expected_output: A greeting response
+  grader_specs:
+  - grader_type: string_match
+    config:
+      contains:
+      - hello
+      - hi
+- id: task-002
+  description: Math question task
+  input: What is 2 + 2?
+  expected_output: '4'
+  grader_specs:
+  - grader_type: string_match
+    config:
+      contains:
+      - '4'
+      - four

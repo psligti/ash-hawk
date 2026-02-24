@@ -1,0 +1,100 @@
+id: complete-example-v1
+name: Complete Evaluation Example
+description: Demonstrates all three grader layers with fixtures
+version: 1.0.0
+tags: [example, demo]
+
+tasks:
+  # Task 1: First layer only (deterministic)
+  - id: string-match-task
+    description: Simple string matching task
+    input: What is 2 + 2?
+    expected_output: "4"
+    grader_specs:
+      - grader_type: string_match
+        config:
+          expected: "4"
+          mode: contains
+    tags: [math, simple]
+
+  # Task 2: First + Second layer (deterministic + LLM)
+  - id: code-quality-task
+    description: Write a function that passes tests AND is clean code
+    input:
+      prompt: |
+        Write a Python function `calculate_average(numbers: list[float]) -> float`
+        that calculates the arithmetic mean of a list of numbers.
+        
+        The function should:
+        - Handle empty lists by returning 0.0
+        - Handle None by returning 0.0
+        - Be well-documented with a docstring
+      language: python
+    fixtures:
+      test_file: ./fixtures/tests/test_calculate_average.py
+    grader_specs:
+      - grader_type: test_runner
+        config:
+          test_file: $test_file
+          pass_threshold: 1.0
+        weight: 0.6
+        required: true
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Evaluate code quality on:
+            1. Proper docstring with args/returns
+            2. Type hints present and correct
+            3. Edge cases handled
+            4. Clear variable names
+          pass_threshold: 0.7
+        weight: 0.4
+    tags: [code, quality]
+
+  # Task 3: All three layers (deterministic + LLM + composite)
+  - id: production-ready-task
+    description: Write production-ready code with full evaluation
+    input:
+      prompt: |
+        Implement a `UserRepository` class with the following methods:
+        - `get_user(user_id: int) -> User | None`
+        - `save_user(user: User) -> bool`
+        - `delete_user(user_id: int) -> bool`
+        - `list_users(limit: int = 100) -> list[User]`
+        
+        Use the provided User model from $model_file.
+        Tests are located at $test_file.
+      language: python
+    fixtures:
+      model_file: ./fixtures/src/models.py
+      test_file: ./fixtures/tests/test_user_repository.py
+      expected_dir: ./fixtures/expected/
+    grader_specs:
+      - grader_type: composite
+        config:
+          graders:
+            - grader_type: test_runner
+              config:
+                test_file: $test_file
+                pass_threshold: 1.0
+              weight: 0.4
+            - grader_type: static_analysis
+              config:
+                tools: [ruff, mypy]
+                max_issues: 5
+              weight: 0.2
+            - grader_type: llm_judge
+              config:
+                rubric: |
+                  Evaluate as production-ready code:
+                  1. Proper error handling (not just pass/fail)
+                  2. Logging present
+                  3. Type hints complete
+                  4. Docstrings on public methods
+                  5. Follows Python conventions (PEP 8)
+                pass_threshold: 0.7
+              weight: 0.4
+          aggregation: weighted_average
+        required: true
+    timeout_seconds: 600
+    tags: [code, production, oop]

@@ -1,0 +1,180 @@
+{
+  "envelope": {
+    "run_id": "run-7d2449d8",
+    "suite_id": "demo",
+    "suite_hash": "c1c68cd66db899e8",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "test",
+    "agent_version": null,
+    "provider": "unknown",
+    "model": "test-model",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-02-20T21:52:08.421906+00:00"
+  },
+  "metrics": {
+    "suite_id": "demo",
+    "run_id": "run-7d2449d8",
+    "total_tasks": 2,
+    "completed_tasks": 2,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 20,
+      "output": 10,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.002,
+    "total_duration_seconds": 0.013036012649536133,
+    "latency_p50_seconds": 0.012598991394042969,
+    "latency_p95_seconds": 0.012598991394042969,
+    "latency_p99_seconds": 0.012598991394042969,
+    "pass_at_k": {},
+    "created_at": "2026-02-20T21:52:08.450538+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-0e1b0a26",
+      "task_id": "task-001",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "Hello! Please respond with a greeting.",
+      "result": {
+        "trial_id": "trial-0e1b0a26",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-02-20T21:52:08.448746+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Hello! Please respond with a greeting."
+            },
+            {
+              "role": "assistant",
+              "content": "Mock response"
+            }
+          ],
+          "tool_calls": [],
+          "token_usage": {
+            "input": 10,
+            "output": 5,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.001,
+          "duration_seconds": 0.011057853698730469,
+          "agent_response": "Mock response",
+          "error_trace": null
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-0e1b0a26",
+        "run_id": "run-7d2449d8",
+        "task_id": "task-001",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-02-20T21:52:08.437602+00:00",
+        "started_at": "2026-02-20T21:52:08.437569+00:00",
+        "completed_at": "2026-02-20T21:52:08.448773+00:00"
+      }
+    },
+    {
+      "id": "trial-a44ad2c5",
+      "task_id": "task-002",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "What is 2 + 2?",
+      "result": {
+        "trial_id": "trial-a44ad2c5",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-02-20T21:52:08.449151+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 2 + 2?"
+            },
+            {
+              "role": "assistant",
+              "content": "Mock response"
+            }
+          ],
+          "tool_calls": [],
+          "token_usage": {
+            "input": 10,
+            "output": 5,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.001,
+          "duration_seconds": 0.01143503189086914,
+          "agent_response": "Mock response",
+          "error_trace": null
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-a44ad2c5",
+        "run_id": "run-7d2449d8",
+        "task_id": "task-002",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-02-20T21:52:08.437684+00:00",
+        "started_at": "2026-02-20T21:52:08.437672+00:00",
+        "completed_at": "2026-02-20T21:52:08.449158+00:00"
+      }
+    }
+  ]
+}

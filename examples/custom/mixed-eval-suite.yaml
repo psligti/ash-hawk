@@ -1,0 +1,88 @@
+template_type: custom
+name: mixed-eval-suite
+description: Custom evaluation suite with mixed task types
+version: "1.0.0"
+tags:
+  - custom
+  - mixed
+  - general
+
+default_grader_type: llm_judge
+default_grader_config:
+  rubric: correctness
+  pass_threshold: 0.7
+
+default_timeout_seconds: 300
+
+tasks:
+  - id: simple-qa
+    description: Simple question answering task
+    input: "What is the capital of France?"
+    expected_output: "Paris"
+    grader_specs:
+      - grader_type: string_match
+        config:
+          expected: "Paris"
+          mode: exact
+        weight: 1.0
+    tags:
+      - qa
+      - geography
+
+  - id: code-generation
+    description: Generate a Python function
+    input:
+      prompt: "Write a function that returns the sum of two numbers"
+      language: python
+    grader_specs:
+      - grader_type: test_runner
+        config:
+          test_path: tests/test_sum.py
+          pass_threshold: 1.0
+        weight: 0.6
+      - grader_type: static_analysis
+        config:
+          tools:
+            - ruff
+          max_issues: 0
+        weight: 0.4
+    tags:
+      - code
+      - python
+
+  - id: open-ended
+    description: Open-ended creative task
+    input: "Write a haiku about programming"
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: quality
+          pass_threshold: 0.6
+        weight: 1.0
+    tags:
+      - creative
+      - writing
+
+  - id: multi-step-reasoning
+    description: Multi-step reasoning task
+    input: |
+      Solve this problem step by step:
+      A store sells apples for $2 each and oranges for $3 each.
+      If a customer buys 4 apples and 3 oranges with a $20 bill,
+      how much change should they receive?
+    expected_output: "$3"
+    grader_specs:
+      - grader_type: string_match
+        config:
+          expected: "3"
+          mode: fuzzy
+          min_similarity: 0.8
+        weight: 0.5
+      - grader_type: llm_judge
+        config:
+          rubric: correctness
+          pass_threshold: 0.8
+        weight: 0.5
+    tags:
+      - reasoning
+      - math

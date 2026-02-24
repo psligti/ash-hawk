@@ -1,0 +1,210 @@
+{
+  "envelope": {
+    "run_id": "run-78211d08",
+    "suite_id": "demo",
+    "suite_hash": "c1c68cd66db899e8",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "mock",
+    "agent_version": null,
+    "provider": "unknown",
+    "model": "unknown",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-02-21T20:10:29.735167+00:00"
+  },
+  "metrics": {
+    "suite_id": "demo",
+    "run_id": "run-78211d08",
+    "total_tasks": 2,
+    "completed_tasks": 2,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 20,
+      "output": 10,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.002,
+    "total_duration_seconds": 0.023895740509033203,
+    "latency_p50_seconds": 0.023392200469970703,
+    "latency_p95_seconds": 0.023392200469970703,
+    "latency_p99_seconds": 0.023392200469970703,
+    "pass_at_k": {},
+    "created_at": "2026-02-21T20:10:29.775332+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-09941ca1",
+      "task_id": "task-001",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "Hello! Please respond with a greeting.",
+      "result": {
+        "trial_id": "trial-09941ca1",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-02-21T20:10:29.762665+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Hello! Please respond with a greeting."
+            },
+            {
+              "role": "assistant",
+              "content": "Mock response"
+            }
+          ],
+          "tool_calls": [],
+          "token_usage": {
+            "input": 10,
+            "output": 5,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.001,
+          "duration_seconds": 0.011062145233154297,
+          "agent_response": "Mock response",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "string_match",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "mode": "exact",
+              "expected_length": 0,
+              "actual_length": 13,
+              "match_type": "none"
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0013580322265625e-05
+          }
+        ],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-09941ca1",
+        "run_id": "run-78211d08",
+        "task_id": "task-001",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-02-21T20:10:29.751527+00:00",
+        "started_at": "2026-02-21T20:10:29.751500+00:00",
+        "completed_at": "2026-02-21T20:10:29.762698+00:00"
+      }
+    },
+    {
+      "id": "trial-a90478d8",
+      "task_id": "task-002",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "What is 2 + 2?",
+      "result": {
+        "trial_id": "trial-a90478d8",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-02-21T20:10:29.773919+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 2 + 2?"
+            },
+            {
+              "role": "assistant",
+              "content": "Mock response"
+            }
+          ],
+          "tool_calls": [],
+          "token_usage": {
+            "input": 10,
+            "output": 5,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.001,
+          "duration_seconds": 0.022284984588623047,
+          "agent_response": "Mock response",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "string_match",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "mode": "exact",
+              "expected_length": 0,
+              "actual_length": 13,
+              "match_type": "none"
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.0067901611328125e-06
+          }
+        ],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-a90478d8",
+        "run_id": "run-78211d08",
+        "task_id": "task-002",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-02-21T20:10:29.751601+00:00",
+        "started_at": "2026-02-21T20:10:29.751590+00:00",
+        "completed_at": "2026-02-21T20:10:29.773930+00:00"
+      }
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "envelope": {
+    "run_id": "run-324b0371",
+    "suite_id": "demo",
+    "suite_hash": "c1c68cd66db899e8",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "test",
+    "agent_version": null,
+    "provider": "test-provider",
+    "model": "test-model",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-02-21T20:09:58.758356+00:00"
+  },
+  "metrics": {
+    "suite_id": "demo",
+    "run_id": "run-324b0371",
+    "total_tasks": 2,
+    "completed_tasks": 2,
+    "passed_tasks": 0,
+    "failed_tasks": 2,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.01741194725036621,
+    "latency_p50_seconds": 0.016896963119506836,
+    "latency_p95_seconds": 0.016896963119506836,
+    "latency_p99_seconds": 0.016896963119506836,
+    "pass_at_k": {},
+    "created_at": "2026-02-21T20:09:58.793553+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-ed2c4fd5",
+      "task_id": "task-001",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Hello! Please respond with a greeting.",
+      "result": {
+        "trial_id": "trial-ed2c4fd5",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "'test-provider' is not a valid ProviderID",
+          "completed_at": "2026-02-21T20:09:58.791843+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.014085054397583008,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 185, in run\n    client = self._get_client()\n             ^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 61, in _get_client\n    api_key_secret = settings.get_api_key_for_provider(self._provider)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/core/settings.py\", line 301, in get_api_key_for_provider\n    provider_enum = ProviderID(provider_id) if isinstance(provider_id, str) else provider_id\n                    ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/enum.py\", line 757, in __call__\n    return cls.__new__(cls, value)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/enum.py\", line 1171, in __new__\n    raise ve_exc\nValueError: 'test-provider' is not a valid ProviderID\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-ed2c4fd5",
+        "run_id": "run-324b0371",
+        "task_id": "task-001",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-02-21T20:09:58.776248+00:00",
+        "started_at": "2026-02-21T20:09:58.776219+00:00",
+        "completed_at": "2026-02-21T20:09:58.791886+00:00"
+      }
+    },
+    {
+      "id": "trial-336747d5",
+      "task_id": "task-002",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "What is 2 + 2?",
+      "result": {
+        "trial_id": "trial-336747d5",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "'test-provider' is not a valid ProviderID",
+          "completed_at": "2026-02-21T20:09:58.792347+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 5.7220458984375e-06,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 185, in run\n    client = self._get_client()\n             ^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 61, in _get_client\n    api_key_secret = settings.get_api_key_for_provider(self._provider)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/core/settings.py\", line 301, in get_api_key_for_provider\n    provider_enum = ProviderID(provider_id) if isinstance(provider_id, str) else provider_id\n                    ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/enum.py\", line 757, in __call__\n    return cls.__new__(cls, value)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/enum.py\", line 1171, in __new__\n    raise ve_exc\nValueError: 'test-provider' is not a valid ProviderID\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-336747d5",
+        "run_id": "run-324b0371",
+        "task_id": "task-002",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-02-21T20:09:58.792187+00:00",
+        "started_at": "2026-02-21T20:09:58.792169+00:00",
+        "completed_at": "2026-02-21T20:09:58.792354+00:00"
+      }
+    }
+  ]
+}

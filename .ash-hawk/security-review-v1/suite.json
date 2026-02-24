@@ -1,0 +1,116 @@
+{
+  "id": "security-review-v1",
+  "name": "Security Review Agent Evaluation",
+  "description": "Evaluates security reviewer on vulnerability detection, severity accuracy, and delegation",
+  "tasks": [
+    {
+      "id": "security-sql-injection",
+      "description": "Detect SQL injection vulnerabilities",
+      "input": {
+        "code": "def get_user(user_id):\n    query = f\"SELECT * FROM users WHERE id = {user_id}\"\n    cursor.execute(query)\n",
+        "expected_findings": [
+          "SQL injection",
+          "f-string in query"
+        ]
+      },
+      "expected_output": "Should detect SQL injection with critical/blocking severity",
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "rubric": "correctness",
+            "pass_threshold": 0.6
+          },
+          "weight": 0.7,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "string_match",
+          "config": {
+            "contains": [
+              "injection",
+              "SQL",
+              "vulnerability"
+            ]
+          },
+          "weight": 0.3,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "injection",
+        "sql",
+        "critical"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "security-hardcoded-secrets",
+      "description": "Detect hardcoded API keys and secrets",
+      "input": {
+        "code": "API_KEY = \"sk-prod-abc123def456\"\nDATABASE_URL = \"postgres://admin:password123@db.example.com/mydb\"\n",
+        "expected_findings": [
+          "hardcoded API key",
+          "hardcoded password"
+        ]
+      },
+      "expected_output": "Should detect hardcoded secrets with blocking severity",
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "rubric": "correctness",
+            "pass_threshold": 0.6
+          },
+          "weight": 0.7,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "string_match",
+          "config": {
+            "contains": [
+              "secret",
+              "hardcoded",
+              "credential"
+            ]
+          },
+          "weight": 0.3,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "secrets",
+        "credentials",
+        "blocking"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [
+    "security",
+    "vulnerability",
+    "owasp"
+  ],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": {
+    "name": "security",
+    "provider": "zai-coding-plan",
+    "model": "glm-4.7",
+    "class_name": "iron_rook.eval.agent_runner:IronRookRunner",
+    "location": null,
+    "kwargs": {
+      "reviewer": "security"
+    }
+  }
+}

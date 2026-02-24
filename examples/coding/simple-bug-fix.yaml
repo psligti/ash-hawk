@@ -1,0 +1,70 @@
+template_type: coding
+name: simple-bug-fix
+description: Simple coding evaluation with bug fix tasks
+version: "1.0.0"
+tags:
+  - coding
+  - bug-fix
+  - python
+
+language: python
+test_framework: pytest
+run_static_analysis: true
+run_code_review: true
+
+default_timeout_seconds: 300
+
+tasks:
+  - id: fix-off-by-one
+    description: Fix off-by-one error in array iteration
+    issue_description: |
+      The function `find_first_negative` in `utils.py` has an off-by-one error.
+      It should iterate through all elements of the array, but currently skips
+      the last element. The function returns the index of the first negative
+      number, or -1 if none found.
+    codebase_path: fixtures/off_by_one/
+    test_files:
+      - tests/test_find_negative.py
+    expected_behavior: |
+      The function should correctly iterate through all elements and return
+      the index of the first negative number.
+    hints:
+      - Check the loop boundary condition
+      - Python range() is exclusive of end
+    difficulty: easy
+    language: python
+
+  - id: fix-auth-bypass
+    description: Fix authentication bypass vulnerability
+    issue_description: |
+      The authentication middleware in `auth.py` has a vulnerability where
+      requests with empty Authorization headers are incorrectly treated as
+      authenticated. This allows unauthorized access to protected endpoints.
+    codebase_path: fixtures/auth_bypass/
+    test_files:
+      - tests/test_auth.py
+      - tests/test_protected.py
+    expected_behavior: |
+      Requests without valid authentication should be rejected with 401 status.
+      Empty Authorization headers should be treated as unauthenticated.
+    difficulty: medium
+    language: python
+
+  - id: implement-caching
+    description: Implement memoization for expensive computations
+    issue_description: |
+      The `FibonacciCalculator` class in `math_utils.py` recalculates
+      fibonacci numbers on every call, causing exponential time complexity.
+      Implement memoization to cache previously computed values.
+    codebase_path: fixtures/fibonacci/
+    test_files:
+      - tests/test_fibonacci.py
+      - tests/test_performance.py
+    expected_behavior: |
+      The calculator should cache results and return cached values on
+      subsequent calls. Performance test requires < 1ms for cached values.
+    hints:
+      - Use functools.lru_cache or implement custom caching
+      - Consider thread-safety requirements
+    difficulty: hard
+    language: python

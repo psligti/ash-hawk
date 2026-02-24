@@ -1,0 +1,101 @@
+template_type: conversational
+name: customer-support-scenarios
+description: Customer support dialogue evaluation scenarios
+version: "1.0.0"
+tags:
+  - conversational
+  - support
+  - dialogue
+
+user_simulator_enabled: true
+empathy_threshold: 0.7
+task_completion_threshold: 0.8
+max_response_time_seconds: 30
+
+tasks:
+  - id: customer-support-refund
+    description: Customer seeking refund for defective product
+    scenario:
+      scenario_type: support
+      context: |
+        User purchased a wireless headphone 2 weeks ago.
+        The left ear cup stopped working. They want a refund
+        but the 14-day return window just expired.
+      user_persona:
+        name: frustrated_customer
+        role: customer
+        personality_traits:
+          - frustrated
+          - impatient
+        knowledge_level: novice
+        goal: Get a full refund for defective headphones
+        opening_message: "I bought these headphones two weeks ago and they're already broken! I want my money back!"
+      agent_role: customer_service_rep
+      success_criteria:
+        - Acknowledge customer frustration
+        - Explain refund policy clearly
+        - Offer alternative solution if refund not possible
+        - Maintain professional tone throughout
+      required_outcomes:
+        - Customer understands the policy
+        - A resolution is offered
+      max_turns: 8
+
+  - id: sales-consultation
+    description: Sales consultation for software product
+    scenario:
+      scenario_type: sales
+      context: |
+        A small business owner is interested in purchasing
+        project management software. They have 10 employees
+        and a limited budget.
+      user_persona:
+        name: small_business_owner
+        role: prospect
+        personality_traits:
+          - budget_conscious
+          - practical
+        knowledge_level: intermediate
+        goal: Find affordable project management software
+        opening_message: "Hi, I'm looking for project management software for my small team. What are your pricing options?"
+      agent_role: sales_consultant
+      success_criteria:
+        - Understand customer needs and budget
+        - Present relevant pricing options
+        - Answer questions about features
+        - Attempt to close or schedule follow-up
+      required_outcomes:
+        - Customer receives pricing information
+        - Next steps are defined
+      max_turns: 12
+
+  - id: technical-troubleshooting
+    description: Technical troubleshooting for software issue
+    scenario:
+      scenario_type: problem_solving
+      context: |
+        User is experiencing an error when trying to export
+        a report from the application. The error message says
+        'Export failed: timeout'. They need the report for a
+        meeting in 30 minutes.
+      user_persona:
+        name: urgent_user
+        role: end_user
+        personality_traits:
+          - stressed
+          - time_constrained
+        knowledge_level: novice
+        goal: Export the report successfully before meeting
+        constraints:
+          - Must complete in under 30 minutes
+        opening_message: "Help! I'm trying to export a report and it keeps timing out. I have a meeting in 30 minutes!"
+      agent_role: technical_support
+      success_criteria:
+        - Quickly diagnose the issue
+        - Provide clear step-by-step solution
+        - Manage time pressure appropriately
+        - Offer workaround if primary solution fails
+      required_outcomes:
+        - User can successfully export report
+        - Issue is documented for future reference
+      max_turns: 10
