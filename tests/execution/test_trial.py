@@ -297,6 +297,8 @@ class TestTrialExecutorTimeout:
         )
 
         assert result.outcome.failure_mode == FailureMode.TIMEOUT
+        assert result.outcome.error_message is not None
+        assert "0.05" in result.outcome.error_message
 
 
 class TestTrialExecutorCancellation:

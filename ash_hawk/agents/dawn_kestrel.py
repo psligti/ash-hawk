@@ -6,6 +6,7 @@ framework for agent execution with policy enforcement.
 
 from __future__ import annotations
 
+import inspect
 import time
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
@@ -83,11 +84,30 @@ class DawnKestrelAgentRunner:
         allowed_tools = list(policy.allowed_tools) if policy.allowed_tools else []
         denied_tools = list(policy.denied_tools) if policy.denied_tools else []
 
-        permission_filter = ToolPermissionFilter(
-            tool_registry=base_registry,
-            allowed_tools=allowed_tools,
-            denied_tools=denied_tools,
-        )
+        init_params = set(inspect.signature(ToolPermissionFilter.__init__).parameters.keys())
+        filter_kwargs: dict[str, Any] = {"tool_registry": base_registry}
+
+        permissions: list[dict[str, Any]] = []
+        for tool in allowed_tools:
+            permissions.append({"permission": tool, "pattern": "*", "action": "allow"})
+        for tool in denied_tools:
+            permissions.append({"permission": tool, "pattern": "*", "action": "deny"})
+
+        if "allowed_tools" in init_params:
+            filter_kwargs["allowed_tools"] = allowed_tools
+        elif "allowlist" in init_params:
+            filter_kwargs["allowlist"] = allowed_tools
+        elif "permissions" in init_params:
+            filter_kwargs["permissions"] = permissions
+
+        if "denied_tools" in init_params:
+            filter_kwargs["denied_tools"] = denied_tools
+        elif "denylist" in init_params:
+            filter_kwargs["denylist"] = denied_tools
+        elif "permissions" in init_params and "permissions" not in filter_kwargs:
+            filter_kwargs["permissions"] = permissions
+
+        permission_filter = ToolPermissionFilter(**filter_kwargs)
 
         filtered_registry = permission_filter.get_filtered_registry()
         return filtered_registry if filtered_registry else ToolRegistry()

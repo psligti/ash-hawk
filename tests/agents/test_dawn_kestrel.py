@@ -393,6 +393,65 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
 
         assert isinstance(filtered.tools, dict)
 
+    def test_create_filtered_registry_supports_allowlist_alias(self, policy_enforcer):
+        runner = DawnKestrelAgentRunner(provider="test", model="test")
+        mock_registry = MagicMock()
+        mock_registry.tools = {}
+
+        captured: dict[str, object] = {}
+
+        class LegacyToolPermissionFilter:
+            def __init__(self, tool_registry=None, allowlist=None, denylist=None):
+                captured["tool_registry"] = tool_registry
+                captured["allowlist"] = allowlist
+                captured["denylist"] = denylist
+
+            def get_filtered_registry(self):
+                return captured["tool_registry"]
+
+        with patch(
+            "dawn_kestrel.tools.permission_filter.ToolPermissionFilter",
+            LegacyToolPermissionFilter,
+        ):
+            runner._create_filtered_registry(policy_enforcer, mock_registry)
+
+        assert captured["allowlist"] == ["read*", "write*"]
+        assert captured["denylist"] == ["*bash*"]
+
+    def test_create_filtered_registry_supports_permissions_only(self, policy_enforcer):
+        runner = DawnKestrelAgentRunner(provider="test", model="test")
+        mock_registry = MagicMock()
+        mock_registry.tools = {}
+
+        captured: dict[str, object] = {}
+
+        class PermissionsOnlyToolPermissionFilter:
+            def __init__(self, permissions=None, tool_registry=None):
+                captured["permissions"] = permissions
+                captured["tool_registry"] = tool_registry
+
+            def get_filtered_registry(self):
+                return captured["tool_registry"]
+
+        with patch(
+            "dawn_kestrel.tools.permission_filter.ToolPermissionFilter",
+            PermissionsOnlyToolPermissionFilter,
+        ):
+            runner._create_filtered_registry(policy_enforcer, mock_registry)
+
+        permissions = captured["permissions"]
+        assert isinstance(permissions, list)
+        assert {
+            "permission": "read*",
+            "pattern": "*",
+            "action": "allow",
+        } in permissions
+        assert {
+            "permission": "*bash*",
+            "pattern": "*",
+            "action": "deny",
+        } in permissions
+
     @pytest.mark.asyncio
     async def test_run_passes_policy_to_registry_creation(self, sample_task, sample_policy):
         runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")

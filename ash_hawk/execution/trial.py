@@ -189,6 +189,7 @@ class TrialExecutor:
         transcript = EvalTranscript()
         outcome: EvalOutcome | None = None
         cancelled = False
+        timeout_seconds = self._policy.timeout_seconds
 
         try:
             timeout_seconds = (
@@ -207,7 +208,7 @@ class TrialExecutor:
         except asyncio.TimeoutError:
             outcome = EvalOutcome.failure(
                 FailureMode.TIMEOUT,
-                f"Trial timed out after {self._policy.timeout_seconds}s",
+                f"Trial timed out after {timeout_seconds}s",
             )
             transcript = EvalTranscript(
                 error_trace="Trial execution timed out",
