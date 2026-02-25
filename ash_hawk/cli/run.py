@@ -180,6 +180,13 @@ async def _run_suite_async(
     with open(suite_file) as f:
         suite_data = yaml.safe_load(f)
 
+    # Apply conftest.yaml inheritance if available
+    from ash_hawk.configs.conftest import ConftestLoader, apply_conftest_to_suite
+
+    loader = ConftestLoader(search_root=suite_file.parent)
+    conftest = loader.load_for_suite(suite_file)
+    suite_data = apply_conftest_to_suite(suite_data or {}, conftest)
+
     try:
         suite = EvalSuite.model_validate(suite_data)
     except Exception as e:
