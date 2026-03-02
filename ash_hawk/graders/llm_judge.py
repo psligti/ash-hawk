@@ -34,9 +34,32 @@ def _compute_variance(scores: list[float]) -> float:
 
 
 if TYPE_CHECKING:
-    from dawn_kestrel.llm.client import LLMClient  # type: ignore[import-untyped]
+    from dawn_kestrel.llm.client import LLMClient
 
 logger = logging.getLogger(__name__)
+
+
+_QUALITATIVE_SCORE_MAP: dict[str, float] = {
+    "excellent": 1.0,
+    "outstanding": 1.0,
+    "exceptional": 1.0,
+    "very good": 0.9,
+    "strong": 0.9,
+    "good": 0.8,
+    "satisfactory": 0.7,
+    "fair": 0.6,
+    "adequate": 0.6,
+    "average": 0.5,
+    "mixed": 0.5,
+    "weak": 0.3,
+    "poor": 0.3,
+    "very poor": 0.2,
+    "bad": 0.2,
+    "failing": 0.0,
+    "failed": 0.0,
+    "fail": 0.0,
+    "incorrect": 0.0,
+}
 
 
 class JudgeOutputBreakdown(pd.BaseModel):
@@ -235,6 +258,43 @@ class LLMJudgeGrader(Grader):
             return min(1.0, max(0.0, (value - 1) / 4))
         return value
 
+    def _coerce_score_value(self, value: Any) -> float | None:
+        if isinstance(value, bool):
+            return None
+
+        if isinstance(value, (int, float)):
+            return float(value)
+
+        if isinstance(value, str):
+            text = value.strip().lower()
+            if not text:
+                return None
+
+            try:
+                return float(text)
+            except ValueError:
+                pass
+
+            percent_match = re.fullmatch(r"([0-9]+(?:\.[0-9]+)?)\s*%", text)
+            if percent_match:
+                return float(percent_match.group(1)) / 100.0
+
+            ratio_match = re.fullmatch(
+                r"([0-9]+(?:\.[0-9]+)?)\s*(?:/|out of)\s*([0-9]+(?:\.[0-9]+)?)",
+                text,
+            )
+            if ratio_match:
+                numerator = float(ratio_match.group(1))
+                denominator = float(ratio_match.group(2))
+                if denominator > 0:
+                    return numerator / denominator
+
+            for label, mapped_score in _QUALITATIVE_SCORE_MAP.items():
+                if re.search(rf"\b{re.escape(label)}\b", text):
+                    return mapped_score
+
+        return None
+
     def _load_prompt(self) -> PromptInfo:
         """Load the judge prompt.
 
@@ -262,25 +322,109 @@ class LLMJudgeGrader(Grader):
         return self._prompt_info
 
     def _format_transcript_context(self, transcript: EvalTranscript) -> str:
-        """Format transcript for inclusion in judge prompt."""
+        """Format transcript with full interleaved execution trace.
+
+        Extracts thinking_log frames from agent_response when available (e.g., iron-rook),
+        providing rich context including goals, risks, steps, and decisions per phase.
+        Falls back to basic messages/tool_calls for agents without thinking_log.
+        """
         parts: list[str] = []
 
-        if transcript.messages:
-            parts.append("Messages:")
-            for msg in transcript.messages[-10:]:  # Last 10 messages
+        # Check for thinking_log in agent_response (iron-rook provides this)
+        agent_response = transcript.agent_response or {}
+        if isinstance(agent_response, str):
+            try:
+                agent_response = json.loads(agent_response)
+            except (json.JSONDecodeError, TypeError):
+                agent_response = {}
+
+        thinking_log = agent_response.get("thinking_log", {})
+        frames = thinking_log.get("frames", [])
+
+        if frames:
+            parts.append("## Execution Trace (Interleaved)")
+            parts.append("")
+            for frame in frames:
+                state = frame.get("state", "unknown")
+                ts = frame.get("ts", "")
+                parts.append(f"### Phase: {state}")
+                if ts:
+                    parts.append(f"Timestamp: {ts}")
+
+                # Goals and risks provide reasoning context
+                goals = frame.get("goals", [])
+                if goals:
+                    parts.append(f"Goals: {goals}")
+
+                risks = frame.get("risks", [])
+                if risks:
+                    parts.append(f"Risks: {risks}")
+
+                checks = frame.get("checks", [])
+                if checks:
+                    parts.append(f"Checks: {checks}")
+
+                # Steps are the interleaved actions
+                steps = frame.get("steps", [])
+                if steps:
+                    parts.append("")
+                    parts.append("Steps:")
+                    for i, step in enumerate(steps, 1):
+                        kind = step.get("kind", "unknown")
+                        why = step.get("why", "")
+                        evidence = step.get("evidence", [])
+                        confidence = step.get("confidence", "medium")
+                        next_action = step.get("next")
+
+                        # Format step with kind indicator
+                        parts.append(f"  {i}. [{kind}] {why}")
+                        if evidence:
+                            for ev in evidence[:3]:  # Max 3 evidence items
+                                ev_preview = str(ev)[:200] + "..." if len(str(ev)) > 200 else str(ev)
+                                parts.append(f"     Evidence: {ev_preview}")
+                        parts.append(f"     Confidence: {confidence}")
+
+                # Decision shows phase conclusion
+                decision = frame.get("decision")
+                if decision:
+                    parts.append(f"  Decision: {decision}")
+
+                parts.append("")  # Blank line between frames
+
+        # Include tool calls with full details (not just names)
+        if transcript.tool_calls:
+            parts.append("## Tool Calls")
+            parts.append("")
+            for tc in transcript.tool_calls[-10:]:  # Last 10 tool calls
+                name = tc.get("name") or tc.get("tool", "unknown")
+                tool_input = tc.get("input", {})
+                output = tc.get("output", {})
+
+                parts.append(f"### {name}")
+                if tool_input:
+                    input_str = json.dumps(tool_input, indent=2)[:500]
+                    parts.append(f"Input: {input_str}")
+                if output:
+                    if isinstance(output, str):
+                        out_preview = output[:500] + "..." if len(output) > 500 else output
+                    else:
+                        out_preview = json.dumps(output, indent=2)[:500]
+                    parts.append(f"Output: {out_preview}")
+                parts.append("")
+
+        # Include recent messages as additional context
+        if transcript.messages and not frames:
+            parts.append("## Messages")
+            parts.append("")
+            for msg in transcript.messages[-5:]:  # Last 5 messages
                 role = msg.get("role", "unknown")
                 content = msg.get("content", "")
                 if isinstance(content, str):
                     content_preview = content[:500] + "..." if len(content) > 500 else content
                 else:
                     content_preview = str(content)[:500]
-                parts.append(f"  [{role}]: {content_preview}")
-
-        if transcript.tool_calls:
-            parts.append("\nTool Calls:")
-            for tc in transcript.tool_calls[-5:]:  # Last 5 tool calls
-                name = tc.get("name", "unknown")
-                parts.append(f"  - {name}")
+                parts.append(f"[{role}]: {content_preview}")
+            parts.append("")
 
         context = "\n".join(parts)
         if len(context) > self._config.max_transcript_length:
@@ -329,7 +473,9 @@ class LLMJudgeGrader(Grader):
                     # Format expected output with must_contain and other constraints
                     parts = []
                     if "must_contain" in eo:
-                        parts.append(f"Response MUST contain these keywords: {', '.join(eo['must_contain'])}")
+                        parts.append(
+                            f"Response MUST contain these keywords: {', '.join(eo['must_contain'])}"
+                        )
                     if "exact_match" in eo:
                         parts.append(f"Response MUST exactly match: {eo['exact_match']}")
                     if "regex" in eo:
@@ -358,7 +504,16 @@ class LLMJudgeGrader(Grader):
         )
 
     def _parse_judge_output(self, raw_output: str) -> JudgeOutput:
-        """Parse and validate the judge's JSON output."""
+        """Parse and validate the judge's JSON output.
+
+        Raises:
+            ValueError: If the output cannot be parsed as JSON or is empty.
+        """
+        # Check for empty output first
+        if not raw_output or not raw_output.strip():
+            logger.warning("Judge returned empty output")
+            raise ValueError("Judge returned empty output - cannot grade")
+
         # Try to extract JSON from the response
         json_str = raw_output.strip()
 
@@ -378,13 +533,9 @@ class LLMJudgeGrader(Grader):
             data = json.loads(json_str)
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse judge output as JSON: {e}")
-            # Return a failed result
-            return JudgeOutput(
-                score=0.0,
-                passed=False,
-                reasoning=f"Failed to parse judge output: {e}",
-                issues=["Judge output was not valid JSON"],
-            )
+            # Raise instead of returning a fake failure - this will be caught
+            # by the grade() method and properly marked as JUDGE_ERROR
+            raise ValueError(f"Failed to parse judge output as JSON: {e}") from e
 
         normalized = self._normalize_judge_payload(data)
 
@@ -417,10 +568,10 @@ class LLMJudgeGrader(Grader):
     def _normalize_judge_payload(self, data: dict[str, Any]) -> dict[str, Any]:
         payload: dict[str, Any] = dict(data)
 
-        score = payload.get("score")
-        if not isinstance(score, (int, float)):
+        score = self._coerce_score_value(payload.get("score"))
+        if score is None:
             score = self._extract_score(data)
-        score = self._normalize_score(float(score))
+        score = self._normalize_score(score)
         payload["score"] = score
 
         passed = payload.get("passed")
@@ -441,15 +592,20 @@ class LLMJudgeGrader(Grader):
         issues = payload.get("issues", [])
         if not isinstance(issues, list):
             issues = [str(issues)]
+        # Also extract from nested answer.critique.weaknesses
+        if not issues:
+            issues = self._extract_issues(data)
         payload["issues"] = issues
 
         strengths = payload.get("strengths", [])
         if not isinstance(strengths, list):
             strengths = [str(strengths)]
+        # Also extract from nested answer.critique.strengths
+        if not strengths:
+            strengths = self._extract_strengths(data)
         payload["strengths"] = strengths
 
         return payload
-
     def _extract_embedded_scores(self, text: str) -> list[float]:
         """Extract scores embedded in text like '(Score: 1.0)' or '**Score: 5/5**'."""
         # Pattern 1: (Score: X.X) or (Score: X)
@@ -476,9 +632,9 @@ class LLMJudgeGrader(Grader):
         def _find_score(obj: dict) -> float | None:
             """Recursively find a score value in the object."""
             if "score" in obj:
-                return float(obj["score"])
+                return self._coerce_score_value(obj["score"])
             if "overall_score" in obj:
-                return float(obj["overall_score"])
+                return self._coerce_score_value(obj["overall_score"])
             return None
 
         def _normalize(value: float) -> float:
@@ -494,15 +650,19 @@ class LLMJudgeGrader(Grader):
             score_val = data["score"]
             if isinstance(score_val, dict):
                 # Score is a dict of dimension scores - extract and average them
-                dim_scores = [v for v in score_val.values() if isinstance(v, (int, float))]
+                dim_scores = [
+                    coerced
+                    for coerced in (self._coerce_score_value(v) for v in score_val.values())
+                    if coerced is not None
+                ]
                 if dim_scores:
                     score = sum(_normalize(s) for s in dim_scores) / len(dim_scores)
                     return score
-            elif isinstance(score_val, (int, float)):
-                score = float(score_val)
+            else:
+                score = self._coerce_score_value(score_val)
         # Overall score variants
         elif "overall_score" in data:
-            score = float(data["overall_score"])
+            score = self._coerce_score_value(data["overall_score"])
         # Nested in "answer"
         elif "answer" in data:
             answer = data["answer"]
@@ -512,13 +672,17 @@ class LLMJudgeGrader(Grader):
                     assessment = answer["overall_assessment"]
                     if isinstance(assessment, dict):
                         score = _find_score(assessment)
-                    elif isinstance(assessment, (int, float)):
-                        score = float(assessment)
-            elif isinstance(answer, (int, float)):
-                score = float(answer)
+                    else:
+                        score = self._coerce_score_value(assessment)
+            else:
+                score = self._coerce_score_value(answer)
         # Nested in dimension scores dict
         elif "scores" in data and isinstance(data["scores"], dict):
-            scores = [v for v in data["scores"].values() if isinstance(v, (int, float))]
+            scores = [
+                coerced
+                for coerced in (self._coerce_score_value(v) for v in data["scores"].values())
+                if coerced is not None
+            ]
             if scores:
                 score = sum(_normalize(s) for s in scores) / len(scores)
                 return score  # Already normalized
@@ -543,9 +707,13 @@ class LLMJudgeGrader(Grader):
             if key in data:
                 val = data[key]
                 if isinstance(val, dict) and "score" in val:
-                    dimension_scores.append(float(val["score"]))
-                elif isinstance(val, (int, float)):
-                    dimension_scores.append(float(val))
+                    score_value = self._coerce_score_value(val["score"])
+                    if score_value is not None:
+                        dimension_scores.append(score_value)
+                else:
+                    score_value = self._coerce_score_value(val)
+                    if score_value is not None:
+                        dimension_scores.append(score_value)
 
         if dimension_scores:
             normalized = [_normalize(s) for s in dimension_scores]
@@ -596,8 +764,10 @@ class LLMJudgeGrader(Grader):
             for key, value in breakdown.items():
                 if isinstance(value, (int, float)):
                     normalized_breakdown[str(key)] = normalize_score(float(value))
-                elif isinstance(value, dict) and isinstance(value.get("score"), (int, float)):
-                    normalized_breakdown[str(key)] = normalize_score(float(value["score"]))
+                elif isinstance(value, dict):
+                    score_value = self._coerce_score_value(value.get("score"))
+                    if score_value is not None:
+                        normalized_breakdown[str(key)] = normalize_score(score_value)
             if normalized_breakdown:
                 return normalized_breakdown
 
@@ -608,20 +778,30 @@ class LLMJudgeGrader(Grader):
                 token in lowered for token in ("score", "accuracy", "quality", "correctness")
             ):
                 extracted[str(key)] = normalize_score(float(value))
-            elif isinstance(value, dict) and isinstance(value.get("score"), (int, float)):
-                extracted[str(key)] = normalize_score(float(value["score"]))
+            elif isinstance(value, dict):
+                score_value = self._coerce_score_value(value.get("score"))
+                if score_value is not None:
+                    extracted[str(key)] = normalize_score(score_value)
 
         answer = data.get("answer")
         if isinstance(answer, dict):
+            # Check for dimension_scores nested in answer
+            dim_scores = answer.get("dimension_scores")
+            if isinstance(dim_scores, dict):
+                for key, value in dim_scores.items():
+                    if isinstance(value, (int, float)):
+                        extracted[str(key)] = normalize_score(float(value))
+            
             for key, value in answer.items():
                 lowered = str(key).lower()
                 if isinstance(value, (int, float)) and any(
                     token in lowered for token in ("score", "accuracy", "quality", "correctness")
                 ):
                     extracted[str(key)] = normalize_score(float(value))
-                elif isinstance(value, dict) and isinstance(value.get("score"), (int, float)):
-                    extracted[str(key)] = normalize_score(float(value["score"]))
-
+                elif isinstance(value, dict):
+                    score_value = self._coerce_score_value(value.get("score"))
+                    if score_value is not None:
+                        extracted[str(key)] = normalize_score(score_value)
         return extracted or None
 
     def _extract_reasoning(self, data: dict[str, Any]) -> str:
@@ -639,12 +819,64 @@ class LLMJudgeGrader(Grader):
                     return str(data["answer"]["reasoning"])
                 if "explanation" in data["answer"]:
                     return str(data["answer"]["explanation"])
+                # Handle critique format (GLM models sometimes use this)
+                if "critique" in data["answer"]:
+                    critique = data["answer"]["critique"]
+                    if isinstance(critique, dict):
+                        parts = []
+                        if "weaknesses" in critique and isinstance(critique["weaknesses"], list):
+                            parts.append("Issues: " + "; ".join(critique["weaknesses"][:3]))
+                        if "strengths" in critique and isinstance(critique["strengths"], list):
+                            parts.append("Strengths: " + "; ".join(critique["strengths"][:2]))
+                        if parts:
+                            return " | ".join(parts)
+                if "overall_assessment" in data["answer"]:
+                    assessment = data["answer"]["overall_assessment"]
+                    if isinstance(assessment, str):
+                        return assessment
+                    if isinstance(assessment, dict) and "summary" in assessment:
+                        return str(assessment["summary"])
         # Try to extract explanation from dimension objects
         for key in ["factual_accuracy", "logical_soundness", "completeness"]:
             if key in data and isinstance(data[key], dict) and "explanation" in data[key]:
                 return str(data[key]["explanation"])
-        return "Validation failed"
+        return "No reasoning provided"
 
+    def _extract_issues(self, data: dict[str, Any]) -> list[str]:
+        """Extract issues from various output formats."""
+        # Check top level
+        if "issues" in data and isinstance(data["issues"], list):
+            return data["issues"]
+        # Check nested in answer
+        if "answer" in data and isinstance(data["answer"], dict):
+            # Check answer.issues
+            if "issues" in data["answer"] and isinstance(data["answer"]["issues"], list):
+                return data["answer"]["issues"]
+            # Check answer.critique.weaknesses
+            critique = data["answer"].get("critique")
+            if isinstance(critique, dict) and "weaknesses" in critique:
+                weaknesses = critique["weaknesses"]
+                if isinstance(weaknesses, list):
+                    return weaknesses
+        return []
+
+    def _extract_strengths(self, data: dict[str, Any]) -> list[str]:
+        """Extract strengths from various output formats."""
+        # Check top level
+        if "strengths" in data and isinstance(data["strengths"], list):
+            return data["strengths"]
+        # Check nested in answer
+        if "answer" in data and isinstance(data["answer"], dict):
+            # Check answer.strengths
+            if "strengths" in data["answer"] and isinstance(data["answer"]["strengths"], list):
+                return data["answer"]["strengths"]
+            # Check answer.critique.strengths
+            critique = data["answer"].get("critique")
+            if isinstance(critique, dict) and "strengths" in critique:
+                strengths = critique["strengths"]
+                if isinstance(strengths, list):
+                    return strengths
+        return []
     async def _run_single_judge(
         self,
         prompt: str,
@@ -832,6 +1064,21 @@ class LLMJudgeGrader(Grader):
                 error_message=f"dawn-kestrel not installed: {e}",
                 details={"failure_mode": FailureMode.JUDGE_ERROR.value},
                 execution_time_seconds=execution_time,
+            )
+
+        except ValueError as e:
+            # Handle JSON parsing failures from _parse_judge_output
+            execution_time = time.time() - start_time
+            logger.warning(f"Judge output parsing failed: {e}")
+            return GraderResult(
+                grader_type=self.name,
+                score=0.0,
+                passed=False,
+                error_message=f"Judge output parsing failed: {e}",
+                details={"failure_mode": FailureMode.JUDGE_ERROR.value},
+                execution_time_seconds=execution_time,
+                needs_review=True,
+                review_reason="Judge returned unparseable output",
             )
 
         except Exception as e:
