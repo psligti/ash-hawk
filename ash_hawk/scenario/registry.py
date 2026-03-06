@@ -161,8 +161,22 @@ def get_default_adapter_registry() -> ScenarioAdapterRegistry:
     global _default_registry
     if _default_registry is None:
         _default_registry = ScenarioAdapterRegistry()
+        _register_builtin_adapters(_default_registry)
         _default_registry.load_from_entry_points()
     return _default_registry
+
+
+def _register_builtin_adapters(registry: ScenarioAdapterRegistry) -> None:
+    """Register built-in scenario adapters.
+
+    This function registers adapters that are included with ash-hawk.
+
+    Args:
+        registry: The registry to register adapters with.
+    """
+    from ash_hawk.scenario.adapters.mock_adapter import MockAdapter
+
+    registry.register(MockAdapter())
 
 
 __all__ = ["ScenarioAdapterRegistry", "get_default_adapter_registry", "ENTRY_POINT_GROUP"]
