@@ -335,6 +335,7 @@ class TestEvalTranscript:
         transcript = EvalTranscript()
         assert transcript.messages == []
         assert transcript.tool_calls == []
+        assert transcript.trace_events == []
         assert transcript.cost_usd == 0.0
         assert transcript.duration_seconds == 0.0
 
@@ -343,12 +344,14 @@ class TestEvalTranscript:
         transcript = EvalTranscript(
             messages=[{"role": "user", "content": "Hello"}],
             tool_calls=[{"tool": "read", "input": {"path": "/tmp/file"}}],
+            trace_events=[{"event_type": "ToolCallEvent", "data": {"name": "read"}}],
             token_usage=TokenUsage(input=100, output=50),
             cost_usd=0.0025,
             duration_seconds=5.3,
         )
         assert len(transcript.messages) == 1
         assert len(transcript.tool_calls) == 1
+        assert len(transcript.trace_events) == 1
         assert transcript.token_usage.total == 150
 
     def test_transcript_with_error(self):

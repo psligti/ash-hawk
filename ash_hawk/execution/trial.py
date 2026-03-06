@@ -199,9 +199,13 @@ class TrialExecutor:
             )
 
             policy_enforcer = PolicyEnforcer(self._policy)
+            runner_config = dict(agent_config)
+            runner_config.setdefault("trial_id", trial_id)
+            runner_config.setdefault("run_id", run_envelope.run_id)
+            runner_config.setdefault("suite_id", run_envelope.suite_id)
 
             transcript, outcome = await asyncio.wait_for(
-                self._agent_runner.run(resolved_task, policy_enforcer, agent_config),
+                self._agent_runner.run(resolved_task, policy_enforcer, runner_config),
                 timeout=timeout_seconds,
             )
 
@@ -359,7 +363,7 @@ class TrialExecutor:
             )
 
         started = time.time()
-        
+
         # Inject expected_output into spec config for graders that need it (e.g., llm_judge)
         enriched_config = dict(spec.config)
         if task.expected_output is not None and "expected_output" not in enriched_config:

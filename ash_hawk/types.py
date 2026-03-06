@@ -412,6 +412,10 @@ class EvalTranscript(pd.BaseModel):
         default_factory=list,
         description="List of tool calls made during the trial",
     )
+    trace_events: list[dict[str, Any]] = pd.Field(
+        default_factory=list,
+        description="Normalized trace events captured during the trial",
+    )
     token_usage: TokenUsage = pd.Field(
         default_factory=TokenUsage,
         description="Token usage statistics",
