@@ -155,6 +155,10 @@ class SdkDawnKestrelAdapter:
             if isinstance(budget_tokens, int):
                 run_config["max_tokens"] = budget_tokens
 
+        policy_mode = sut_config.get("policy_mode")
+        if isinstance(policy_mode, str) and policy_mode.strip() and "policy_mode" not in run_config:
+            run_config["policy_mode"] = policy_mode.strip()
+
         policy_payload: dict[str, Any] = {}
         tooling_call: Callable[[str, Any], dict[str, Any]] | None = None
         if isinstance(tooling_harness, dict):
