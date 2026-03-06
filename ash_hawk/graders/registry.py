@@ -9,8 +9,8 @@ This module provides a registry for graders that supports:
 from __future__ import annotations
 
 import logging
-from importlib.metadata import entry_points
-from typing import TYPE_CHECKING, cast
+from importlib.metadata import EntryPoint, entry_points
+from typing import TYPE_CHECKING, Iterable, Any, cast
 
 if TYPE_CHECKING:
     from ash_hawk.graders.base import Grader
@@ -88,16 +88,19 @@ class GraderRegistry:
         If a grader with the same name already exists, a warning will be logged
         but the existing grader will NOT be overwritten.
         """
+        eps: Iterable[EntryPoint]
         try:
             eps = entry_points(group=ENTRY_POINT_GROUP)
         except TypeError:
             # Python < 3.10 compatibility
-            eps = entry_points().get(ENTRY_POINT_GROUP, [])
+            eps_raw = cast(dict[str, list[EntryPoint]], entry_points())
+            eps = eps_raw.get(ENTRY_POINT_GROUP, [])
 
         for ep in eps:
             try:
                 # Entry point can be a Grader class or instance
-                loaded = cast(object, ep.load())
+                entry_point: Any = ep
+                loaded = cast(object, entry_point.load())
 
                 # If it's a class, instantiate it
                 from ash_hawk.graders.base import Grader
@@ -109,7 +112,7 @@ class GraderRegistry:
                 else:
                     logger.warning(
                         "Entry point '%s' must be a Grader class or instance",
-                        ep.name,
+                        entry_point.name,
                     )
                     continue
 
@@ -118,7 +121,7 @@ class GraderRegistry:
                     logger.warning(
                         "Grader '%s' from entry point '%s' already registered, skipping",
                         grader.name,
-                        ep.name,
+                        entry_point.name,
                     )
                 else:
                     self.register(grader)
@@ -126,7 +129,7 @@ class GraderRegistry:
             except Exception as e:
                 logger.error(
                     "Failed to load grader from entry point '%s': %s",
-                    ep.name,
+                    entry_point.name,
                     e,
                 )
 
@@ -151,10 +154,15 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
         ToolCallGrader,
         TranscriptGrader,
     )
+    from ash_hawk.graders.diff_constraints import DiffConstraintsGrader
     from ash_hawk.graders.human import ManualReviewGrader
     from ash_hawk.graders.llm_judge import LLMJudgeGrader
     from ash_hawk.graders.structured import FormatGrader, SchemaGrader, ToolUsageGrader
-    from ash_hawk.graders.trace_assertions import TraceSchemaGrader, VerifyBeforeDoneGrader
+    from ash_hawk.graders.trace_assertions import (
+        OrderingGrader,
+        TraceSchemaGrader,
+        VerifyBeforeDoneGrader,
+    )
 
     registry.register(StringMatchGrader())
     registry.register(TestRunnerGrader())
@@ -167,6 +175,8 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(ToolUsageGrader())
     registry.register(TraceSchemaGrader())
     registry.register(VerifyBeforeDoneGrader())
+    registry.register(OrderingGrader())
+    registry.register(DiffConstraintsGrader())
     registry.register(ManualReviewGrader())
 
 

@@ -101,7 +101,8 @@ class TraceSchemaGrader(Grader):
                 )
                 continue
 
-            errors = self._validate_event(event)
+            event_payload: dict[str, Any] = {str(key): value for key, value in event.items()}
+            errors = self._validate_event(event_payload)
             if errors:
                 failed_events.append(
                     {
@@ -225,4 +226,121 @@ class BudgetComplianceGrader(Grader):
         )
 
 
-__all__ = ["TraceSchemaGrader", "VerifyBeforeDoneGrader", "BudgetComplianceGrader"]
+class OrderingGrader(Grader):
+    @property
+    def name(self) -> str:
+        return "ordering"
+
+    def _extract_event_type(self, event: object) -> str | None:
+        if not isinstance(event, dict):
+            return None
+        event_map: dict[str, Any] = {str(key): value for key, value in event.items()}
+        event_type = event_map.get("event_type")
+        if isinstance(event_type, str) and event_type.strip():
+            return event_type
+        return None
+
+    async def grade(
+        self,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> GraderResult:
+        effective_transcript = transcript
+        if trial.result is not None:
+            effective_transcript = trial.result.transcript
+
+        ordering_rules = spec.config.get("ordering_rules", [])
+        if not ordering_rules:
+            return GraderResult(
+                grader_type=self.name,
+                score=1.0,
+                passed=True,
+                details={"total_rules": 0, "violations": []},
+            )
+
+        events = list(effective_transcript.trace_events or [])
+        event_types = [self._extract_event_type(event) for event in events]
+
+        violations: list[dict[str, Any]] = []
+        for index, rule in enumerate(ordering_rules):
+            if not isinstance(rule, dict):
+                violations.append(
+                    {
+                        "index": index,
+                        "error": "Ordering rule must be a mapping",
+                    }
+                )
+                continue
+
+            rule_map: dict[str, Any] = {str(key): value for key, value in rule.items()}
+            before = rule_map.get("before")
+            after = rule_map.get("after")
+            errors: list[str] = []
+            if not isinstance(before, str) or not before.strip():
+                errors.append("before must be non-empty string")
+            if not isinstance(after, str) or not after.strip():
+                errors.append("after must be non-empty string")
+            if errors:
+                violations.append(
+                    {
+                        "index": index,
+                        "error": "; ".join(errors),
+                    }
+                )
+                continue
+
+            before_index = next((i for i, value in enumerate(event_types) if value == before), None)
+            after_index = next((i for i, value in enumerate(event_types) if value == after), None)
+            if before_index is None:
+                violations.append(
+                    {
+                        "index": index,
+                        "before": before,
+                        "after": after,
+                        "error": "before event not found",
+                    }
+                )
+                continue
+            if after_index is None:
+                violations.append(
+                    {
+                        "index": index,
+                        "before": before,
+                        "after": after,
+                        "error": "after event not found",
+                    }
+                )
+                continue
+            if before_index > after_index:
+                violations.append(
+                    {
+                        "index": index,
+                        "before": before,
+                        "after": after,
+                        "error": "events out of order",
+                        "before_index": before_index,
+                        "after_index": after_index,
+                    }
+                )
+
+        passed = not violations
+        score = 1.0 if passed else 0.0
+
+        return GraderResult(
+            grader_type=self.name,
+            score=score,
+            passed=passed,
+            details={
+                "total_rules": len(ordering_rules),
+                "violations": violations,
+            },
+        )
+
+
+__all__ = [
+    "TraceSchemaGrader",
+    "VerifyBeforeDoneGrader",
+    "BudgetComplianceGrader",
+    "OrderingGrader",
+]
