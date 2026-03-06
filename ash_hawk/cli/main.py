@@ -1,6 +1,4 @@
-import asyncio
 from pathlib import Path
-from typing import Optional
 
 import click
 import yaml
@@ -92,12 +90,14 @@ def init(path: str, name: str, force: bool) -> None:
     console.print(f"[dim]Edit the file to customize your evaluation suite.[/dim]")
 
 
-from ash_hawk.cli.calibrate import calibrate
+from ash_hawk.cli.scenario import scenario
+from ash_hawk.cli.run import run
 from ash_hawk.cli.list import list_cmd
 from ash_hawk.cli.report import report
-from ash_hawk.cli.run import run
+from ash_hawk.cli.calibrate import calibrate
 
 cli.add_command(run)
 cli.add_command(list_cmd, name="list")
 cli.add_command(report)
 cli.add_command(calibrate)
+cli.add_command(scenario)
