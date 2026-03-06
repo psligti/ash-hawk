@@ -174,8 +174,10 @@ def _register_builtin_adapters(registry: ScenarioAdapterRegistry) -> None:
     Args:
         registry: The registry to register adapters with.
     """
+    from ash_hawk.scenario.adapters.coding_agent_subprocess import CodingAgentSubprocessAdapter
     from ash_hawk.scenario.adapters.mock_adapter import MockAdapter
 
+    registry.register(CodingAgentSubprocessAdapter())
     registry.register(MockAdapter())
 
 

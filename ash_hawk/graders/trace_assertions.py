@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 from ash_hawk.graders.base import Grader
 from ash_hawk.scenario.trace import TraceEvent
@@ -91,7 +91,7 @@ class TraceSchemaGrader(Grader):
             )
 
         failed_events: list[dict[str, Any]] = []
-        for index, event in enumerate(cast(list[object], trace_events)):
+        for index, event in enumerate(trace_events):
             if not isinstance(event, dict):
                 failed_events.append(
                     {
@@ -101,7 +101,7 @@ class TraceSchemaGrader(Grader):
                 )
                 continue
 
-            errors = self._validate_event(cast(dict[str, Any], event))
+            errors = self._validate_event(event)
             if errors:
                 failed_events.append(
                     {
@@ -148,8 +148,6 @@ class VerifyBeforeDoneGrader(Grader):
             )
 
         for event in effective_transcript.trace_events or []:
-            if not isinstance(event, dict):
-                continue
             if event.get("event_type") != "VerificationEvent":
                 continue
             if event.get("data", {}).get("pass") is True:
@@ -168,4 +166,63 @@ class VerifyBeforeDoneGrader(Grader):
         )
 
 
-__all__ = ["TraceSchemaGrader", "VerifyBeforeDoneGrader"]
+class BudgetComplianceGrader(Grader):
+    @property
+    def name(self) -> str:
+        return "budget"
+
+    async def grade(
+        self,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> GraderResult:
+        effective_transcript = transcript
+        if trial.result is not None:
+            effective_transcript = trial.result.transcript
+
+        config = spec.config
+        max_tool_calls = config.get("max_tool_calls")
+        max_time_seconds = config.get("max_time_seconds")
+        max_steps = config.get("max_steps")
+
+        tool_call_count = len(effective_transcript.tool_calls or [])
+        duration_seconds = effective_transcript.duration_seconds
+        step_count = len(effective_transcript.trace_events or [])
+
+        violations: list[str] = []
+        if max_time_seconds is not None and duration_seconds > max_time_seconds:
+            violations.append(
+                f"duration_seconds {duration_seconds} exceeds max_time_seconds {max_time_seconds}"
+            )
+        if max_tool_calls is not None and tool_call_count > max_tool_calls:
+            violations.append(
+                f"tool_calls {tool_call_count} exceeds max_tool_calls {max_tool_calls}"
+            )
+        if max_steps is not None and step_count > max_steps:
+            violations.append(f"steps {step_count} exceeds max_steps {max_steps}")
+
+        passed = not violations
+        score = 1.0 if passed else 0.0
+
+        return GraderResult(
+            grader_type=self.name,
+            score=score,
+            passed=passed,
+            details={
+                "violations": violations,
+                "counts": {
+                    "duration_seconds": duration_seconds,
+                    "tool_calls": tool_call_count,
+                    "steps": step_count,
+                },
+                "limits": {
+                    "max_time_seconds": max_time_seconds,
+                    "max_tool_calls": max_tool_calls,
+                    "max_steps": max_steps,
+                },
+            },
+        )
+
+
+__all__ = ["TraceSchemaGrader", "VerifyBeforeDoneGrader", "BudgetComplianceGrader"]
