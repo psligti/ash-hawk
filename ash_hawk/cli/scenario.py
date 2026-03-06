@@ -4,6 +4,7 @@ import json
 import tempfile
 import uuid
 from pathlib import Path
+from typing import Literal
 
 import click
 import yaml
@@ -320,7 +321,13 @@ def run(path: str, sut: str, policy_mode: str | None, record: bool, replay: bool
         console.print("[red]Error:[/red] --record and --replay are mutually exclusive.")
         raise SystemExit(1)
 
-    tooling_mode = "record" if record else "replay" if replay else "mock"
+    tooling_mode: Literal["mock", "record", "replay"]
+    if record:
+        tooling_mode = "record"
+    elif replay:
+        tooling_mode = "replay"
+    else:
+        tooling_mode = "mock"
 
     temp_dir: tempfile.TemporaryDirectory[str] | None = None
     try:
@@ -624,7 +631,7 @@ def replay(run_id: str) -> None:
         raise SystemExit(1)
 
 
-async def _find_run_summary(storage: FileStorage, run_id: str):
+async def _find_run_summary(storage: FileStorage, run_id: str) -> EvalRunSummary | None:
     suite_ids = await storage.list_suites()
     for suite_id in suite_ids:
         run_ids = await storage.list_runs(suite_id)
@@ -661,11 +668,12 @@ async def _report_async(run_id: str, format_: str) -> None:
         raise SystemExit(1)
 
     if format_.lower() == "json":
-        report_payload = {
+        trials: list[dict[str, object]] = []
+        report_payload: dict[str, object] = {
             "run_id": summary.envelope.run_id,
             "suite_id": summary.envelope.suite_id,
             "created_at": summary.envelope.created_at,
-            "trials": [],
+            "trials": trials,
         }
         for trial in summary.trials:
             result = trial.result
@@ -688,7 +696,7 @@ async def _report_async(run_id: str, format_: str) -> None:
                 if trace_path is not None:
                     trace_excerpt = excerpt_trace(trace_path)
 
-            report_payload["trials"].append(
+            trials.append(
                 {
                     "trial_id": trial.id,
                     "scenario_id": trial.task_id,

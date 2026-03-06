@@ -167,6 +167,70 @@ class VerifyBeforeDoneGrader(Grader):
         )
 
 
+class EvidenceRequiredGrader(Grader):
+    @property
+    def name(self) -> str:
+        return "evidence_required"
+
+    def _has_evidence(self, data: dict[str, Any]) -> bool:
+        evidence_path = data.get("evidence_path")
+        evidence_ref = data.get("evidence_ref")
+        if isinstance(evidence_path, str) and evidence_path.strip():
+            return True
+        if isinstance(evidence_ref, str) and evidence_ref.strip():
+            return True
+        return False
+
+    async def grade(
+        self,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> GraderResult:
+        effective_transcript = transcript
+        if trial.result is not None:
+            effective_transcript = trial.result.transcript
+
+        missing_evidence: list[dict[str, Any]] = []
+        total_todos = 0
+        completed_todos = 0
+
+        for index, event in enumerate(effective_transcript.trace_events or []):
+            if not isinstance(event, dict):
+                continue
+            if event.get("event_type") != "TodoEvent":
+                continue
+            total_todos += 1
+            data = event.get("data", {})
+            if not isinstance(data, dict):
+                continue
+            if data.get("completed") is not True:
+                continue
+            completed_todos += 1
+            if self._has_evidence(data):
+                continue
+            missing_evidence.append(
+                {
+                    "index": index,
+                    "reason": "missing_evidence",
+                }
+            )
+
+        passed = not missing_evidence
+        score = 1.0 if passed else 0.0
+
+        return GraderResult(
+            grader_type=self.name,
+            score=score,
+            passed=passed,
+            details={
+                "total_todos": total_todos,
+                "completed_todos": completed_todos,
+                "missing_evidence": missing_evidence,
+            },
+        )
+
+
 class BudgetComplianceGrader(Grader):
     @property
     def name(self) -> str:
@@ -341,6 +405,7 @@ class OrderingGrader(Grader):
 __all__ = [
     "TraceSchemaGrader",
     "VerifyBeforeDoneGrader",
+    "EvidenceRequiredGrader",
     "BudgetComplianceGrader",
     "OrderingGrader",
 ]
