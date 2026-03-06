@@ -8,7 +8,7 @@ import sys
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Literal
+from typing import TYPE_CHECKING, Any, Iterable, Literal
 
 from ash_hawk import __version__
 from ash_hawk.config import EvalConfig, get_config
@@ -18,7 +18,6 @@ from ash_hawk.scenario.agent_runner import ScenarioAgentRunner
 from ash_hawk.scenario.loader import discover_scenarios, load_scenario
 from ash_hawk.scenario.models import ScenarioGraderSpec, ScenarioV1
 from ash_hawk.scenario.registry import ScenarioAdapterRegistry, get_default_adapter_registry
-from ash_hawk.storage import FileStorage
 from ash_hawk.types import (
     EvalRunSummary,
     EvalSuite,
@@ -26,7 +25,12 @@ from ash_hawk.types import (
     GraderSpec,
     RunEnvelope,
     ToolSurfacePolicy,
+    TrialEnvelope,
 )
+
+if TYPE_CHECKING:
+    from ash_hawk.storage import FileStorage
+
 
 PATH_KEYS = {
     "path",
@@ -49,6 +53,7 @@ class ScenarioRunner:
         tooling_mode: Literal["mock", "record", "replay"] = "mock",
         adapter_registry: ScenarioAdapterRegistry | None = None,
     ) -> None:
+        from ash_hawk.storage import FileStorage
         config = get_config()
         resolved_storage = (
             Path(storage_path) if storage_path is not None else config.storage_path_resolved()
