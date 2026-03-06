@@ -9,6 +9,13 @@ Phase 1 implemented fixture resolution. Phase 2 adds:
 2. `pyproject.toml [tool.ash-hawk]` configuration
 3. Suite discovery and filtering
 
+### Agent Evals Framework
+
+For detailed specifications on the pytest-like scenario evaluation framework, see:
+
+- **[Agent Evals (Pytest-like Framework)](specs/agent-evals-pytest-like-framework.md)** - Complete technical specification for scenario-based evaluations
+
+
 ---
 
 ## 1. conftest.yaml Loading
