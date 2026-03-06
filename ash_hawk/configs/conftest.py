@@ -144,7 +144,7 @@ class ConftestLoader:
         merged = self._deep_merge(base_dict, override_dict)
         return ConftestConfig(**merged)
 
-    def _deep_merge(self, base: dict, override: dict) -> dict:
+    def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
         """Deep merge two dictionaries.
 
         - Dicts are recursively merged

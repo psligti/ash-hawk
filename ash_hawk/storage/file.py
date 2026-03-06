@@ -114,9 +114,12 @@ class FileStorage:
 
     async def _read_json(self, path: Path) -> dict[str, Any] | None:
         try:
-            async with aiofiles.open(path, "r") as f:
+            async with aiofiles.open(path) as f:
                 content = await f.read()
-            return json.loads(content)
+            payload = json.loads(content)
+            if isinstance(payload, dict):
+                return payload
+            return None
         except FileNotFoundError:
             return None
 

@@ -19,8 +19,8 @@ from ash_hawk.types import (
     FailureMode,
     RunEnvelope,
     SuiteMetrics,
-    ToolSurfacePolicy,
     TokenUsage,
+    ToolSurfacePolicy,
     TrialResult,
 )
 

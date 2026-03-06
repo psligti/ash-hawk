@@ -87,14 +87,14 @@ def init(path: str, name: str, force: bool) -> None:
         yaml.dump(sample_suite, f, default_flow_style=False, sort_keys=False)
 
     console.print(f"[green]Created:[/green] {path}")
-    console.print(f"[dim]Edit the file to customize your evaluation suite.[/dim]")
+    console.print("[dim]Edit the file to customize your evaluation suite.[/dim]")
 
 
-from ash_hawk.cli.scenario import scenario
-from ash_hawk.cli.run import run
+from ash_hawk.cli.calibrate import calibrate
 from ash_hawk.cli.list import list_cmd
 from ash_hawk.cli.report import report
-from ash_hawk.cli.calibrate import calibrate
+from ash_hawk.cli.run import run
+from ash_hawk.cli.scenario import scenario
 
 cli.add_command(run)
 cli.add_command(list_cmd, name="list")

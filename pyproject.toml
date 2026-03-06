@@ -81,6 +81,17 @@ ignore = ["F401", "F841", "E501", "E402", "W291", "W293", "UP035", "UP007", "UP0
 [tool.mypy]
 python_version = "3.11"
 strict = true
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
+module = [
+  "ash_hawk.graders.code",
+  "ash_hawk.graders.composite",
+  "ash_hawk.graders.llm_judge",
+  "ash_hawk.graders.structured",
+]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

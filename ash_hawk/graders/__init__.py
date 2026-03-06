@@ -13,12 +13,12 @@ with scores (0.0-1.0) and pass/fail status.
 """
 
 from ash_hawk.graders.aggregation import (
+    DisagreementReport,
     aggregate_results,
     calculate_pass_at_k,
     calculate_statistics,
     create_run_summary,
     detect_disagreements,
-    DisagreementReport,
     filter_results,
     grader_summary,
     group_by_grader,

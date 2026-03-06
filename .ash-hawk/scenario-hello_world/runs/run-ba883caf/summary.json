@@ -1,0 +1,162 @@
+{
+  "envelope": {
+    "run_id": "run-ba883caf",
+    "suite_id": "scenario-hello_world",
+    "suite_hash": "c77fa9f228da2391",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-06T03:59:28.177804+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-hello_world",
+    "run_id": "run-ba883caf",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 1,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.0023441314697265625,
+    "latency_p50_seconds": 0.002019166946411133,
+    "latency_p95_seconds": 0.002019166946411133,
+    "latency_p99_seconds": 0.002019166946411133,
+    "pass_at_k": {},
+    "created_at": "2026-03-06T03:59:28.195197+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-b9ed87c0",
+      "task_id": "hello_world",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "hello_world",
+          "description": "Minimal smoke test for agentic SDK with mock adapter",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Say hello world"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {
+                  "command": "echo hi"
+                },
+                "result": {
+                  "stdout": "hi\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 3,
+            "max_tool_calls": 5,
+            "max_tokens": 100,
+            "max_time_seconds": 10.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/hello_world.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-b9ed87c0",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Tooling trace not found: /Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/tool_mocks/scenarios/trace.jsonl",
+          "completed_at": "2026-03-06T03:59:28.193139+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0013089179992675781,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/execution/trial.py\", line 207, in execute\n    transcript, outcome = await asyncio.wait_for(\n                          ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/scenario/agent_runner.py\", line 91, in run\n    tooling_harness = ToolingHarness(mode=self._tooling_mode, root=tooling_root)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/scenario/tooling.py\", line 82, in __init__\n    raise FileNotFoundError(f\"Tooling trace not found: {self._trace_path}\")\nFileNotFoundError: Tooling trace not found: /Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/tool_mocks/scenarios/trace.jsonl"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-b9ed87c0",
+        "run_id": "run-ba883caf",
+        "task_id": "hello_world",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-06T03:59:28.192966+00:00",
+        "started_at": "2026-03-06T03:59:28.192930+00:00",
+        "completed_at": "2026-03-06T03:59:28.194247+00:00"
+      }
+    }
+  ]
+}

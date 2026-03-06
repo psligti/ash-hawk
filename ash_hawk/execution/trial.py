@@ -4,7 +4,7 @@ import asyncio
 import time
 import traceback
 import uuid
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
@@ -72,8 +72,7 @@ class _FunctionRunner:
     ) -> tuple[EvalTranscript, EvalOutcome]:
         result = self._func(task, policy_enforcer, config)
         if asyncio.iscoroutine(result):
-            coro_result = await result
-            return coro_result  # type: ignore[no-any-return]
+            return await cast(Awaitable[tuple[EvalTranscript, EvalOutcome]], result)
         return result
 
 
@@ -209,7 +208,7 @@ class TrialExecutor:
                 timeout=timeout_seconds,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             outcome = EvalOutcome.failure(
                 FailureMode.TIMEOUT,
                 f"Trial timed out after {timeout_seconds}s",
@@ -385,7 +384,7 @@ class TrialExecutor:
                 result = await grader.grade(trial, transcript, enriched_spec)
             duration = time.time() - started
             return result.model_copy(update={"execution_time_seconds": duration})
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return GraderResult(
                 grader_type=spec.grader_type,
                 score=0.0,
@@ -446,7 +445,7 @@ class TrialExecutor:
         if isinstance(explicit_weights_raw, list):
             candidate_weights: list[float] = []
             valid_weights = True
-            for raw_weight in cast(list[Any], explicit_weights_raw):
+            for raw_weight in explicit_weights_raw:
                 if isinstance(raw_weight, (float, int, str)):
                     candidate_weights.append(float(raw_weight))
                 else:

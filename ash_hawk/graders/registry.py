@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from importlib.metadata import EntryPoint, entry_points
-from typing import TYPE_CHECKING, Iterable, Any, cast
+from typing import TYPE_CHECKING, Any, Iterable, cast
 
 if TYPE_CHECKING:
     from ash_hawk.graders.base import Grader

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any
 
 import pydantic as pd
@@ -32,7 +32,6 @@ from ash_hawk.types import (
     SuiteMetrics,
     TokenUsage,
 )
-
 
 # =============================================================================
 # DATA CLASSES FOR METRICS
@@ -362,7 +361,7 @@ class SuiteMetricsDetailed(pd.BaseModel):
         description="Per-grader metrics",
     )
     created_at: str = pd.Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="When metrics were computed",
     )
 

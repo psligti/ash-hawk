@@ -35,7 +35,6 @@ from ash_hawk.types import (
     TokenUsage,
 )
 
-
 # =============================================================================
 # FIXTURES
 # =============================================================================
@@ -510,7 +509,8 @@ def test_create_simple_workflow_with_logging() -> None:
 
 def test_imports_work() -> None:
     from ash_hawk.graders.human import HumanGrader, ManualReviewGrader
-    from ash_hawk.review import ReviewWorkflow as RW, create_simple_workflow as csf
+    from ash_hawk.review import ReviewWorkflow as RW
+    from ash_hawk.review import create_simple_workflow as csf
 
     assert issubclass(ManualReviewGrader, HumanGrader)
     assert issubclass(HumanGrader, Grader)

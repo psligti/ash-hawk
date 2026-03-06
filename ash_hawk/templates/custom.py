@@ -304,7 +304,10 @@ class CustomTaskBuilder(EvalTemplate):
             return data
         if isinstance(data, dict):
             if "tasks" in data:
-                return data["tasks"]
+                tasks = data.get("tasks")
+                if isinstance(tasks, list):
+                    return tasks
+                raise TemplateLoadError("Task list must be a list")
             return [data]
         raise TemplateLoadError(f"Unexpected YAML structure: {type(data)}")
 

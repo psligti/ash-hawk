@@ -81,7 +81,7 @@ async def _show_report_async(
             console.print("[red]Error:[/red] No suites found in storage")
             raise SystemExit(1)
         else:
-            console.print(f"[red]Error:[/red] Multiple suites found. Specify --suite")
+            console.print("[red]Error:[/red] Multiple suites found. Specify --suite")
             console.print(f"[dim]Available suites: {', '.join(suite_ids)}[/dim]")
             raise SystemExit(1)
 

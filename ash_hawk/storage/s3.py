@@ -128,7 +128,10 @@ class S3Storage:
             response = await client.get_object(Bucket=self._config.bucket, Key=key)
             async with response["Body"] as stream:
                 content = await stream.read()
-            return json.loads(content)
+            payload = json.loads(content)
+            if isinstance(payload, dict):
+                return payload
+            return None
         except client.exceptions.NoSuchKey:
             return None
         except client.exceptions.ClientError as e:

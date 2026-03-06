@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Callable
@@ -112,7 +112,7 @@ class LoggingReviewHook(ReviewHook):
 
     def _log(self, event: str, **kwargs: Any) -> None:
         entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "event": event,
             **kwargs,
         }
@@ -156,7 +156,7 @@ class ReviewWorkflow:
         batch_id: str | None = None,
     ) -> ReviewBatch:
         batch = ReviewBatch(
-            batch_id=batch_id or f"batch_{datetime.now(timezone.utc).timestamp()}",
+            batch_id=batch_id or f"batch_{datetime.now(UTC).timestamp()}",
             items=items,
         )
         self._batches[batch.batch_id] = batch

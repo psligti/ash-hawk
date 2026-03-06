@@ -293,7 +293,7 @@ class PostgresStorage:
                 return None
             return EvalRunSummary.model_validate(row["data"])
 
-    async def __aenter__(self) -> "PostgresStorage":
+    async def __aenter__(self) -> PostgresStorage:
         """Async context manager entry."""
         await self._get_pool()
         await self.initialize_schema()

@@ -2,20 +2,20 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Literal
+from typing import Any, Iterable, Iterator, Literal, cast
 
 import pydantic as pd
 
-EVENT_TYPE_MODEL_MESSAGE = "ModelMessageEvent"
-EVENT_TYPE_TOOL_CALL = "ToolCallEvent"
-EVENT_TYPE_TOOL_RESULT = "ToolResultEvent"
-EVENT_TYPE_VERIFICATION = "VerificationEvent"
-EVENT_TYPE_TODO = "TodoEvent"
-EVENT_TYPE_DIFF = "DiffEvent"
-EVENT_TYPE_ARTIFACT = "ArtifactEvent"
-EVENT_TYPE_POLICY_DECISION = "PolicyDecisionEvent"
-EVENT_TYPE_REJECTION = "RejectionEvent"
-EVENT_TYPE_BUDGET = "BudgetEvent"
+EVENT_TYPE_MODEL_MESSAGE: Literal["ModelMessageEvent"] = "ModelMessageEvent"
+EVENT_TYPE_TOOL_CALL: Literal["ToolCallEvent"] = "ToolCallEvent"
+EVENT_TYPE_TOOL_RESULT: Literal["ToolResultEvent"] = "ToolResultEvent"
+EVENT_TYPE_VERIFICATION: Literal["VerificationEvent"] = "VerificationEvent"
+EVENT_TYPE_TODO: Literal["TodoEvent"] = "TodoEvent"
+EVENT_TYPE_DIFF: Literal["DiffEvent"] = "DiffEvent"
+EVENT_TYPE_ARTIFACT: Literal["ArtifactEvent"] = "ArtifactEvent"
+EVENT_TYPE_POLICY_DECISION: Literal["PolicyDecisionEvent"] = "PolicyDecisionEvent"
+EVENT_TYPE_REJECTION: Literal["RejectionEvent"] = "RejectionEvent"
+EVENT_TYPE_BUDGET: Literal["BudgetEvent"] = "BudgetEvent"
 
 DEFAULT_TRACE_TS = "1970-01-01T00:00:00Z"
 
@@ -30,82 +30,82 @@ class TraceEvent(pd.BaseModel):
 
 
 class ModelMessageEvent(TraceEvent):
-    event_type: Literal["ModelMessageEvent"] = EVENT_TYPE_MODEL_MESSAGE
+    event_type: str = EVENT_TYPE_MODEL_MESSAGE
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "ModelMessageEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> ModelMessageEvent:
         return cls(ts=ts, data=data)
 
 
 class ToolCallEvent(TraceEvent):
-    event_type: Literal["ToolCallEvent"] = EVENT_TYPE_TOOL_CALL
+    event_type: str = EVENT_TYPE_TOOL_CALL
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "ToolCallEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> ToolCallEvent:
         return cls(ts=ts, data=data)
 
 
 class ToolResultEvent(TraceEvent):
-    event_type: Literal["ToolResultEvent"] = EVENT_TYPE_TOOL_RESULT
+    event_type: str = EVENT_TYPE_TOOL_RESULT
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "ToolResultEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> ToolResultEvent:
         return cls(ts=ts, data=data)
 
 
 class VerificationEvent(TraceEvent):
-    event_type: Literal["VerificationEvent"] = EVENT_TYPE_VERIFICATION
+    event_type: str = EVENT_TYPE_VERIFICATION
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "VerificationEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> VerificationEvent:
         return cls(ts=ts, data=data)
 
 
 class TodoEvent(TraceEvent):
-    event_type: Literal["TodoEvent"] = EVENT_TYPE_TODO
+    event_type: str = EVENT_TYPE_TODO
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "TodoEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> TodoEvent:
         return cls(ts=ts, data=data)
 
 
 class DiffEvent(TraceEvent):
-    event_type: Literal["DiffEvent"] = EVENT_TYPE_DIFF
+    event_type: str = EVENT_TYPE_DIFF
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "DiffEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> DiffEvent:
         return cls(ts=ts, data=data)
 
 
 class ArtifactEvent(TraceEvent):
-    event_type: Literal["ArtifactEvent"] = EVENT_TYPE_ARTIFACT
+    event_type: str = EVENT_TYPE_ARTIFACT
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "ArtifactEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> ArtifactEvent:
         return cls(ts=ts, data=data)
 
 
 class PolicyDecisionEvent(TraceEvent):
-    event_type: Literal["PolicyDecisionEvent"] = EVENT_TYPE_POLICY_DECISION
+    event_type: str = EVENT_TYPE_POLICY_DECISION
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "PolicyDecisionEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> PolicyDecisionEvent:
         return cls(ts=ts, data=data)
 
 
 class RejectionEvent(TraceEvent):
-    event_type: Literal["RejectionEvent"] = EVENT_TYPE_REJECTION
+    event_type: str = EVENT_TYPE_REJECTION
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "RejectionEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> RejectionEvent:
         return cls(ts=ts, data=data)
 
 
 class BudgetEvent(TraceEvent):
-    event_type: Literal["BudgetEvent"] = EVENT_TYPE_BUDGET
+    event_type: str = EVENT_TYPE_BUDGET
 
     @classmethod
-    def create(cls, ts: str, data: dict[str, Any]) -> "BudgetEvent":
+    def create(cls, ts: str, data: dict[str, Any]) -> BudgetEvent:
         return cls(ts=ts, data=data)
 
 
@@ -137,7 +137,8 @@ def iter_trace_jsonl(path: str | Path) -> Iterator[TraceEvent]:
                 payload = json.loads(stripped)
                 if not isinstance(payload, dict):
                     raise ValueError("Trace JSONL line must be a JSON object")
-                event_type = payload.get("event_type", "")
+                payload_dict = cast(dict[str, Any], payload)
+                event_type = payload_dict.get("event_type", "")
                 model = EVENT_TYPE_MODEL_MAP.get(event_type, TraceEvent)
                 yield model.model_validate(payload)
 

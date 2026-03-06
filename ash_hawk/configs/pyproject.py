@@ -107,17 +107,17 @@ def load_pyproject_config(
 
     # Parse TOML
     try:
-        import tomllib  # Python 3.11+
+        import tomllib as toml  # Python 3.11+
     except ImportError:
         try:
-            import tomli as tomllib
+            import tomli as toml
         except ImportError:
             # Fallback if tomli not installed
             return PyprojectConfig()
 
     try:
         content = pyproject_path.read_bytes()
-        data = tomllib.loads(content.decode("utf-8"))
+        data = toml.loads(content.decode("utf-8"))
     except Exception:
         return PyprojectConfig()
 

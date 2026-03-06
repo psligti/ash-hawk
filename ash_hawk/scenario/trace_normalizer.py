@@ -42,7 +42,7 @@ PATH_KEYS = {
     "tmp_path",
 }
 
-MESSAGE_TYPE_EVENT_MAP = {
+MESSAGE_TYPE_EVENT_MAP: dict[str, type[TraceEvent]] = {
     "verification": VerificationEvent,
     "todo": TodoEvent,
     "diff": DiffEvent,
@@ -80,7 +80,8 @@ def _event_from_message(message: dict[str, Any]) -> TraceEvent:
     data = _strip_volatile(message)
 
     if isinstance(message_type, str) and message_type in MESSAGE_TYPE_EVENT_MAP:
-        return MESSAGE_TYPE_EVENT_MAP[message_type].create(DEFAULT_TRACE_TS, data)
+        event_cls = MESSAGE_TYPE_EVENT_MAP[message_type]
+        return event_cls(ts=DEFAULT_TRACE_TS, data=data)
 
     if role == "tool":
         return ToolResultEvent.create(DEFAULT_TRACE_TS, data)

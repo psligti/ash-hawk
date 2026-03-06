@@ -15,7 +15,7 @@ Key features:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -167,7 +167,7 @@ class HTMLReporter:
             include_charts=self.include_charts,
             chartjs_cdn=self.chartjs_cdn,
             # Helpers
-            now=datetime.now(timezone.utc).isoformat(),
+            now=datetime.now(UTC).isoformat(),
             format_duration=self._format_duration,
             format_tokens=self._format_tokens,
             format_cost=self._format_cost,
@@ -230,7 +230,7 @@ class HTMLReporter:
             theme=self.theme,
             include_charts=self.include_charts,
             chartjs_cdn=self.chartjs_cdn,
-            now=datetime.now(timezone.utc).isoformat(),
+            now=datetime.now(UTC).isoformat(),
             format_duration=self._format_duration,
             format_tokens=self._format_tokens,
             format_cost=self._format_cost,
@@ -275,7 +275,7 @@ class HTMLReporter:
             theme=self.theme,
             include_charts=self.include_charts,
             chartjs_cdn=self.chartjs_cdn,
-            now=datetime.now(timezone.utc).isoformat(),
+            now=datetime.now(UTC).isoformat(),
             format_duration=self._format_duration,
             format_tokens=self._format_tokens,
             format_cost=self._format_cost,

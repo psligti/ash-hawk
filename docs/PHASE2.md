@@ -8,6 +8,7 @@ Phase 1 implemented fixture resolution. Phase 2 adds:
 1. `conftest.yaml` loading with inheritance
 2. `pyproject.toml [tool.ash-hawk]` configuration
 3. Suite discovery and filtering
+4. Scenario CLI surface for validate/run/report workflows
 
 ### Agent Evals Framework
 

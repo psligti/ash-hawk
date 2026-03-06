@@ -15,15 +15,16 @@ Key functions:
 
 from __future__ import annotations
 
-import pydantic as pd
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Callable
 
+import pydantic as pd
+
 from ash_hawk.types import (
+    EvalRunSummary,
     EvalStatus,
     EvalTrial,
-    EvalRunSummary,
     GraderResult,
     RunEnvelope,
     SuiteMetrics,
@@ -169,7 +170,7 @@ def aggregate_results(
         latency_p95_seconds=percentile(latencies, 95),
         latency_p99_seconds=percentile(latencies, 99),
         pass_at_k=pass_at_k,
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
     )
 
 
@@ -268,7 +269,7 @@ def group_by_time(
                 dt = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
                 timestamp = dt.timestamp()
                 bucket_start = int(timestamp // bucket_seconds) * bucket_seconds
-                bucket_key = datetime.fromtimestamp(bucket_start, tz=timezone.utc).isoformat()
+                bucket_key = datetime.fromtimestamp(bucket_start, tz=UTC).isoformat()
                 grouped[bucket_key].append(trial)
             except (ValueError, TypeError):
                 continue

@@ -15,7 +15,7 @@ from __future__ import annotations
 import csv
 import json
 from abc import abstractmethod
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -23,7 +23,6 @@ import pydantic as pd
 
 from ash_hawk.graders.base import Grader
 from ash_hawk.types import EvalTranscript, EvalTrial, GraderResult, GraderSpec
-
 
 # =============================================================================
 # REVIEW DATA MODELS
@@ -67,7 +66,7 @@ class ReviewDecision(pd.BaseModel):
     labels: list[str] = pd.Field(default_factory=list, description="Categorical labels applied")
     issues: list[str] = pd.Field(default_factory=list, description="Identified issues/problems")
     reviewed_at: str = pd.Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="ISO timestamp when review was completed",
     )
 
@@ -81,7 +80,7 @@ class ReviewBatch(pd.BaseModel):
     """
 
     batch_id: str = pd.Field(
-        default_factory=lambda: f"batch_{datetime.now(timezone.utc).timestamp()}",
+        default_factory=lambda: f"batch_{datetime.now(UTC).timestamp()}",
         description="Unique identifier for this batch",
     )
     items: list[ReviewItem] = pd.Field(default_factory=list, description="Items to review")
@@ -89,7 +88,7 @@ class ReviewBatch(pd.BaseModel):
         default_factory=list, description="Completed review decisions"
     )
     created_at: str = pd.Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="ISO timestamp when batch was created",
     )
     metadata: dict[str, Any] = pd.Field(default_factory=dict, description="Batch-level metadata")

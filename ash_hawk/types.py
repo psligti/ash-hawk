@@ -18,7 +18,7 @@ Key types:
 from __future__ import annotations
 
 import enum
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Literal
 
 import pydantic as pd
@@ -73,8 +73,7 @@ class TokenUsage(pd.BaseModel):
     cache_read: int = 0
     cache_write: int = 0
 
-    @pd.computed_field
-    @property
+    @pd.computed_field(return_type=int)
     def total(self) -> int:
         """Total tokens used (input + output + reasoning)."""
         return self.input + self.output + self.reasoning
@@ -383,8 +382,7 @@ class EvalSuite(pd.BaseModel):
         description="Default agent configuration for all tasks in this suite",
     )
 
-    @pd.computed_field
-    @property
+    @pd.computed_field(return_type=int)
     def task_count(self) -> int:
         """Number of tasks in the suite."""
         return len(self.tasks)
@@ -471,7 +469,7 @@ class EvalOutcome(pd.BaseModel):
         """Create a successful outcome."""
         return cls(
             status=EvalStatus.COMPLETED,
-            completed_at=datetime.now(timezone.utc).isoformat(),
+            completed_at=datetime.now(UTC).isoformat(),
         )
 
     @classmethod
@@ -485,7 +483,7 @@ class EvalOutcome(pd.BaseModel):
             status=EvalStatus.ERROR,
             failure_mode=failure_mode,
             error_message=error_message,
-            completed_at=datetime.now(timezone.utc).isoformat(),
+            completed_at=datetime.now(UTC).isoformat(),
         )
 
     model_config = pd.ConfigDict(extra="forbid")

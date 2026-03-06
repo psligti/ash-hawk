@@ -17,8 +17,8 @@ from ash_hawk.types import (
     FailureMode,
     GraderSpec,
     RunEnvelope,
-    ToolSurfacePolicy,
     TokenUsage,
+    ToolSurfacePolicy,
     TrialEnvelope,
     TrialResult,
 )

@@ -10,11 +10,10 @@ whether an action is allowed, and if not, the specific failure mode.
 
 from __future__ import annotations
 
+import fnmatch
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
-
-import fnmatch
+from typing import Any, Literal
 
 from ash_hawk.types import FailureMode, ToolPermission, ToolSurfacePolicy
 
@@ -78,7 +77,7 @@ class PolicyEnforcer:
         """The policy being enforced (read-only access)."""
         return self._policy
 
-    def check_tool(self, tool_name: str, tool_input: dict) -> PolicyCheckResult:
+    def check_tool(self, tool_name: str, tool_input: dict[str, Any]) -> PolicyCheckResult:
         """Check if a tool call is permitted by the policy.
 
         This method performs the following checks in order:
@@ -128,7 +127,7 @@ class PolicyEnforcer:
 
         return PolicyCheckResult(allowed=True)
 
-    def _check_tool_paths(self, tool_input: dict) -> PolicyCheckResult:
+    def _check_tool_paths(self, tool_input: dict[str, Any]) -> PolicyCheckResult:
         """Check path access for tools that operate on the filesystem.
 
         Args:
@@ -144,7 +143,11 @@ class PolicyEnforcer:
             if key in tool_input:
                 path_value = tool_input[key]
                 if isinstance(path_value, str):
-                    mode = "write" if key in ["destination", "source"] else "read"
+                    mode: Literal["read", "write"]
+                    if key in ["destination", "source"]:
+                        mode = "write"
+                    else:
+                        mode = "read"
                     result = self.check_path(path_value, mode)
                     if not result.allowed:
                         return result

@@ -249,7 +249,7 @@ async def run_sandboxed_command(
                 timeout=sandbox.timeout_seconds,
             )
             timed_out = False
-        except asyncio.TimeoutError:
+        except TimeoutError:
             process.kill()
             await process.wait()
             stdout_bytes, stderr_bytes = b"", b"Command timed out"

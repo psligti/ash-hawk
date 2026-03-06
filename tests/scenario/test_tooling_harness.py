@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from ash_hawk.scenario.tooling import ToolTimeoutError, ToolingHarness
+from ash_hawk.scenario.tooling import ToolingHarness, ToolTimeoutError
 
 
 def test_tooling_harness_mock_hit_miss() -> None:
