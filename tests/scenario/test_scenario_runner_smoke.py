@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 
 import ash_hawk.scenario.registry as registry_module
@@ -29,7 +30,7 @@ class MockScenarioAdapter:
         return "ok", [], {"note": "artifact"}
 
 
-def test_scenario_runner_smoke(tmp_path, monkeypatch) -> None:
+def test_scenario_runner_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     registry = ScenarioAdapterRegistry()
     adapter = MockScenarioAdapter()
     assert isinstance(adapter, ScenarioAdapter)
@@ -78,7 +79,9 @@ def test_scenario_runner_smoke(tmp_path, monkeypatch) -> None:
 
     summary = run_scenarios([str(scenario_path)])
     assert summary.trials
-    trace_events = summary.trials[0].result.transcript.trace_events
+    trial = summary.trials[0]
+    assert trial.result is not None
+    trace_events = trial.result.transcript.trace_events
     assert trace_events
     assert any(event.get("event_type") == "ToolCallEvent" for event in trace_events)
     assert any(event.get("event_type") == "ArtifactEvent" for event in trace_events)

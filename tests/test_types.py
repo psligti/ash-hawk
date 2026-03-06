@@ -88,7 +88,7 @@ class TestTokenUsage:
     def test_extra_forbidden(self):
         """Test that extra fields are forbidden."""
         with pytest.raises(Exception):  # ValidationError
-            TokenUsage(input=100, extra_field="not_allowed")
+            TokenUsage.model_validate({"input": 100, "extra_field": "not_allowed"})
 
 
 class TestToolSurfacePolicy:
@@ -132,7 +132,9 @@ class TestToolSurfacePolicy:
     def test_extra_forbidden(self):
         """Test that extra fields are forbidden."""
         with pytest.raises(Exception):  # ValidationError
-            ToolSurfacePolicy(allowed_tools=["read"], custom_field="not_allowed")
+            ToolSurfacePolicy.model_validate(
+                {"allowed_tools": ["read"], "custom_field": "not_allowed"}
+            )
 
 
 class TestGraderSpec:
@@ -162,7 +164,7 @@ class TestGraderSpec:
     def test_extra_forbidden(self):
         """Test that extra fields are forbidden."""
         with pytest.raises(Exception):  # ValidationError
-            GraderSpec(grader_type="test", unknown_field="not_allowed")
+            GraderSpec.model_validate({"grader_type": "test", "unknown_field": "not_allowed"})
 
 
 class TestGraderResult:
@@ -264,7 +266,7 @@ class TestEvalTask:
     def test_extra_forbidden(self):
         """Test that extra fields are forbidden."""
         with pytest.raises(Exception):  # ValidationError
-            EvalTask(id="test", input="test", custom_field="not_allowed")
+            EvalTask.model_validate({"id": "test", "input": "test", "custom_field": "not_allowed"})
 
 
 class TestEvalSuite:
@@ -324,7 +326,7 @@ class TestEvalSuite:
     def test_extra_forbidden(self):
         """Test that extra fields are forbidden."""
         with pytest.raises(Exception):  # ValidationError
-            EvalSuite(id="test", name="Test", custom_field="not_allowed")
+            EvalSuite.model_validate({"id": "test", "name": "Test", "custom_field": "not_allowed"})
 
 
 class TestEvalTranscript:
@@ -589,105 +591,121 @@ class TestExtraForbidden:
 
     def test_token_usage_extra_forbidden(self):
         with pytest.raises(Exception):
-            TokenUsage(input=100, extra="not_allowed")
+            TokenUsage.model_validate({"input": 100, "extra": "not_allowed"})
 
     def test_tool_surface_policy_extra_forbidden(self):
         with pytest.raises(Exception):
-            ToolSurfacePolicy(allowed_tools=["read"], extra="not_allowed")
+            ToolSurfacePolicy.model_validate({"allowed_tools": ["read"], "extra": "not_allowed"})
 
     def test_grader_spec_extra_forbidden(self):
         with pytest.raises(Exception):
-            GraderSpec(grader_type="test", extra="not_allowed")
+            GraderSpec.model_validate({"grader_type": "test", "extra": "not_allowed"})
 
     def test_grader_result_extra_forbidden(self):
         with pytest.raises(Exception):
-            GraderResult(grader_type="test", score=1.0, passed=True, extra="not_allowed")
+            GraderResult.model_validate(
+                {"grader_type": "test", "score": 1.0, "passed": True, "extra": "not_allowed"}
+            )
 
     def test_eval_task_extra_forbidden(self):
         with pytest.raises(Exception):
-            EvalTask(id="test", input="test", extra="not_allowed")
+            EvalTask.model_validate({"id": "test", "input": "test", "extra": "not_allowed"})
 
     def test_eval_suite_extra_forbidden(self):
         with pytest.raises(Exception):
-            EvalSuite(id="test", name="Test", extra="not_allowed")
+            EvalSuite.model_validate({"id": "test", "name": "Test", "extra": "not_allowed"})
 
     def test_eval_transcript_extra_forbidden(self):
         with pytest.raises(Exception):
-            EvalTranscript(extra="not_allowed")
+            EvalTranscript.model_validate({"extra": "not_allowed"})
 
     def test_eval_outcome_extra_forbidden(self):
         with pytest.raises(Exception):
-            EvalOutcome(status=EvalStatus.COMPLETED, extra="not_allowed")
+            EvalOutcome.model_validate({"status": EvalStatus.COMPLETED, "extra": "not_allowed"})
 
     def test_trial_result_extra_forbidden(self):
         with pytest.raises(Exception):
-            TrialResult(trial_id="test", outcome=EvalOutcome.success(), extra="not_allowed")
+            TrialResult.model_validate(
+                {
+                    "trial_id": "test",
+                    "outcome": EvalOutcome.success().model_dump(),
+                    "extra": "not_allowed",
+                }
+            )
 
     def test_eval_trial_extra_forbidden(self):
         with pytest.raises(Exception):
-            EvalTrial(id="test", task_id="test", extra="not_allowed")
+            EvalTrial.model_validate({"id": "test", "task_id": "test", "extra": "not_allowed"})
 
     def test_run_envelope_extra_forbidden(self):
         with pytest.raises(Exception):
-            RunEnvelope(
-                run_id="test",
-                suite_id="test",
-                suite_hash="test",
-                harness_version="test",
-                agent_name="test",
-                provider="test",
-                model="test",
-                tool_policy_hash="test",
-                python_version="test",
-                os_info="test",
-                created_at="test",
-                extra="not_allowed",
+            RunEnvelope.model_validate(
+                {
+                    "run_id": "test",
+                    "suite_id": "test",
+                    "suite_hash": "test",
+                    "harness_version": "test",
+                    "agent_name": "test",
+                    "provider": "test",
+                    "model": "test",
+                    "tool_policy_hash": "test",
+                    "python_version": "test",
+                    "os_info": "test",
+                    "created_at": "test",
+                    "extra": "not_allowed",
+                }
             )
 
     def test_trial_envelope_extra_forbidden(self):
         with pytest.raises(Exception):
-            TrialEnvelope(
-                trial_id="test",
-                run_id="test",
-                task_id="test",
-                policy_snapshot=ToolSurfacePolicy(),
-                created_at="test",
-                extra="not_allowed",
+            TrialEnvelope.model_validate(
+                {
+                    "trial_id": "test",
+                    "run_id": "test",
+                    "task_id": "test",
+                    "policy_snapshot": ToolSurfacePolicy().model_dump(),
+                    "created_at": "test",
+                    "extra": "not_allowed",
+                }
             )
 
     def test_suite_metrics_extra_forbidden(self):
         with pytest.raises(Exception):
-            SuiteMetrics(
-                suite_id="test",
-                run_id="test",
-                total_tasks=0,
-                created_at="test",
-                extra="not_allowed",
+            SuiteMetrics.model_validate(
+                {
+                    "suite_id": "test",
+                    "run_id": "test",
+                    "total_tasks": 0,
+                    "created_at": "test",
+                    "extra": "not_allowed",
+                }
             )
 
     def test_eval_run_summary_extra_forbidden(self):
         with pytest.raises(Exception):
-            EvalRunSummary(
-                envelope=RunEnvelope(
-                    run_id="test",
-                    suite_id="test",
-                    suite_hash="test",
-                    harness_version="test",
-                    agent_name="test",
-                    provider="test",
-                    model="test",
-                    tool_policy_hash="test",
-                    python_version="test",
-                    os_info="test",
-                    created_at="test",
-                ),
-                metrics=SuiteMetrics(
-                    suite_id="test",
-                    run_id="test",
-                    total_tasks=0,
-                    created_at="test",
-                ),
-                extra="not_allowed",
+            EvalRunSummary.model_validate(
+                {
+                    "envelope": RunEnvelope(
+                        run_id="test",
+                        suite_id="test",
+                        suite_hash="test",
+                        harness_version="test",
+                        agent_name="test",
+                        provider="test",
+                        model="test",
+                        tool_policy_hash="test",
+                        python_version="test",
+                        os_info="test",
+                        created_at="test",
+                    ).model_dump(),
+                    "metrics": SuiteMetrics(
+                        suite_id="test",
+                        run_id="test",
+                        total_tasks=0,
+                        created_at="test",
+                    ).model_dump(),
+                    "extra": "not_allowed",
+                }
             )
 
 
@@ -877,7 +895,9 @@ class TestCalibrationSample:
     def test_extra_forbidden(self):
         """Test that extra fields are forbidden."""
         with pytest.raises(Exception):  # ValidationError
-            CalibrationSample(predicted=0.5, actual=True, extra="not_allowed")
+            CalibrationSample.model_validate(
+                {"predicted": 0.5, "actual": True, "extra": "not_allowed"}
+            )
 
 
 class TestCalibrationCurve:
@@ -952,7 +972,9 @@ class TestCalibrationCurve:
         from ash_hawk.types import CalibrationCurve
 
         with pytest.raises(Exception):  # ValidationError
-            CalibrationCurve(samples=[], ece=0.0, brier_score=0.0, extra="not_allowed")
+            CalibrationCurve.model_validate(
+                {"samples": [], "ece": 0.0, "brier_score": 0.0, "extra": "not_allowed"}
+            )
 
 
 class TestCalibrationResult:
@@ -1000,9 +1022,11 @@ class TestCalibrationResult:
 
         curve = CalibrationCurve(samples=[], ece=0.0, brier_score=0.0)
         with pytest.raises(Exception):  # ValidationError
-            CalibrationResult(
-                curve=curve,
-                recommended_threshold=0.5,
-                grader_name="test",
-                extra="not_allowed",
+            CalibrationResult.model_validate(
+                {
+                    "curve": curve.model_dump(),
+                    "recommended_threshold": 0.5,
+                    "grader_name": "test",
+                    "extra": "not_allowed",
+                }
             )

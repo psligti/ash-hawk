@@ -10,9 +10,9 @@ Provides machine-readable export of evaluation runs including:
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from io import StringIO
-from typing import Any
+from typing import Any, cast
 
 from pydantic import ValidationError
 
@@ -59,19 +59,21 @@ def _strip_computed_fields(data: dict[str, Any], model_name: str) -> dict[str, A
 
 def _strip_nested_computed(obj: dict[str, Any]) -> dict[str, Any]:
     result = dict(obj)
+    result.pop("trace_path", None)
     if "token_usage" in result and isinstance(result["token_usage"], dict):
-        result["token_usage"] = _strip_computed_fields(result["token_usage"], "TokenUsage")
+        token_usage = cast(dict[str, Any], result["token_usage"])
+        result["token_usage"] = _strip_computed_fields(token_usage, "TokenUsage")
     if "total_tokens" in result and isinstance(result["total_tokens"], dict):
-        result["total_tokens"] = _strip_computed_fields(result["total_tokens"], "TokenUsage")
+        total_tokens = cast(dict[str, Any], result["total_tokens"])
+        result["total_tokens"] = _strip_computed_fields(total_tokens, "TokenUsage")
     if "transcript" in result and isinstance(result["transcript"], dict):
-        transcript = dict(result["transcript"])
+        transcript = dict(cast(dict[str, Any], result["transcript"]))
         if "token_usage" in transcript and isinstance(transcript["token_usage"], dict):
-            transcript["token_usage"] = _strip_computed_fields(
-                transcript["token_usage"], "TokenUsage"
-            )
+            transcript_token_usage = cast(dict[str, Any], transcript["token_usage"])
+            transcript["token_usage"] = _strip_computed_fields(transcript_token_usage, "TokenUsage")
         result["transcript"] = transcript
     if "result" in result and isinstance(result["result"], dict):
-        trial_result = _strip_nested_computed(result["result"])
+        trial_result = _strip_nested_computed(cast(dict[str, Any], result["result"]))
         result["result"] = trial_result
     return result
 
@@ -113,7 +115,8 @@ class JSONSchemaValidator:
 
         if "metrics" in data:
             try:
-                cleaned_metrics = _strip_nested_computed(data["metrics"])
+                metrics_payload = cast(dict[str, Any], data["metrics"])
+                cleaned_metrics = _strip_nested_computed(metrics_payload)
                 SuiteMetrics.model_validate(cleaned_metrics)
             except ValidationError as e:
                 self._errors.append(f"Invalid metrics: {e}")
@@ -122,7 +125,8 @@ class JSONSchemaValidator:
             if not isinstance(data["trials"], list):
                 self._errors.append("trials must be a list")
             else:
-                for i, trial_data in enumerate(data["trials"]):
+                trials_payload = cast(list[dict[str, Any]], data["trials"])
+                for i, trial_data in enumerate(trials_payload):
                     try:
                         cleaned_trial = _strip_nested_computed(trial_data)
                         EvalTrial.model_validate(cleaned_trial)
@@ -271,7 +275,7 @@ class JSONExporter:
         Returns:
             JSONL string (newline-delimited JSON).
         """
-        lines = []
+        lines: list[str] = []
         for trial in trials:
             line = json.dumps(trial.model_dump(), default=self._json_serializer)
             lines.append(line)
@@ -295,7 +299,7 @@ class JSONExporter:
         Returns:
             JSONL string with header + trials.
         """
-        lines = []
+        lines: list[str] = []
 
         header = {
             "type": "header",
@@ -311,7 +315,7 @@ class JSONExporter:
         for trial in summary.trials:
             line = {
                 "type": "trial",
-                "trial": trial.model_dump(),
+                "trial": self._build_trial_export(trial, summary.envelope),
             }
             lines.append(json.dumps(line, default=self._json_serializer))
 
@@ -363,7 +367,7 @@ class JSONExporter:
             "exported_at": datetime.now(UTC).isoformat(),
             "envelope": envelope.model_dump(),
             "metrics": metrics.model_dump(),
-            "trials": [t.model_dump() for t in trials],
+            "trials": [self._build_trial_export(trial, envelope) for trial in trials],
         }
 
         if self._include_schema:
@@ -372,6 +376,15 @@ class JSONExporter:
         if suite:
             data["suite"] = suite.model_dump()
 
+        return data
+
+    @staticmethod
+    def _build_trial_export(trial: EvalTrial, envelope: RunEnvelope | None) -> dict[str, Any]:
+        data = trial.model_dump()
+        if envelope and trial.result and trial.result.transcript.trace_events:
+            data["trace_path"] = (
+                f".ash-hawk/{envelope.suite_id}/runs/{envelope.run_id}/trials/{trial.id}.trace.jsonl"
+            )
         return data
 
     @staticmethod

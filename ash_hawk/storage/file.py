@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import aiofiles
 import aiofiles.os
 from pydantic import BaseModel
 
+from ash_hawk.scenario.trace import TraceEvent, write_trace_jsonl
 from ash_hawk.storage import StoredTrial
 from ash_hawk.types import (
     EvalRunSummary,
@@ -32,13 +35,18 @@ def _dump_model(model: BaseModel) -> dict[str, Any]:
         if isinstance(value, BaseModel):
             result[field_name] = _dump_model(value)
         elif isinstance(value, dict):
-            result[field_name] = {
-                k: _dump_model(v) if isinstance(v, BaseModel) else v for k, v in value.items()
-            }
+            nested: dict[str, Any] = {}
+            for raw_key, raw_val in value.items():
+                key = str(raw_key)
+                val: Any = raw_val
+                nested[key] = _dump_model(val) if isinstance(val, BaseModel) else val
+            result[field_name] = nested
         elif isinstance(value, list):
-            result[field_name] = [
-                _dump_model(item) if isinstance(item, BaseModel) else item for item in value
-            ]
+            nested_list: list[Any] = []
+            for raw_item in value:
+                item: Any = raw_item
+                nested_list.append(_dump_model(item) if isinstance(item, BaseModel) else item)
+            result[field_name] = nested_list
         else:
             result[field_name] = value
     return result
@@ -78,6 +86,9 @@ class FileStorage:
     def _trial_file(self, suite_id: str, run_id: str, trial_id: str) -> Path:
         return self._trials_path(suite_id, run_id) / f"{trial_id}.json"
 
+    def _trial_trace_file(self, suite_id: str, run_id: str, trial_id: str) -> Path:
+        return self._trials_path(suite_id, run_id) / f"{trial_id}.trace.jsonl"
+
     def _summary_file(self, suite_id: str, run_id: str) -> Path:
         return self._run_path(suite_id, run_id) / "summary.json"
 
@@ -90,6 +101,16 @@ class FileStorage:
         async with aiofiles.open(temp_path, "w") as f:
             await f.write(content)
         await aiofiles.os.replace(str(temp_path), str(path))
+
+    async def _atomic_write_trace(self, path: Path, events: list[TraceEvent]) -> None:
+        await self._ensure_dir(path.parent)
+        temp_path = path.with_suffix(f"{path.suffix}.tmp")
+
+        def _write_and_replace() -> None:
+            write_trace_jsonl(temp_path, events)
+            os.replace(temp_path, path)
+
+        await asyncio.to_thread(_write_and_replace)
 
     async def _read_json(self, path: Path) -> dict[str, Any] | None:
         try:
@@ -141,6 +162,16 @@ class FileStorage:
             json.dumps(stored, indent=2),
         )
 
+        trace_events = []
+        if trial.result is not None:
+            trace_events = trial.result.transcript.trace_events
+        if trace_events:
+            events = [TraceEvent.model_validate(event) for event in trace_events]
+            await self._atomic_write_trace(
+                self._trial_trace_file(suite_id, run_id, trial.id),
+                events,
+            )
+
     async def load_trial(self, suite_id: str, run_id: str, trial_id: str) -> StoredTrial | None:
         data = await self._read_json(self._trial_file(suite_id, run_id, trial_id))
         if data is None:
@@ -154,15 +185,17 @@ class FileStorage:
     async def list_runs(self, suite_id: str) -> list[str]:
         runs_path = self._runs_path(suite_id)
         try:
-            entries = await aiofiles.os.listdir(str(runs_path))
+            entries: list[str] = [str(entry) for entry in await aiofiles.os.listdir(str(runs_path))]
             return sorted(entries)
         except FileNotFoundError:
             return []
 
     async def list_suites(self) -> list[str]:
         try:
-            entries = await aiofiles.os.listdir(str(self._base_path))
-            suite_ids = []
+            entries: list[str] = [
+                str(entry) for entry in await aiofiles.os.listdir(str(self._base_path))
+            ]
+            suite_ids: list[str] = []
             for entry in entries:
                 suite_file = self._suite_file(entry)
                 try:
