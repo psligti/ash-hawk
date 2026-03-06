@@ -154,7 +154,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     from ash_hawk.graders.human import ManualReviewGrader
     from ash_hawk.graders.llm_judge import LLMJudgeGrader
     from ash_hawk.graders.structured import FormatGrader, SchemaGrader, ToolUsageGrader
-    from ash_hawk.graders.trace_assertions import TraceSchemaGrader
+    from ash_hawk.graders.trace_assertions import TraceSchemaGrader, VerifyBeforeDoneGrader
 
     registry.register(StringMatchGrader())
     registry.register(TestRunnerGrader())
@@ -166,6 +166,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(FormatGrader())
     registry.register(ToolUsageGrader())
     registry.register(TraceSchemaGrader())
+    registry.register(VerifyBeforeDoneGrader())
     registry.register(ManualReviewGrader())
 
 

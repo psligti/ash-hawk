@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from ash_hawk.graders.base import Grader
 from ash_hawk.scenario.trace import TraceEvent
@@ -80,7 +80,8 @@ class TraceSchemaGrader(Grader):
         if trial.result is not None:
             effective_transcript = trial.result.transcript
 
-        trace_events = effective_transcript.trace_events or []
+        trace_events: list[object] = []
+        trace_events.extend(effective_transcript.trace_events or [])
         if not trace_events:
             return GraderResult(
                 grader_type=self.name,
@@ -90,7 +91,7 @@ class TraceSchemaGrader(Grader):
             )
 
         failed_events: list[dict[str, Any]] = []
-        for index, event in enumerate(trace_events):
+        for index, event in enumerate(cast(list[object], trace_events)):
             if not isinstance(event, dict):
                 failed_events.append(
                     {
@@ -100,7 +101,7 @@ class TraceSchemaGrader(Grader):
                 )
                 continue
 
-            errors = self._validate_event(event)
+            errors = self._validate_event(cast(dict[str, Any], event))
             if errors:
                 failed_events.append(
                     {
@@ -123,4 +124,48 @@ class TraceSchemaGrader(Grader):
         )
 
 
-__all__ = ["TraceSchemaGrader"]
+class VerifyBeforeDoneGrader(Grader):
+    @property
+    def name(self) -> str:
+        return "verify_before_done"
+
+    async def grade(
+        self,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> GraderResult:
+        effective_transcript = transcript
+        if trial.result is not None:
+            effective_transcript = trial.result.transcript
+
+        if not effective_transcript.agent_response:
+            return GraderResult(
+                grader_type=self.name,
+                score=1.0,
+                passed=True,
+                details={"verified": False, "reason": "not_done"},
+            )
+
+        for event in effective_transcript.trace_events or []:
+            if not isinstance(event, dict):
+                continue
+            if event.get("event_type") != "VerificationEvent":
+                continue
+            if event.get("data", {}).get("pass") is True:
+                return GraderResult(
+                    grader_type=self.name,
+                    score=1.0,
+                    passed=True,
+                    details={"verified": True},
+                )
+
+        return GraderResult(
+            grader_type=self.name,
+            score=0.0,
+            passed=False,
+            details={"verified": False, "reason": "missing_verification"},
+        )
+
+
+__all__ = ["TraceSchemaGrader", "VerifyBeforeDoneGrader"]
