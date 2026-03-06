@@ -1,0 +1,37 @@
+schema_version: "v1"
+id: "coding_agent_smoke"
+description: "Smoke test for coding agent with deterministic fixture"
+
+sut:
+  type: "coding_agent"
+  adapter: "coding_agent_subprocess"
+  config:
+    command: "python apply_fix.py"
+
+inputs:
+  prompt: "Apply the fix to the application"
+  repo_fixture: "../fixtures/repos/coding-agent-smoke/"
+
+tools:
+  allowed_tools: []
+  mocks: {}
+  fault_injection: {}
+
+budgets:
+  max_steps: 3
+  max_tool_calls: 5
+  max_tokens: 100
+  max_time_seconds: 30.0
+
+expectations:
+  must_events: []
+  must_not_events: []
+  ordering_rules: []
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "diff_constraints"
+    config:
+      allowed_paths:
+        - "src/**"
