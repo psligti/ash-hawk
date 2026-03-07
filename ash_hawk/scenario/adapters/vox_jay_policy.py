@@ -87,10 +87,12 @@ class VoxJayPolicyAdapter:
         from vox_jay.policies import (
             ActionType,
             AuthorRelationship,
+            BudgetExhaustedError,
             BudgetInfo,
             EngagementPolicy,
             MasterPolicy,
             PolicyInput,
+            PolicyOutput,
             RankingPolicy,
             StrategyContext,
             StrategyPolicy,
@@ -198,12 +200,21 @@ class VoxJayPolicyAdapter:
             "strategy": StrategyPolicy,
             "master": MasterPolicy,
         }
-
         policy_class = policies.get(policy_name, MasterPolicy)
         policy = policy_class()
 
         # 8. Run policy
-        output = policy.propose(policy_input)
+        try:
+            output = policy.propose(policy_input)
+        except BudgetExhaustedError as e:
+            # Budget exhausted - return empty output gracefully
+            output = PolicyOutput(
+                actions=[],
+                rationale=f"Budget exhausted: {e}", 
+                confidence=0.0,
+                strategy_alignment_score=0.0,
+                constraints_checked=["budget"],
+            )
 
         # 9. Emit policy decision event
         policy_event = PolicyDecisionEvent.create(
