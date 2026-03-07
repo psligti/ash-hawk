@@ -1,0 +1,4 @@
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "user", "content": "Evaluate policy: engagement", "tweets_count": 1}}
+{"schema_version": 1, "event_type": "PolicyDecisionEvent", "ts": "1970-01-01T00:00:00Z", "data": {"policy": "engagement", "actions_count": 0, "confidence": 0.0, "strategy_alignment_score": 0.0, "rationale": "Budget exhausted: Pending actions at capacity: 10/10", "actions": []}}
+{"schema_version": 1, "event_type": "VerificationEvent", "ts": "1970-01-01T00:00:00Z", "data": {"pass": true, "message": "All assertions passed"}}
+{"schema_version": 1, "event_type": "ArtifactEvent", "ts": "1970-01-01T00:00:00Z", "data": {"path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-policy_edge_budget_exhaustion/runs/run-4427521e/artifacts/trial-2df21cd2/artifacts.json", "artifact_key": "artifacts"}}

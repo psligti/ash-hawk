@@ -22,11 +22,19 @@ DEFAULT_TRACE_TS = "1970-01-01T00:00:00Z"
 
 class TraceEvent(pd.BaseModel):
     schema_version: int = 1
-    event_type: str
+    event_type: str = ""
     ts: str
     data: dict[str, Any] = pd.Field(default_factory=dict)
 
     model_config = pd.ConfigDict(extra="forbid")
+
+    @classmethod
+    def create(cls, ts: str, data: dict[str, Any]) -> TraceEvent:
+        """Create an event instance with timestamp and data.
+        
+        Subclasses should override this method to provide type-specific creation.
+        """
+        return cls(ts=ts, data=data)
 
 
 class ModelMessageEvent(TraceEvent):

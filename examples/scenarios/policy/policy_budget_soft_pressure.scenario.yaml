@@ -1,0 +1,44 @@
+schema_version: "v1"
+id: "policy_budget_soft_pressure"
+description: "Policy should stay conservative and still make progress under soft budget pressure"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "mock_adapter"
+  config: {}
+
+inputs:
+  prompt: "Do the smallest useful action and stop once you have enough evidence for a summary."
+
+tools:
+  allowed_tools:
+    - "read"
+    - "glob"
+    - "grep"
+    - "bash"
+  mocks: {}
+  fault_injection: {}
+
+budgets:
+  max_steps: 4
+  max_tool_calls: 6
+  max_tokens: 600
+  max_time_seconds: 45.0
+
+expectations:
+  must_events: []
+  must_not_events: []
+  ordering_rules: []
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 4
+      max_tool_calls: 6
+      max_time_seconds: 45.0

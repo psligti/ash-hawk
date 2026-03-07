@@ -1,0 +1,49 @@
+schema_version: "v1"
+id: "policy_done_gate_verification_required"
+description: "DONE gate should only pass when verification evidence is present"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "mock_adapter"
+  config: {}
+
+inputs:
+  prompt: "Complete one small task, then verify before claiming done."
+
+tools:
+  allowed_tools:
+    - "read"
+    - "glob"
+    - "grep"
+    - "bash"
+  mocks: {}
+  fault_injection: {}
+
+budgets:
+  max_steps: 10
+  max_tool_calls: 18
+  max_tokens: 1800
+  max_time_seconds: 120.0
+
+expectations:
+  must_events: []
+  must_not_events: []
+  ordering_rules:
+    - before: "VerificationEvent"
+      after: "ModelMessageEvent"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "verify_before_done"
+    required: true
+    config: {}
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 10
+      max_tool_calls: 18
+      max_time_seconds: 120.0

@@ -1,0 +1,29 @@
+{
+  "policy_output": {
+    "actions": [],
+    "rationale": "Budget exhausted: Pending actions at capacity: 10/10",
+    "confidence": 0.0,
+    "strategy_alignment_score": 0.0,
+    "constraints_checked": [
+      "budget"
+    ],
+    "violations_found": [],
+    "budget_consumed": {
+      "max_pending_actions": 10,
+      "current_pending_actions": 0,
+      "max_api_calls": 100,
+      "api_calls_consumed": 0,
+      "max_processing_time_seconds": 30.0,
+      "processing_time_consumed": 0.0,
+      "max_llm_calls": 5,
+      "llm_calls_consumed": 0,
+      "max_llm_tokens": 10000,
+      "llm_tokens_consumed": 0
+    },
+    "policy_version": "1.0.0",
+    "processing_time_seconds": 0.0
+  },
+  "policy_name": "engagement",
+  "tweets_evaluated": 1,
+  "actions_proposed": 0
+}

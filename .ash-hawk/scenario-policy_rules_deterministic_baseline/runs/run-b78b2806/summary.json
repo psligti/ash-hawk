@@ -1,0 +1,224 @@
+{
+  "envelope": {
+    "run_id": "run-b78b2806",
+    "suite_id": "scenario-policy_rules_deterministic_baseline",
+    "suite_hash": "870681f4c24a0598",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-06T15:58:01.820265+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-policy_rules_deterministic_baseline",
+    "run_id": "run-b78b2806",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.5,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.010684967041015625,
+    "latency_p50_seconds": 0.010313987731933594,
+    "latency_p95_seconds": 0.010313987731933594,
+    "latency_p99_seconds": 0.010313987731933594,
+    "pass_at_k": {},
+    "created_at": "2026-03-06T15:58:01.840785+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-15bdada1",
+      "task_id": "policy_rules_deterministic_baseline",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_rules_deterministic_baseline",
+          "description": "Rules policy should produce stable bounded behavior for the same prompt",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {
+              "policy_mode": "rules",
+              "runner_kwargs": {},
+              "run_config": {}
+            }
+          },
+          "inputs": {
+            "prompt": "List a minimal plan and execute only the highest-priority safe step."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 8,
+            "max_tool_calls": 16,
+            "max_tokens": 1600,
+            "max_time_seconds": 90.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 8,
+                "max_tool_calls": 16,
+                "max_time_seconds": 90.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmput_gijvz/000-policy_rules_deterministic_baseline.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmput_gijvz"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-15bdada1",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-06T15:58:01.830601+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "List a minimal plan and execute only the highest-priority safe step."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-policy_rules_deterministic_baseline/runs/run-b78b2806/artifacts/trial-15bdada1/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00034809112548828125,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 3,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.075599670410156e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: budget",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.5,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-15bdada1",
+        "run_id": "run-b78b2806",
+        "task_id": "policy_rules_deterministic_baseline",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-06T15:58:01.830199+00:00",
+        "started_at": "2026-03-06T15:58:01.830171+00:00",
+        "completed_at": "2026-03-06T15:58:01.830620+00:00"
+      }
+    }
+  ]
+}

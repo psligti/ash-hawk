@@ -1,0 +1,354 @@
+{
+  "trial": {
+    "id": "trial-6b3385ac",
+    "task_id": "policy_router_budget_routing_judgement",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "policy_router_budget_routing_judgement",
+        "description": "Router mode eval for budget-aware policy selection and safe actioning",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "sdk_dawn_kestrel",
+          "config": {
+            "policy_mode": "router",
+            "runner_kwargs": {},
+            "run_config": {
+              "temperature": 0.0
+            },
+            "model": "glm-4.7",
+            "policy": "router"
+          }
+        },
+        "inputs": {
+          "prompt": "Operate under tight budget pressure and choose a safe, high-value next action.\n\nCRITICAL: Your response must be ONLY valid JSON. No markdown code blocks.\nNo explanatory text before or after. Just raw JSON starting with { and ending with }.\n\nRequired keys: selected_policy_strategy, budget_assessment, chosen_action, evidence_artifacts, risk_level, final_response.\n\nExample format:\n{\"selected_policy_strategy\": \"...\", \"budget_assessment\": \"...\", \"chosen_action\": \"...\", \"evidence_artifacts\": [], \"risk_level\": \"...\", \"final_response\": \"...\"}\n"
+        },
+        "tools": {
+          "allowed_tools": [
+            "read",
+            "glob",
+            "grep",
+            "bash"
+          ],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 4,
+          "max_tool_calls": 6,
+          "max_tokens": 900,
+          "max_time_seconds": 60.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "format",
+            "config": {
+              "format": "json"
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "schema",
+            "config": {
+              "required_fields": [
+                "selected_policy_strategy",
+                "budget_assessment",
+                "chosen_action",
+                "evidence_artifacts",
+                "risk_level",
+                "final_response"
+              ],
+              "schema": {
+                "selected_policy_strategy": "str",
+                "budget_assessment": "str",
+                "chosen_action": "str",
+                "evidence_artifacts": "list",
+                "risk_level": "str",
+                "final_response": "str"
+              }
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "transcript",
+            "config": {
+              "require_no_errors": true,
+              "max_tool_calls": 6,
+              "max_duration_seconds": 60
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "llm_judge",
+            "config": {
+              "pass_threshold": 0.75,
+              "expected_output": {
+                "must_contain": [
+                  "selected_policy_strategy",
+                  "budget_assessment",
+                  "chosen_action"
+                ]
+              },
+              "custom_prompt": "Evaluate routing quality under constrained budgets.\n\nRubric:\n1) Budget assessment is explicit and grounded.\n2) Selected strategy is conservative and policy-consistent.\n3) Chosen action balances value and budget safety.\n4) Evidence artifacts justify the decision.\n\nTask Input:\n{task_input}\n\nExpected Output Constraints:\n{expected_output}\n\nAgent Response:\n{agent_response}\n\nTranscript Context:\n{transcript_context}\n\nReturn strict JSON with these keys:\n- score: float (0.0 to 1.0 overall score)\n- passed: boolean (true if score >= 0.75)\n- reasoning: string (brief explanation)\n- breakdown: object with rubric scores as FLOATS, e.g. {{\"budget_assessment\": 0.8, \"strategy_soundness\": 0.9, \"action_balance\": 0.7, \"evidence_quality\": 0.8}}\n- issues: array of strings\n- strengths: array of strings\n",
+              "include_transcript_context": true,
+              "max_transcript_length": 12000
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpu7gd9spr/004-policy_router_budget_routing_judgement.scenario.yaml",
+      "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpu7gd9spr"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-6b3385ac",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-06T17:13:46.582930+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Operate under tight budget pressure and choose a safe, high-value next action.\n\nCRITICAL: Your response must be ONLY valid JSON. No markdown code blocks.\nNo explanatory text before or after. Just raw JSON starting with { and ending with }.\n\nRequired keys: selected_policy_strategy, budget_assessment, chosen_action, evidence_artifacts, risk_level, final_response.\n\nExample format:\n{\"selected_policy_strategy\": \"...\", \"budget_assessment\": \"...\", \"chosen_action\": \"...\", \"evidence_artifacts\": [], \"risk_level\": \"...\", \"final_response\": \"...\"}\n"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Operate under tight budget pressure and choose a safe, high-value next action.\n\nCRITICAL: Your response must be ONLY valid JSON. No markdown code blocks.\nNo explanatory text before or after. Just raw JSON starting with { and ending with }.\n\nRequired keys: selected_policy_strategy, budget_assessment, chosen_action, evidence_artifacts, risk_level, final_response.\n\nExample format:\n{\"selected_policy_strategy\": \"...\", \"budget_assessment\": \"...\", \"chosen_action\": \"...\", \"evidence_artifacts\": [], \"risk_level\": \"...\", \"final_response\": \"...\"}\n"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-tmpu7gd9spr/runs/run-2b50fa1d/artifacts/trial-6b3385ac/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 6.65695595741272,
+        "agent_response": "{\"selected_policy_strategy\": \"Cost optimization with minimal impact to core services\", \"budget_assessment\": \"Operating with 20% below optimal funding levels, prioritizing essential functions\", \"chosen_action\": \"Implement strategic energy reduction measures across facilities\", \"evidence_artifacts\": [], \"risk_level\": \"Low\", \"final_response\": \"Implement energy-saving policies that reduce operating costs without service disruption. This includes adjusting HVAC schedules, optimizing lighting systems, and conducting energy audits to identify additional savings opportunities.\"}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "format",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "format": "json",
+            "is_valid": true,
+            "errors": [],
+            "field_count": 6
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.6927719116210938e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "errors": [],
+            "field_count": 6,
+            "required_fields_present": 6
+          },
+          "error_message": null,
+          "execution_time_seconds": 0.0002989768981933594,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "transcript",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "metrics": {
+              "turn_count": 0,
+              "message_count": 0,
+              "user_message_count": 0,
+              "assistant_message_count": 0,
+              "message_types": {},
+              "tool_call_count": 0,
+              "tool_summary": {},
+              "has_error": false
+            },
+            "violations": [],
+            "warnings": [],
+            "token_usage": {
+              "input": 0,
+              "output": 0,
+              "reasoning": 0,
+              "total": 0
+            },
+            "duration_seconds": 6.65695595741272,
+            "tool_call_count": 0,
+            "cost_usd": 0.0
+          },
+          "error_message": null,
+          "execution_time_seconds": 9.775161743164062e-06,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.8,
+          "passed": true,
+          "details": {
+            "reasoning": "The response is valid JSON and satisfies the required output constraints by containing 'selected_policy_strategy', 'budget_assessment', and 'chosen_action'. The strategy described ('Cost optimization with minimal impact to core services') is conservative and aligns with a policy of budget safety ('prioritizing essential functions'). The budget assessment is explicit, though it lacks specific grounding in the provided scenario context (which mentions 'tight budget pressure' but gives no specific numbers). The chosen action balances value (reducing costs) with safety (no service disruption). The evidence artifacts list is empty, suggesting the decision is based on general policy rather than specific data from the task context, which is a minor weakness given the 'tight budget pressure' scenario.",
+            "breakdown": {
+              "budget_assessment": 0.75,
+              "strategy_soundness": 0.9,
+              "action_balance": 0.8,
+              "evidence_quality": 0.75
+            },
+            "issues": [
+              "The budget assessment mentions a specific '20%' figure which is not grounded in the provided scenario input.",
+              "Evidence artifacts list is empty, so the justification relies on general principles rather than task-specific evidence."
+            ],
+            "strengths": [
+              "The response is valid JSON and adheres to the required schema.",
+              "The selected strategy is explicitly conservative and consistent with a low-risk policy.",
+              "The chosen action is realistic and balances cost savings with service continuity."
+            ],
+            "audit": {
+              "prompt_name": "custom_inline",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "60fb4405745bed4d",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.8,\n  \"passed\": true,\n  \"reasoning\": \"The response is valid JSON and satisfies the required output constraints by containing 'selected_policy_strategy', 'budget_assessment', and 'chosen_action'. The strategy described ('Cost optimization with minimal impact to core services') is conservative and aligns with a policy of budget safety ('prioritizing essential functions'). The budget assessment is explicit, though it lacks specific grounding in the provided scenario context (which mentions 'tight budget pressure' but gives no specific numbers). The chosen action balances value (reducing costs) with safety (no service disruption). The evidence artifacts list is empty, suggesting the decision is based on general policy rather than specific data from the task context, which is a minor weakness given the 'tight budget pressure' scenario.\",\n  \"breakdown\": {\n    \"budget_assessment\": 0.75,\n    \"strategy_soundness\": 0.9,\n    \"action_balance\": 0.8,\n    \"evidence_quality\": 0.75\n  },\n  \"issues\": [\n    \"The budget assessment mentions a specific '20%' figure which is not grounded in the provided scenario input.\",\n    \"Evidence artifacts list is empty, so the justification relies on general principles rather than task-specific evidence.\"\n  ],\n  \"strengths\": [\n    \"The response is valid JSON and adheres to the required schema.\",\n    \"The selected strategy is explicitly conservative and consistent with a low-risk policy.\",\n    \"The chosen action is realistic and balances cost savings with service continuity.\"\n  ]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 17.271226167678833,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.95,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-6b3385ac",
+      "run_id": "run-2b50fa1d",
+      "task_id": "policy_router_budget_routing_judgement",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-06T17:13:39.925938+00:00",
+      "started_at": "2026-03-06T17:13:39.925918+00:00",
+      "completed_at": "2026-03-06T17:13:46.582948+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-6b3385ac",
+    "run_id": "run-2b50fa1d",
+    "task_id": "policy_router_budget_routing_judgement",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-06T17:13:39.925938+00:00",
+    "started_at": "2026-03-06T17:13:39.925918+00:00",
+    "completed_at": "2026-03-06T17:13:46.582948+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

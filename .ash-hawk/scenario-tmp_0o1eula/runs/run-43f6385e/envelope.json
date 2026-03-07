@@ -1,0 +1,18 @@
+{
+  "run_id": "run-43f6385e",
+  "suite_id": "scenario-tmp_0o1eula",
+  "suite_hash": "12477a7ae488a0fa",
+  "harness_version": "0.1.0",
+  "git_commit": null,
+  "agent_name": "scenario-adapter",
+  "agent_version": null,
+  "provider": "scenario",
+  "model": "scenario",
+  "model_params": {},
+  "seed": null,
+  "tool_policy_hash": "d783e1cb5350e2e4",
+  "python_version": "3.12.6",
+  "os_info": "macOS-15.7.3-arm64-arm-64bit",
+  "config_snapshot": {},
+  "created_at": "2026-03-06T14:14:00.941752+00:00"
+}

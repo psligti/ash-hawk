@@ -138,8 +138,8 @@ class TestLLMJudgeGrader:
             tool_calls=[{"name": "read_file"}],
         )
         context = grader._format_transcript_context(transcript)
-        assert "Messages:" in context
-        assert "Tool Calls:" in context
+        assert "## Messages" in context
+        assert "## Tool Calls" in context
 
     def test_format_agent_response_from_transcript(self):
         grader = LLMJudgeGrader()
@@ -184,11 +184,8 @@ class TestLLMJudgeGrader:
     def test_parse_judge_output_invalid_json(self):
         grader = LLMJudgeGrader()
         raw = "This is not JSON"
-        output = grader._parse_judge_output(raw)
-        assert output.score == 0.0
-        assert output.passed is False
-        assert "Failed to parse" in output.reasoning
-
+        with pytest.raises(ValueError, match="Failed to parse"):
+            grader._parse_judge_output(raw)
     def test_parse_judge_output_with_nested_answer_payload(self):
         grader = LLMJudgeGrader()
         raw = json.dumps(

@@ -171,7 +171,7 @@ class TestCliRun:
                 "--storage",
                 temp_storage,
                 "--agent",
-                "explore",
+                "general"
             ],
         )
         assert result.exit_code == 0
@@ -183,7 +183,7 @@ class TestCliRun:
         summary_path = Path(temp_storage) / "test-suite" / "runs" / run_id / "summary.json"
         assert summary_path.exists()
         summary = yaml.safe_load(summary_path.read_text())
-        assert summary["envelope"]["agent_name"] == "explore"
+        assert summary["envelope"]["agent_name"] == "general"
 
     def test_run_uses_custom_runner_from_suite(self, runner, temp_dir, temp_storage):
         suite_dir = Path(temp_dir) / "suites"

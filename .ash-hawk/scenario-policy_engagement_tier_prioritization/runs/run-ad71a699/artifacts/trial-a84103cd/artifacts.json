@@ -1,0 +1,82 @@
+{
+  "policy_output": {
+    "actions": [
+      {
+        "tweet_id": "111",
+        "author_handle": "tier1_contact",
+        "action_type": "reply",
+        "priority": 1,
+        "score": 0.9,
+        "rationale": "Tier 1 contact asking for input",
+        "confidence": 0.8,
+        "draft_text": null,
+        "risk_level": "low",
+        "strategy_violations": [],
+        "relevance_score": 0.7,
+        "timeliness_score": 0.8,
+        "relationship_score": 1.0,
+        "quality_score": 0.75,
+        "engagement_potential_score": 0.9
+      },
+      {
+        "tweet_id": "222",
+        "author_handle": "tier2_contact",
+        "action_type": "reply",
+        "priority": 2,
+        "score": 0.75,
+        "rationale": "Question detected, reply opportunity",
+        "confidence": 0.8,
+        "draft_text": null,
+        "risk_level": "low",
+        "strategy_violations": [],
+        "relevance_score": 0.7,
+        "timeliness_score": 0.8,
+        "relationship_score": 0.8,
+        "quality_score": 0.75,
+        "engagement_potential_score": 0.75
+      },
+      {
+        "tweet_id": "333",
+        "author_handle": "random_user",
+        "action_type": "reply",
+        "priority": 2,
+        "score": 0.6,
+        "rationale": "Question detected, reply opportunity",
+        "confidence": 0.8,
+        "draft_text": null,
+        "risk_level": "low",
+        "strategy_violations": [],
+        "relevance_score": 0.7,
+        "timeliness_score": 0.8,
+        "relationship_score": 0.5,
+        "quality_score": 0.75,
+        "engagement_potential_score": 0.6
+      }
+    ],
+    "rationale": "Evaluated 3 tweets, proposed 3 actions",
+    "confidence": 0.8000000000000002,
+    "strategy_alignment_score": 0.8000000000000002,
+    "constraints_checked": [
+      "budget",
+      "strategy_alignment"
+    ],
+    "violations_found": [],
+    "budget_consumed": {
+      "max_pending_actions": 10,
+      "current_pending_actions": 0,
+      "max_api_calls": 100,
+      "api_calls_consumed": 0,
+      "max_processing_time_seconds": 30.0,
+      "processing_time_consumed": 0.0,
+      "max_llm_calls": 5,
+      "llm_calls_consumed": 0,
+      "max_llm_tokens": 10000,
+      "llm_tokens_consumed": 0
+    },
+    "policy_version": "1.0.0",
+    "processing_time_seconds": 0.0
+  },
+  "policy_name": "engagement",
+  "tweets_evaluated": 3,
+  "actions_proposed": 3
+}

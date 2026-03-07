@@ -177,18 +177,14 @@ def _register_builtin_adapters(registry: ScenarioAdapterRegistry) -> None:
     from ash_hawk.scenario.adapters.coding_agent_subprocess import CodingAgentSubprocessAdapter
     from ash_hawk.scenario.adapters.mock_adapter import MockAdapter
     from ash_hawk.scenario.adapters.sdk_dawn_kestrel import SdkDawnKestrelAdapter
+    from ash_hawk.scenario.adapters.vox_jay_command import VoxJayCommandAdapter
     from ash_hawk.scenario.adapters.vox_jay_policy import VoxJayPolicyAdapter
 
     registry.register(CodingAgentSubprocessAdapter())
     registry.register(MockAdapter())
     registry.register(SdkDawnKestrelAdapter())
+    registry.register(VoxJayCommandAdapter())
     registry.register(VoxJayPolicyAdapter())
-    from ash_hawk.scenario.adapters.mock_adapter import MockAdapter
-    from ash_hawk.scenario.adapters.sdk_dawn_kestrel import SdkDawnKestrelAdapter
-
-    registry.register(CodingAgentSubprocessAdapter())
-    registry.register(MockAdapter())
-    registry.register(SdkDawnKestrelAdapter())
 
 
 __all__ = ["ScenarioAdapterRegistry", "get_default_adapter_registry", "ENTRY_POINT_GROUP"]

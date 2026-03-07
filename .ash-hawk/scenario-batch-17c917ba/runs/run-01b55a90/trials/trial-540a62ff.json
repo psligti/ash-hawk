@@ -1,0 +1,344 @@
+{
+  "trial": {
+    "id": "trial-540a62ff",
+    "task_id": "policy_engagement_tier_prioritization",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "policy_engagement_tier_prioritization",
+        "description": "Test EngagementPolicy tier-based prioritization logic",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_policy",
+          "config": {}
+        },
+        "inputs": {
+          "policy": "engagement",
+          "tweets": [
+            {
+              "id": "111",
+              "author_handle": "tier1_contact",
+              "author_name": "Tier1 Contact",
+              "text": "What do you think about this approach?",
+              "created_at": "2026-03-06T15:00:00Z",
+              "public_metrics": {
+                "like_count": 5,
+                "reply_count": 2
+              }
+            },
+            {
+              "id": "222",
+              "author_handle": "tier2_contact",
+              "author_name": "Tier2 Contact",
+              "text": "What do you think about this approach?",
+              "created_at": "2026-03-06T15:00:00Z",
+              "public_metrics": {
+                "like_count": 5,
+                "reply_count": 2
+              }
+            },
+            {
+              "id": "333",
+              "author_handle": "random_user",
+              "author_name": "Random User",
+              "text": "What do you think about this approach?",
+              "created_at": "2026-03-06T15:00:00Z",
+              "public_metrics": {
+                "like_count": 5,
+                "reply_count": 2
+              }
+            }
+          ],
+          "relationships": {
+            "tier1_contact": {
+              "handle": "tier1_contact",
+              "tier": 1
+            },
+            "tier2_contact": {
+              "handle": "tier2_contact",
+              "tier": 2
+            }
+          },
+          "strategy": {
+            "tiers": {
+              "tier1_handles": [
+                "tier1_contact"
+              ],
+              "tier2_handles": [
+                "tier2_contact"
+              ]
+            }
+          },
+          "budget": {
+            "max_pending_actions": 10,
+            "current_pending_actions": 0
+          }
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [
+            "Tier 1 contact gets CRITICAL priority",
+            "Tier 2 contact gets HIGH priority",
+            "Random user gets MEDIUM or LOW priority",
+            "All get REPLY action type (questions detected)"
+          ],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "actions[0].author_handle",
+              "expected": "tier1_contact"
+            },
+            {
+              "path": "actions[0].priority",
+              "expected": 1
+            },
+            {
+              "path": "actions[1].author_handle",
+              "expected": "tier2_contact"
+            },
+            {
+              "path": "actions[1].priority",
+              "expected": 2
+            },
+            {
+              "path": "actions[2].author_handle",
+              "expected": "random_user"
+            },
+            {
+              "path": "actions[2].priority",
+              "in": [
+                3,
+                4
+              ]
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "schema",
+            "config": {
+              "schema_type": "json"
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_engagement_tier_prioritization.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-540a62ff",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-07T21:04:40.043295+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Evaluate policy: engagement",
+              "tweets_count": 3
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "policy": "engagement",
+              "actions_count": 3,
+              "confidence": 0.8000000000000002,
+              "strategy_alignment_score": 0.8000000000000002,
+              "rationale": "Evaluated 3 tweets, proposed 3 actions",
+              "actions": [
+                {
+                  "tweet_id": "111",
+                  "author_handle": "tier1_contact",
+                  "action_type": "reply",
+                  "priority": 1,
+                  "score": 0.9,
+                  "rationale": "Tier 1 contact asking for input"
+                },
+                {
+                  "tweet_id": "222",
+                  "author_handle": "tier2_contact",
+                  "action_type": "reply",
+                  "priority": 2,
+                  "score": 0.75,
+                  "rationale": "Question detected, reply opportunity"
+                },
+                {
+                  "tweet_id": "333",
+                  "author_handle": "random_user",
+                  "action_type": "reply",
+                  "priority": 2,
+                  "score": 0.6,
+                  "rationale": "Question detected, reply opportunity"
+                }
+              ]
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "All assertions passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-17c917ba/runs/run-01b55a90/artifacts/trial-540a62ff/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.00043010711669921875,
+        "agent_response": "{\"actions\":[{\"tweet_id\":\"111\",\"author_handle\":\"tier1_contact\",\"action_type\":\"reply\",\"priority\":1,\"score\":0.9,\"rationale\":\"Tier 1 contact asking for input\",\"confidence\":0.8,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.7,\"timeliness_score\":0.8,\"relationship_score\":1.0,\"quality_score\":0.75,\"engagement_potential_score\":0.9},{\"tweet_id\":\"222\",\"author_handle\":\"tier2_contact\",\"action_type\":\"reply\",\"priority\":2,\"score\":0.75,\"rationale\":\"Question detected, reply opportunity\",\"confidence\":0.8,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.7,\"timeliness_score\":0.8,\"relationship_score\":0.8,\"quality_score\":0.75,\"engagement_potential_score\":0.75},{\"tweet_id\":\"333\",\"author_handle\":\"random_user\",\"action_type\":\"reply\",\"priority\":2,\"score\":0.6,\"rationale\":\"Question detected, reply opportunity\",\"confidence\":0.8,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.7,\"timeliness_score\":0.8,\"relationship_score\":0.5,\"quality_score\":0.75,\"engagement_potential_score\":0.6}],\"rationale\":\"Evaluated 3 tweets, proposed 3 actions\",\"confidence\":0.8000000000000002,\"strategy_alignment_score\":0.8000000000000002,\"constraints_checked\":[\"budget\",\"strategy_alignment\"],\"violations_found\":[],\"budget_consumed\":{\"max_pending_actions\":10,\"current_pending_actions\":0,\"max_api_calls\":100,\"api_calls_consumed\":0,\"max_processing_time_seconds\":30.0,\"processing_time_consumed\":0.0,\"max_llm_calls\":5,\"llm_calls_consumed\":0,\"max_llm_tokens\":10000,\"llm_tokens_consumed\":0},\"policy_version\":\"1.0.0\",\"processing_time_seconds\":0.0}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.5020370483398438e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "errors": [],
+            "field_count": 9,
+            "required_fields_present": 0
+          },
+          "error_message": null,
+          "execution_time_seconds": 2.8133392333984375e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-540a62ff",
+      "run_id": "run-01b55a90",
+      "task_id": "policy_engagement_tier_prioritization",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-07T21:04:40.042823+00:00",
+      "started_at": "2026-03-07T21:04:40.042807+00:00",
+      "completed_at": "2026-03-07T21:04:40.043307+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-540a62ff",
+    "run_id": "run-01b55a90",
+    "task_id": "policy_engagement_tier_prioritization",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-07T21:04:40.042823+00:00",
+    "started_at": "2026-03-07T21:04:40.042807+00:00",
+    "completed_at": "2026-03-07T21:04:40.043307+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

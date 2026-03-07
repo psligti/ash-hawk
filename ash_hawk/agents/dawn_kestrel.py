@@ -7,8 +7,12 @@ framework for agent execution with policy enforcement.
 from __future__ import annotations
 
 import inspect
+import json
+import asyncio
+import re
 import time
 from decimal import Decimal
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ash_hawk.policy import PolicyEnforcer
@@ -73,16 +77,27 @@ class DawnKestrelAgentRunner:
         self,
         policy_enforcer: PolicyEnforcer,
         base_registry: ToolRegistry | None = None,
+        allowed_tools_override: list[str] | None = None,
+        denied_tools_override: list[str] | None = None,
     ) -> ToolRegistry:
-        from dawn_kestrel.tools.framework import ToolRegistry
+        try:
+            from dawn_kestrel.tools.registry import ToolRegistry as DefaultToolRegistry
+        except Exception:
+            from dawn_kestrel.tools.framework import ToolRegistry as DefaultToolRegistry
         from dawn_kestrel.tools.permission_filter import ToolPermissionFilter
 
         if base_registry is None:
-            base_registry = ToolRegistry()
+            base_registry = DefaultToolRegistry()
+        if not hasattr(base_registry, "tool_metadata"):
+            setattr(base_registry, "tool_metadata", {})
 
         policy = policy_enforcer.policy
         allowed_tools = list(policy.allowed_tools) if policy.allowed_tools else []
         denied_tools = list(policy.denied_tools) if policy.denied_tools else []
+        if allowed_tools_override is not None:
+            allowed_tools = list(allowed_tools_override)
+        if denied_tools_override is not None:
+            denied_tools = list(denied_tools_override)
 
         init_params = set(inspect.signature(ToolPermissionFilter.__init__).parameters.keys())
         filter_kwargs: dict[str, Any] = {"tool_registry": base_registry}
@@ -110,7 +125,150 @@ class DawnKestrelAgentRunner:
         permission_filter = ToolPermissionFilter(**filter_kwargs)
 
         filtered_registry = permission_filter.get_filtered_registry()
-        return filtered_registry if filtered_registry else ToolRegistry()
+        if filtered_registry is None:
+            filtered_registry = DefaultToolRegistry()
+        if not hasattr(filtered_registry, "tool_metadata"):
+            setattr(filtered_registry, "tool_metadata", {})
+        return filtered_registry
+
+    def _build_tool_definitions(self, tools: dict[str, Any]) -> list[dict[str, Any]]:
+        definitions: list[dict[str, Any]] = []
+        for tool in tools.values():
+            tool_id = getattr(tool, "id", None)
+            if not isinstance(tool_id, str) or not tool_id.strip():
+                continue
+            tool_description = getattr(tool, "description", "")
+            parameters = tool.parameters() if hasattr(tool, "parameters") else {}
+            if not isinstance(parameters, dict):
+                parameters = {}
+            definitions.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool_id,
+                        "description": tool_description,
+                        "parameters": parameters,
+                    },
+                }
+            )
+        return definitions
+
+    def _extract_text_tool_calls(self, text: str) -> list[dict[str, Any]]:
+        calls: list[dict[str, Any]] = []
+        alias_map = {
+            "read_file": "read",
+            "write_file": "write",
+            "edit_file": "edit",
+            "search_code": "grep",
+            "run_bash": "bash",
+        }
+
+        pattern = re.compile(r"([a-zA-Z_][\w/]*)\(([^)]*)\)")
+        arg_pattern = re.compile(r"([a-zA-Z_][\w]*)\s*=\s*([\"'])(.*?)\2")
+
+        xml_call_pattern = re.compile(r"<tool_call>\s*([a-zA-Z_][\w]*)>?", re.IGNORECASE)
+        xml_path_pattern = re.compile(r"<path>(.*?)</path>", re.IGNORECASE | re.DOTALL)
+        xml_match = xml_call_pattern.search(text)
+        if xml_match:
+            raw_name = xml_match.group(1).strip()
+            tool_name = alias_map.get(raw_name, raw_name)
+            tool_input: dict[str, Any] = {}
+            path_match = xml_path_pattern.search(text)
+            if path_match:
+                tool_input["filePath"] = path_match.group(1).strip()
+            if tool_name:
+                calls.append({"tool": tool_name, "input": tool_input})
+
+        for match in pattern.finditer(text):
+            raw_name = match.group(1).strip()
+            raw_name = raw_name.split("/")[-1]
+            tool_name = alias_map.get(raw_name, raw_name)
+            args_text = match.group(2).replace('\\"', '"').replace("\\'", "'")
+            tool_input: dict[str, Any] = {}
+            for arg_match in arg_pattern.finditer(args_text):
+                key = arg_match.group(1)
+                value = arg_match.group(3)
+                tool_input[key] = value
+
+            if tool_name == "read" and "path" in tool_input and "filePath" not in tool_input:
+                tool_input["filePath"] = tool_input.pop("path")
+            if tool_name == "write" and "path" in tool_input and "filePath" not in tool_input:
+                tool_input["filePath"] = tool_input.pop("path")
+            if tool_name == "bash" and "cmd" in tool_input and "command" not in tool_input:
+                tool_input["command"] = tool_input.pop("cmd")
+
+            if tool_name:
+                calls.append({"tool": tool_name, "input": tool_input})
+
+        return calls
+
+    async def _execute_tool_calls(
+        self,
+        tool_calls: list[dict[str, Any]],
+        filtered_registry: ToolRegistry,
+        config: dict[str, Any],
+        trial_id: str,
+    ) -> list[dict[str, Any]]:
+        from dawn_kestrel.tools.framework import ToolContext
+
+        executed: list[dict[str, Any]] = []
+        base_dir_value = config.get("workdir") or "."
+        base_dir = Path(base_dir_value) if isinstance(base_dir_value, str) else Path(".")
+
+        for idx, call in enumerate(tool_calls):
+            tool_name = call.get("tool") or call.get("name")
+            if not isinstance(tool_name, str) or not tool_name.strip():
+                continue
+            tool_name = tool_name.strip().lower()
+
+            raw_input = call.get("input")
+            if raw_input is None:
+                raw_input = call.get("arguments")
+            tool_input = raw_input if isinstance(raw_input, dict) else {}
+
+            tool = filtered_registry.get(tool_name)
+            if tool is None:
+                executed.append(
+                    {
+                        "tool": tool_name,
+                        "input": tool_input,
+                        "error": f"Tool not available: {tool_name}",
+                    }
+                )
+                continue
+
+            call_id = f"{trial_id}_tool_{idx}"
+            ctx = ToolContext(
+                session_id=trial_id,
+                message_id=trial_id,
+                agent="ash_hawk_eval",
+                abort=asyncio.Event(),
+                messages=[],
+                call_id=call_id,
+                base_dir=base_dir,
+            )
+
+            try:
+                result = await tool.execute(tool_input, ctx)
+                executed.append(
+                    {
+                        "tool": tool_name,
+                        "input": tool_input,
+                        "output": result.output,
+                        "title": result.title,
+                        "metadata": result.metadata,
+                    }
+                )
+            except Exception as exc:
+                executed.append(
+                    {
+                        "tool": tool_name,
+                        "input": tool_input,
+                        "error": str(exc),
+                    }
+                )
+
+        return executed
 
     def _extract_token_usage(self, response: Any) -> TokenUsage:
         usage = TokenUsage()
@@ -141,7 +299,7 @@ class DawnKestrelAgentRunner:
                 return float(cost)
             return cost or 0.0
         if isinstance(response, dict):
-            return response.get("cost", 0.0)
+            return response.get("cost", 0.0)  # type: ignore[no-any-return]
         return 0.0
 
     def _extract_messages(self, response: Any) -> list[dict[str, Any]]:
@@ -186,9 +344,9 @@ class DawnKestrelAgentRunner:
 
     def _extract_agent_response(self, response: Any) -> str | dict[str, Any] | None:
         if hasattr(response, "text") and response.text:
-            return response.text
+            return response.text  # type: ignore[no-any-return]
         if hasattr(response, "content"):
-            return response.content
+            return response.content  # type: ignore[no-any-return]
         if isinstance(response, dict):
             return response.get("text") or response.get("content")
         return None
@@ -203,19 +361,36 @@ class DawnKestrelAgentRunner:
 
         try:
             client = self._get_client()
-            filtered_registry = self._create_filtered_registry(policy_enforcer)
-
             task_input = task.input
+            override_allowed_tools: list[str] | None = None
+            override_denied_tools: list[str] | None = None
+            if isinstance(task_input, dict):
+                policy_snapshot = task_input.get("policy_snapshot")
+                if isinstance(policy_snapshot, dict):
+                    raw_allowed = policy_snapshot.get("allowed_tools")
+                    if isinstance(raw_allowed, list):
+                        override_allowed_tools = [
+                            tool for tool in raw_allowed if isinstance(tool, str)
+                        ]
+                    raw_denied = policy_snapshot.get("denied_tools")
+                    if isinstance(raw_denied, list):
+                        override_denied_tools = [
+                            tool for tool in raw_denied if isinstance(tool, str)
+                        ]
+
+            filtered_registry = self._create_filtered_registry(
+                policy_enforcer,
+                allowed_tools_override=override_allowed_tools,
+                denied_tools_override=override_denied_tools,
+            )
+
             if isinstance(task_input, dict):
                 prompt = task_input.get("prompt", task_input.get("message", str(task_input)))
             else:
                 prompt = str(task_input)
 
-            tools = (
-                list((await filtered_registry.get_all()).values())
-                if filtered_registry.tools
-                else []
-            )
+            available_tools = await filtered_registry.get_all()
+            tool_definitions = self._build_tool_definitions(available_tools)
 
             from dawn_kestrel.llm.client import LLMRequestOptions
 
@@ -224,17 +399,63 @@ class DawnKestrelAgentRunner:
                 max_tokens=config.get("max_tokens", self._kwargs.get("max_tokens")),
             )
 
-            response = await client.complete(
-                messages=[{"role": "user", "content": prompt}],
-                tools=tools if tools else None,
-                options=options,
-            )
+            conversation: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
+            all_tool_calls: list[dict[str, Any]] = []
+            trial_id = str(config.get("trial_id") or f"trial-{int(time.time() * 1000)}")
+            max_iterations = int(config.get("max_tool_iterations", 3) or 3)
+            response = None
+
+            for _ in range(max_iterations):
+                response = await client.complete(
+                    messages=conversation,
+                    tools=tool_definitions if tool_definitions else None,
+                    options=options,
+                )
+
+                model_text = self._extract_agent_response(response)
+                if isinstance(model_text, str) and model_text.strip():
+                    conversation.append({"role": "assistant", "content": model_text})
+
+                tool_calls = self._extract_tool_calls(response)
+                if not tool_calls and isinstance(model_text, str) and model_text.strip():
+                    tool_calls = self._extract_text_tool_calls(model_text)
+                if not tool_calls:
+                    break
+
+                executed = await self._execute_tool_calls(
+                    tool_calls=tool_calls,
+                    filtered_registry=filtered_registry,
+                    config=config,
+                    trial_id=trial_id,
+                )
+
+                for item in executed:
+                    normalized = {
+                        "tool": item.get("tool"),
+                        "input": item.get("input", {}),
+                    }
+                    if "output" in item:
+                        normalized["output"] = item.get("output")
+                    if "error" in item:
+                        normalized["error"] = item.get("error")
+                    all_tool_calls.append(normalized)
+
+                conversation.append(
+                    {
+                        "role": "user",
+                        "content": "Tool execution results:\n"
+                        + json.dumps(executed, ensure_ascii=True, default=str),
+                    }
+                )
+
+            if response is None:
+                raise RuntimeError("LLM completion failed to produce a response")
 
             duration = time.time() - start_time
 
             transcript = EvalTranscript(
-                messages=[{"role": "user", "content": prompt}] + self._extract_messages(response),
-                tool_calls=self._extract_tool_calls(response),
+                messages=conversation,
+                tool_calls=all_tool_calls,
                 token_usage=self._extract_token_usage(response),
                 cost_usd=self._extract_cost(response),
                 duration_seconds=duration,

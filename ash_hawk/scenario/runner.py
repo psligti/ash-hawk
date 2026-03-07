@@ -84,7 +84,7 @@ class ScenarioRunner:
 
         await self._storage.save_suite(suite)
 
-        agent_config = {
+        agent_config: dict[str, Any] = {
             "agent_name": "scenario-adapter",
             "provider": "scenario",
             "model": "scenario",

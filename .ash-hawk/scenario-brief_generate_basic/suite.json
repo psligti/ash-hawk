@@ -1,0 +1,155 @@
+{
+  "id": "scenario-brief_generate_basic",
+  "name": "scenario-brief_generate_basic",
+  "description": "",
+  "tasks": [
+    {
+      "id": "brief_generate_basic",
+      "description": "Test basic morning brief generation with default settings",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_generate_basic",
+          "description": "Test basic morning brief generation with default settings",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "brief",
+            "config": {
+              "output": "terminal",
+              "posts": 3,
+              "replies": 10,
+              "trends_limit": 7,
+              "save": false
+            },
+            "mock_sources": {
+              "trends": [
+                {
+                  "topic": "AI Agents",
+                  "source": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/hackernews",
+                  "score": 0.92,
+                  "url": "https://example.com/ai-agents"
+                },
+                {
+                  "topic": "Distributed Systems",
+                  "source": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/lobsters",
+                  "score": 0.88,
+                  "url": "https://example.com/dist-sys"
+                },
+                {
+                  "topic": "Python 3.13",
+                  "source": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/reddit",
+                  "score": 0.85,
+                  "url": "https://example.com/python"
+                }
+              ],
+              "feed_items": [
+                {
+                  "handle": "tech_leader",
+                  "text": "What are your thoughts on the future of AI agents?",
+                  "is_question": true,
+                  "tier": 1
+                },
+                {
+                  "handle": "startup_founder",
+                  "text": "Just launched our new product!",
+                  "is_question": false,
+                  "tier": 2
+                }
+              ]
+            },
+            "strategy": {
+              "tier1_handles": [
+                "tech_leader"
+              ],
+              "tier2_handles": [
+                "startup_founder"
+              ],
+              "primary_topics": [
+                "AI",
+                "distributed systems",
+                "Python"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 60.0
+          },
+          "expectations": {
+            "must_events": [
+              "Trends aggregated from multiple sources",
+              "Post drafts generated",
+              "Reply targets identified",
+              "Brief formatted for terminal output"
+            ],
+            "must_not_events": [
+              "Save digest to file (save=false)"
+            ],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "digest.trends_count",
+                "expected": 3
+              },
+              {
+                "path": "digest.posts_count",
+                "expected": 3
+              },
+              {
+                "path": "digest.format",
+                "expected": "terminal"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_generate_basic.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_generate_basic.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 60.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

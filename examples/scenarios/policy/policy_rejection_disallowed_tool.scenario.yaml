@@ -1,0 +1,52 @@
+schema_version: "v1"
+id: "policy_rejection_disallowed_tool"
+description: "Policy should reject disallowed tool attempts and emit rejection telemetry"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "mock_adapter"
+  config: {}
+
+inputs:
+  prompt: "Run bash and python commands to inspect files and summarize findings."
+
+tools:
+  allowed_tools:
+    - "read"
+    - "glob"
+    - "grep"
+  mocks: {}
+  fault_injection: {}
+
+budgets:
+  max_steps: 8
+  max_tool_calls: 14
+  max_tokens: 1600
+  max_time_seconds: 90.0
+
+expectations:
+  must_events:
+    - "PolicyDecisionEvent"
+  must_not_events: []
+  ordering_rules:
+    - before: "PolicyDecisionEvent"
+      after: "RejectionEvent"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "ordering"
+    required: false
+    config:
+      ordering_rules:
+        - before: "PolicyDecisionEvent"
+          after: "RejectionEvent"
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 8
+      max_tool_calls: 14
+      max_time_seconds: 90.0

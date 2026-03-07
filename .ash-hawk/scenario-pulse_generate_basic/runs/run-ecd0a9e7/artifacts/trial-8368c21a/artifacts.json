@@ -1,0 +1,32 @@
+{
+  "command": "pulse",
+  "result": {
+    "command": "pulse",
+    "targets": [
+      {
+        "id": "111",
+        "author": "colleague",
+        "text": "Has anyone tried the new Python async features?",
+        "metrics": {
+          "likes": 5,
+          "replies": 3
+        }
+      },
+      {
+        "id": "222",
+        "author": "industry_peer",
+        "text": "Great article on distributed systems!",
+        "metrics": {
+          "likes": 20,
+          "replies": 8
+        }
+      }
+    ],
+    "targets_count": 2,
+    "sources": [
+      "x_feed"
+    ],
+    "execution_time_seconds": 1.5
+  },
+  "verification_passed": true
+}

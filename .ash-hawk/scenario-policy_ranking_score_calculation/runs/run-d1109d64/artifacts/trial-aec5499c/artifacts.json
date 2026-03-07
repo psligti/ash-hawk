@@ -1,0 +1,29 @@
+{
+  "policy_output": {
+    "actions": [],
+    "rationale": "Scored 2 tweets, proposed 0 actions",
+    "confidence": 0.85,
+    "strategy_alignment_score": 0.9,
+    "constraints_checked": [
+      "ranking"
+    ],
+    "violations_found": [],
+    "budget_consumed": {
+      "max_pending_actions": 10,
+      "current_pending_actions": 0,
+      "max_api_calls": 100,
+      "api_calls_consumed": 0,
+      "max_processing_time_seconds": 30.0,
+      "processing_time_consumed": 0.0,
+      "max_llm_calls": 5,
+      "llm_calls_consumed": 0,
+      "max_llm_tokens": 10000,
+      "llm_tokens_consumed": 0
+    },
+    "policy_version": "1.0.0",
+    "processing_time_seconds": 0.0
+  },
+  "policy_name": "ranking",
+  "tweets_evaluated": 2,
+  "actions_proposed": 0
+}

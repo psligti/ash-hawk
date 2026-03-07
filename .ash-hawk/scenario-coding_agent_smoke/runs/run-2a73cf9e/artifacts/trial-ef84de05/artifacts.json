@@ -1,0 +1,5 @@
+{
+  "diff.patch": "diff --git a/src/app.txt b/src/app.txt\nindex 03770cf..badc32f 100644\n--- a/src/app.txt\n+++ b/src/app.txt\n@@ -1 +1 @@\n-version=1\n+version=2\n",
+  "stdout.txt": "",
+  "stderr.txt": ""
+}

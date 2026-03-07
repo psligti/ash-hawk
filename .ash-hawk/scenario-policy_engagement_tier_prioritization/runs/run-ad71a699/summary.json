@@ -1,0 +1,349 @@
+{
+  "envelope": {
+    "run_id": "run-ad71a699",
+    "suite_id": "scenario-policy_engagement_tier_prioritization",
+    "suite_hash": "322de4a6ab596c7b",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-07T17:35:05.056698+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-policy_engagement_tier_prioritization",
+    "run_id": "run-ad71a699",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 1,
+    "failed_tasks": 0,
+    "pass_rate": 1.0,
+    "mean_score": 1.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.021978139877319336,
+    "latency_p50_seconds": 0.021500110626220703,
+    "latency_p95_seconds": 0.021500110626220703,
+    "latency_p99_seconds": 0.021500110626220703,
+    "pass_at_k": {},
+    "created_at": "2026-03-07T17:35:05.095473+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-a84103cd",
+      "task_id": "policy_engagement_tier_prioritization",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_engagement_tier_prioritization",
+          "description": "Test EngagementPolicy tier-based prioritization logic",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_policy",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "engagement",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "tier1_contact",
+                "author_name": "Tier1 Contact",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              },
+              {
+                "id": "222",
+                "author_handle": "tier2_contact",
+                "author_name": "Tier2 Contact",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              },
+              {
+                "id": "333",
+                "author_handle": "random_user",
+                "author_name": "Random User",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              }
+            ],
+            "relationships": {
+              "tier1_contact": {
+                "handle": "tier1_contact",
+                "tier": 1
+              },
+              "tier2_contact": {
+                "handle": "tier2_contact",
+                "tier": 2
+              }
+            },
+            "strategy": {
+              "tiers": {
+                "tier1_handles": [
+                  "tier1_contact"
+                ],
+                "tier2_handles": [
+                  "tier2_contact"
+                ]
+              }
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "Tier 1 contact gets CRITICAL priority",
+              "Tier 2 contact gets HIGH priority",
+              "Random user gets MEDIUM or LOW priority",
+              "All get REPLY action type (questions detected)"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions[0].author_handle",
+                "expected": "tier1_contact"
+              },
+              {
+                "path": "actions[0].priority",
+                "expected": 1
+              },
+              {
+                "path": "actions[1].author_handle",
+                "expected": "tier2_contact"
+              },
+              {
+                "path": "actions[1].priority",
+                "expected": 2
+              },
+              {
+                "path": "actions[2].author_handle",
+                "expected": "random_user"
+              },
+              {
+                "path": "actions[2].priority",
+                "in": [
+                  3,
+                  4
+                ]
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "schema",
+              "config": {
+                "schema_type": "json"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_engagement_tier_prioritization.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-a84103cd",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-07T17:35:05.081788+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Evaluate policy: engagement",
+                "tweets_count": 3
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "policy": "engagement",
+                "actions_count": 3,
+                "confidence": 0.8000000000000002,
+                "strategy_alignment_score": 0.8000000000000002,
+                "rationale": "Evaluated 3 tweets, proposed 3 actions",
+                "actions": [
+                  {
+                    "tweet_id": "111",
+                    "author_handle": "tier1_contact",
+                    "action_type": "reply",
+                    "priority": 1,
+                    "score": 0.9,
+                    "rationale": "Tier 1 contact asking for input"
+                  },
+                  {
+                    "tweet_id": "222",
+                    "author_handle": "tier2_contact",
+                    "action_type": "reply",
+                    "priority": 2,
+                    "score": 0.75,
+                    "rationale": "Question detected, reply opportunity"
+                  },
+                  {
+                    "tweet_id": "333",
+                    "author_handle": "random_user",
+                    "action_type": "reply",
+                    "priority": 2,
+                    "score": 0.6,
+                    "rationale": "Question detected, reply opportunity"
+                  }
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-policy_engagement_tier_prioritization/runs/run-ad71a699/artifacts/trial-a84103cd/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.008111953735351562,
+          "agent_response": "{\"actions\":[{\"tweet_id\":\"111\",\"author_handle\":\"tier1_contact\",\"action_type\":\"reply\",\"priority\":1,\"score\":0.9,\"rationale\":\"Tier 1 contact asking for input\",\"confidence\":0.8,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.7,\"timeliness_score\":0.8,\"relationship_score\":1.0,\"quality_score\":0.75,\"engagement_potential_score\":0.9},{\"tweet_id\":\"222\",\"author_handle\":\"tier2_contact\",\"action_type\":\"reply\",\"priority\":2,\"score\":0.75,\"rationale\":\"Question detected, reply opportunity\",\"confidence\":0.8,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.7,\"timeliness_score\":0.8,\"relationship_score\":0.8,\"quality_score\":0.75,\"engagement_potential_score\":0.75},{\"tweet_id\":\"333\",\"author_handle\":\"random_user\",\"action_type\":\"reply\",\"priority\":2,\"score\":0.6,\"rationale\":\"Question detected, reply opportunity\",\"confidence\":0.8,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.7,\"timeliness_score\":0.8,\"relationship_score\":0.5,\"quality_score\":0.75,\"engagement_potential_score\":0.6}],\"rationale\":\"Evaluated 3 tweets, proposed 3 actions\",\"confidence\":0.8000000000000002,\"strategy_alignment_score\":0.8000000000000002,\"constraints_checked\":[\"budget\",\"strategy_alignment\"],\"violations_found\":[],\"budget_consumed\":{\"max_pending_actions\":10,\"current_pending_actions\":0,\"max_api_calls\":100,\"api_calls_consumed\":0,\"max_processing_time_seconds\":30.0,\"processing_time_consumed\":0.0,\"max_llm_calls\":5,\"llm_calls_consumed\":0,\"max_llm_tokens\":10000,\"llm_tokens_consumed\":0},\"policy_version\":\"1.0.0\",\"processing_time_seconds\":0.0}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.933906555175781e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "errors": [],
+              "field_count": 9,
+              "required_fields_present": 0
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.1948089599609375e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-a84103cd",
+        "run_id": "run-ad71a699",
+        "task_id": "policy_engagement_tier_prioritization",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-07T17:35:05.073600+00:00",
+        "started_at": "2026-03-07T17:35:05.073570+00:00",
+        "completed_at": "2026-03-07T17:35:05.081815+00:00"
+      }
+    }
+  ]
+}

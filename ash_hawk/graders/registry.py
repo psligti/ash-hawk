@@ -154,6 +154,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
         ToolCallGrader,
         TranscriptGrader,
     )
+    from ash_hawk.graders.cheat_detection import CheatDetectionGrader
     from ash_hawk.graders.diff_constraints import DiffConstraintsGrader
     from ash_hawk.graders.human import ManualReviewGrader
     from ash_hawk.graders.llm_judge import LLMJudgeGrader
@@ -180,6 +181,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(OrderingGrader())
     registry.register(DiffConstraintsGrader())
     registry.register(ManualReviewGrader())
+    registry.register(CheatDetectionGrader())
 
 
 def get_default_registry() -> GraderRegistry:

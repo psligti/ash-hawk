@@ -1,0 +1,46 @@
+schema_version: "v1"
+id: "policy_react_repair_path"
+description: "ReAct policy eval with bounded retries and safe fallback behavior"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "mock_adapter"
+  config: {}
+
+inputs:
+  prompt: "Reason briefly, choose one actionable next step, and report uncertainty if blocked."
+
+tools:
+  allowed_tools:
+    - "read"
+    - "glob"
+    - "grep"
+    - "bash"
+  mocks: {}
+  fault_injection:
+    malformed:
+      - "bash"
+
+budgets:
+  max_steps: 10
+  max_tool_calls: 20
+  max_tokens: 2200
+  max_time_seconds: 120.0
+
+expectations:
+  must_events: []
+  must_not_events: []
+  ordering_rules: []
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 10
+      max_tool_calls: 20
+      max_time_seconds: 120.0

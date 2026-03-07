@@ -1,0 +1,359 @@
+{
+  "trial": {
+    "id": "trial-fef763d9",
+    "task_id": "policy_plan_execute_todo_evidence_judgement",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "policy_plan_execute_todo_evidence_judgement",
+        "description": "Plan-execute mode eval for todo progression and evidence-backed completion",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "sdk_dawn_kestrel",
+          "config": {
+            "policy_mode": "plan_execute",
+            "runner_kwargs": {},
+            "run_config": {
+              "temperature": 0.0
+            },
+            "model": "glm-4.7",
+            "policy": "rules"
+          }
+        },
+        "inputs": {
+          "prompt": "Work in plan-execute mode.\n\nCRITICAL: Your response must be ONLY valid JSON. No markdown code blocks.\nNo explanatory text before or after. Just raw JSON starting with { and ending with }.\n\nRequired keys: todo_plan, executed_step, completion_claim, evidence_artifacts, verification_plan, final_response.\nEnsure completion_claim references explicit evidence artifacts.\ntodo_plan must be an array of strings.\n\nExample format:\n{\"todo_plan\": [\"step1\", \"step2\"], \"executed_step\": \"...\", \"completion_claim\": \"...\", \"evidence_artifacts\": [], \"verification_plan\": \"...\", \"final_response\": \"...\"}\n"
+        },
+        "tools": {
+          "allowed_tools": [
+            "read",
+            "glob",
+            "grep",
+            "bash"
+          ],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 12,
+          "max_tool_calls": 20,
+          "max_tokens": 2600,
+          "max_time_seconds": 160.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "format",
+            "config": {
+              "format": "json"
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "schema",
+            "config": {
+              "required_fields": [
+                "todo_plan",
+                "executed_step",
+                "completion_claim",
+                "evidence_artifacts",
+                "verification_plan",
+                "final_response"
+              ],
+              "schema": {
+                "todo_plan": "list",
+                "executed_step": "str",
+                "completion_claim": "str",
+                "evidence_artifacts": "list",
+                "verification_plan": "str",
+                "final_response": "str"
+              }
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "transcript",
+            "config": {
+              "require_no_errors": true,
+              "max_tool_calls": 20,
+              "max_duration_seconds": 160
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "llm_judge",
+            "config": {
+              "pass_threshold": 0.78,
+              "expected_output": {
+                "must_contain": [
+                  "todo_plan",
+                  "completion_claim",
+                  "verification_plan"
+                ]
+              },
+              "custom_prompt": "Evaluate policy-driven plan/execute quality.\n\nRubric:\n1) Todo plan is concrete and scoped.\n2) Executed step aligns with plan priority and constraints.\n3) Completion claim is evidence-backed (not speculative).\n4) Verification plan is realistic and testable.\n\nTask Input:\n{task_input}\n\nExpected Output Constraints:\n{expected_output}\n\nAgent Response:\n{agent_response}\n\nTranscript Context:\n{transcript_context}\n\nReturn strict JSON with these keys:\n- score: float (0.0 to 1.0 overall score)\n- passed: boolean (true if score >= 0.78)\n- reasoning: string (brief explanation)\n- breakdown: object with rubric scores as FLOATS, e.g. {{\"todo_plan_quality\": 0.9, \"step_alignment\": 0.8, \"evidence_backing\": 0.7, \"verification_realism\": 0.8}}\n- issues: array of strings\n- strengths: array of strings\n",
+              "include_transcript_context": true,
+              "max_transcript_length": 12000
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpsx1uwh0d/002-policy_plan_execute_todo_evidence_judgement.scenario.yaml",
+      "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpsx1uwh0d"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-fef763d9",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-06T17:09:23.223071+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Work in plan-execute mode.\n\nCRITICAL: Your response must be ONLY valid JSON. No markdown code blocks.\nNo explanatory text before or after. Just raw JSON starting with { and ending with }.\n\nRequired keys: todo_plan, executed_step, completion_claim, evidence_artifacts, verification_plan, final_response.\nEnsure completion_claim references explicit evidence artifacts.\ntodo_plan must be an array of strings.\n\nExample format:\n{\"todo_plan\": [\"step1\", \"step2\"], \"executed_step\": \"...\", \"completion_claim\": \"...\", \"evidence_artifacts\": [], \"verification_plan\": \"...\", \"final_response\": \"...\"}\n"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Work in plan-execute mode.\n\nCRITICAL: Your response must be ONLY valid JSON. No markdown code blocks.\nNo explanatory text before or after. Just raw JSON starting with { and ending with }.\n\nRequired keys: todo_plan, executed_step, completion_claim, evidence_artifacts, verification_plan, final_response.\nEnsure completion_claim references explicit evidence artifacts.\ntodo_plan must be an array of strings.\n\nExample format:\n{\"todo_plan\": [\"step1\", \"step2\"], \"executed_step\": \"...\", \"completion_claim\": \"...\", \"evidence_artifacts\": [], \"verification_plan\": \"...\", \"final_response\": \"...\"}\n"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-tmpsx1uwh0d/runs/run-e6aa85f3/artifacts/trial-fef763d9/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 4.194509029388428,
+        "agent_response": "{\"todo_plan\": [\"Understand the requested JSON format\", \"Create a response that meets the requirements\", \"Ensure the response is valid JSON with all required keys\"], \"executed_step\": \"Creating JSON response with required keys and structure\", \"completion_claim\": \"I have provided a valid JSON response with all required keys (todo_plan, executed_step, completion_claim, evidence_artifacts, verification_plan, final_response) as requested\", \"evidence_artifacts\": [\"This JSON response\"], \"verification_plan\": \"Verify that the output is valid JSON by parsing it and confirming it contains all required keys with proper value types\", \"final_response\": \"This is the valid JSON response you requested, with all required keys and no additional formatting or explanatory text\"}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "format",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "format": "json",
+            "is_valid": true,
+            "errors": [],
+            "field_count": 6
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.6927719116210938e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "errors": [],
+            "field_count": 6,
+            "required_fields_present": 6
+          },
+          "error_message": null,
+          "execution_time_seconds": 0.0003039836883544922,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "transcript",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "metrics": {
+              "turn_count": 0,
+              "message_count": 0,
+              "user_message_count": 0,
+              "assistant_message_count": 0,
+              "message_types": {},
+              "tool_call_count": 0,
+              "tool_summary": {},
+              "has_error": false
+            },
+            "violations": [],
+            "warnings": [],
+            "token_usage": {
+              "input": 0,
+              "output": 0,
+              "reasoning": 0,
+              "total": 0
+            },
+            "duration_seconds": 4.194509029388428,
+            "tool_call_count": 0,
+            "cost_usd": 0.0
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.0013580322265625e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.45,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent provided a meta-response about the JSON format rather than actually performing a meaningful task. The todo plan is abstract and self-referential, not concrete or scoped to a specific task. The completion claim is circular evidence (the JSON response proves itself), not actual evidence of task completion. The verification plan is basic JSON validation, insufficient for real task verification.",
+            "breakdown": {
+              "todo_plan_quality": 0.3,
+              "step_alignment": 0.7,
+              "evidence_backing": 0.2,
+              "verification_realism": 0.6
+            },
+            "issues": [
+              "Todo plan is meta-abstract (\"Understand format\", \"Create response\") rather than task-specific concrete actions",
+              "Evidence artifacts are circular - pointing to the response itself as evidence",
+              "No actual task was performed - this is just a response format demonstration",
+              "Completion claim is self-referential without external validation",
+              "Verification plan only checks JSON syntax, not task-specific correctness",
+              "No transcript context available to assess real tool execution"
+            ],
+            "strengths": [
+              "Response contains all required keys as specified",
+              "Output is valid JSON with proper structure",
+              "Followed formatting constraints (no markdown code blocks)",
+              "Values are of correct data types (lists, strings)"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "5ea8e60b42052127",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.45,\n  \"passed\": false,\n  \"reasoning\": \"The agent provided a meta-response about the JSON format rather than actually performing a meaningful task. The todo plan is abstract and self-referential, not concrete or scoped to a specific task. The completion claim is circular evidence (the JSON response proves itself), not actual evidence of task completion. The verification plan is basic JSON validation, insufficient for real task verification.\",\n  \"breakdown\": {\n    \"todo_plan_quality\": 0.3,\n    \"step_alignment\": 0.7,\n    \"evidence_backing\": 0.2,\n    \"verification_realism\": 0.6\n  },\n  \"issues\": [\n    \"Todo plan is meta-abstract (\\\"Understand format\\\", \\\"Create response\\\") rather than task-specific concrete actions\",\n    \"Evidence artifacts are circular - pointing to the response itself as evidence\",\n    \"No actual task was performed - this is just a response format demonstration\",\n    \"Completion claim is self-referential without external validation\",\n    \"Verification plan only checks JSON syntax, not task-specific correctness\",\n    \"No transcript context available to assess real tool execution\"\n  ],\n  \"strengths\": [\n    \"Response contains all required keys as specified\",\n    \"Output is valid JSON with proper structure\",\n    \"Followed formatting constraints (no markdown code blocks)\",\n    \"Values are of correct data types (lists, strings)\"\n  ]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 29.229261875152588,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.8625,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-fef763d9",
+      "run_id": "run-e6aa85f3",
+      "task_id": "policy_plan_execute_todo_evidence_judgement",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-06T17:09:19.028506+00:00",
+      "started_at": "2026-03-06T17:09:19.028486+00:00",
+      "completed_at": "2026-03-06T17:09:23.223087+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-fef763d9",
+    "run_id": "run-e6aa85f3",
+    "task_id": "policy_plan_execute_todo_evidence_judgement",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-06T17:09:19.028506+00:00",
+    "started_at": "2026-03-06T17:09:19.028486+00:00",
+    "completed_at": "2026-03-06T17:09:23.223087+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

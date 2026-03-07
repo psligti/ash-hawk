@@ -7,6 +7,7 @@ This module provides various export formats for evaluation results:
 All reporters include full RunEnvelope for reproducibility.
 """
 
+from ash_hawk.reporting.gap_scorecard import GapScorecardGenerator, load_scorecard
 from ash_hawk.reporting.html import (
     HTMLReporter,
     Theme,
@@ -23,6 +24,13 @@ from ash_hawk.reporting.json_export import (
     export_jsonl,
     validate_export,
 )
+from ash_hawk.reporting.scorecard_types import (
+    AgentDepth,
+    GapDiff,
+    GapScorecard,
+    Requirement,
+    RequirementCoverage,
+)
 
 __all__ = [
     "EXPORT_SCHEMA",
@@ -37,4 +45,12 @@ __all__ = [
     "generate_task_html",
     "generate_trial_html",
     "validate_export",
+    # Gap scorecard
+    "AgentDepth",
+    "GapDiff",
+    "GapScorecard",
+    "GapScorecardGenerator",
+    "Requirement",
+    "RequirementCoverage",
+    "load_scorecard",
 ]

@@ -1,0 +1,48 @@
+schema_version: "v1"
+id: "policy_router_fallback_resilience"
+description: "Router mode should remain safe under transient tool/output faults"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "mock_adapter"
+  config: {}
+
+inputs:
+  prompt: "Attempt one action, recover from malformed tool output, and provide a safe fallback summary."
+
+tools:
+  allowed_tools:
+    - "read"
+    - "glob"
+    - "grep"
+    - "bash"
+  mocks: {}
+  fault_injection:
+    malformed:
+      - "bash"
+    timeouts:
+      bash: 1
+
+budgets:
+  max_steps: 10
+  max_tool_calls: 14
+  max_tokens: 1800
+  max_time_seconds: 110.0
+
+expectations:
+  must_events: []
+  must_not_events: []
+  ordering_rules: []
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 10
+      max_tool_calls: 14
+      max_time_seconds: 110.0

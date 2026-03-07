@@ -1,0 +1,189 @@
+{
+  "id": "scenario-policy_engagement_tier_prioritization",
+  "name": "scenario-policy_engagement_tier_prioritization",
+  "description": "",
+  "tasks": [
+    {
+      "id": "policy_engagement_tier_prioritization",
+      "description": "Test EngagementPolicy tier-based prioritization logic",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_engagement_tier_prioritization",
+          "description": "Test EngagementPolicy tier-based prioritization logic",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_policy",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "engagement",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "tier1_contact",
+                "author_name": "Tier1 Contact",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              },
+              {
+                "id": "222",
+                "author_handle": "tier2_contact",
+                "author_name": "Tier2 Contact",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              },
+              {
+                "id": "333",
+                "author_handle": "random_user",
+                "author_name": "Random User",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              }
+            ],
+            "relationships": {
+              "tier1_contact": {
+                "handle": "tier1_contact",
+                "tier": 1
+              },
+              "tier2_contact": {
+                "handle": "tier2_contact",
+                "tier": 2
+              }
+            },
+            "strategy": {
+              "tiers": {
+                "tier1_handles": [
+                  "tier1_contact"
+                ],
+                "tier2_handles": [
+                  "tier2_contact"
+                ]
+              }
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "Tier 1 contact gets CRITICAL priority",
+              "Tier 2 contact gets HIGH priority",
+              "Random user gets MEDIUM or LOW priority",
+              "All get REPLY action type (questions detected)"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions[0].author_handle",
+                "expected": "tier1_contact"
+              },
+              {
+                "path": "actions[0].priority",
+                "expected": 1
+              },
+              {
+                "path": "actions[1].author_handle",
+                "expected": "tier2_contact"
+              },
+              {
+                "path": "actions[1].priority",
+                "expected": 2
+              },
+              {
+                "path": "actions[2].author_handle",
+                "expected": "random_user"
+              },
+              {
+                "path": "actions[2].priority",
+                "in": [
+                  3,
+                  4
+                ]
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "schema",
+              "config": {
+                "schema_type": "json"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_engagement_tier_prioritization.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "schema",
+          "config": {
+            "schema_type": "json"
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_policy"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_engagement_tier_prioritization.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

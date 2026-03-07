@@ -1,0 +1,225 @@
+{
+  "trial": {
+    "id": "trial-9165ff6d",
+    "task_id": "hello_world",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "hello_world",
+        "description": "Minimal smoke test for agentic SDK with mock adapter",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "mock_adapter",
+          "config": {}
+        },
+        "inputs": {
+          "prompt": "Say hello world"
+        },
+        "tools": {
+          "allowed_tools": [
+            "bash"
+          ],
+          "mocks": {
+            "bash": {
+              "input": {
+                "command": "echo hi"
+              },
+              "result": {
+                "stdout": "hi\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 3,
+          "max_tool_calls": 5,
+          "max_tokens": 100,
+          "max_time_seconds": 10.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/hello_world.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-9165ff6d",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-06T14:11:43.904439+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Say hello world"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "bash",
+              "input": {
+                "command": "echo 'mock'"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "bash",
+              "result": {
+                "stdout": "mock\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "OK"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-hello_world/runs/run-c7f27630/artifacts/trial-9165ff6d/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0004558563232421875,
+        "agent_response": "OK",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 5,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 4.410743713378906e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-9165ff6d",
+      "run_id": "run-c7f27630",
+      "task_id": "hello_world",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-06T14:11:43.903896+00:00",
+      "started_at": "2026-03-06T14:11:43.903855+00:00",
+      "completed_at": "2026-03-06T14:11:43.904463+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-9165ff6d",
+    "run_id": "run-c7f27630",
+    "task_id": "hello_world",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-06T14:11:43.903896+00:00",
+    "started_at": "2026-03-06T14:11:43.903855+00:00",
+    "completed_at": "2026-03-06T14:11:43.904463+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

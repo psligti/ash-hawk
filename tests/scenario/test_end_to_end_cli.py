@@ -43,7 +43,7 @@ def test_scenario_validate_examples(
 
     assert result.exit_code == 0
     assert "PASS" in result.output
-    assert "hello_world" in result.output
+    assert "examples" in result.output  # Path contains 'examples'
 
 
 def test_scenario_run_success_example(

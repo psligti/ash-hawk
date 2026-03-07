@@ -1,0 +1,65 @@
+{
+  "command": "brief",
+  "result": {
+    "command": "brief",
+    "digest": {
+      "trends": [
+        {
+          "topic": "AI Agents",
+          "source": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/hackernews",
+          "score": 0.92,
+          "url": "https://example.com/ai-agents"
+        },
+        {
+          "topic": "Distributed Systems",
+          "source": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/lobsters",
+          "score": 0.88,
+          "url": "https://example.com/dist-sys"
+        },
+        {
+          "topic": "Python 3.13",
+          "source": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/reddit",
+          "score": 0.85,
+          "url": "https://example.com/python"
+        }
+      ],
+      "trends_count": 3,
+      "posts": [
+        {
+          "topic": "AI Agents",
+          "draft": "Draft for AI Agents"
+        },
+        {
+          "topic": "Distributed Systems",
+          "draft": "Draft for Distributed Systems"
+        },
+        {
+          "topic": "Python 3.13",
+          "draft": "Draft for Python 3.13"
+        }
+      ],
+      "posts_count": 3,
+      "replies": [
+        {
+          "handle": "tech_leader",
+          "text": "What are your thoughts on the future of AI agents?",
+          "tier": 1,
+          "is_question": true
+        },
+        {
+          "handle": "startup_founder",
+          "text": "Just launched our new product!",
+          "tier": 2,
+          "is_question": false
+        }
+      ],
+      "replies_count": 2,
+      "format": "terminal"
+    },
+    "metrics": {
+      "execution_time_seconds": 2.5,
+      "sources_queried": 2
+    }
+  },
+  "verification_passed": true
+}

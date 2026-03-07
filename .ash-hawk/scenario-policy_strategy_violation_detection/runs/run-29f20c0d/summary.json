@@ -1,0 +1,277 @@
+{
+  "envelope": {
+    "run_id": "run-29f20c0d",
+    "suite_id": "scenario-policy_strategy_violation_detection",
+    "suite_hash": "151f221df65fb032",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-07T17:35:05.056716+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-policy_strategy_violation_detection",
+    "run_id": "run-29f20c0d",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 1,
+    "failed_tasks": 0,
+    "pass_rate": 1.0,
+    "mean_score": 1.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.021680116653442383,
+    "latency_p50_seconds": 0.021281003952026367,
+    "latency_p95_seconds": 0.021281003952026367,
+    "latency_p99_seconds": 0.021281003952026367,
+    "pass_at_k": {},
+    "created_at": "2026-03-07T17:35:05.095167+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-456f7dfc",
+      "task_id": "policy_strategy_violation_detection",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_strategy_violation_detection",
+          "description": "Test StrategyPolicy violation detection and enforcement",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_policy",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "strategy",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "contact",
+                "author_name": "Contact",
+                "text": "Hello world",
+                "created_at": "2026-03-06T15:00:00Z"
+              },
+              {
+                "id": "222",
+                "author_handle": "contact2",
+                "author_name": "Contact2",
+                "text": "Amazing update!",
+                "created_at": "2026-03-06T15:00:00Z"
+              },
+              {
+                "id": "333",
+                "author_handle": "contact3",
+                "author_name": "Contact3",
+                "text": "Thoughts on the topic?",
+                "created_at": "2026-03-06T15:00:00Z"
+              }
+            ],
+            "relationships": {},
+            "strategy": {
+              "principles": [
+                "No engagement bait",
+                "Prefer build in public content"
+              ],
+              "boundaries": [
+                "No political content"
+              ]
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "Strategy policy evaluates tweets against principles",
+              "Strategy alignment score is calculated"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "strategy_alignment_score",
+                "gte": 0.0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/strategy/policy_strategy_violation_detection.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/strategy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-456f7dfc",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-07T17:35:05.081788+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Evaluate policy: strategy",
+                "tweets_count": 3
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "policy": "strategy",
+                "actions_count": 3,
+                "confidence": 0.9,
+                "strategy_alignment_score": 1.0,
+                "rationale": "Evaluated 3 tweets, 3 passed strategy checks",
+                "actions": [
+                  {
+                    "tweet_id": "111",
+                    "author_handle": "contact",
+                    "action_type": "like",
+                    "priority": 3,
+                    "score": 0.5,
+                    "rationale": "Basic engagement with contact"
+                  },
+                  {
+                    "tweet_id": "222",
+                    "author_handle": "contact2",
+                    "action_type": "like",
+                    "priority": 3,
+                    "score": 0.5,
+                    "rationale": "Basic engagement with contact2"
+                  },
+                  {
+                    "tweet_id": "333",
+                    "author_handle": "contact3",
+                    "action_type": "like",
+                    "priority": 3,
+                    "score": 0.5,
+                    "rationale": "Basic engagement with contact3"
+                  }
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-policy_strategy_violation_detection/runs/run-29f20c0d/artifacts/trial-456f7dfc/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.008123159408569336,
+          "agent_response": "{\"actions\":[{\"tweet_id\":\"111\",\"author_handle\":\"contact\",\"action_type\":\"like\",\"priority\":3,\"score\":0.5,\"rationale\":\"Basic engagement with contact\",\"confidence\":0.7,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.0,\"timeliness_score\":0.0,\"relationship_score\":0.0,\"quality_score\":0.0,\"engagement_potential_score\":0.0},{\"tweet_id\":\"222\",\"author_handle\":\"contact2\",\"action_type\":\"like\",\"priority\":3,\"score\":0.5,\"rationale\":\"Basic engagement with contact2\",\"confidence\":0.7,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.0,\"timeliness_score\":0.0,\"relationship_score\":0.0,\"quality_score\":0.0,\"engagement_potential_score\":0.0},{\"tweet_id\":\"333\",\"author_handle\":\"contact3\",\"action_type\":\"like\",\"priority\":3,\"score\":0.5,\"rationale\":\"Basic engagement with contact3\",\"confidence\":0.7,\"draft_text\":null,\"risk_level\":\"low\",\"strategy_violations\":[],\"relevance_score\":0.0,\"timeliness_score\":0.0,\"relationship_score\":0.0,\"quality_score\":0.0,\"engagement_potential_score\":0.0}],\"rationale\":\"Evaluated 3 tweets, 3 passed strategy checks\",\"confidence\":0.9,\"strategy_alignment_score\":1.0,\"constraints_checked\":[\"principles\",\"boundaries\",\"goals\"],\"violations_found\":[],\"budget_consumed\":{\"max_pending_actions\":10,\"current_pending_actions\":0,\"max_api_calls\":100,\"api_calls_consumed\":0,\"max_processing_time_seconds\":30.0,\"processing_time_consumed\":0.0,\"max_llm_calls\":5,\"llm_calls_consumed\":0,\"max_llm_tokens\":10000,\"llm_tokens_consumed\":0},\"policy_version\":\"1.0.0\",\"processing_time_seconds\":0.0}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.814697265625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-456f7dfc",
+        "run_id": "run-29f20c0d",
+        "task_id": "policy_strategy_violation_detection",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-07T17:35:05.073592+00:00",
+        "started_at": "2026-03-07T17:35:05.073561+00:00",
+        "completed_at": "2026-03-07T17:35:05.081813+00:00"
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "run_id": "run-872091a2",
+  "suite_id": "scenario-policy_edge_budget_exhaustion",
+  "suite_hash": "9ce3c0d28cc6969a",
+  "harness_version": "0.1.0",
+  "git_commit": null,
+  "agent_name": "scenario-adapter",
+  "agent_version": null,
+  "provider": "scenario",
+  "model": "scenario",
+  "model_params": {},
+  "seed": null,
+  "tool_policy_hash": "d783e1cb5350e2e4",
+  "python_version": "3.12.6",
+  "os_info": "macOS-15.7.3-arm64-arm-64bit",
+  "config_snapshot": {},
+  "created_at": "2026-03-07T17:32:35.719848+00:00"
+}

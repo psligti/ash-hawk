@@ -1,0 +1,1005 @@
+{
+  "id": "scenario-batch-82c98ea3",
+  "name": "scenario-batch-82c98ea3",
+  "description": "",
+  "tasks": [
+    {
+      "id": "brief_edge_no_trends",
+      "description": "Test brief_edge_no_trends command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_edge_no_trends",
+          "description": "Test brief_edge_no_trends command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_edge_no_trends.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_edge_no_trends.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "brief_generate_basic",
+      "description": "Test brief_generate_basic command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_generate_basic",
+          "description": "Test brief_generate_basic command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_generate_basic.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_generate_basic.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "brief_post_generation",
+      "description": "Test brief_post_generation command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_post_generation",
+          "description": "Test brief_post_generation command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_post_generation.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_post_generation.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "decision_heuristic_fallback",
+      "description": "Test decision_heuristic_fallback command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "decision_heuristic_fallback",
+          "description": "Test decision_heuristic_fallback command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/decision_heuristic_fallback.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/decision_heuristic_fallback.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "edge_llm_failure",
+      "description": "Test edge_llm_failure command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "edge_llm_failure",
+          "description": "Test edge_llm_failure command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_llm_failure.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_llm_failure.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "edge_pending_limit_reached",
+      "description": "Test edge_pending_limit_reached command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "edge_pending_limit_reached",
+          "description": "Test edge_pending_limit_reached command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_pending_limit_reached.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_pending_limit_reached.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "review_parse_valid",
+      "description": "Test review_parse_valid command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "review_parse_valid",
+          "description": "Test review_parse_valid command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/review_parse_valid.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/review_parse_valid.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "state_pending_to_approved",
+      "description": "Test state_pending_to_approved command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_approved",
+          "description": "Test state_pending_to_approved command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_approved.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_approved.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "state_pending_to_executed",
+      "description": "Test state_pending_to_executed command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_executed",
+          "description": "Test state_pending_to_executed command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_executed.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_executed.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "state_pending_to_needs_revision",
+      "description": "Test state_pending_to_needs_revision command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_needs_revision",
+          "description": "Test state_pending_to_needs_revision command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_needs_revision.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_needs_revision.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "tick_full_cycle",
+      "description": "Test tick_full_cycle command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "tick_full_cycle",
+          "description": "Test tick_full_cycle command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/tick_full_cycle.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/tick_full_cycle.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "pulse_generate_basic",
+      "description": "Test pulse_generate_basic command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "pulse_generate_basic",
+          "description": "Test pulse_generate_basic command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse/pulse_generate_basic.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse/pulse_generate_basic.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "recap_record_metrics",
+      "description": "Test recap_record_metrics command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "recap_record_metrics",
+          "description": "Test recap_record_metrics command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/recap/recap_record_metrics.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/recap"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/recap/recap_record_metrics.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "weekly_pattern_recognition",
+      "description": "Test weekly_pattern_recognition command execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "weekly_pattern_recognition",
+          "description": "Test weekly_pattern_recognition command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly/weekly_pattern_recognition.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly/weekly_pattern_recognition.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

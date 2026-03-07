@@ -1,0 +1,43 @@
+schema_version: "v1"
+id: "policy_fsm_bridge_baseline"
+description: "Baseline policy eval through FSM bridge mode"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "mock_adapter"
+  config: {}
+
+inputs:
+  prompt: "Summarize this task in two steps, then read one file and report findings."
+
+tools:
+  allowed_tools:
+    - "read"
+    - "glob"
+    - "grep"
+  mocks: {}
+  fault_injection: {}
+
+budgets:
+  max_steps: 10
+  max_tool_calls: 20
+  max_tokens: 2000
+  max_time_seconds: 120.0
+
+expectations:
+  must_events: []
+  must_not_events: []
+  ordering_rules: []
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 10
+      max_tool_calls: 20
+      max_time_seconds: 120.0

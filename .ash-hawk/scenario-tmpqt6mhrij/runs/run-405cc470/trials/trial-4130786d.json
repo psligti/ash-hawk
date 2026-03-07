@@ -1,0 +1,204 @@
+{
+  "trial": {
+    "id": "trial-4130786d",
+    "task_id": "policy_budget_soft_pressure",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "policy_budget_soft_pressure",
+        "description": "Policy should stay conservative and still make progress under soft budget pressure",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "sdk_dawn_kestrel",
+          "config": {
+            "policy_mode": "router",
+            "runner_kwargs": {},
+            "run_config": {},
+            "model": "m2",
+            "policy": "rules"
+          }
+        },
+        "inputs": {
+          "prompt": "Do the smallest useful action and stop once you have enough evidence for a summary."
+        },
+        "tools": {
+          "allowed_tools": [
+            "read",
+            "glob",
+            "grep",
+            "bash"
+          ],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 4,
+          "max_tool_calls": 6,
+          "max_tokens": 600,
+          "max_time_seconds": 45.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "budget",
+            "config": {
+              "max_steps": 4,
+              "max_tool_calls": 6,
+              "max_time_seconds": 45.0
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpqt6mhrij/002-policy_budget_soft_pressure.scenario.yaml",
+      "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpqt6mhrij"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-4130786d",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-06T15:57:41.910888+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-tmpqt6mhrij/runs/run-405cc470/artifacts/trial-4130786d/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0026230812072753906,
+        "agent_response": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 227, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 575, in complete\n    model_info = await self._ensure_model_info()\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 391, in _ensure_model_info\n    raise ValueError(f\"Model {self.model} not found for provider {self.provider_id}\")\nValueError: Model m2 not found for provider ProviderID.Z_AI_CODING_PLAN\n",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 1,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.3113021850585938e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "budget",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: budget",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.5,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-4130786d",
+      "run_id": "run-405cc470",
+      "task_id": "policy_budget_soft_pressure",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-06T15:57:41.908236+00:00",
+      "started_at": "2026-03-06T15:57:41.908224+00:00",
+      "completed_at": "2026-03-06T15:57:41.910897+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-4130786d",
+    "run_id": "run-405cc470",
+    "task_id": "policy_budget_soft_pressure",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-06T15:57:41.908236+00:00",
+    "started_at": "2026-03-06T15:57:41.908224+00:00",
+    "completed_at": "2026-03-06T15:57:41.910897+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

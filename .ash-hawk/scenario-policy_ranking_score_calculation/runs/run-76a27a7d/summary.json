@@ -1,0 +1,256 @@
+{
+  "envelope": {
+    "run_id": "run-76a27a7d",
+    "suite_id": "scenario-policy_ranking_score_calculation",
+    "suite_hash": "22e9ddd266c9a226",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-07T17:28:47.142701+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-policy_ranking_score_calculation",
+    "run_id": "run-76a27a7d",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 1,
+    "failed_tasks": 0,
+    "pass_rate": 1.0,
+    "mean_score": 1.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.015116214752197266,
+    "latency_p50_seconds": 0.014690160751342773,
+    "latency_p95_seconds": 0.014690160751342773,
+    "latency_p99_seconds": 0.014690160751342773,
+    "pass_at_k": {},
+    "created_at": "2026-03-07T17:28:47.174400+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-ab397903",
+      "task_id": "policy_ranking_score_calculation",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_ranking_score_calculation",
+          "description": "Test RankingPolicy multi-dimensional scoring",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "ranking",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "tech_expert",
+                "author_name": "Tech Expert",
+                "text": "Just published a deep dive on distributed systems consensus algorithms with code examples",
+                "created_at": "2026-03-06T14:30:00Z",
+                "public_metrics": {
+                  "like_count": 50,
+                  "reply_count": 10
+                },
+                "detected_topics": [
+                  "distributed systems"
+                ]
+              },
+              {
+                "id": "222",
+                "author_handle": "casual_poster",
+                "author_name": "Casual Poster",
+                "text": "Check out this link!",
+                "created_at": "2026-03-06T10:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 1
+                },
+                "detected_topics": []
+              }
+            ],
+            "relationships": {
+              "tech_expert": {
+                "handle": "tech_expert",
+                "tier": 1
+              }
+            },
+            "strategy": {
+              "topics": {
+                "primary_topics": [
+                  "distributed systems",
+                  "consensus"
+                ]
+              }
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "First tweet scores higher than second",
+              "High-quality content gets recognized"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions_count",
+                "gt": 0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpwi7ol7q8/000-policy_ranking_score_calculation.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpwi7ol7q8"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-ab397903",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-07T17:28:47.160059+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Hello"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-policy_ranking_score_calculation/runs/run-76a27a7d/artifacts/trial-ab397903/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0005919933319091797,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.600120544433594e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-ab397903",
+        "run_id": "run-76a27a7d",
+        "task_id": "policy_ranking_score_calculation",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-07T17:28:47.159393+00:00",
+        "started_at": "2026-03-07T17:28:47.159354+00:00",
+        "completed_at": "2026-03-07T17:28:47.160135+00:00"
+      }
+    }
+  ]
+}

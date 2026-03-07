@@ -81,7 +81,8 @@ def _event_from_message(message: dict[str, Any]) -> TraceEvent:
 
     if isinstance(message_type, str) and message_type in MESSAGE_TYPE_EVENT_MAP:
         event_cls = MESSAGE_TYPE_EVENT_MAP[message_type]
-        return event_cls(ts=DEFAULT_TRACE_TS, data=data)
+        # Use create() factory method which handles defaults correctly
+        return event_cls.create(DEFAULT_TRACE_TS, data)
 
     if role == "tool":
         return ToolResultEvent.create(DEFAULT_TRACE_TS, data)

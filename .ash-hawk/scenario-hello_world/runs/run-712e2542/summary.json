@@ -1,0 +1,162 @@
+{
+  "envelope": {
+    "run_id": "run-712e2542",
+    "suite_id": "scenario-hello_world",
+    "suite_hash": "9f108cb51405253b",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-06T14:14:15.107187+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-hello_world",
+    "run_id": "run-712e2542",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 1,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.001322031021118164,
+    "latency_p50_seconds": 0.0009579658508300781,
+    "latency_p95_seconds": 0.0009579658508300781,
+    "latency_p99_seconds": 0.0009579658508300781,
+    "pass_at_k": {},
+    "created_at": "2026-03-06T14:14:15.119696+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-cd7187af",
+      "task_id": "hello_world",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "hello_world",
+          "description": "Minimal smoke test for agentic SDK with mock adapter",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Say hello world"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {
+                  "command": "echo hi"
+                },
+                "result": {
+                  "stdout": "hi\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 3,
+            "max_tool_calls": 5,
+            "max_tokens": 100,
+            "max_time_seconds": 10.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpog27lu6c/000-hello_world.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpog27lu6c"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-cd7187af",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Scenario adapter not found: sdk_dawn_kestrel",
+          "completed_at": "2026-03-06T14:14:15.118608+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 3.695487976074219e-05,
+          "agent_response": null,
+          "error_trace": "Scenario adapter not found: sdk_dawn_kestrel"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-cd7187af",
+        "run_id": "run-712e2542",
+        "task_id": "hello_world",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-06T14:14:15.118496+00:00",
+        "started_at": "2026-03-06T14:14:15.118458+00:00",
+        "completed_at": "2026-03-06T14:14:15.118634+00:00"
+      }
+    }
+  ]
+}

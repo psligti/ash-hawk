@@ -1,0 +1,137 @@
+{
+  "id": "scenario-pulse_generate_basic",
+  "name": "scenario-pulse_generate_basic",
+  "description": "",
+  "tasks": [
+    {
+      "id": "pulse_generate_basic",
+      "description": "Test basic midday pulse generation with fast execution",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "pulse_generate_basic",
+          "description": "Test basic midday pulse generation with fast execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "pulse",
+            "config": {
+              "limit": 5,
+              "output": "terminal"
+            },
+            "mock_feed": {
+              "items": [
+                {
+                  "id": "111",
+                  "author": "colleague",
+                  "text": "Has anyone tried the new Python async features?",
+                  "created_at": "2026-03-06T12:30:00Z",
+                  "metrics": {
+                    "likes": 5,
+                    "replies": 3
+                  }
+                },
+                {
+                  "id": "222",
+                  "author": "industry_peer",
+                  "text": "Great article on distributed systems!",
+                  "created_at": "2026-03-06T12:15:00Z",
+                  "metrics": {
+                    "likes": 20,
+                    "replies": 8
+                  }
+                }
+              ]
+            },
+            "strategy": {
+              "tier1_handles": [
+                "colleague"
+              ],
+              "tier2_handles": [
+                "industry_peer"
+              ],
+              "primary_topics": [
+                "Python",
+                "distributed systems"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "Feed items fetched from X only",
+              "5 or fewer reply targets identified",
+              "Pulse completes in < 5 seconds",
+              "Quick metrics snapshot included"
+            ],
+            "must_not_events": [
+              "Fetch from hackernews/lobsters/etc",
+              "Generate more than 10 targets",
+              "Take > 5 seconds"
+            ],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "targets_count",
+                "lte": 5
+              },
+              {
+                "path": "execution_time_seconds",
+                "lt": 5.0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse/pulse_generate_basic.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse/pulse_generate_basic.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

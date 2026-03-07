@@ -1,0 +1,221 @@
+{
+  "trial": {
+    "id": "trial-798294d9",
+    "task_id": "policy_edge_budget_exhaustion",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "policy_edge_budget_exhaustion",
+        "description": "Test policy behavior when budget is exhausted",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "mock_adapter",
+          "config": {}
+        },
+        "inputs": {
+          "policy": "engagement",
+          "tweets": [
+            {
+              "id": "111",
+              "author_handle": "important_contact",
+              "author_name": "Important Contact",
+              "text": "Important question here?",
+              "created_at": "2026-03-06T15:00:00Z"
+            }
+          ],
+          "relationships": {},
+          "strategy": {},
+          "budget": {
+            "max_pending_actions": 10,
+            "current_pending_actions": 10
+          }
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [
+            "BudgetExhaustedError raised or no actions proposed"
+          ],
+          "must_not_events": [
+            "Actions created despite budget exhaustion"
+          ],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "actions_count",
+              "expected": 0
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpi6s3a1e4/000-policy_edge_budget_exhaustion.scenario.yaml",
+      "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpi6s3a1e4"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-798294d9",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-07T17:28:47.159989+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Hello"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "Mock verification passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "OK"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-policy_edge_budget_exhaustion/runs/run-c113d76f/artifacts/trial-798294d9/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.000431060791015625,
+        "agent_response": "OK",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 4.696846008300781e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-798294d9",
+      "run_id": "run-c113d76f",
+      "task_id": "policy_edge_budget_exhaustion",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-07T17:28:47.159486+00:00",
+      "started_at": "2026-03-07T17:28:47.159449+00:00",
+      "completed_at": "2026-03-07T17:28:47.160135+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-798294d9",
+    "run_id": "run-c113d76f",
+    "task_id": "policy_edge_budget_exhaustion",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-07T17:28:47.159486+00:00",
+    "started_at": "2026-03-07T17:28:47.159449+00:00",
+    "completed_at": "2026-03-07T17:28:47.160135+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

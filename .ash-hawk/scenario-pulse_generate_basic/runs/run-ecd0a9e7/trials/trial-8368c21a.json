@@ -1,0 +1,262 @@
+{
+  "trial": {
+    "id": "trial-8368c21a",
+    "task_id": "pulse_generate_basic",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "pulse_generate_basic",
+        "description": "Test basic midday pulse generation with fast execution",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_command",
+          "config": {}
+        },
+        "inputs": {
+          "command": "pulse",
+          "config": {
+            "limit": 5,
+            "output": "terminal"
+          },
+          "mock_feed": {
+            "items": [
+              {
+                "id": "111",
+                "author": "colleague",
+                "text": "Has anyone tried the new Python async features?",
+                "created_at": "2026-03-06T12:30:00Z",
+                "metrics": {
+                  "likes": 5,
+                  "replies": 3
+                }
+              },
+              {
+                "id": "222",
+                "author": "industry_peer",
+                "text": "Great article on distributed systems!",
+                "created_at": "2026-03-06T12:15:00Z",
+                "metrics": {
+                  "likes": 20,
+                  "replies": 8
+                }
+              }
+            ]
+          },
+          "strategy": {
+            "tier1_handles": [
+              "colleague"
+            ],
+            "tier2_handles": [
+              "industry_peer"
+            ],
+            "primary_topics": [
+              "Python",
+              "distributed systems"
+            ]
+          }
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [
+            "Feed items fetched from X only",
+            "5 or fewer reply targets identified",
+            "Pulse completes in < 5 seconds",
+            "Quick metrics snapshot included"
+          ],
+          "must_not_events": [
+            "Fetch from hackernews/lobsters/etc",
+            "Generate more than 10 targets",
+            "Take > 5 seconds"
+          ],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "targets_count",
+              "lte": 5
+            },
+            {
+              "path": "execution_time_seconds",
+              "lt": 5.0
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse/pulse_generate_basic.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-8368c21a",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-07T21:11:26.566566+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Execute command: pulse",
+              "inputs": [
+                "command",
+                "config",
+                "mock_feed",
+                "strategy"
+              ]
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "command": "pulse",
+              "status": "completed",
+              "targets_count": 2
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "All assertions passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-pulse_generate_basic/runs/run-ecd0a9e7/artifacts/trial-8368c21a/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.00044083595275878906,
+        "agent_response": "{\"command\": \"pulse\", \"targets\": [{\"id\": \"111\", \"author\": \"colleague\", \"text\": \"Has anyone tried the new Python async features?\", \"metrics\": {\"likes\": 5, \"replies\": 3}}, {\"id\": \"222\", \"author\": \"industry_peer\", \"text\": \"Great article on distributed systems!\", \"metrics\": {\"likes\": 20, \"replies\": 8}}], \"targets_count\": 2, \"sources\": [\"x_feed\"], \"execution_time_seconds\": 1.5}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 5.2928924560546875e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-8368c21a",
+      "run_id": "run-ecd0a9e7",
+      "task_id": "pulse_generate_basic",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-07T21:11:26.566064+00:00",
+      "started_at": "2026-03-07T21:11:26.566036+00:00",
+      "completed_at": "2026-03-07T21:11:26.566731+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-8368c21a",
+    "run_id": "run-ecd0a9e7",
+    "task_id": "pulse_generate_basic",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-07T21:11:26.566064+00:00",
+    "started_at": "2026-03-07T21:11:26.566036+00:00",
+    "completed_at": "2026-03-07T21:11:26.566731+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

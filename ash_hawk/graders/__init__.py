@@ -1,3 +1,6 @@
+from .cheat_detection import CheatDetectionGrader
+
+
 """Grader infrastructure for ash-hawk evaluation harness.
 
 This module provides the base grader abstract class and a registry
@@ -28,6 +31,28 @@ from ash_hawk.graders.aggregation import (
     slice_results,
 )
 from ash_hawk.graders.base import Grader, PassThroughGrader
+from ash_hawk.graders.judge_normalizer import (
+    NormalizedJudgeOutput,
+    normalize_judge_output,
+)
+from ash_hawk.graders.registry import (
+    ENTRY_POINT_GROUP,
+    GraderRegistry,
+    get_default_registry,
+)
+from ash_hawk.graders.rubric_guard import (
+    enforce_rubric_based_evaluation,
+    task_has_rubric_based_evaluation,
+    validate_suite_has_rubric_based_evaluation,
+    validate_task_has_rubric,
+)
+from ash_hawk.graders.score_normalizer import (
+    compute_weighted_score,
+    normalize_grader_scores,
+    normalize_score,
+    score_to_grade,
+)
+from ash_hawk.graders.base import Grader, PassThroughGrader
 from ash_hawk.graders.registry import (
     ENTRY_POINT_GROUP,
     GraderRegistry,
@@ -53,4 +78,17 @@ __all__ = [
     "group_by_time",
     "percentile",
     "slice_results",
+    # Judge normalizer
+    "NormalizedJudgeOutput",
+    "normalize_judge_output",
+    # Score normalizer
+    "compute_weighted_score",
+    "normalize_grader_scores",
+    "normalize_score",
+    "score_to_grade",
+    # Rubric guard
+    "enforce_rubric_based_evaluation",
+    "task_has_rubric_based_evaluation",
+    "validate_suite_has_rubric_based_evaluation",
+    "validate_task_has_rubric",
 ]
