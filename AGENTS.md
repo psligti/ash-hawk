@@ -1,0 +1,278 @@
+# AGENTS.md - Ash Hawk Codebase Guide
+
+## Project Overview
+
+Ash Hawk is a Python evaluation harness for AI agents. It provides structured task execution, automated grading (deterministic, LLM-based, composite), and comprehensive result tracking.
+
+---
+
+## Build/Lint/Test Commands
+
+### Installation
+```bash
+uv sync                    # Install all dependencies
+uv sync --group dev        # Install with dev dependencies
+```
+
+### Linting & Type Checking
+```bash
+uv run ruff check .        # Run ruff linter
+uv run ruff check . --fix  # Auto-fix lint issues
+uv run mypy ash_hawk       # Run mypy type checker (strict mode)
+```
+
+### Testing
+```bash
+uv run pytest              # Run all tests with coverage
+uv run pytest tests/       # Run tests in specific directory
+uv run pytest tests/graders/test_composite.py  # Run single test file
+uv run pytest tests/graders/test_composite.py::TestWeightedMode  # Run single test class
+uv run pytest tests/graders/test_composite.py::TestWeightedMode::test_weighted_equal_weights  # Run single test
+uv run pytest -x           # Stop on first failure
+uv run pytest -v           # Verbose output
+uv run pytest --no-cov     # Run without coverage
+```
+
+### Building
+```bash
+uv build                   # Build package
+```
+
+### CLI Usage
+```bash
+ash-hawk run <suite.yaml> --agent <name>  # Run evaluation suite
+ash-hawk list                             # List runs
+ash-hawk report --run <run-id>            # Generate report
+ash-hawk validate <suite.yaml>            # Validate suite YAML
+```
+
+---
+
+## Code Style Guidelines
+
+### Imports
+```python
+# Standard library first (alphabetically)
+from __future__ import annotations
+from abc import ABC, abstractmethod
+from datetime import UTC, datetime
+from typing import Any, Literal
+
+# Third-party second
+import pydantic as pd
+import pytest
+
+# Local imports last
+from ash_hawk.types import EvalTranscript, EvalTrial, GraderResult
+```
+
+### Naming Conventions
+- **Files**: `snake_case.py` (e.g., `llm_judge.py`, `test_runner.py`)
+- **Classes**: `PascalCase` (e.g., `CompositeGrader`, `EvalSuite`)
+- **Functions/Methods**: `snake_case` (e.g., `grade_trial`, `is_tool_allowed`)
+- **Constants**: `UPPER_SNAKE_CASE` (e.g., `DEFAULT_TIMEOUT_SECONDS`)
+- **Private attributes**: `_leading_underscore` (e.g., `_name`, `_weights`)
+- **Enums**: `PascalCase` for class, `UPPER_CASE` for values
+
+### Type Hints (MANDATORY)
+```python
+# All functions must have complete type hints
+async def grade(
+    self,
+    trial: EvalTrial,
+    transcript: EvalTranscript,
+    spec: GraderSpec,
+) -> GraderResult:
+    ...
+
+# Use modern union syntax
+def __init__(self, name: str | None = None): ...
+
+# Use list/dict generics directly
+items: list[str] = []
+config: dict[str, Any] = {}
+```
+
+### Pydantic Models
+```python
+# All models use strict validation with extra="forbid"
+class MyModel(pd.BaseModel):
+    field: str = pd.Field(description="Field description")
+    optional: int | None = pd.Field(default=None, description="Optional field")
+    
+    model_config = pd.ConfigDict(extra="forbid")
+
+# Use computed_field for derived properties
+@pd.computed_field(return_type=int)
+def total(self) -> int:
+    return self.input + self.output
+```
+
+### Docstrings
+```python
+def method(self, arg: str) -> bool:
+    """Brief one-line description.
+
+    Longer description if needed.
+
+    Args:
+        arg: Description of arg.
+
+    Returns:
+        Description of return value.
+    """
+```
+
+### Error Handling
+- Raise specific exceptions with descriptive messages
+- Use `ValueError` for validation errors
+- Include context in error messages
+
+### Formatting (via ruff)
+- Line length: 100 characters
+- Target Python: 3.11+
+- Ruff rules enabled: E, F, I, W, UP (pyupgrade)
+
+### Async Patterns
+```python
+# All I/O operations are async
+async def grade(self, trial: EvalTrial, ...) -> GraderResult:
+    result = await some_async_operation()
+    return result
+
+# Use pytest.mark.asyncio for async tests
+@pytest.mark.asyncio
+async def test_something():
+    result = await my_async_func()
+    assert result is True
+```
+
+### Test Patterns
+```python
+# Fixtures at module level
+@pytest.fixture
+def trial():
+    return EvalTrial(id="trial-1", task_id="task-1")
+
+# Class-based test organization
+class TestCompositeGrader:
+    """Test CompositeGrader."""
+    
+    @pytest.mark.asyncio
+    async def test_weighted_scoring(self, trial, transcript, spec):
+        # Arrange
+        grader = CompositeGrader([...])
+        # Act
+        result = await grader.grade(trial, transcript, spec)
+        # Assert
+        assert result.score == 0.75
+```
+
+---
+
+## Project Structure
+
+```
+ash-hawk/
+├── ash_hawk/           # Main package
+│   ├── agents/         # Agent adapters (dawn-kestrel, etc.)
+│   ├── calibration/    # Calibration analysis (ECE, Brier)
+│   ├── cli/            # CLI commands (run, list, report)
+│   ├── configs/        # Config loading (pyproject, conftest)
+│   ├── events/         # Event system
+│   ├── execution/      # Trial execution, fixtures
+│   ├── graders/        # Graders (base, llm_judge, composite, etc.)
+│   ├── metrics/        # Statistics and metrics
+│   ├── policy/         # Tool policy enforcement
+│   ├── reporting/      # HTML/JSON reports
+│   ├── scenario/       # Scenario running (new framework)
+│   ├── storage/        # Backends (file, sqlite, postgres, s3)
+│   ├── templates/      # Task templates
+│   ├── types.py        # Core type definitions
+│   └── config.py       # Configuration management
+├── tests/              # Test suite (mirrors ash_hawk structure)
+├── evals/              # Evaluation suites and fixtures
+├── examples/           # Example suites and scenarios
+├── docs/               # Documentation
+├── pyproject.toml      # Project config
+├── ruff.toml           # Linter config
+└── pyrightconfig.json  # Type checker config
+```
+
+---
+
+## Note-Lark Knowledge Management
+
+Use note-lark MCP tools for persistent knowledge capture:
+
+### Global Knowledge (cross-project)
+```python
+# Capture patterns, learnings, principles
+note-lark_memory_structured({
+    title: "Grader Best Practices",
+    memory_type: "procedural",
+    scope: "global",
+    tags: ["pattern", "graders"]
+})
+```
+
+### Project-Specific Knowledge
+```python
+# Capture project conventions, decisions
+note-lark_memory_append({
+    scope: "global",  # or "project" with project_id
+    tags: ["ash-hawk", "convention"]
+})
+```
+
+### Note Types to Use
+- `docs` - Reference documentation
+- `glossary` - Domain terms and definitions
+- `learnings` - Things that worked or didn't work
+- `principles` - Design principles
+- `reference` - External references
+- `skills` - Skill documentation
+- `specs` - Specifications
+- `standards` - Code standards
+- `tickets` - Task tracking
+
+### Workflow
+1. **Session start**: Search memory for project context
+2. **During work**: Append lightweight learnings
+3. **Decisions**: Create structured memory
+4. **Before completing**: Document any new patterns
+
+---
+
+## Key Dependencies
+
+- **pydantic** (v2+): Data validation, strict mode
+- **click**: CLI framework
+- **pytest**: Testing with pytest-asyncio
+- **ruff**: Fast linting and formatting
+- **mypy**: Strict type checking
+- **rich**: CLI output formatting
+- **aiofiles/aiohttp/aiosqlite/asyncpg**: Async I/O
+
+---
+
+## Environment Variables
+
+```bash
+ASH_HAWK_PARALLELISM=4
+ASH_HAWK_DEFAULT_TIMEOUT_SECONDS=300
+ASH_HAWK_STORAGE_BACKEND=file
+ASH_HAWK_STORAGE_PATH=.ash-hawk-results
+ASH_HAWK_LOG_LEVEL=INFO
+```
+
+---
+
+## Important Notes
+
+- **Never** suppress type errors (`# type: ignore`, `Any` abuse)
+- **Never** skip hooks or tests
+- **Always** run `ruff check` and `mypy` before committing
+- **Always** use async for I/O operations
+- **Always** add type hints to all public functions
+- **Always** use `extra="forbid"` in Pydantic models

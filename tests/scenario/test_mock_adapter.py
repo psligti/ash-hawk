@@ -131,3 +131,45 @@ def test_mock_adapter_registered():
     adapter = registry.get("mock_adapter")
     assert adapter is not None
     assert adapter.name == "mock_adapter"
+
+
+def test_mock_adapter_with_extra_mock_tool_calls():
+    adapter = MockAdapter()
+
+    scenario = {
+        "id": "test-scenario-extra",
+        "sut": {"type": "coding_agent", "adapter": "mock_adapter"},
+        "tools": {"allowed_tools": []},
+        "inputs": {
+            "prompt": "Test prompt",
+            "mock_tool_calls": [
+                {
+                    "tool": "note-lark_memory_search",
+                    "input": {"query": "prefs"},
+                }
+            ],
+        },
+        "expectations": {},
+        "budgets": {},
+    }
+
+    workdir = Path("/tmp")
+    tooling_harness = ToolingHarness(mode="mock", root=workdir)
+    tooling_harness.register_mock(
+        "note-lark_memory_search",
+        {"query": "prefs"},
+        {"items": []},
+    )
+
+    final_output, trace_events, artifacts = adapter.run_scenario(
+        scenario, workdir, tooling_harness, {}
+    )
+
+    assert final_output == "OK"
+    assert artifacts == {}
+
+    tool_call_events = [e for e in trace_events if e["event_type"] == "ToolCallEvent"]
+    tool_result_events = [e for e in trace_events if e["event_type"] == "ToolResultEvent"]
+    assert len(tool_call_events) == 1
+    assert len(tool_result_events) == 1
+    assert tool_call_events[0]["data"]["tool"] == "note-lark_memory_search"

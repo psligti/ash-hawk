@@ -801,7 +801,7 @@ requires-dist = [
     { name = "asyncio-extras", specifier = ">=0.22.0" },
     { name = "click", specifier = ">=8.0" },
     { name = "click", marker = "extra == 'cli'", specifier = ">=8.0" },
-    { name = "dawn-kestrel", extras = ["cli", "tui"], marker = "extra == 'full'" },
+    { name = "dawn-kestrel", extras = ["cli", "tui", "redis"], marker = "extra == 'full'" },
     { name = "dependency-injector", specifier = ">=4.41" },
     { name = "faker", marker = "extra == 'dev'", specifier = ">=28.0" },
     { name = "gitpython", specifier = ">=3.1" },
@@ -814,6 +814,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
     { name = "python-frontmatter", specifier = ">=1.0" },
+    { name = "redis", marker = "extra == 'redis'", specifier = ">=5.0" },
     { name = "rich", specifier = ">=13.0" },
     { name = "rich", marker = "extra == 'cli'", specifier = ">=13.0" },
     { name = "ripgrep", specifier = ">=14.0" },
@@ -825,7 +826,7 @@ requires-dist = [
     { name = "tomli", specifier = ">=2.0" },
     { name = "tomli-w", specifier = ">=1.0" },
 ]
-provides-extras = ["cli", "tui", "full", "dev"]
+provides-extras = ["cli", "tui", "redis", "full", "dev"]
 
 [package.metadata.requires-dev]
 dev = [

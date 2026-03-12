@@ -100,6 +100,38 @@ class MockAdapter:
             )
             trace_events.append(tool_result.model_dump())
 
+        extra_calls = scenario.get("inputs", {}).get("mock_tool_calls", [])
+        if isinstance(extra_calls, list):
+            for item in extra_calls:
+                if not isinstance(item, dict):
+                    continue
+                tool_name = item.get("tool")
+                tool_input = item.get("input", {})
+                if not isinstance(tool_name, str) or not tool_name.strip():
+                    continue
+                if not isinstance(tool_input, dict):
+                    tool_input = {}
+
+                call_event = ToolCallEvent.create(
+                    ts=DEFAULT_TRACE_TS,
+                    data={"tool": tool_name, "input": tool_input},
+                )
+                trace_events.append(call_event.model_dump())
+
+                try:
+                    if hasattr(tooling_harness, "call"):
+                        result = tooling_harness.call(tool_name, tool_input)
+                    else:
+                        result = {"ok": True}
+                except Exception:
+                    result = {"ok": False}
+
+                result_event = ToolResultEvent.create(
+                    ts=DEFAULT_TRACE_TS,
+                    data={"tool": tool_name, "result": result},
+                )
+                trace_events.append(result_event.model_dump())
+
         # 3. Emit VerificationEvent if expectations are configured
         expectations = scenario.get("expectations", {})
         has_expectations = (
@@ -118,11 +150,17 @@ class MockAdapter:
             trace_events.append(verification.model_dump())
 
         # 4. Emit final output message
+        final_content = scenario.get("inputs", {}).get(
+            "expected_output",
+            "OK",
+        )
+        if not isinstance(final_content, str):
+            final_content = str(final_content)
         final_msg = ModelMessageEvent.create(
             ts=DEFAULT_TRACE_TS,
-            data={"role": "assistant", "content": "OK"},
+            data={"role": "assistant", "content": final_content},
         )
         trace_events.append(final_msg.model_dump())
 
         # Return final output, trace events, and empty artifacts
-        return "OK", trace_events, {}
+        return final_content, trace_events, {}

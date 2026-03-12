@@ -147,6 +147,7 @@ _default_registry: GraderRegistry | None = None
 
 
 def _register_builtin_graders(registry: GraderRegistry) -> None:
+    from ash_hawk.graders.cheat_detection import CheatDetectionGrader
     from ash_hawk.graders.code import (
         StaticAnalysisGrader,
         StringMatchGrader,
@@ -154,14 +155,15 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
         ToolCallGrader,
         TranscriptGrader,
     )
-    from ash_hawk.graders.cheat_detection import CheatDetectionGrader
     from ash_hawk.graders.diff_constraints import DiffConstraintsGrader
     from ash_hawk.graders.human import ManualReviewGrader
     from ash_hawk.graders.llm_judge import LLMJudgeGrader
     from ash_hawk.graders.structured import FormatGrader, SchemaGrader, ToolUsageGrader
     from ash_hawk.graders.trace_assertions import (
+        BudgetComplianceGrader,
         EvidenceRequiredGrader,
         OrderingGrader,
+        TraceContentGrader,
         TraceSchemaGrader,
         VerifyBeforeDoneGrader,
     )
@@ -176,6 +178,8 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(FormatGrader())
     registry.register(ToolUsageGrader())
     registry.register(TraceSchemaGrader())
+    registry.register(TraceContentGrader())
+    registry.register(BudgetComplianceGrader())
     registry.register(VerifyBeforeDoneGrader())
     registry.register(EvidenceRequiredGrader())
     registry.register(OrderingGrader())

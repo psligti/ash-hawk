@@ -142,6 +142,13 @@ class TestGraderRegistry:
         assert len(registry) == 3
         assert registry.list_graders() == ["custom1", "custom2", "pass_through"]
 
+    def test_default_registry_includes_trace_content(self):
+        import ash_hawk.graders.registry as reg_module
+
+        reg_module._default_registry = None
+        registry = get_default_registry()
+        assert "trace_content" in registry.list_graders()
+
     def test_register_overwrites(self):
         """Registering with same name overwrites previous grader."""
         registry = GraderRegistry()

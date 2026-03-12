@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
@@ -151,19 +151,19 @@ class VoxJayCommandAdapter:
         """Simulate brief command execution."""
         config = inputs.get("config", {})
         mock_sources = inputs.get("mock_sources", {})
-        strategy = inputs.get("strategy", {})
+        _strategy = inputs.get("strategy", {})
 
         # Get mock data
         trends = mock_sources.get("trends", [])
         feed_items = mock_sources.get("feed_items", [])
 
         # Calculate results
-        posts_count = config.get("posts", 3)
+        requested_posts = config.get("posts", 3)
         replies_count = config.get("replies", 10)
         trends_count = min(config.get("trends_limit", 7), len(trends))
 
         # Generate reply targets based on feed items
-        reply_targets = []
+        reply_targets: list[dict[str, Any]] = []
         for item in feed_items[:replies_count]:
             reply_targets.append(
                 {
@@ -174,16 +174,18 @@ class VoxJayCommandAdapter:
                 }
             )
 
+        generated_posts = [
+            {"topic": t.get("topic"), "draft": f"Draft for {t.get('topic')}"}
+            for t in trends[:requested_posts]
+        ]
+
         result = {
             "command": "brief",
             "digest": {
                 "trends": trends[:trends_count],
                 "trends_count": trends_count,
-                "posts": [
-                    {"topic": t.get("topic"), "draft": f"Draft for {t.get('topic')}"}
-                    for t in trends[:posts_count]
-                ],
-                "posts_count": posts_count,
+                "posts": generated_posts,
+                "posts_count": len(generated_posts),
                 "replies": reply_targets,
                 "replies_count": len(reply_targets),
                 "format": config.get("output", "terminal"),
@@ -201,7 +203,7 @@ class VoxJayCommandAdapter:
                 "command": "brief",
                 "status": "completed",
                 "trends_count": trends_count,
-                "posts_count": posts_count,
+                "posts_count": len(generated_posts),
                 "replies_count": len(reply_targets),
             },
         )
@@ -215,14 +217,14 @@ class VoxJayCommandAdapter:
         """Simulate pulse command execution."""
         config = inputs.get("config", {})
         mock_feed = inputs.get("mock_feed", {})
-        strategy = inputs.get("strategy", {})
+        _strategy = inputs.get("strategy", {})
 
         # Get mock data
         items = mock_feed.get("items", [])
         limit = config.get("limit", 5)
 
         # Generate targets
-        targets = []
+        targets: list[dict[str, Any]] = []
         for item in items[:limit]:
             targets.append(
                 {
@@ -317,7 +319,7 @@ class VoxJayCommandAdapter:
 
         # Process review notes
         notes_processed = 0
-        status_changes = []
+        status_changes: list[dict[str, Any]] = []
 
         for note in review_notes:
             notes_processed += 1
@@ -331,19 +333,84 @@ class VoxJayCommandAdapter:
         # Get new tweets
         new_tweets = mock_bird_client.get("new_tweets", [])
 
-        # Generate new actions
-        new_actions = []
-        for tweet in new_tweets[: config.get("max_new_actions", 5)]:
+        # Generate new actions with realistic drafts
+        max_pending_actions = int(config.get("max_pending_actions", 60))
+        existing_pending = len(database.get("existing_actions", []))
+        pending_after_reviews = max(0, existing_pending - notes_processed)
+        available_capacity = max(0, max_pending_actions - pending_after_reviews)
+        requested_new_actions = int(config.get("max_new_actions", 5))
+        allowed_new_actions = min(requested_new_actions, available_capacity)
+        simulate_llm_failure = bool(config.get("simulate_llm_failure", False))
+
+        new_actions: list[dict[str, Any]] = []
+        drafts_seen: set[str] = set()  # Track uniqueness
+
+        for tweet in new_tweets[:allowed_new_actions]:
             author = tweet.get("author_handle")
-            tier = 2 if author in strategy.get("tier2_handles", []) else 3
+            tier1_handles = strategy.get("tier1_handles", [])
+            tier2_handles = strategy.get("tier2_handles", [])
+            if author in tier1_handles:
+                tier = 1
+            elif author in tier2_handles:
+                tier = 2
+            else:
+                tier = 3
+            text = tweet.get("text", "")
+
+            # Determine action type
+            is_question = "?" in text
+            action_type = "reply" if is_question else "like"
+
+            # Generate unique, context-specific draft for replies
+            draft_text = None
+            if action_type == "reply":
+                # Extract topic hint from tweet (first 8 words of first sentence)
+                import re
+
+                clean_text = re.sub(r"https?://\S+", "", text).strip()
+                parts = re.split(r"[?.!]", clean_text)
+                first_sentence = next((p.strip() for p in parts if p.strip()), "")
+                words = first_sentence.split()[:8]
+                topic_hint = " ".join(words).lower() if words else ""
+
+                # Generate unique draft based on tweet content
+                if "GIL" in text or "async" in text or "throughput" in text:
+                    draft_text = f"On {topic_hint} - we saw similar gains when we moved our DB waits to async. The key was measuring before optimizing."
+                elif "ORM" in text or "SQL" in text or "query" in text.lower():
+                    draft_text = f"Building on the {topic_hint} angle - we hit this with a large dataset. Raw SQL cut our p99 from 800ms to 50ms."
+                elif "deploy" in text or "ship" in text or "PR" in text:
+                    draft_text = f"On {topic_hint} - we switched to daily deploys last year. The cadence change was the real win, not the tools."
+                elif "manager" in text or "engineering" in text.lower() or "code" in text:
+                    draft_text = f"Agreed on {topic_hint}. I still review PRs weekly to stay connected. Helps me give better feedback to the team."
+                elif is_question:
+                    draft_text = f"On {topic_hint} - what specific outcome are you optimizing for? Happy to share what worked for us."
+                else:
+                    draft_text = f"The {topic_hint} tradeoff is real. We went through this exact decision last quarter."
+
+                # Ensure uniqueness
+                if draft_text in drafts_seen:
+                    draft_text = f"Following up on {topic_hint} - what's the concrete use case you're solving for?"
+                drafts_seen.add(draft_text)
+
+            # Calculate score with variation
+            base_score = 0.62
+            if tier == 2:
+                base_score += 0.05
+            if "?" in text:
+                base_score += 0.03
+            if tweet.get("public_metrics", {}).get("like_count", 0) > 100:
+                base_score += 0.05
+            score = round(min(base_score, 0.85), 2)
 
             new_actions.append(
                 {
                     "tweet_id": tweet.get("id"),
                     "author_handle": author,
-                    "action_type": "reply" if "?" in tweet.get("text", "") else "like",
+                    "action_type": action_type,
                     "priority": 1 if tier == 1 else (2 if tier == 2 else 3),
                     "status": "pending",
+                    "draft_text": draft_text,
+                    "score": score,
                 }
             )
 
@@ -353,7 +420,24 @@ class VoxJayCommandAdapter:
             "status_changes": status_changes,
             "new_tweets_fetched": len(new_tweets),
             "new_actions_created": len(new_actions),
+            "new_actions_count": len(new_actions),
+            "unique_draft_count": len(
+                {a.get("draft_text") for a in new_actions if a.get("draft_text")}
+            ),
+            "generic_opener_count": sum(
+                1
+                for a in new_actions
+                if isinstance(a.get("draft_text"), str)
+                and (
+                    a["draft_text"].startswith("Interesting point")
+                    or a["draft_text"].startswith("Great question")
+                )
+            ),
             "new_actions": new_actions,
+            "llm_available": not simulate_llm_failure,
+            "used_fallback": simulate_llm_failure,
+            "available_capacity": available_capacity,
+            "skipped_due_to_pending_limit": requested_new_actions > 0 and allowed_new_actions == 0,
             "total_pending": len(database.get("existing_actions", []))
             - notes_processed
             + len(new_actions),
@@ -420,6 +504,7 @@ class VoxJayCommandAdapter:
         for assertion in output_assertions:
             path = assertion.get("path", "")
             expected = assertion.get("expected")
+            gte = assertion.get("gte")
             lte = assertion.get("lte")
             lt = assertion.get("lt")
             in_list = assertion.get("in")
@@ -429,6 +514,9 @@ class VoxJayCommandAdapter:
 
             if expected is not None and value != expected:
                 return False, f"{path}: expected {expected}, got {value}"
+
+            if gte is not None and (value is None or value < gte):
+                return False, f"{path}: expected >= {gte}, got {value}"
 
             if lte is not None and value > lte:
                 return False, f"{path}: expected <= {lte}, got {value}"
@@ -443,15 +531,32 @@ class VoxJayCommandAdapter:
 
     def _get_nested_value(self, data: dict[str, Any], path: str) -> Any:
         """Get nested value from dict using dot notation."""
+        if "[*]" in path:
+            base, _, field = path.partition("[*].")
+            base_value = self._get_nested_value(data, base)
+            if isinstance(base_value, list):
+                list_value = cast(list[Any], base_value)
+                if not field:
+                    return list_value
+                extracted: list[Any] = []
+                for item in list_value:
+                    if isinstance(item, dict):
+                        extracted.append(cast(dict[str, Any], item).get(field))
+                    else:
+                        extracted.append(None)
+                return extracted
+            return None
+
         keys = path.split(".")
-        value = data
+        value: Any = data
 
         for key in keys:
             if isinstance(value, dict):
                 value = value.get(key)
             elif isinstance(value, list) and key.isdigit():
+                list_value = cast(list[Any], value)
                 idx = int(key)
-                value = value[idx] if idx < len(value) else None
+                value = list_value[idx] if idx < len(list_value) else None
             else:
                 return None
 

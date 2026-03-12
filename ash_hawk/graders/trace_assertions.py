@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import fnmatch
+import re
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from ash_hawk.graders.base import Grader
 from ash_hawk.scenario.trace import TraceEvent
@@ -101,7 +103,7 @@ class TraceSchemaGrader(Grader):
                 )
                 continue
 
-            event_payload: dict[str, Any] = {str(key): value for key, value in event.items()}
+            event_payload = cast(dict[str, Any], event)
             errors = self._validate_event(event_payload)
             if errors:
                 failed_events.append(
@@ -149,9 +151,15 @@ class VerifyBeforeDoneGrader(Grader):
             )
 
         for event in effective_transcript.trace_events or []:
-            if event.get("event_type") != "VerificationEvent":
+            event_map = event
+            if event_map.get("event_type") != "VerificationEvent":
                 continue
-            if event.get("data", {}).get("pass") is True:
+            data = event_map.get("data", {})
+            if isinstance(data, dict):
+                data_map = data
+            else:
+                data_map = {}
+            if data_map.get("pass") is True:
                 return GraderResult(
                     grader_type=self.name,
                     score=1.0,
@@ -196,14 +204,13 @@ class EvidenceRequiredGrader(Grader):
         completed_todos = 0
 
         for index, event in enumerate(effective_transcript.trace_events or []):
-            if not isinstance(event, dict):
-                continue
             if event.get("event_type") != "TodoEvent":
                 continue
             total_todos += 1
-            data = event.get("data", {})
-            if not isinstance(data, dict):
+            data_raw = event.get("data", {})
+            if not isinstance(data_raw, dict):
                 continue
+            data = cast(dict[str, Any], data_raw)
             if data.get("completed") is not True:
                 continue
             completed_todos += 1
@@ -298,7 +305,7 @@ class OrderingGrader(Grader):
     def _extract_event_type(self, event: object) -> str | None:
         if not isinstance(event, dict):
             return None
-        event_map: dict[str, Any] = {str(key): value for key, value in event.items()}
+        event_map = cast(dict[str, Any], event)
         event_type = event_map.get("event_type")
         if isinstance(event_type, str) and event_type.strip():
             return event_type
@@ -337,7 +344,7 @@ class OrderingGrader(Grader):
                 )
                 continue
 
-            rule_map: dict[str, Any] = {str(key): value for key, value in rule.items()}
+            rule_map = cast(dict[str, Any], rule)
             before = rule_map.get("before")
             after = rule_map.get("after")
             errors: list[str] = []
@@ -402,10 +409,170 @@ class OrderingGrader(Grader):
         )
 
 
+class TraceContentGrader(Grader):
+    @property
+    def name(self) -> str:
+        return "trace_content"
+
+    def _event_types(self, trace_events: list[dict[str, Any]]) -> list[str]:
+        out: list[str] = []
+        for event in trace_events:
+            event_map = event
+            event_type = event_map.get("event_type")
+            if isinstance(event_type, str) and event_type.strip():
+                out.append(event_type)
+        return out
+
+    def _extract_tool_names(
+        self,
+        trace_events: list[dict[str, Any]],
+        transcript_tool_calls: list[dict[str, Any]],
+    ) -> list[str]:
+        names: list[str] = []
+
+        for event in trace_events:
+            event_map = event
+            event_type = event_map.get("event_type")
+            data = event_map.get("data", {})
+            if not isinstance(data, dict):
+                continue
+            data_map = cast(dict[str, Any], data)
+
+            if event_type == "ToolCallEvent":
+                candidate = (
+                    data_map.get("tool") or data_map.get("tool_name") or data_map.get("name")
+                )
+                if isinstance(candidate, str) and candidate.strip():
+                    names.append(candidate)
+            elif event_type in {"PolicyDecisionEvent", "RejectionEvent"}:
+                candidate = data_map.get("tool_name")
+                if isinstance(candidate, str) and candidate.strip():
+                    names.append(candidate)
+
+        for call in transcript_tool_calls:
+            candidate = call.get("tool") or call.get("tool_name") or call.get("name")
+            if isinstance(candidate, str) and candidate.strip():
+                names.append(candidate)
+
+        return names
+
+    def _matches_pattern(self, text: str, pattern: str, use_regex: bool) -> bool:
+        if use_regex:
+            try:
+                return re.search(pattern, text) is not None
+            except re.error:
+                return False
+        return fnmatch.fnmatch(text, pattern)
+
+    async def grade(
+        self,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> GraderResult:
+        effective_transcript = transcript
+        if trial.result is not None:
+            effective_transcript = trial.result.transcript
+
+        config = spec.config
+        required_event_types = [
+            item
+            for item in config.get("required_event_types", [])
+            if isinstance(item, str) and item.strip()
+        ]
+        forbidden_event_types = [
+            item
+            for item in config.get("forbidden_event_types", [])
+            if isinstance(item, str) and item.strip()
+        ]
+        required_tool_names = [
+            item
+            for item in config.get("required_tool_names", [])
+            if isinstance(item, str) and item.strip()
+        ]
+        forbidden_tool_names = [
+            item
+            for item in config.get("forbidden_tool_names", [])
+            if isinstance(item, str) and item.strip()
+        ]
+        required_mcp_prefixes = [
+            item
+            for item in config.get("required_mcp_prefixes", [])
+            if isinstance(item, str) and item.strip()
+        ]
+        required_skill_markers = [
+            item
+            for item in config.get("required_skill_markers", [])
+            if isinstance(item, str) and item.strip()
+        ]
+        forbidden_skill_markers = [
+            item
+            for item in config.get("forbidden_skill_markers", [])
+            if isinstance(item, str) and item.strip()
+        ]
+        tool_pattern_mode = str(config.get("tool_pattern_mode", "glob")).strip().lower()
+        use_regex = tool_pattern_mode == "regex"
+
+        trace_events = list(effective_transcript.trace_events or [])
+        event_types = self._event_types(trace_events)
+        tool_names = self._extract_tool_names(
+            trace_events,
+            list(effective_transcript.tool_calls or []),
+        )
+        response_text = str(effective_transcript.agent_response or "")
+        response_lower = response_text.lower()
+
+        violations: list[str] = []
+
+        for event_type in required_event_types:
+            if event_type not in event_types:
+                violations.append(f"missing_required_event_type:{event_type}")
+
+        for event_type in forbidden_event_types:
+            if event_type in event_types:
+                violations.append(f"forbidden_event_type_present:{event_type}")
+
+        for pattern in required_tool_names:
+            if not any(self._matches_pattern(name, pattern, use_regex) for name in tool_names):
+                violations.append(f"missing_required_tool:{pattern}")
+
+        for pattern in forbidden_tool_names:
+            if any(self._matches_pattern(name, pattern, use_regex) for name in tool_names):
+                violations.append(f"forbidden_tool_present:{pattern}")
+
+        for prefix in required_mcp_prefixes:
+            if not any(name.startswith(prefix) for name in tool_names):
+                violations.append(f"missing_required_mcp_prefix:{prefix}")
+
+        for marker in required_skill_markers:
+            if marker.lower() not in response_lower:
+                violations.append(f"missing_required_skill_marker:{marker}")
+
+        for marker in forbidden_skill_markers:
+            if marker.lower() in response_lower:
+                violations.append(f"forbidden_skill_marker_present:{marker}")
+
+        passed = not violations
+        score = 1.0 if passed else 0.0
+
+        return GraderResult(
+            grader_type=self.name,
+            score=score,
+            passed=passed,
+            details={
+                "event_types": event_types,
+                "tool_names": tool_names,
+                "violations": violations,
+                "tool_pattern_mode": "regex" if use_regex else "glob",
+            },
+        )
+
+
 __all__ = [
     "TraceSchemaGrader",
     "VerifyBeforeDoneGrader",
     "EvidenceRequiredGrader",
     "BudgetComplianceGrader",
     "OrderingGrader",
+    "TraceContentGrader",
 ]
