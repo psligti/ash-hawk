@@ -276,3 +276,77 @@ ASH_HAWK_LOG_LEVEL=INFO
 - **Always** use async for I/O operations
 - **Always** add type hints to all public functions
 - **Always** use `extra="forbid"` in Pydantic models
+
+---
+
+## Git Practices
+
+### Atomic Commits
+
+Each commit should represent a single, logical change:
+
+- **One concern per commit**: A commit should do one thing (fix a bug, add a feature, refactor)
+- **Self-contained**: Each commit should leave the codebase in a working state
+- **Revertable**: Any commit should be revertable without breaking the build
+- **Descriptive messages**: Explain *why*, not *what*
+
+**GOOD:**
+```bash
+git commit -m "fix: handle empty fixture list in registry lookup"
+git commit -m "feat: add json_schema grader for structure validation"
+git commit -m "refactor: extract common validation logic into base class"
+```
+
+**BAD:**
+```bash
+git commit -m "fixes"                    # Too vague
+git commit -m "WIP"                      # Not atomic
+git commit -m "fix bug and add tests"    # Two concerns
+```
+
+### Commit Message Format
+
+Use conventional commits:
+
+```
+<type>: <description>
+
+[optional body]
+```
+
+**Types:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `refactor:` - Code refactoring
+- `test:` - Adding/updating tests
+- `docs:` - Documentation only
+- `chore:` - Maintenance tasks
+
+### Push Frequently
+
+- **Push after each logical unit** of work is complete
+- **Don't batch multiple features** in one push
+- **Push before switching tasks** or ending a session
+- **Push working code only** - tests should pass
+
+**Workflow:**
+```bash
+# Complete a feature
+git add -p                    # Stage hunks selectively
+git commit -m "feat: add support for custom fixtures"
+git push origin main
+
+# Fix a bug
+git add -p
+git commit -m "fix: handle None in grader registry"
+git push origin main
+```
+
+### Pre-Push Checklist
+
+- [ ] `ruff check .` passes
+- [ ] `mypy ash_hawk` passes
+- [ ] `uv run pytest` passes (or affected tests)
+- [ ] Commit message is descriptive
+- [ ] Commit is atomic (single concern)
+
