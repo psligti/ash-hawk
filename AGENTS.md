@@ -342,7 +342,7 @@ git commit -m "fix: handle None in grader registry"
 git push origin main
 ```
 
-### Pre-Push Checklist
+### Pre-Commit Checklist
 
 - [ ] `ruff check .` passes
 - [ ] `mypy ash_hawk` passes
