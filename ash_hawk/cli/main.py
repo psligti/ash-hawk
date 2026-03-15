@@ -91,6 +91,7 @@ def init(path: str, name: str, force: bool) -> None:
 
 
 from ash_hawk.cli.calibrate import calibrate
+from ash_hawk.cli.improve import improve
 from ash_hawk.cli.list import list_cmd
 from ash_hawk.cli.report import report
 from ash_hawk.cli.run import run
@@ -101,3 +102,4 @@ cli.add_command(list_cmd, name="list")
 cli.add_command(report)
 cli.add_command(calibrate)
 cli.add_command(scenario)
+cli.add_command(improve)
