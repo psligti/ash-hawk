@@ -1,0 +1,81 @@
+id: iron-rook-evidence-quality
+name: Iron Rook Evidence Quality Analysis
+description: Analysis suite for evaluating evidence quality in agent outputs
+version: 1.0.0
+tags:
+  - iron-rook
+  - evidence
+  - quality
+  - analysis
+
+agent:
+  name: iron-rook
+  provider: zai
+  model: glm-4-plus
+
+tasks:
+  - id: verify-tool-output-usage
+    description: Verify proper use of tool outputs as evidence
+    input:
+      prompt: |
+        Analyze how the agent uses tool outputs as evidence.
+        Identify: proper citations, misused outputs, fabricated claims.
+        Focus on: whether conclusions are grounded in tool results.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete evidence verification with specific examples
+            - 0.7: Good verification with most examples
+            - 0.4: Basic observations about evidence use
+            - 0.0: No evidence analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - verification
+      - grounding
+
+  - id: assess-reasoning-chains
+    description: Assess quality of reasoning chains
+    input:
+      prompt: |
+        Evaluate the logical reasoning chains in the agent's response.
+        Identify: valid deductions, logical gaps, unsupported conclusions.
+        Focus on: step-by-step reasoning quality.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete reasoning chain analysis with gaps identified
+            - 0.7: Good reasoning analysis with some gaps
+            - 0.4: Basic reasoning observations
+            - 0.0: No reasoning analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - reasoning
+      - logic
+
+  - id: evaluate-conclusion-support
+    description: Evaluate how well conclusions are supported
+    input:
+      prompt: |
+        Assess whether the agent's final conclusions are well-supported.
+        Identify: evidence backing, missing support, over-claims.
+        Focus on: conclusion-to-evidence alignment.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete conclusion support analysis
+            - 0.7: Good analysis with most issues identified
+            - 0.4: Basic support observations
+            - 0.0: No support analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - conclusions
+      - support

@@ -1,9 +1,3 @@
-"""Pipeline orchestrator for improvement workflow.
-
-Coordinates the execution of pipeline roles in sequence:
-to analyze runs, generate improvement proposals, and curate them into persistent lessons.
-"""
-
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -14,14 +8,12 @@ from ash_hawk.contracts import (
     CuratedLesson,
     ImprovementProposal,
     ReviewRequest,
+    RunArtifact,
 )
 from ash_hawk.pipeline.types import PipelineContext, PipelineRole, PipelineStepResult
 
 if TYPE_CHECKING:
     pass
-
-if TYPE_CHECKING:
-    from dawn_kestrel.contracts import RunArtifact
 
 
 class PipelineOrchestrator:

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import asyncio
+import os
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Literal, cast
 from uuid import uuid4
 
@@ -9,14 +10,17 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from ash_hawk.adapters.artifact_adapter import ArtifactAdapter
 from ash_hawk.contracts import (
     CuratedLesson,
     ImprovementProposal,
-    ReviewFinding,
     ReviewMetrics,
     ReviewRequest,
     ReviewResult,
+    RunArtifact,
 )
+from ash_hawk.services.review_service import ReviewService
+from ash_hawk.storage import FileStorage
 
 console = Console()
 
@@ -255,17 +259,28 @@ def rollback_lesson(lesson_id: str, reason: str) -> None:
 
 
 def _run_review(request: ReviewRequest) -> ReviewResult:
-    """Execute a review request (placeholder implementation)."""
-    return ReviewResult(
-        review_id=f"review-{uuid4().hex[:8]}",
-        request_id=str(uuid4()),
-        run_artifact_id=request.run_artifact_id,
-        target_agent=request.target_agent,
-        status="completed",
-        findings=[],
-        metrics=ReviewMetrics(score=0.85),
-        created_at=datetime.now(UTC),
-    )
+    storage_path = os.environ.get("ASH_HAWK_STORAGE_PATH", ".ash-hawk")
+    storage = FileStorage(storage_path)
+    adapter = ArtifactAdapter(storage)
+    service = ReviewService()
+
+    async def load_and_review() -> ReviewResult:
+        artifact = await adapter.load_run_artifact(request.run_artifact_id)
+        if artifact is None:
+            return ReviewResult(
+                review_id=f"review-{uuid4().hex[:8]}",
+                request_id=request.run_artifact_id,
+                run_artifact_id=request.run_artifact_id,
+                target_agent=request.target_agent,
+                status="failed",
+                findings=[],
+                metrics=ReviewMetrics(score=0.0),
+                created_at=datetime.now(UTC),
+                error_message=f"Run artifact not found: {request.run_artifact_id}",
+            )
+        return service.review(request, artifact)
+
+    return asyncio.run(load_and_review())
 
 
 def _display_review_result(result: ReviewResult) -> None:

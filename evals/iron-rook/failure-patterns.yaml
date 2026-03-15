@@ -1,0 +1,81 @@
+id: iron-rook-failure-patterns
+name: Iron Rook Failure Pattern Analysis
+description: Analysis suite for detecting failure patterns in agent runs
+version: 1.0.0
+tags:
+  - iron-rook
+  - failure
+  - patterns
+  - analysis
+
+agent:
+  name: iron-rook
+  provider: zai
+  model: glm-4-plus
+
+tasks:
+  - id: detect-timeout-failures
+    description: Detect and analyze timeout-related failures
+    input:
+      prompt: |
+        Analyze the run artifact for timeout-related failures.
+        Identify: timeout sources, affected tools, patterns leading to timeouts.
+        Recommend: timeout adjustments, retry strategies, prevention measures.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete timeout analysis with root causes and recommendations
+            - 0.7: Good timeout analysis with some recommendations
+            - 0.4: Identifies timeouts without deep analysis
+            - 0.0: No timeout analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - timeout
+      - reliability
+
+  - id: detect-error-cascades
+    description: Detect cascading error patterns
+    input:
+      prompt: |
+        Analyze the run artifact for error cascade patterns.
+        Identify: error propagation, compounding failures, recovery attempts.
+        Focus on: tool errors that lead to subsequent failures.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Identifies full error cascade chain with analysis
+            - 0.7: Identifies most cascade patterns
+            - 0.4: Basic error observation
+            - 0.0: No cascade analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - cascade
+      - errors
+
+  - id: detect-resource-exhaustion
+    description: Detect resource exhaustion patterns
+    input:
+      prompt: |
+        Analyze the run artifact for resource exhaustion signs.
+        Identify: token budget exhaustion, cost limits, memory pressure.
+        Focus on: usage patterns that lead to exhaustion.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete resource analysis with prevention strategies
+            - 0.7: Good resource analysis with some strategies
+            - 0.4: Basic resource observations
+            - 0.0: No resource analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - resources
+      - limits

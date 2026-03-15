@@ -1,0 +1,81 @@
+id: iron-rook-tool-efficiency
+name: Iron Rook Tool Efficiency Analysis
+description: Analysis suite for tool usage efficiency patterns
+version: 1.0.0
+tags:
+  - iron-rook
+  - efficiency
+  - tools
+  - analysis
+
+agent:
+  name: iron-rook
+  provider: zai
+  model: glm-4-plus
+
+tasks:
+  - id: analyze-tool-redundancy
+    description: Detect redundant tool calls in runs
+    input:
+      prompt: |
+        Analyze the tool call sequences in the provided run artifact.
+        Identify redundant or repeated tool calls that could be optimized.
+        Focus on: repeated reads, unnecessary file operations, redundant searches.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Identifies all redundant tool calls with specific examples
+            - 0.7: Identifies most redundancies with some examples
+            - 0.4: Identifies some redundancies without examples
+            - 0.0: No meaningful analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - redundancy
+      - optimization
+
+  - id: analyze-tool-timing
+    description: Analyze tool call timing patterns
+    input:
+      prompt: |
+        Analyze the timing of tool calls in the run artifact.
+        Identify slow operations and potential parallelization opportunities.
+        Focus on: sequential operations that could be parallel, slow tool calls.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Comprehensive timing analysis with recommendations
+            - 0.7: Good timing analysis with some recommendations
+            - 0.4: Basic timing observations
+            - 0.0: No timing analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - timing
+      - performance
+
+  - id: analyze-tool-selection
+    description: Analyze tool selection appropriateness
+    input:
+      prompt: |
+        Evaluate whether the agent selected appropriate tools for each task.
+        Identify cases where suboptimal tools were chosen.
+        Focus on: using grep vs read, bash vs specialized tools, etc.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Identifies all suboptimal tool choices with alternatives
+            - 0.7: Identifies most suboptimal choices
+            - 0.4: Basic observations about tool selection
+            - 0.0: No analysis of tool selection
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - selection
+      - appropriateness

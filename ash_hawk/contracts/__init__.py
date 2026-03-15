@@ -1,14 +1,4 @@
-"""Ash Hawk contracts for cross-agent improvement engine.
-
-These contracts define the interface for evaluation, improvement proposals,
-and curated lessons across all Dawn Kestrel-based agents.
-
-Key contracts:
-- ReviewRequest: Request to evaluate a completed run
-- ReviewResult: Result of the evaluation with findings
-- ImprovementProposal: Structured proposal for behavioral change
-- CuratedLesson: Approved and versioned lesson for persistence
-"""
+"""Ash Hawk contracts for cross-agent improvement engine."""
 
 from __future__ import annotations
 
@@ -16,6 +6,7 @@ from ash_hawk.contracts.curated_lesson import CuratedLesson
 from ash_hawk.contracts.improvement_proposal import ImprovementProposal
 from ash_hawk.contracts.review_request import ReviewRequest
 from ash_hawk.contracts.review_result import ReviewFinding, ReviewMetrics, ReviewResult
+from ash_hawk.contracts.run_artifact import RunArtifact, StepRecord, ToolCallRecord
 
 __all__ = [
     "ReviewRequest",
@@ -24,4 +15,7 @@ __all__ = [
     "ReviewMetrics",
     "ImprovementProposal",
     "CuratedLesson",
+    "RunArtifact",
+    "StepRecord",
+    "ToolCallRecord",
 ]

@@ -1,14 +1,12 @@
-"""Analyst role for failure analysis and finding generation."""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from ash_hawk.contracts import ReviewFinding, ReviewMetrics
+from ash_hawk.contracts import ReviewFinding, ReviewMetrics, RunArtifact
 
 if TYPE_CHECKING:
-    from dawn_kestrel.contracts.run_artifact import RunArtifact
+    pass
 
 
 class AnalystInput:
