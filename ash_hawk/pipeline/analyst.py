@@ -99,9 +99,10 @@ class AnalystRole:
             if tc.outcome == "failure":
                 patterns.append(f"Tool {tc.tool_name} failed")
             if tc.error_message:
-                if "timeout" in tc.error_message.lower():
+                error_lower = tc.error_message.lower()
+                if "timeout" in error_lower or "timed out" in error_lower:
                     patterns.append("Tool call timed out")
-                elif "permission" in tc.error_message.lower():
+                elif "permission" in error_lower:
                     patterns.append("Permission denied")
 
         if artifact.outcome == "failure":
