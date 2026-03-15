@@ -1,0 +1,83 @@
+id: bolt-merlin-calibration-analysis
+name: Bolt Merlin Calibration Analysis
+description: Analysis suite for calibration and prediction accuracy evaluation
+version: 1.0.0
+tags:
+  - bolt-merlin
+  - calibration
+  - predictions
+  - accuracy
+
+agent:
+  name: bolt-merlin
+  provider: zai
+  model: glm-4-plus
+
+tasks:
+  - id: analyze-prediction-accuracy
+    description: Analyze prediction accuracy vs actual outcomes
+    input:
+      prompt: |
+        Analyze the prediction accuracy in the provided run artifact.
+        Compare predicted scores against actual pass/fail outcomes.
+        Identify: overconfident predictions, underconfident predictions, well-calibrated ranges.
+        Focus on: ECE calculation, Brier score analysis, reliability per score range.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete accuracy analysis with ECE and Brier score insights
+            - 0.7: Good accuracy analysis with some calibration observations
+            - 0.4: Basic accuracy observations
+            - 0.0: No accuracy analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - accuracy
+      - calibration
+
+  - id: analyze-confidence-distribution
+    description: Analyze confidence score distribution
+    input:
+      prompt: |
+        Analyze the distribution of confidence scores in the run artifact.
+        Identify: score clustering, confidence gaps, unusual distributions.
+        Focus on: score ranges, confidence calibration, distribution patterns.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete distribution analysis with calibration insights
+            - 0.7: Good distribution analysis with some patterns identified
+            - 0.4: Basic distribution observations
+            - 0.0: No distribution analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - confidence
+      - distribution
+
+  - id: identify-disagreement-cases
+    description: Identify cases where predictions disagree with outcomes
+    input:
+      prompt: |
+        Identify all disagreement cases where predicted score significantly
+        differs from actual outcome.
+        Analyze: prediction error magnitude, common patterns, root causes.
+        Focus on: false positives, false negatives, threshold sensitivity.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete disagreement analysis with root cause insights
+            - 0.7: Good disagreement analysis with most cases identified
+            - 0.4: Basic disagreement observations
+            - 0.0: No disagreement analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - disagreement
+      - errors

@@ -1,0 +1,81 @@
+id: bolt-merlin-grader-evaluation
+name: Bolt Merlin Grader Evaluation
+description: Analysis suite for evaluating grader performance and reliability
+version: 1.0.0
+tags:
+  - bolt-merlin
+  - graders
+  - evaluation
+  - reliability
+
+agent:
+  name: bolt-merlin
+  provider: zai
+  model: glm-4-plus
+
+tasks:
+  - id: evaluate-grader-consistency
+    description: Evaluate grader consistency across similar inputs
+    input:
+      prompt: |
+        Analyze grader consistency across similar or repeated inputs.
+        Identify: score variance, inconsistent judgments, systematic biases.
+        Focus on: intra-grader consistency, score stability, bias patterns.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete consistency analysis with bias identification
+            - 0.7: Good consistency analysis with some patterns
+            - 0.4: Basic consistency observations
+            - 0.0: No consistency analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - consistency
+      - reliability
+
+  - id: evaluate-grader-discrimination
+    description: Evaluate grader ability to discriminate quality levels
+    input:
+      prompt: |
+        Analyze how well the grader discriminates between different quality levels.
+        Identify: score separation, clear vs ambiguous cases, threshold behavior.
+        Focus on: score spread, discrimination power, edge case handling.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete discrimination analysis with threshold insights
+            - 0.7: Good discrimination analysis with some observations
+            - 0.4: Basic discrimination observations
+            - 0.0: No discrimination analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - discrimination
+      - thresholds
+
+  - id: identify-grader-weaknesses
+    description: Identify grader weakness patterns
+    input:
+      prompt: |
+        Identify patterns of grader weaknesses or failure modes.
+        Analyze: task types with poor accuracy, systematic errors, blind spots.
+        Focus on: error patterns, difficulty calibration, improvement opportunities.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete weakness analysis with improvement recommendations
+            - 0.7: Good weakness analysis with most issues identified
+            - 0.4: Basic weakness observations
+            - 0.0: No weakness analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - weaknesses
+      - improvement

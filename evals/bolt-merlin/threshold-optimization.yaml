@@ -1,0 +1,81 @@
+id: bolt-merlin-threshold-optimization
+name: Bolt Merlin Threshold Optimization
+description: Analysis suite for optimizing pass/fail thresholds
+version: 1.0.0
+tags:
+  - bolt-merlin
+  - thresholds
+  - optimization
+  - calibration
+
+agent:
+  name: bolt-merlin
+  provider: zai
+  model: glm-4-plus
+
+tasks:
+  - id: analyze-threshold-sensitivity
+    description: Analyze pass/fail threshold sensitivity
+    input:
+      prompt: |
+        Analyze how sensitive outcomes are to threshold changes.
+        Calculate: accuracy at different thresholds, optimal threshold range.
+        Focus on: ROC-like analysis, precision/recall tradeoffs, threshold stability.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete sensitivity analysis with optimal threshold recommendations
+            - 0.7: Good sensitivity analysis with some insights
+            - 0.4: Basic sensitivity observations
+            - 0.0: No sensitivity analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - sensitivity
+      - thresholds
+
+  - id: identify-edge-cases
+    description: Identify edge cases near threshold boundaries
+    input:
+      prompt: |
+        Identify cases that fall near threshold boundaries.
+        Analyze: borderline scores, ambiguous cases, threshold-exact outcomes.
+        Focus on: uncertainty quantification, edge case patterns, boundary behavior.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete edge case analysis with pattern identification
+            - 0.7: Good edge case analysis with most cases identified
+            - 0.4: Basic edge case observations
+            - 0.0: No edge case analysis
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - edge-cases
+      - boundaries
+
+  - id: recommend-threshold-adjustments
+    description: Recommend threshold adjustments based on calibration
+    input:
+      prompt: |
+        Based on calibration analysis, recommend threshold adjustments.
+        Consider: current accuracy, calibration error, operational requirements.
+        Focus on: threshold recommendations, expected impact, confidence intervals.
+    grader_specs:
+      - grader_type: llm_judge
+        config:
+          rubric: |
+            Score based on:
+            - 1.0: Complete recommendations with impact analysis
+            - 0.7: Good recommendations with some analysis
+            - 0.4: Basic recommendation observations
+            - 0.0: No recommendations
+          model: glm-4-flash
+        weight: 1.0
+    tags:
+      - recommendations
+      - optimization
