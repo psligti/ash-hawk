@@ -6,14 +6,17 @@ framework for agent execution with policy enforcement.
 
 from __future__ import annotations
 
+import asyncio
+import importlib
 import inspect
 import json
-import asyncio
+import os
 import re
 import time
+from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any, cast
 
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.types import (
@@ -24,10 +27,218 @@ from ash_hawk.types import (
     TokenUsage,
 )
 
-if TYPE_CHECKING:
-    from dawn_kestrel.llm.client import LLMClient
-    from dawn_kestrel.tools.framework import ToolRegistry
-    from dawn_kestrel.tools.permission_filter import ToolPermissionFilter
+
+@dataclass(frozen=True)
+class _McpServerConfig:
+    name: str
+    command: str
+    args: list[str]
+    env: dict[str, str]
+    cwd: str | None
+
+
+def _sanitize_mcp_tool_id(raw_id: str) -> str:
+    cleaned = re.sub(r"[^a-zA-Z0-9_-]", "_", raw_id).strip("_")
+    if cleaned == "":
+        cleaned = "mcp_tool"
+    if not re.match(r"[a-zA-Z_]", cleaned):
+        cleaned = f"mcp_{cleaned}"
+    return cleaned.lower()
+
+
+def _mcp_result_to_text(result: dict[str, Any]) -> str:
+    content = result.get("content")
+    if isinstance(content, list):
+        text_chunks: list[str] = []
+        for item_dict in cast(list[dict[str, Any]], content):
+            if not isinstance(item_dict, dict):
+                continue
+            item_type = item_dict.get("type")
+            text_value = item_dict.get("text")
+            if item_type == "text" and isinstance(text_value, str):
+                text_chunks.append(text_value)
+            elif item_type == "json" and "json" in item_dict:
+                text_chunks.append(json.dumps(item_dict["json"], ensure_ascii=True, default=str))
+            elif isinstance(text_value, str):
+                text_chunks.append(text_value)
+        if text_chunks:
+            return "\n".join(text_chunks)
+
+    if "structuredContent" in result:
+        return json.dumps(result["structuredContent"], ensure_ascii=True, default=str)
+
+    return json.dumps(result, ensure_ascii=True, default=str)
+
+
+class _McpStdioClient:
+    def __init__(self, config: _McpServerConfig) -> None:
+        self._config = config
+        self._process: asyncio.subprocess.Process | None = None
+        self._request_id = 0
+        self._request_lock = asyncio.Lock()
+
+    async def start(self) -> None:
+        env = os.environ.copy()
+        env.update(self._config.env)
+        self._process = await asyncio.create_subprocess_exec(
+            self._config.command,
+            *self._config.args,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=self._config.cwd,
+            env=env,
+        )
+
+        await self.request(
+            "initialize",
+            {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {
+                    "name": "ash-hawk",
+                    "version": "0.1.0",
+                },
+            },
+        )
+        await self.notify("notifications/initialized", {})
+
+    async def close(self) -> None:
+        if self._process is None:
+            return
+        process = self._process
+        self._process = None
+
+        if process.returncode is None:
+            process.terminate()
+            try:
+                await asyncio.wait_for(process.wait(), timeout=2.0)
+            except TimeoutError:
+                process.kill()
+                await process.wait()
+
+    async def list_tools(self) -> list[dict[str, Any]]:
+        response = await self.request("tools/list", {})
+        tools = response.get("tools") if isinstance(response, dict) else None
+        if isinstance(tools, list):
+            return [tool for tool in tools if isinstance(tool, dict)]
+        return []
+
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        response = await self.request(
+            "tools/call",
+            {
+                "name": tool_name,
+                "arguments": arguments,
+            },
+        )
+        if isinstance(response, dict):
+            return response
+        return {"content": [{"type": "text", "text": str(response)}]}
+
+    async def notify(self, method: str, params: dict[str, Any] | None = None) -> None:
+        payload: dict[str, Any] = {"jsonrpc": "2.0", "method": method}
+        if params is not None:
+            payload["params"] = params
+        await self._write_message(payload)
+
+    async def request(self, method: str, params: dict[str, Any] | None = None) -> Any:
+        async with self._request_lock:
+            self._request_id += 1
+            request_id = self._request_id
+            payload: dict[str, Any] = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "method": method,
+            }
+            if params is not None:
+                payload["params"] = params
+            await self._write_message(payload)
+
+            while True:
+                message = await self._read_message()
+                if not isinstance(message, dict):
+                    continue
+                if message.get("id") != request_id:
+                    continue
+                if "error" in message:
+                    raise RuntimeError(
+                        f"MCP request failed for server '{self._config.name}': {message['error']}"
+                    )
+                return message.get("result", {})
+
+    async def _write_message(self, payload: dict[str, Any]) -> None:
+        if self._process is None or self._process.stdin is None:
+            raise RuntimeError(f"MCP server '{self._config.name}' is not running")
+        body = json.dumps(payload, ensure_ascii=True).encode("utf-8")
+        header = f"Content-Length: {len(body)}\r\n\r\n".encode("ascii")
+        self._process.stdin.write(header + body)
+        await self._process.stdin.drain()
+
+    async def _read_message(self) -> dict[str, Any]:
+        if self._process is None or self._process.stdout is None:
+            raise RuntimeError(f"MCP server '{self._config.name}' is not running")
+
+        content_length = 0
+        while True:
+            line = await self._process.stdout.readline()
+            if line == b"":
+                raise RuntimeError(f"MCP server '{self._config.name}' closed stdout unexpectedly")
+            stripped = line.strip()
+            if stripped == b"":
+                break
+            lower_line = stripped.lower()
+            if lower_line.startswith(b"content-length:"):
+                _, value = stripped.split(b":", 1)
+                content_length = int(value.strip())
+
+        if content_length <= 0:
+            raise RuntimeError(f"MCP server '{self._config.name}' sent invalid content length")
+
+        body = await self._process.stdout.readexactly(content_length)
+        parsed = json.loads(body.decode("utf-8"))
+        if isinstance(parsed, dict):
+            return cast(dict[str, Any], parsed)
+        raise RuntimeError(f"MCP server '{self._config.name}' sent invalid JSON-RPC message")
+
+
+class _McpToolProxy:
+    def __init__(
+        self,
+        *,
+        tool_id: str,
+        server_name: str,
+        mcp_tool_name: str,
+        description: str,
+        input_schema: dict[str, Any],
+        client: _McpStdioClient,
+    ) -> None:
+        self.id = tool_id
+        self.description = description
+        self._server_name = server_name
+        self._mcp_tool_name = mcp_tool_name
+        self._input_schema = input_schema
+        self._client = client
+
+    def parameters(self) -> dict[str, Any]:
+        if isinstance(self._input_schema, dict) and self._input_schema:
+            return self._input_schema
+        return {"type": "object", "properties": {}, "additionalProperties": True}
+
+    async def execute(self, args: dict[str, Any], ctx: Any) -> Any:
+        del ctx
+        tools_framework_module = importlib.import_module("dawn_kestrel.tools.framework")
+        tool_result_type = getattr(tools_framework_module, "ToolResult")
+
+        result = await self._client.call_tool(self._mcp_tool_name, args)
+        return tool_result_type(
+            title=f"{self.id} completed",
+            output=_mcp_result_to_text(result),
+            metadata={
+                "mcp_server": self._server_name,
+                "mcp_tool": self._mcp_tool_name,
+            },
+        )
 
 
 class DawnKestrelAgentRunner:
@@ -54,19 +265,146 @@ class DawnKestrelAgentRunner:
         """
         self._provider = provider
         self._model = model
+        self._mcp_servers = self._parse_mcp_servers(kwargs.pop("mcp_servers", None))
         self._kwargs = kwargs
-        self._client: LLMClient | None = None
+        self._client: Any | None = None
+        self._lesson_injector: Any | None = None
 
-    def _get_client(self) -> LLMClient:
+    def set_lesson_injector(self, injector: Any) -> None:
+        """Set the lesson injector for augmenting prompts with learned lessons."""
+        self._lesson_injector = injector
+
+    def get_lesson_injector(self) -> Any | None:
+        """Get the current lesson injector."""
+        return self._lesson_injector
+
+    def _parse_mcp_servers(self, raw_servers: Any) -> list[_McpServerConfig]:
+        if raw_servers is None:
+            return []
+        if not isinstance(raw_servers, list):
+            raise ValueError("mcp_servers must be a list")
+
+        parsed: list[_McpServerConfig] = []
+        for idx, item in enumerate(raw_servers):
+            if not isinstance(item, dict):
+                raise ValueError(f"mcp_servers[{idx}] must be a mapping")
+
+            name = item.get("name")
+            command = item.get("command")
+            if not isinstance(name, str) or not name.strip():
+                raise ValueError(f"mcp_servers[{idx}].name must be a non-empty string")
+            if not isinstance(command, str) or not command.strip():
+                raise ValueError(f"mcp_servers[{idx}].command must be a non-empty string")
+
+            raw_args = item.get("args", [])
+            if not isinstance(raw_args, list) or not all(isinstance(arg, str) for arg in raw_args):
+                raise ValueError(f"mcp_servers[{idx}].args must be a list of strings")
+
+            raw_env = item.get("env", {})
+            if not isinstance(raw_env, dict):
+                raise ValueError(f"mcp_servers[{idx}].env must be a mapping of strings")
+            env: dict[str, str] = {}
+            for key, value in raw_env.items():
+                if not isinstance(key, str) or not isinstance(value, str):
+                    raise ValueError(f"mcp_servers[{idx}].env must contain only string keys/values")
+                env[key] = value
+
+            raw_cwd = item.get("cwd")
+            if raw_cwd is not None and not isinstance(raw_cwd, str):
+                raise ValueError(f"mcp_servers[{idx}].cwd must be a string when provided")
+
+            parsed.append(
+                _McpServerConfig(
+                    name=name.strip(),
+                    command=command.strip(),
+                    args=[arg for arg in raw_args if arg.strip() != ""],
+                    env=env,
+                    cwd=raw_cwd,
+                )
+            )
+
+        return parsed
+
+    def _create_base_registry(self) -> Any:
+        try:
+            tools_registry_module = importlib.import_module("dawn_kestrel.tools.registry")
+            default_tool_registry = getattr(tools_registry_module, "ToolRegistry")
+        except Exception:
+            tools_framework_module = importlib.import_module("dawn_kestrel.tools.framework")
+            default_tool_registry = getattr(tools_framework_module, "ToolRegistry")
+
+        registry = default_tool_registry()
+        if not hasattr(registry, "tool_metadata"):
+            setattr(registry, "tool_metadata", {})
+        return registry
+
+    async def _register_mcp_tools(self, base_registry: Any) -> list[_McpStdioClient]:
+        clients: list[_McpStdioClient] = []
+        if not self._mcp_servers:
+            return clients
+
+        try:
+            for server in self._mcp_servers:
+                client = _McpStdioClient(server)
+                await client.start()
+                tool_specs = await client.list_tools()
+
+                for tool_spec in tool_specs:
+                    if not isinstance(tool_spec, dict):
+                        continue
+                    tool_name = tool_spec.get("name")
+                    if not isinstance(tool_name, str) or not tool_name.strip():
+                        continue
+
+                    tool_id = _sanitize_mcp_tool_id(f"{server.name}_{tool_name}")
+                    description_raw = tool_spec.get("description")
+                    description = description_raw if isinstance(description_raw, str) else ""
+                    input_schema_raw = tool_spec.get("inputSchema")
+                    input_schema = input_schema_raw if isinstance(input_schema_raw, dict) else {}
+
+                    proxy = _McpToolProxy(
+                        tool_id=tool_id,
+                        server_name=server.name,
+                        mcp_tool_name=tool_name,
+                        description=description,
+                        input_schema=input_schema,
+                        client=client,
+                    )
+                    await base_registry.register(
+                        proxy,
+                        tool_id,
+                        metadata={
+                            "mcp_server": server.name,
+                            "mcp_tool": tool_name,
+                        },
+                    )
+
+                clients.append(client)
+
+            return clients
+        except Exception:
+            await self._close_mcp_clients(clients)
+            raise
+
+    async def _close_mcp_clients(self, clients: list[_McpStdioClient]) -> None:
+        for client in clients:
+            try:
+                await client.close()
+            except Exception:
+                continue
+
+    def _get_client(self) -> Any:
         if self._client is None:
-            from dawn_kestrel.core.settings import get_settings
-            from dawn_kestrel.llm.client import LLMClient
+            settings_module = importlib.import_module("dawn_kestrel.core.settings")
+            llm_client_module = importlib.import_module("dawn_kestrel.llm.client")
+            get_settings = getattr(settings_module, "get_settings")
+            llm_client_type = getattr(llm_client_module, "LLMClient")
 
             settings = get_settings()
             api_key_secret = settings.get_api_key_for_provider(self._provider)
             api_key = api_key_secret.get_secret_value() if api_key_secret else None
 
-            self._client = LLMClient(
+            self._client = llm_client_type(
                 provider_id=self._provider,
                 model=self._model,
                 api_key=api_key,
@@ -76,18 +414,21 @@ class DawnKestrelAgentRunner:
     def _create_filtered_registry(
         self,
         policy_enforcer: PolicyEnforcer,
-        base_registry: ToolRegistry | None = None,
+        base_registry: Any = None,
         allowed_tools_override: list[str] | None = None,
         denied_tools_override: list[str] | None = None,
-    ) -> ToolRegistry:
+    ) -> Any:
         try:
-            from dawn_kestrel.tools.registry import ToolRegistry as DefaultToolRegistry
+            tools_registry_module = importlib.import_module("dawn_kestrel.tools.registry")
+            default_tool_registry = getattr(tools_registry_module, "ToolRegistry")
         except Exception:
-            from dawn_kestrel.tools.framework import ToolRegistry as DefaultToolRegistry
-        from dawn_kestrel.tools.permission_filter import ToolPermissionFilter
+            tools_framework_module = importlib.import_module("dawn_kestrel.tools.framework")
+            default_tool_registry = getattr(tools_framework_module, "ToolRegistry")
+        permission_filter_module = importlib.import_module("dawn_kestrel.tools.permission_filter")
+        tool_permission_filter = getattr(permission_filter_module, "ToolPermissionFilter")
 
         if base_registry is None:
-            base_registry = DefaultToolRegistry()
+            base_registry = default_tool_registry()
         if not hasattr(base_registry, "tool_metadata"):
             setattr(base_registry, "tool_metadata", {})
 
@@ -99,7 +440,7 @@ class DawnKestrelAgentRunner:
         if denied_tools_override is not None:
             denied_tools = list(denied_tools_override)
 
-        init_params = set(inspect.signature(ToolPermissionFilter.__init__).parameters.keys())
+        init_params = set(inspect.signature(tool_permission_filter.__init__).parameters.keys())
         filter_kwargs: dict[str, Any] = {"tool_registry": base_registry}
 
         permissions: list[dict[str, Any]] = []
@@ -122,11 +463,11 @@ class DawnKestrelAgentRunner:
         elif "permissions" in init_params and "permissions" not in filter_kwargs:
             filter_kwargs["permissions"] = permissions
 
-        permission_filter = ToolPermissionFilter(**filter_kwargs)
+        permission_filter = tool_permission_filter(**filter_kwargs)
 
         filtered_registry = permission_filter.get_filtered_registry()
         if filtered_registry is None:
-            filtered_registry = DefaultToolRegistry()
+            filtered_registry = default_tool_registry()
         if not hasattr(filtered_registry, "tool_metadata"):
             setattr(filtered_registry, "tool_metadata", {})
         return filtered_registry
@@ -163,21 +504,21 @@ class DawnKestrelAgentRunner:
             "run_bash": "bash",
         }
 
-        pattern = re.compile(r"([a-zA-Z_][\w/]*)\(([^)]*)\)")
+        pattern = re.compile(r"([a-zA-Z_][\w/-]*)\(([^)]*)\)")
         arg_pattern = re.compile(r"([a-zA-Z_][\w]*)\s*=\s*([\"'])(.*?)\2")
 
-        xml_call_pattern = re.compile(r"<tool_call>\s*([a-zA-Z_][\w]*)>?", re.IGNORECASE)
+        xml_call_pattern = re.compile(r"<tool_call>\s*([a-zA-Z_][\w-]*)>?", re.IGNORECASE)
         xml_path_pattern = re.compile(r"<path>(.*?)</path>", re.IGNORECASE | re.DOTALL)
         xml_match = xml_call_pattern.search(text)
         if xml_match:
             raw_name = xml_match.group(1).strip()
             tool_name = alias_map.get(raw_name, raw_name)
-            tool_input: dict[str, Any] = {}
+            xml_tool_input: dict[str, Any] = {}
             path_match = xml_path_pattern.search(text)
             if path_match:
-                tool_input["filePath"] = path_match.group(1).strip()
+                xml_tool_input["filePath"] = path_match.group(1).strip()
             if tool_name:
-                calls.append({"tool": tool_name, "input": tool_input})
+                calls.append({"tool": tool_name, "input": xml_tool_input})
 
         for match in pattern.finditer(text):
             raw_name = match.group(1).strip()
@@ -205,11 +546,12 @@ class DawnKestrelAgentRunner:
     async def _execute_tool_calls(
         self,
         tool_calls: list[dict[str, Any]],
-        filtered_registry: ToolRegistry,
+        filtered_registry: Any,
         config: dict[str, Any],
         trial_id: str,
     ) -> list[dict[str, Any]]:
-        from dawn_kestrel.tools.framework import ToolContext
+        tools_framework_module = importlib.import_module("dawn_kestrel.tools.framework")
+        tool_context_type = getattr(tools_framework_module, "ToolContext")
 
         executed: list[dict[str, Any]] = []
         base_dir_value = config.get("workdir") or "."
@@ -238,7 +580,7 @@ class DawnKestrelAgentRunner:
                 continue
 
             call_id = f"{trial_id}_tool_{idx}"
-            ctx = ToolContext(
+            ctx = tool_context_type(
                 session_id=trial_id,
                 message_id=trial_id,
                 agent="ash_hawk_eval",
@@ -358,6 +700,7 @@ class DawnKestrelAgentRunner:
         config: dict[str, Any],
     ) -> tuple[EvalTranscript, EvalOutcome]:
         start_time = time.time()
+        mcp_clients: list[_McpStdioClient] = []
 
         try:
             client = self._get_client()
@@ -378,8 +721,11 @@ class DawnKestrelAgentRunner:
                             tool for tool in raw_denied if isinstance(tool, str)
                         ]
 
+            base_registry = self._create_base_registry()
+            mcp_clients = await self._register_mcp_tools(base_registry)
             filtered_registry = self._create_filtered_registry(
                 policy_enforcer,
+                base_registry=base_registry,
                 allowed_tools_override=override_allowed_tools,
                 denied_tools_override=override_denied_tools,
             )
@@ -389,12 +735,17 @@ class DawnKestrelAgentRunner:
             else:
                 prompt = str(task_input)
 
+            agent_id = str(config.get("agent_name", "default"))
+            if self._lesson_injector is not None:
+                prompt = self._lesson_injector.inject_into_prompt(agent_id, prompt)
+
             available_tools = await filtered_registry.get_all()
             tool_definitions = self._build_tool_definitions(available_tools)
 
-            from dawn_kestrel.llm.client import LLMRequestOptions
+            llm_client_module = importlib.import_module("dawn_kestrel.llm.client")
+            llm_request_options = getattr(llm_client_module, "LLMRequestOptions")
 
-            options = LLMRequestOptions(
+            options = llm_request_options(
                 temperature=config.get("temperature", self._kwargs.get("temperature")),
                 max_tokens=config.get("max_tokens", self._kwargs.get("max_tokens")),
             )
@@ -495,3 +846,5 @@ class DawnKestrelAgentRunner:
                 str(e),
             )
             return transcript, outcome
+        finally:
+            await self._close_mcp_clients(mcp_clients)

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from ash_hawk.services.lesson_injector import LessonInjector
 from ash_hawk.services.lesson_service import LessonService
 from ash_hawk.services.review_service import ReviewService
 
 __all__ = [
-    "ReviewService",
+    "LessonInjector",
     "LessonService",
+    "ReviewService",
 ]
