@@ -48,7 +48,6 @@ class FailureMode(enum.StrEnum):
     POLICY_VIOLATION = "policy_violation"
     AGENT_ERROR = "agent_error"
     VALIDATION_ERROR = "validation_error"
-    RESOURCE_EXCEEDED = "resource_exceeded"
 
 
 class ToolPermission(enum.StrEnum):
@@ -284,8 +283,31 @@ class EvalAgentConfig(pd.BaseModel):
         default_factory=dict,
         description="Keyword arguments passed to the runner constructor",
     )
+    mcp_servers: list[EvalMcpServerConfig] = pd.Field(
+        default_factory=list,
+        description="MCP servers to attach to the agent runtime",
+    )
 
     model_config = pd.ConfigDict(extra="forbid", populate_by_name=True)
+
+
+class EvalMcpServerConfig(pd.BaseModel):
+    name: str = pd.Field(description="Logical MCP server name")
+    command: str = pd.Field(description="Executable command for the MCP server")
+    args: list[str] = pd.Field(
+        default_factory=list,
+        description="Command-line arguments passed to the MCP server",
+    )
+    env: dict[str, str] = pd.Field(
+        default_factory=dict,
+        description="Environment variables for the MCP server process",
+    )
+    cwd: str | None = pd.Field(
+        default=None,
+        description="Optional working directory for the MCP server process",
+    )
+
+    model_config = pd.ConfigDict(extra="forbid")
 
 
 # =============================================================================
@@ -927,6 +949,283 @@ class CalibrationResult(pd.BaseModel):
 
 
 # =============================================================================
+# FAST EVAL TYPES
+# =============================================================================
+
+
+class FastEvalGraderType(enum.StrEnum):
+    """Supported grader types for fast evals."""
+
+    STRING_MATCH = "string_match"
+    REGEX = "regex"
+    JSON_SCHEMA = "json_schema"
+    LLM_RUBRIC = "llm_rubric"
+
+
+class FastEvalGraderConfig(pd.BaseModel):
+    """Configuration for a fast eval grader."""
+
+    grader_type: FastEvalGraderType = pd.Field(
+        description="Type of grader to use",
+    )
+    pass_threshold: float = pd.Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="Threshold for passing (default 0.7)",
+    )
+    case_insensitive: bool = pd.Field(
+        default=False,
+        description="Case insensitive matching for string_match",
+    )
+    mode: str = pd.Field(
+        default="exact",
+        description="Match mode for string_match: exact, contains, starts_with, ends_with",
+    )
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
+class FastEval(pd.BaseModel):
+    """Single fast evaluation test case.
+
+    Fast evals are lightweight evaluations that skip full agent execution
+    and use focused grading. They're useful for regression testing and
+    quick behavior verification.
+    """
+
+    id: str = pd.Field(
+        description="Unique identifier for this fast eval",
+    )
+    description: str = pd.Field(
+        default="",
+        description="Brief description of what's being tested",
+    )
+    input: str = pd.Field(
+        description="Input prompt for the fast eval",
+    )
+    expected: str | list[str] | None = pd.Field(
+        default=None,
+        description="Expected output for string matching",
+    )
+    pattern: str | None = pd.Field(
+        default=None,
+        description="Regex pattern for regex grader",
+    )
+    json_schema: dict[str, Any] | None = pd.Field(
+        default=None,
+        description="JSON schema for json_schema grader",
+        validation_alias="schema",
+        serialization_alias="schema",
+    )
+    rubric: str | None = pd.Field(
+        default=None,
+        description="Rubric text for llm_rubric grader",
+    )
+    grader: FastEvalGraderType | FastEvalGraderConfig = pd.Field(
+        description="Grader type or full config",
+    )
+    tags: list[str] = pd.Field(
+        default_factory=list,
+        description="Tags for filtering and organization",
+    )
+    timeout_seconds: float = pd.Field(
+        default=10.0,
+        description="Timeout for this eval (default 10s)",
+    )
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+    @property
+    def grader_config(self) -> FastEvalGraderConfig:
+        """Resolve grader configuration."""
+        if isinstance(self.grader, FastEvalGraderConfig):
+            return self.grader
+        return FastEvalGraderConfig(grader_type=self.grader)
+
+
+class FastEvalSuite(pd.BaseModel):
+    """Collection of fast evaluation tests.
+
+    Fast eval suites provide a lightweight way to run regression tests
+    and verify agent behaviors without full agent execution overhead.
+    """
+
+    id: str = pd.Field(
+        description="Unique identifier for this suite",
+    )
+    name: str = pd.Field(
+        description="Human-readable name for the suite",
+    )
+    description: str = pd.Field(
+        default="",
+        description="Description of the suite's purpose",
+    )
+    evals: list[FastEval] = pd.Field(
+        default_factory=list,
+        description="List of fast eval test cases",
+    )
+    defaults: FastEvalGraderConfig | None = pd.Field(
+        default=None,
+        description="Default grader configuration for all evals",
+    )
+    tags: list[str] = pd.Field(
+        default_factory=list,
+        description="Tags for categorizing the suite",
+    )
+    agent: str | None = pd.Field(
+        default=None,
+        description="Agent name to use for LLM calls",
+    )
+    model: str | None = pd.Field(
+        default=None,
+        description="Model to use for LLM calls",
+    )
+    provider: str | None = pd.Field(
+        default=None,
+        description="Provider to use for LLM calls",
+    )
+    parallelism: int = pd.Field(
+        default=4,
+        ge=1,
+        description="Number of parallel evaluations",
+    )
+
+    @pd.computed_field(return_type=int)
+    def eval_count(self) -> int:
+        """Number of evals in the suite."""
+        return len(self.evals)
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
+class FastEvalResult(pd.BaseModel):
+    """Result of a single fast eval execution."""
+
+    eval_id: str = pd.Field(
+        description="ID of the evaluated fast eval",
+    )
+    passed: bool = pd.Field(
+        description="Whether the eval passed",
+    )
+    score: float = pd.Field(
+        ge=0.0,
+        le=1.0,
+        description="Score from 0.0 to 1.0",
+    )
+    grader_type: str = pd.Field(
+        description="Type of grader used",
+    )
+    response: str | None = pd.Field(
+        default=None,
+        description="LLM response (for debugging)",
+    )
+    details: dict[str, Any] = pd.Field(
+        default_factory=dict,
+        description="Additional grader-specific details",
+    )
+    error_message: str | None = pd.Field(
+        default=None,
+        description="Error message if eval failed",
+    )
+    duration_seconds: float = pd.Field(
+        default=0.0,
+        ge=0.0,
+        description="Time taken to execute the eval",
+    )
+    token_usage: TokenUsage = pd.Field(
+        default_factory=TokenUsage,
+        description="Token usage for this eval",
+    )
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
+class FastEvalSuiteResult(pd.BaseModel):
+    """Result of running an entire fast eval suite."""
+
+    suite_id: str = pd.Field(
+        description="ID of the suite",
+    )
+    results: list[FastEvalResult] = pd.Field(
+        default_factory=list,
+        description="Results for each eval",
+    )
+    total_evals: int = pd.Field(
+        description="Total number of evals in suite",
+    )
+    passed_evals: int = pd.Field(
+        default=0,
+        description="Number of passed evals",
+    )
+    failed_evals: int = pd.Field(
+        default=0,
+        description="Number of failed evals",
+    )
+    pass_rate: float = pd.Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Overall pass rate",
+    )
+    mean_score: float = pd.Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Mean score across all evals",
+    )
+    total_duration_seconds: float = pd.Field(
+        default=0.0,
+        ge=0.0,
+        description="Total execution time",
+    )
+    total_tokens: TokenUsage = pd.Field(
+        default_factory=TokenUsage,
+        description="Total token usage",
+    )
+    total_cost_usd: float = pd.Field(
+        default=0.0,
+        ge=0.0,
+        description="Total cost in USD",
+    )
+    created_at: str = pd.Field(
+        description="ISO timestamp when results were computed",
+    )
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+    @classmethod
+    def compute(cls, suite_id: str, results: list[FastEvalResult]) -> FastEvalSuiteResult:
+        """Compute aggregate results from a list of fast eval results."""
+        from datetime import UTC, datetime
+
+        total = len(results)
+        passed = sum(1 for r in results if r.passed)
+        failed = total - passed
+
+        total_tokens = TokenUsage()
+        for r in results:
+            total_tokens.input += r.token_usage.input
+            total_tokens.output += r.token_usage.output
+            total_tokens.reasoning += r.token_usage.reasoning
+            total_tokens.cache_read += r.token_usage.cache_read
+            total_tokens.cache_write += r.token_usage.cache_write
+
+        return cls(
+            suite_id=suite_id,
+            results=results,
+            total_evals=total,
+            passed_evals=passed,
+            failed_evals=failed,
+            pass_rate=passed / total if total > 0 else 0.0,
+            mean_score=sum(r.score for r in results) / total if total > 0 else 0.0,
+            total_duration_seconds=sum(r.duration_seconds for r in results),
+            total_tokens=total_tokens,
+            created_at=datetime.now(UTC).isoformat(),
+        )
+
+
+# =============================================================================
 # EXPORTS
 # =============================================================================
 
@@ -940,6 +1239,7 @@ __all__ = [
     "ToolSurfacePolicy",
     "GraderSpec",
     "GraderResult",
+    "EvalMcpServerConfig",
     "EvalTask",
     "EvalSuite",
     "EvalTranscript",
@@ -956,6 +1256,11 @@ __all__ = [
     "CalibrationSample",
     "CalibrationCurve",
     "CalibrationResult",
-    # Type aliases
-    "StorageBackend",
+    # Fast Eval
+    "FastEvalGraderType",
+    "FastEvalGraderConfig",
+    "FastEval",
+    "FastEvalSuite",
+    "FastEvalResult",
+    "FastEvalSuiteResult",
 ]

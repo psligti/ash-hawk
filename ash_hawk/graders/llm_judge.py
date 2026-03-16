@@ -15,7 +15,13 @@ from typing import TYPE_CHECKING, Any, Literal
 import pydantic as pd
 
 from ash_hawk.graders.base import Grader
-from ash_hawk.prompts import PromptInfo, _compute_hash, load_custom_prompt, load_judge_prompt
+from ash_hawk.prompts import (
+    PromptInfo,
+    _compute_hash,
+    list_judge_prompts,
+    load_custom_prompt,
+    load_judge_prompt,
+)
 from ash_hawk.types import (
     EvalTranscript,
     EvalTrial,
@@ -60,6 +66,79 @@ _QUALITATIVE_SCORE_MAP: dict[str, float] = {
     "fail": 0.0,
     "incorrect": 0.0,
 }
+
+
+_CONTEXT_PLACEHOLDERS: tuple[str, ...] = (
+    "{task_input}",
+    "{expected_output}",
+    "{agent_response}",
+    "{transcript_context}",
+)
+
+
+def _has_context_placeholders(prompt: str) -> bool:
+    return any(ph in prompt for ph in _CONTEXT_PLACEHOLDERS)
+
+
+def _escape_format_braces(text: str) -> str:
+    return text.replace("{", "{{").replace("}", "}}")
+
+
+def _looks_like_inline_rubric(value: str) -> bool:
+    stripped = value.strip()
+    if not stripped:
+        return False
+    if "\n" in stripped or "\r" in stripped:
+        return True
+    if len(stripped) >= 80 and " " in stripped:
+        return True
+    lowered = stripped.lower()
+    if lowered.startswith("evaluate") and " " in lowered:
+        return True
+    if "score" in lowered and ("-" in stripped or ":" in stripped) and " " in lowered:
+        return True
+    return False
+
+
+_RUBRIC_TEXT_WRAPPER_TEMPLATE: str = """You are an expert evaluator judging an AI agent's response.
+
+Your goal: apply the rubric below to the provided context and return a strict JSON result.
+
+## Task Input
+{task_input}
+
+## Expected Output (if provided)
+{expected_output}
+
+## Agent's Response
+{agent_response}
+
+## Full Transcript Context
+{transcript_context}
+
+## Rubric
+__RUBRIC_TEXT__
+
+## Output Format
+You MUST respond with a valid JSON object matching this schema:
+
+```json
+{{
+  "score": <float between 0.0 and 1.0>,
+  "passed": <boolean>,
+  "reasoning": "<brief explanation of the score>",
+  "issues": ["<list of issues, if any>"],
+  "strengths": ["<list of strengths, if any>"]
+}}
+```
+
+Respond with ONLY the JSON object, no additional text.
+"""
+
+
+def _wrap_rubric_text_as_prompt(rubric_text: str) -> str:
+    safe_text = _escape_format_braces(rubric_text.strip())
+    return _RUBRIC_TEXT_WRAPPER_TEMPLATE.replace("__RUBRIC_TEXT__", safe_text)
 
 
 class JudgeOutputBreakdown(pd.BaseModel):
@@ -144,14 +223,26 @@ class JudgeConfig(pd.BaseModel):
 
     rubric: str = pd.Field(
         default="correctness",
-        description="Rubric to use (correctness, relevance, safety, quality)",
+        description=(
+            "Built-in judge prompt name (e.g., correctness, relevance, safety, quality, helpfulness). "
+            "If this looks like inline rubric text (e.g., multiline), it will be wrapped into the "
+            "standard judge prompt template."
+        ),
     )
     custom_prompt: str | None = pd.Field(
         default=None,
-        description="Inline custom prompt string (takes priority over custom_prompt_path)",
+        description=(
+            "Inline judge prompt template. If it does not include context placeholders "
+            "({task_input}, {agent_response}, {transcript_context}, {expected_output}), it is "
+            "treated as rubric text and wrapped into the standard judge prompt template."
+        ),
     )
     custom_prompt_path: str | None = pd.Field(
-        default=None, description="Path to custom prompt file"
+        default=None,
+        description=(
+            "Path to custom prompt file. If the loaded content does not include context placeholders, "
+            "it is treated as rubric text and wrapped into the standard judge prompt template."
+        ),
     )
     pass_threshold: float = pd.Field(
         default=0.7, ge=0.0, le=1.0, description="Threshold for passing"
@@ -306,20 +397,65 @@ class LLMJudgeGrader(Grader):
         if self._prompt_info is not None:
             return self._prompt_info
 
-        if self._config.custom_prompt:
-            # Use inline custom prompt string directly
+        if self._config.custom_prompt is not None and self._config.custom_prompt.strip() != "":
+            raw = self._config.custom_prompt
+            if _has_context_placeholders(raw):
+                content = raw
+                name = "custom_inline"
+            else:
+                content = _wrap_rubric_text_as_prompt(raw)
+                name = "custom_inline_rubric"
             self._prompt_info = PromptInfo(
-                name="custom_inline",
+                name=name,
                 version="1.0.0",
-                content=self._config.custom_prompt,
-                content_hash=_compute_hash(self._config.custom_prompt),
+                content=content,
+                content_hash=_compute_hash(content),
             )
-        elif self._config.custom_prompt_path:
-            self._prompt_info = load_custom_prompt(self._config.custom_prompt_path)
-        else:
-            self._prompt_info = load_judge_prompt(self._config.rubric)
+            return self._prompt_info
 
-        return self._prompt_info
+        if (
+            self._config.custom_prompt_path is not None
+            and self._config.custom_prompt_path.strip() != ""
+        ):
+            loaded = load_custom_prompt(self._config.custom_prompt_path)
+            if _has_context_placeholders(loaded.content):
+                self._prompt_info = loaded
+            else:
+                content = _wrap_rubric_text_as_prompt(loaded.content)
+                self._prompt_info = PromptInfo(
+                    name=loaded.name,
+                    version=loaded.version,
+                    content=content,
+                    content_hash=_compute_hash(content),
+                )
+            return self._prompt_info
+
+        rubric_value = self._config.rubric
+        rubric_key = rubric_value.strip()
+        available = set(list_judge_prompts())
+
+        if rubric_key in available:
+            self._prompt_info = load_judge_prompt(rubric_key)
+            return self._prompt_info
+
+        if _looks_like_inline_rubric(rubric_value):
+            content = _wrap_rubric_text_as_prompt(rubric_value)
+            self._prompt_info = PromptInfo(
+                name="rubric_inline",
+                version="1.0.0",
+                content=content,
+                content_hash=_compute_hash(content),
+            )
+            return self._prompt_info
+
+        available_list = ", ".join(sorted(available))
+        hint = ""
+        if "/" in rubric_key or rubric_key.endswith(".md"):
+            hint = " If you meant a file path, use custom_prompt_path."
+        raise FileNotFoundError(
+            f"Unknown judge rubric '{rubric_key}'. Available built-in rubrics: {available_list}.{hint} "
+            "For inline rubric text, use custom_prompt."
+        )
 
     def _format_transcript_context(self, transcript: EvalTranscript) -> str:
         """Format transcript with full interleaved execution trace.
@@ -330,13 +466,17 @@ class LLMJudgeGrader(Grader):
         """
         parts: list[str] = []
 
-        # Check for thinking_log in agent_response (iron-rook provides this)
-        agent_response = transcript.agent_response or {}
-        if isinstance(agent_response, str):
+        raw_agent_response = transcript.agent_response
+        agent_response: dict[str, Any] = {}
+        if isinstance(raw_agent_response, str):
             try:
-                agent_response = json.loads(agent_response)
+                parsed = json.loads(raw_agent_response)
+                if isinstance(parsed, dict):
+                    agent_response = parsed
             except (json.JSONDecodeError, TypeError):
                 agent_response = {}
+        elif isinstance(raw_agent_response, dict):
+            agent_response = raw_agent_response
 
         thinking_log = agent_response.get("thinking_log", {})
         frames = thinking_log.get("frames", [])
@@ -380,7 +520,9 @@ class LLMJudgeGrader(Grader):
                         parts.append(f"  {i}. [{kind}] {why}")
                         if evidence:
                             for ev in evidence[:3]:  # Max 3 evidence items
-                                ev_preview = str(ev)[:200] + "..." if len(str(ev)) > 200 else str(ev)
+                                ev_preview = (
+                                    str(ev)[:200] + "..." if len(str(ev)) > 200 else str(ev)
+                                )
                                 parts.append(f"     Evidence: {ev_preview}")
                         parts.append(f"     Confidence: {confidence}")
 
@@ -606,6 +748,7 @@ class LLMJudgeGrader(Grader):
         payload["strengths"] = strengths
 
         return payload
+
     def _extract_embedded_scores(self, text: str) -> list[float]:
         """Extract scores embedded in text like '(Score: 1.0)' or '**Score: 5/5**'."""
         # Pattern 1: (Score: X.X) or (Score: X)
@@ -791,7 +934,7 @@ class LLMJudgeGrader(Grader):
                 for key, value in dim_scores.items():
                     if isinstance(value, (int, float)):
                         extracted[str(key)] = normalize_score(float(value))
-            
+
             for key, value in answer.items():
                 lowered = str(key).lower()
                 if isinstance(value, (int, float)) and any(
@@ -877,6 +1020,7 @@ class LLMJudgeGrader(Grader):
                 if isinstance(strengths, list):
                     return strengths
         return []
+
     async def _run_single_judge(
         self,
         prompt: str,

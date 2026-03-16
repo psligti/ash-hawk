@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Set
 
 from pydantic import BaseModel, ConfigDict
 
-from ash_hawk.types import EvalTrial, EvalTranscript, GraderResult, GraderSpec
+from ash_hawk.types import EvalTranscript, EvalTrial, GraderResult, GraderSpec
 
 from .base import Grader
 

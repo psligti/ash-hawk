@@ -1,6 +1,5 @@
 import asyncio
 from collections import defaultdict
-from pathlib import Path
 
 import click
 from rich.console import Console
@@ -16,7 +15,7 @@ from ash_hawk.metrics.statistics import (
     wilson_confidence_interval,
 )
 from ash_hawk.storage import FileStorage
-from ash_hawk.types import EvalStatus, GraderResult
+from ash_hawk.types import EvalStatus, FailureMode, GraderResult
 
 console = Console()
 
@@ -60,6 +59,48 @@ def _show_report(
     verbose: bool,
 ) -> None:
     asyncio.run(_show_report_async(run_id, suite_id, storage_path, verbose))
+
+
+def _is_grader_error_trial(trial: object) -> bool:
+    trial_result = getattr(trial, "result", None)
+    if trial_result is None:
+        return False
+
+    outcome = getattr(trial_result, "outcome", None)
+    if outcome and getattr(outcome, "failure_mode", None) == FailureMode.JUDGE_ERROR:
+        return True
+
+    grader_results = getattr(trial_result, "grader_results", [])
+    for grader_result in grader_results:
+        if getattr(grader_result, "error_message", None):
+            return True
+        details = getattr(grader_result, "details", {})
+        if isinstance(details, dict):
+            details_dict: dict[str, object] = details
+            if details_dict.get("failure_mode") == "judge_error":
+                return True
+    return False
+
+
+def _categorize_trial_outcome(trial: object) -> str:
+    trial_result = getattr(trial, "result", None)
+    if trial_result is None:
+        return "other"
+
+    outcome = getattr(trial_result, "outcome", None)
+    failure_mode = getattr(outcome, "failure_mode", None) if outcome else None
+
+    if failure_mode == FailureMode.TIMEOUT:
+        return "timeout"
+    if _is_grader_error_trial(trial):
+        return "grader_error"
+
+    status = getattr(trial, "status", None)
+    aggregate_passed = getattr(trial_result, "aggregate_passed", False)
+    if status == EvalStatus.COMPLETED and not aggregate_passed:
+        return "task_fail"
+
+    return "other"
 
 
 async def _show_report_async(
@@ -133,6 +174,22 @@ async def _show_report_async(
     results_table.add_row("Completed", str(metrics.completed_tasks))
     results_table.add_row("Passed", f"[{pass_color}]{metrics.passed_tasks}[/{pass_color}]")
     results_table.add_row("Failed", str(metrics.failed_tasks))
+
+    task_failures = 0
+    timeouts = 0
+    grader_errors = 0
+    for trial in summary.trials:
+        category = _categorize_trial_outcome(trial)
+        if category == "task_fail":
+            task_failures += 1
+        elif category == "timeout":
+            timeouts += 1
+        elif category == "grader_error":
+            grader_errors += 1
+
+    results_table.add_row("Task Fails", str(task_failures))
+    results_table.add_row("Timeouts", str(timeouts))
+    results_table.add_row("Grader Errors", str(grader_errors))
 
     if detailed_metrics.pass_rate_ci:
         ci = detailed_metrics.pass_rate_ci
@@ -241,7 +298,7 @@ async def _show_report_async(
 
     if disagreement_report.flagged_trial_ids:
         console.print()
-        review_lines = []
+        review_lines: list[str] = []
         for trial_id in disagreement_report.flagged_trial_ids:
             reason = disagreement_report.reasons.get(trial_id, "Unknown reason")
             review_lines.append(f"[yellow]{trial_id}[/yellow]: {reason}")

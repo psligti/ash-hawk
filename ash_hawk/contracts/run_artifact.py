@@ -66,6 +66,10 @@ class StepRecord(pd.BaseModel):
         content: The content of the step.
         outcome: Result of this step.
         timestamp: When the step was recorded.
+        status: Status of this step (pending, running, completed, failed).
+        started_at: When this step started.
+        completed_at: When this step completed.
+        tool_calls: Tool calls made during this step.
     """
 
     step_id: str = pd.Field(
@@ -87,6 +91,22 @@ class StepRecord(pd.BaseModel):
     timestamp: datetime | None = pd.Field(
         default=None,
         description="When the step was recorded",
+    )
+    status: str = pd.Field(
+        default="pending",
+        description="Status of this step (pending, running, completed, failed)",
+    )
+    started_at: datetime | None = pd.Field(
+        default=None,
+        description="When this step started",
+    )
+    completed_at: datetime | None = pd.Field(
+        default=None,
+        description="When this step completed",
+    )
+    tool_calls: list[ToolCallRecord] = pd.Field(
+        default_factory=list,
+        description="Tool calls made during this step",
     )
 
     model_config = pd.ConfigDict(extra="allow")
@@ -170,6 +190,20 @@ class RunArtifact(pd.BaseModel):
     completed_at: datetime | None = pd.Field(
         default=None,
         description="When the run completed",
+    )
+    overall_score: float = pd.Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Overall score from evaluation (0.0 to 1.0)",
+    )
+    metrics: dict[str, float] = pd.Field(
+        default_factory=dict,
+        description="Computed metrics (efficiency_score, quality_score, safety_score, etc.)",
+    )
+    trial_ids: list[str] = pd.Field(
+        default_factory=list,
+        description="IDs of trials included in this run artifact",
     )
 
     model_config = pd.ConfigDict(extra="allow")

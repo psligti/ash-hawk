@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 import pydantic as pd
 
+from ash_hawk.strategies import Strategy, SubStrategy
+
 
 class CuratedLesson(pd.BaseModel):
     """Approved and versioned lesson for persistence.
@@ -92,6 +94,22 @@ class CuratedLesson(pd.BaseModel):
     applied_at: datetime | None = pd.Field(
         default=None,
         description="When the lesson was first applied to a run",
+    )
+    experiment_id: str | None = pd.Field(
+        default=None,
+        description="ID of the experiment this lesson belongs to",
+    )
+    strategy: Strategy | None = pd.Field(
+        default=None,
+        description="Top-level improvement strategy",
+    )
+    sub_strategies: list[SubStrategy] = pd.Field(
+        default_factory=list,
+        description="Sub-strategies this lesson addresses",
+    )
+    applicability_rules: list[str] = pd.Field(
+        default_factory=list,
+        description="Conditions for when to apply this lesson",
     )
 
     def is_active(self) -> bool:

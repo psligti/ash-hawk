@@ -9,6 +9,7 @@ Key components:
 - EvalRunner: Parallel suite runner with timeout, budget, and cancellation support
 """
 
+from ash_hawk.execution.fast_eval import FastEvalRunner
 from ash_hawk.execution.fixtures import FixtureError, FixtureResolver
 from ash_hawk.execution.runner import EvalRunner, ResourceTracker
 from ash_hawk.execution.trial import AgentRunner, TrialExecutor
@@ -16,6 +17,7 @@ from ash_hawk.execution.trial import AgentRunner, TrialExecutor
 __all__ = [
     "AgentRunner",
     "EvalRunner",
+    "FastEvalRunner",
     "FixtureError",
     "FixtureResolver",
     "ResourceTracker",

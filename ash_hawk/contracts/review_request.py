@@ -49,5 +49,13 @@ class ReviewRequest(pd.BaseModel):
         default=None,
         description="Optional baseline run ID for before/after comparison",
     )
+    experiment_id: str | None = pd.Field(
+        default=None,
+        description="ID of the experiment for parallel trial isolation",
+    )
+    variant: str | None = pd.Field(
+        default=None,
+        description="A/B test variant identifier (e.g., 'control', 'treatment-a')",
+    )
 
     model_config = pd.ConfigDict(extra="forbid")

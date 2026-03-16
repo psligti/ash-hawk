@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 import pydantic as pd
 
+from ash_hawk.strategies import Strategy, SubStrategy
+
 
 class ImprovementProposal(pd.BaseModel):
     """Structured proposal for improving agent behavior.
@@ -91,6 +93,18 @@ class ImprovementProposal(pd.BaseModel):
     rejection_reason: str | None = pd.Field(
         default=None,
         description="Reason for rejection if status is rejected",
+    )
+    experiment_id: str | None = pd.Field(
+        default=None,
+        description="ID of the experiment this proposal belongs to",
+    )
+    strategy: Strategy | None = pd.Field(
+        default=None,
+        description="Top-level improvement strategy",
+    )
+    sub_strategies: list[SubStrategy] = pd.Field(
+        default_factory=list,
+        description="Sub-strategies this proposal addresses",
     )
 
     model_config = pd.ConfigDict(extra="forbid")

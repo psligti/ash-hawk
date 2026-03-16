@@ -158,6 +158,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     from ash_hawk.graders.diff_constraints import DiffConstraintsGrader
     from ash_hawk.graders.human import ManualReviewGrader
     from ash_hawk.graders.llm_judge import LLMJudgeGrader
+    from ash_hawk.graders.llm_rubric import LLMRubricGrader
     from ash_hawk.graders.structured import FormatGrader, SchemaGrader, ToolUsageGrader
     from ash_hawk.graders.trace_assertions import (
         BudgetComplianceGrader,
@@ -174,6 +175,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(ToolCallGrader())
     registry.register(TranscriptGrader())
     registry.register(LLMJudgeGrader())
+    registry.register(LLMRubricGrader())
     registry.register(SchemaGrader())
     registry.register(FormatGrader())
     registry.register(ToolUsageGrader())

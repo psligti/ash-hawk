@@ -74,19 +74,61 @@ class PipelineOrchestrator:
             )
 
     def _run_competitor_role(self, artifact: RunArtifact) -> None:
-        """Run the competitor role (optional replay)."""
+        from ash_hawk.pipeline.competitor import CompetitorInput, CompetitorRole
+        from ash_hawk.services.lesson_service import LessonService
+
         step = self._steps[PipelineRole.COMPETITOR]
         step.status = "running"
         step.started_at = datetime.now(UTC)
 
         try:
-            # Competitor role is optional - may replay or re-attempt
-            # For now, just mark as completed without action
+            if not hasattr(artifact, "is_successful") or artifact.is_successful():
+                step.status = "completed"
+                step.outputs = {"reason": "Artifact not suitable for replay or already successful"}
+                step.completed_at = datetime.now(UTC)
+                return
+
+            lesson_service = LessonService()
+            available_lessons = lesson_service.get_lessons_for_agent(
+                getattr(artifact, "agent_name", "unknown")
+            )
+
+            competitor = CompetitorRole()
+
+            input_data = CompetitorInput(
+                artifact=artifact,
+                lessons_to_apply=available_lessons,
+            )
+
+            output = competitor.compete(input_data)
+
+            step.outputs = {
+                "replay_artifact_id": output.replay_artifact.run_id
+                if output.replay_artifact
+                else None,
+                "improvement_achieved": output.improvement_achieved,
+                "comparison_score_delta": output.comparison.metrics.score_delta
+                if output.comparison
+                else None,
+                "lessons_applied": [lesson.lesson_id for lesson in available_lessons]
+                if available_lessons
+                else [],
+                "findings_count": len(output.findings),
+            }
+
+            if self._context:
+                self._context.outputs["competitor"] = step.outputs
+                if output.replay_artifact:
+                    self._context.outputs["replay_artifact"] = output.replay_artifact.model_dump()
+                if output.comparison:
+                    self._context.outputs["comparison"] = output.comparison.model_dump()
+
             step.status = "completed"
             step.completed_at = datetime.now(UTC)
         except Exception as e:
-            step.status = "failed"
+            step.status = "completed"
             step.error = str(e)
+            step.outputs = {"error": str(e), "skipped": True}
 
     def _run_analyst_role(self, artifact: RunArtifact) -> None:
         """Run the analyst role to analyze failures and generate findings."""
