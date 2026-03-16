@@ -203,44 +203,61 @@ ash-hawk/
 
 ## Note-Lark Knowledge Management
 
-Use note-lark MCP tools for persistent knowledge capture:
+Use note-lark MCP tools for persistent knowledge capture.
 
-### Global Knowledge (cross-project)
+### Critical call shape
+
+All note-lark tool calls must wrap arguments under `payload={...}`.
+
+### Quick capture (append-only)
+
 ```python
-# Capture patterns, learnings, principles
-note-lark_memory_structured({
-    title: "Grader Best Practices",
-    memory_type: "procedural",
-    scope: "global",
-    tags: ["pattern", "graders"]
+note_lark_memory_append(payload={
+    "scope": "project",
+    "project": "ash-hawk",
+    "source": "session",
+    "raw_text": "Composite grader weighting needs per-domain calibration.",
+    "tags": ["ash-hawk", "graders", "calibration"],
 })
 ```
 
-### Project-Specific Knowledge
+### Structured learning note
+
 ```python
-# Capture project conventions, decisions
-note-lark_memory_append({
-    scope: "global",  # or "project" with project_id
-    tags: ["ash-hawk", "convention"]
+note_lark_memory_structured(payload={
+    "title": "Composite grader calibration pattern",
+    "memory_type": "procedural",
+    "scope": "project",
+    "project": "ash-hawk",
+    "status": "structured",
+    "confidence": 0.9,
+    "evidence_count": 2,
+    "tags": ["ash-hawk", "evals", "graders"],
+    "body": "# Learning\n\nCalibrate grader weights per suite domain.",
 })
 ```
 
-### Note Types to Use
-- `docs` - Reference documentation
-- `glossary` - Domain terms and definitions
-- `learnings` - Things that worked or didn't work
-- `principles` - Design principles
-- `reference` - External references
-- `skills` - Skill documentation
-- `specs` - Specifications
-- `standards` - Code standards
-- `tickets` - Task tracking
+### Create typed notes (docs/specs/skills)
+
+```python
+note_lark_notes_create(payload={
+    "title": "Ash Hawk grader authoring guide",
+    "type": "doc",
+    "scope": "project",
+    "project": "ash-hawk",
+    "frontmatter": {
+        "doc_status": "draft",
+    },
+    "body": "## Overview\n\nGuidance for creating deterministic and LLM graders.",
+})
+```
 
 ### Workflow
-1. **Session start**: Search memory for project context
-2. **During work**: Append lightweight learnings
-3. **Decisions**: Create structured memory
-4. **Before completing**: Document any new patterns
+
+1. Session start: `note_lark_memory_search` / `note_lark_notes_search`
+2. During work: `note_lark_memory_append` for raw learnings
+3. Consolidation: `note_lark_memory_structured` for validated patterns
+4. Durable docs/specs: `note_lark_notes_create` with required `frontmatter`
 
 ---
 
@@ -322,12 +339,28 @@ Use conventional commits:
 - `docs:` - Documentation only
 - `chore:` - Maintenance tasks
 
-### Push Frequently
+### Commit Frequently
 
-- **Push after each logical unit** of work is complete
-- **Don't batch multiple features** in one push
-- **Push before switching tasks** or ending a session
-- **Push working code only** - tests should pass
+- **Commit after each logical unit** of work is complete
+- **Commit periodically during implementation** - don't wait until the end
+- **Don't batch multiple features** in one commit
+- **Commit before switching tasks** or ending a session
+- **Commit working code only** - tests should pass
+
+**CRITICAL**: As an AI agent, you MUST commit changes periodically throughout a session. Do NOT wait for the user to ask. After completing each todo item or logical unit, commit immediately.
+
+**Workflow:**
+```bash
+# After completing a feature or fix
+git add ash_hawk/eval_packs/
+git commit -m "feat: add evaluator packs with registry"
+git push origin main
+
+# After completing another unit
+git add ash_hawk/integration/
+git commit -m "feat: add post-run review hooks"
+git push origin main
+```
 
 **Workflow:**
 ```bash
@@ -349,4 +382,3 @@ git push origin main
 - [ ] `uv run pytest` passes (or affected tests)
 - [ ] Commit message is descriptive
 - [ ] Commit is atomic (single concern)
-
