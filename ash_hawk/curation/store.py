@@ -42,25 +42,33 @@ class LessonStore:
             return self._lessons.get(lesson_id)
         return None
 
-    def get_for_agent(self, agent_id: str) -> list[CuratedLesson]:
+    def get_for_agent(
+        self,
+        agent_id: str,
+        experiment_id: str | None = None,
+    ) -> list[CuratedLesson]:
         lesson_ids = self._by_agent.get(agent_id, [])
         lessons = []
         for lid in lesson_ids:
             lesson = self._lessons.get(lid)
             if lesson and lesson.validation_status == "approved":
-                lessons.append(lesson)
+                if experiment_id is None or lesson.experiment_id == experiment_id:
+                    lessons.append(lesson)
         return lessons
 
     def list_all(
         self,
         status: str | None = None,
         lesson_type: str | None = None,
+        experiment_id: str | None = None,
     ) -> list[CuratedLesson]:
         lessons = list(self._lessons.values())
         if status:
             lessons = [lesson for lesson in lessons if lesson.validation_status == status]
         if lesson_type:
             lessons = [lesson for lesson in lessons if lesson.lesson_type == lesson_type]
+        if experiment_id:
+            lessons = [lesson for lesson in lessons if lesson.experiment_id == experiment_id]
         return lessons
 
     def update_status(

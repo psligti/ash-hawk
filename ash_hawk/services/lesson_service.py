@@ -5,10 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from ash_hawk.contracts import CuratedLesson, ImprovementProposal
-from ash_hawk.curation.provenance import ProvenanceRecord
+from ash_hawk.curation.provenance import ProvenanceRecord, ProvenanceTracker
 from ash_hawk.curation.rollback import RollbackManager
 from ash_hawk.curation.store import LessonStore
-from ash_hawk.curation.provenance import ProvenanceTracker
 
 
 class LessonService:
@@ -27,7 +26,18 @@ class LessonService:
         self,
         proposal: ImprovementProposal,
         applies_to_agents: list[str] | None = None,
+        experiment_id: str | None = None,
     ) -> CuratedLesson:
+        if experiment_id is None:
+            import warnings
+
+            warnings.warn(
+                "experiment_id not provided - lesson will be stored in global namespace. "
+                "Pass experiment_id for parallel trial isolation.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         lesson = CuratedLesson(
             lesson_id=f"lesson-{proposal.proposal_id}",
             source_proposal_id=proposal.proposal_id,
@@ -39,6 +49,7 @@ class LessonService:
             validation_status="approved",
             version=1,
             created_at=proposal.created_at,
+            experiment_id=experiment_id,
         )
 
         self._store.store(lesson)
@@ -50,15 +61,24 @@ class LessonService:
     def get_lesson(self, lesson_id: str) -> CuratedLesson | None:
         return self._store.get(lesson_id)
 
-    def get_lessons_for_agent(self, agent_id: str) -> list[CuratedLesson]:
-        return self._store.get_for_agent(agent_id)
+    def get_lessons_for_agent(
+        self,
+        agent_id: str,
+        experiment_id: str | None = None,
+    ) -> list[CuratedLesson]:
+        return self._store.get_for_agent(agent_id, experiment_id=experiment_id)
 
     def list_lessons(
         self,
         status: str | None = None,
         lesson_type: str | None = None,
+        experiment_id: str | None = None,
     ) -> list[CuratedLesson]:
-        return self._store.list_all(status=status, lesson_type=lesson_type)
+        return self._store.list_all(
+            status=status,
+            lesson_type=lesson_type,
+            experiment_id=experiment_id,
+        )
 
     def rollback_lesson(
         self,
