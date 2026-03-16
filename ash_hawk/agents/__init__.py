@@ -1,12 +1,11 @@
-"""Agent runners for ash-hawk evaluation harness.
-
-This module provides agent runner implementations that integrate with
-different LLM frameworks. Each runner implements the AgentRunner protocol.
-
-Available runners:
-- DawnKestrelAgentRunner: Integration with dawn-kestrel framework
-"""
-
+from ash_hawk.agents.bolt_merlin import BoltMerlinAgentRunner
 from ash_hawk.agents.dawn_kestrel import DawnKestrelAgentRunner
+from ash_hawk.agents.iron_rook import IronRookAgentRunner
+from ash_hawk.agents.vox_jay import VoxJayAgentRunner
 
-__all__ = ["DawnKestrelAgentRunner"]
+__all__ = [
+    "DawnKestrelAgentRunner",
+    "IronRookAgentRunner",
+    "BoltMerlinAgentRunner",
+    "VoxJayAgentRunner",
+]
