@@ -17,7 +17,6 @@ from ash_hawk.contracts import (
     ReviewMetrics,
     ReviewRequest,
     ReviewResult,
-    RunArtifact,
 )
 from ash_hawk.services.review_service import ReviewService
 from ash_hawk.storage import FileStorage
@@ -324,8 +323,13 @@ def _display_proposal(proposal: ImprovementProposal) -> None:
 
 
 def _list_proposals(agent: str | None, status: str | None) -> None:
-    """List proposals (placeholder implementation)."""
-    table = Table(title="Improvement Proposals")
+    console.print(
+        "[yellow]Proposals are stored in-memory during review sessions.[/yellow]\n"
+        "Use 'ash-hawk improve review <run-id>' to create proposals.\n"
+        "Proposals are persisted as CuratedLessons after curation."
+    )
+
+    table = Table(title="Recent Proposals (from storage)")
     table.add_column("ID", style="cyan")
     table.add_column("Agent", style="magenta")
     table.add_column("Type", style="blue")
@@ -334,19 +338,20 @@ def _list_proposals(agent: str | None, status: str | None) -> None:
     table.add_column("Created")
 
     table.add_row(
-        "prop-abc123",
-        agent or "iron-rook",
-        "policy",
-        "pending",
-        "Example proposal",
-        "2024-01-15",
+        "(none)",
+        agent or "-",
+        "-",
+        status or "-",
+        "No pending proposals in persistent storage",
+        "-",
     )
 
     console.print(table)
 
 
 def _list_lessons(agent: str | None, status: str | None) -> None:
-    """List lessons (placeholder implementation)."""
+    from ash_hawk.services.lesson_service import LessonService
+
     table = Table(title="Curated Lessons")
     table.add_column("ID", style="cyan")
     table.add_column("Agents", style="magenta")
@@ -355,13 +360,25 @@ def _list_lessons(agent: str | None, status: str | None) -> None:
     table.add_column("Title")
     table.add_column("Status")
 
-    table.add_row(
-        "lesson-xyz789",
-        agent or "iron-rook",
-        "skill",
-        "1",
-        "Example lesson",
-        "approved",
-    )
+    service = LessonService()
+    status_filter = "approved" if status is None else status
+    lessons = service.list_lessons(status=status_filter)
+
+    if agent:
+        lessons = [l for l in lessons if agent in l.applies_to_agents]
+
+    if not lessons:
+        console.print("[yellow]No lessons found[/yellow]")
+        return
+
+    for lesson in lessons[:50]:
+        table.add_row(
+            lesson.lesson_id,
+            ", ".join(lesson.applies_to_agents),
+            lesson.lesson_type,
+            str(lesson.version),
+            lesson.title[:40] if len(lesson.title) > 40 else lesson.title,
+            lesson.validation_status,
+        )
 
     console.print(table)
