@@ -1,0 +1,151 @@
+{
+  "trial": {
+    "id": "trial-c5c55fb2",
+    "task_id": "discoverability.description-keywords",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill with unique keyword ONLY in description:\n   - title: \"Code Organization\"\n   - type: skill\n   - scope: global\n   - description: \"Best practices for organizing code with xyz-unique-keyword-999\"\n   - skill_level: beginner\n   - triggers: [\"organize\", \"structure\"]\n   - required_tools: []\n   \n2. Search for \"xyz-unique-keyword-999\"\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-c5c55fb2",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:30:22.224161+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create skill with unique keyword ONLY in description:\n   - title: \"Code Organization\"\n   - type: skill\n   - scope: global\n   - description: \"Best practices for organizing code with xyz-unique-keyword-999\"\n   - skill_level: beginner\n   - triggers: [\"organize\", \"structure\"]\n   - required_tools: []\n   \n2. Search for \"xyz-unique-keyword-999\"\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"function\": \"create_skill\",\n  \"payload\": {\n    \"title\": \"Code Organization\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"Best practices for organizing code with xyz-unique-keyword-999\",\n    \"skill_level\": \"beginner\",\n    \"triggers\": [\n      \"organize\",\n      \"structure\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"function\": \"search\",\n  \"payload\": {\n    \"query\": \"xyz-unique-keyword-999\"\n  }\n}\n```\n\n```json\n{\n  \"function\": \"verify\",\n  \"payload\": {\n    \"expectation\": \"skill_found\",\n    \"search_term\": \"xyz-unique-keyword-999\",\n    \"target_title\": \"Code Organization\"\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 108,
+          "output": 2087,
+          "reasoning": 1904,
+          "cache_read": 7,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 27.352336168289185,
+        "agent_response": "```json\n{\n  \"function\": \"create_skill\",\n  \"payload\": {\n    \"title\": \"Code Organization\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"Best practices for organizing code with xyz-unique-keyword-999\",\n    \"skill_level\": \"beginner\",\n    \"triggers\": [\n      \"organize\",\n      \"structure\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"function\": \"search\",\n  \"payload\": {\n    \"query\": \"xyz-unique-keyword-999\"\n  }\n}\n```\n\n```json\n{\n  \"function\": \"verify\",\n  \"payload\": {\n    \"expectation\": \"skill_found\",\n    \"search_term\": \"xyz-unique-keyword-999\",\n    \"target_title\": \"Code Organization\"\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent successfully completed all required steps: created the skill with the unique keyword in the description, performed a search for that keyword, and included a verification step. All three function calls used proper payload wrappers and contained the correct parameters.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "Correctly structured create_skill call with all required parameters including type, scope, description, skill_level, triggers, and required_tools",
+              "Included unique keyword 'xyz-unique-keyword-999' in description as specified",
+              "Performed search call with the unique keyword as the query",
+              "Included verification step with appropriate parameters to verify skill was found"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "57d1836aa3619a9c",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent successfully completed all required steps: created the skill with the unique keyword in the description, performed a search for that keyword, and included a verification step. All three function calls used proper payload wrappers and contained the correct parameters.\",\n  \"issues\": [],\n  \"strengths\": [\"Correctly structured create_skill call with all required parameters including type, scope, description, skill_level, triggers, and required_tools\", \"Included unique keyword 'xyz-unique-keyword-999' in description as specified\", \"Performed search call with the unique keyword as the query\", \"Included verification step with appropriate parameters to verify skill was found\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 8.11070704460144,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-c5c55fb2",
+      "run_id": "run-487c804f",
+      "task_id": "discoverability.description-keywords",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:29:54.871715+00:00",
+      "started_at": "2026-03-12T17:29:54.871670+00:00",
+      "completed_at": "2026-03-12T17:30:22.224179+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-c5c55fb2",
+    "run_id": "run-487c804f",
+    "task_id": "discoverability.description-keywords",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:29:54.871715+00:00",
+    "started_at": "2026-03-12T17:29:54.871670+00:00",
+    "completed_at": "2026-03-12T17:30:22.224179+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

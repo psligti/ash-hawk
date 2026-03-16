@@ -1,0 +1,184 @@
+{
+  "trial": {
+    "id": "trial-cd7845f7",
+    "task_id": "skill.memory.creates-learning",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-cd7845f7",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:56:00.848728+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll create the structured memory entry using the specified parameters."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Test Learning\", \"memory_type\": \"procedural\", \"scope\": \"project\", \"project\": \"note-lark\", \"status\": \"structured\", \"confidence\": 0.9, \"tags\": [\"test\", \"learning\"], \"body\": \"This is a test learning about note-lark.\"}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"mem-project-a17bd3d3\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/projects/note-lark/learnings/mem-project-a17bd3d3.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "Perfect! I've successfully created the structured memory entry with the requested details.\n\n**Created Memory:**\n- **ID:** mem-project-a17bd3d3\n- **Title:** \"Test Learning\"\n- **Type:** procedural\n- **Scope:** project\n- **Project:** note-lark\n- **Status:** structured\n- **Confidence:** 0.9\n- **Tags:** [\"test\", \"learning\"]\n- **Body:** \"This is a test learning about note-lark.\"\n\nThe memory entry has been created and saved to the note-lark project's learnings directory. The operation completed successfully with no warnings."
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_memory_structured",
+            "input": {
+              "payload": {
+                "title": "Test Learning",
+                "memory_type": "procedural",
+                "scope": "project",
+                "project": "note-lark",
+                "status": "structured",
+                "confidence": 0.9,
+                "tags": [
+                  "test",
+                  "learning"
+                ],
+                "body": "This is a test learning about note-lark."
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"mem-project-a17bd3d3\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/projects/note-lark/learnings/mem-project-a17bd3d3.md\",\"warnings\":[]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 6990,
+          "output": 271,
+          "reasoning": 140,
+          "cache_read": 6761,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 27.82913303375244,
+        "agent_response": "Perfect! I've successfully created the structured memory entry with the requested details.\n\n**Created Memory:**\n- **ID:** mem-project-a17bd3d3\n- **Title:** \"Test Learning\"\n- **Type:** procedural\n- **Scope:** project\n- **Project:** note-lark\n- **Status:** structured\n- **Confidence:** 0.9\n- **Tags:** [\"test\", \"learning\"]\n- **Body:** \"This is a test learning about note-lark.\"\n\nThe memory entry has been created and saved to the note-lark project's learnings directory. The operation completed successfully with no warnings.",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent correctly called memory_structured with a payload wrapper containing all required fields. The memory was created successfully (ok: true). All three required fields (memory_type, status, confidence) were used with correct values.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "Used payload wrapper correctly",
+              "Memory created successfully",
+              "All required fields included with correct values"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "4cebcf684cc92fb7",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent correctly called memory_structured with a payload wrapper containing all required fields. The memory was created successfully (ok: true). All three required fields (memory_type, status, confidence) were used with correct values.\",\n  \"issues\": [],\n  \"strengths\": [\"Used payload wrapper correctly\", \"Memory created successfully\", \"All required fields included with correct values\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 31.26573419570923,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-cd7845f7",
+      "run_id": "run-1e30a78e",
+      "task_id": "skill.memory.creates-learning",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:55:33.019277+00:00",
+      "started_at": "2026-03-13T01:55:33.019149+00:00",
+      "completed_at": "2026-03-13T01:56:00.926715+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-cd7845f7",
+    "run_id": "run-1e30a78e",
+    "task_id": "skill.memory.creates-learning",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:55:33.019277+00:00",
+    "started_at": "2026-03-13T01:55:33.019149+00:00",
+    "completed_at": "2026-03-13T01:56:00.926715+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "command": "recap",
+  "result": {
+    "command": "recap",
+    "date": "2026-03-11",
+    "metrics": {
+      "followers": 1450,
+      "impressions": 12000,
+      "engagement": 4.2
+    },
+    "summary": {
+      "posts_made": 0,
+      "replies_sent": 0,
+      "engagement_rate": 4.2
+    }
+  },
+  "verification_passed": true
+}

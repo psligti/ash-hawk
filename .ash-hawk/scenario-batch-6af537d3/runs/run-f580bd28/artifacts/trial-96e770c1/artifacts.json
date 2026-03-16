@@ -1,0 +1,40 @@
+{
+  "command": "harness_tick",
+  "result": {
+    "command": "harness_tick",
+    "notes_processed": 0,
+    "status_changes": [],
+    "new_tweets_fetched": 2,
+    "new_actions_created": 2,
+    "new_actions_count": 2,
+    "unique_draft_count": 1,
+    "generic_opener_count": 0,
+    "new_actions": [
+      {
+        "tweet_id": "9001",
+        "author_handle": "builder1",
+        "action_type": "reply",
+        "priority": 1,
+        "status": "pending",
+        "draft_text": "On how are you measuring eval reliability over time - what specific outcome are you optimizing for? Happy to share what worked for us.",
+        "score": 0.65
+      },
+      {
+        "tweet_id": "9002",
+        "author_handle": "builder2",
+        "action_type": "like",
+        "priority": 2,
+        "status": "pending",
+        "draft_text": null,
+        "score": 0.72
+      }
+    ],
+    "llm_available": true,
+    "used_fallback": false,
+    "available_capacity": 10,
+    "skipped_due_to_pending_limit": false,
+    "total_pending": 2,
+    "index_updated": true
+  },
+  "verification_passed": true
+}

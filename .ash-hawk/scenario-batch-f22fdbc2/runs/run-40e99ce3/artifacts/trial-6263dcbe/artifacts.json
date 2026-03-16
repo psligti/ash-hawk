@@ -1,0 +1,40 @@
+{
+  "command": "harness_tick",
+  "result": {
+    "command": "harness_tick",
+    "notes_processed": 0,
+    "status_changes": [],
+    "new_tweets_fetched": 2,
+    "new_actions_created": 2,
+    "new_actions_count": 2,
+    "unique_draft_count": 2,
+    "generic_opener_count": 0,
+    "new_actions": [
+      {
+        "tweet_id": "9301",
+        "author_handle": "fallback_a",
+        "action_type": "reply",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": "On how do you benchmark eval stability - what specific outcome are you optimizing for? Happy to share what worked for us.",
+        "score": 0.65
+      },
+      {
+        "tweet_id": "9302",
+        "author_handle": "fallback_b",
+        "action_type": "reply",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": "On any advice on reducing flaky test retries - what specific outcome are you optimizing for? Happy to share what worked for us.",
+        "score": 0.65
+      }
+    ],
+    "llm_available": false,
+    "used_fallback": true,
+    "available_capacity": 60,
+    "skipped_due_to_pending_limit": false,
+    "total_pending": 2,
+    "index_updated": true
+  },
+  "verification_passed": true
+}

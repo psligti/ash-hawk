@@ -13,7 +13,7 @@
           "description": "Test EngagementPolicy tier-based prioritization logic",
           "sut": {
             "type": "agentic_sdk",
-            "adapter": "vox_jay_policy",
+            "adapter": "vox_jay_command",
             "config": {}
           },
           "inputs": {
@@ -148,8 +148,8 @@
             }
           ]
         },
-        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_engagement_tier_prioritization.scenario.yaml",
-        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement"
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpecp13om5/000-policy_engagement_tier_prioritization.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpecp13om5"
       },
       "expected_output": null,
       "grader_specs": [
@@ -172,10 +172,10 @@
       ],
       "tags": [
         "scenario",
-        "vox_jay_policy"
+        "vox_jay_command"
       ],
       "metadata": {
-        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_engagement_tier_prioritization.scenario.yaml"
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpecp13om5/000-policy_engagement_tier_prioritization.scenario.yaml"
       },
       "fixtures": {},
       "timeout_seconds": 30.0,

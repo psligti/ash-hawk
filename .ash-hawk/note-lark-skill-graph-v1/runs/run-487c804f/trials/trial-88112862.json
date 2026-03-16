@@ -1,0 +1,153 @@
+{
+  "trial": {
+    "id": "trial-88112862",
+    "task_id": "search.disambiguation.multiple-matches",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-88112862",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:29:09.249697+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"payload\": {\n    \"title\": \"Error Handling - Python\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"Python specific error handling\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"error\",\n      \"python\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"title\": \"Error Handling - JavaScript\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"JavaScript specific error handling\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"error\",\n      \"javascript\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"query\": \"error handling\"\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 161,
+          "output": 2609,
+          "reasoning": 2428,
+          "cache_read": 5,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 32.61983108520508,
+        "agent_response": "```json\n{\n  \"payload\": {\n    \"title\": \"Error Handling - Python\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"Python specific error handling\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"error\",\n      \"python\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"title\": \"Error Handling - JavaScript\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"JavaScript specific error handling\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"error\",\n      \"javascript\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"query\": \"error handling\"\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.3,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent correctly created both skills and performed the search, but failed to show the search results and verify that both skills appear in the results as required by step 4 of the task.",
+            "breakdown": {
+              "score": 0.3
+            },
+            "issues": [
+              "Missing verification step - agent did not display search results or confirm both skills were found",
+              "No evidence that search returned multiple results"
+            ],
+            "strengths": [
+              "Both skills created correctly with proper payload wrappers",
+              "All skill parameters accurately set (title, type, scope, description, skill_level, triggers, required_tools)",
+              "Search query performed with correct payload wrapper"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "ab93517f0b56bd73",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.3,\n  \"passed\": false,\n  \"reasoning\": \"The agent correctly created both skills and performed the search, but failed to show the search results and verify that both skills appear in the results as required by step 4 of the task.\",\n  \"issues\": [\n    \"Missing verification step - agent did not display search results or confirm both skills were found\",\n    \"No evidence that search returned multiple results\"\n  ],\n  \"strengths\": [\n    \"Both skills created correctly with proper payload wrappers\",\n    \"All skill parameters accurately set (title, type, scope, description, skill_level, triggers, required_tools)\",\n    \"Search query performed with correct payload wrapper\"\n  ]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 8.825678825378418,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.3,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-88112862",
+      "run_id": "run-487c804f",
+      "task_id": "search.disambiguation.multiple-matches",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:28:36.629734+00:00",
+      "started_at": "2026-03-12T17:28:36.629717+00:00",
+      "completed_at": "2026-03-12T17:29:09.249747+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-88112862",
+    "run_id": "run-487c804f",
+    "task_id": "search.disambiguation.multiple-matches",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:28:36.629734+00:00",
+    "started_at": "2026-03-12T17:28:36.629717+00:00",
+    "completed_at": "2026-03-12T17:29:09.249747+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

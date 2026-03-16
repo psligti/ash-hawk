@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-b92a3b9b",
+    "task_id": "discoverability.case-insensitive",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill:\n   - title: \"Docker Container Management\"\n   - type: skill\n   - scope: global\n   - description: \"Manage Docker containers efficiently\"\n   - skill_level: intermediate\n   - triggers: [\"docker\", \"container\"]\n   - required_tools: []\n   \n2. Search for \"DOCKER\" (all uppercase)\n3. Search for \"docker\" (all lowercase)\n4. Search for \"Docker\" (mixed case)\n\n5. Verify all searches find the same skill\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-b92a3b9b",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:29:19.181817+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create skill:\n   - title: \"Docker Container Management\"\n   - type: skill\n   - scope: global\n   - description: \"Manage Docker containers efficiently\"\n   - skill_level: intermediate\n   - triggers: [\"docker\", \"container\"]\n   - required_tools: []\n   \n2. Search for \"DOCKER\" (all uppercase)\n3. Search for \"docker\" (all lowercase)\n4. Search for \"Docker\" (mixed case)\n\n5. Verify all searches find the same skill\n\nUse payload wrapper for all calls.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"payload\": {\n    \"action\": \"create\",\n    \"title\": \"Docker Container Management\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"Manage Docker containers efficiently\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"docker\",\n      \"container\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"action\": \"search\",\n    \"query\": \"DOCKER\"\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"action\": \"search\",\n    \"query\": \"docker\"\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"action\": \"search\",\n    \"query\": \"Docker\"\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 117,
+          "output": 1298,
+          "reasoning": 1126,
+          "cache_read": 12,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 15.242130994796753,
+        "agent_response": "```json\n{\n  \"payload\": {\n    \"action\": \"create\",\n    \"title\": \"Docker Container Management\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"Manage Docker containers efficiently\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"docker\",\n      \"container\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"action\": \"search\",\n    \"query\": \"DOCKER\"\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"action\": \"search\",\n    \"query\": \"docker\"\n  }\n}\n```\n\n```json\n{\n  \"payload\": {\n    \"action\": \"search\",\n    \"query\": \"Docker\"\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate:\n1. Skill created (0.2 points)\n2. Uppercase search found skill (0.2 points)\n3. Lowercase search found skill (0.3 points)\n4. Mixed case search found skill (0.3 points)\n\nScore: sum of points\n.md. Expected prompt at: Evaluate:\n1. Skill created (0.2 points)\n2. Uppercase search found skill (0.2 points)\n3. Lowercase search found skill (0.3 points)\n4. Mixed case search found skill (0.3 points)\n\nScore: sum of points\n.md",
+          "execution_time_seconds": 0.0006108283996582031,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-b92a3b9b",
+      "run_id": "run-a56f5c1c",
+      "task_id": "discoverability.case-insensitive",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:29:03.939456+00:00",
+      "started_at": "2026-03-12T16:29:03.939395+00:00",
+      "completed_at": "2026-03-12T16:29:19.181849+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-b92a3b9b",
+    "run_id": "run-a56f5c1c",
+    "task_id": "discoverability.case-insensitive",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:29:03.939456+00:00",
+    "started_at": "2026-03-12T16:29:03.939395+00:00",
+    "completed_at": "2026-03-12T16:29:19.181849+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

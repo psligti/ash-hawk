@@ -1,0 +1,247 @@
+{
+  "trial": {
+    "id": "trial-acb2e52c",
+    "task_id": "skill.discoverability.triggers.cover-variations",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill with comprehensive trigger phrases:\n- title: \"Test Writing\"\n- type: skill\n- scope: global\n- description: \"Write unit tests using pytest with proper coverage\"\n- skill_level: intermediate\n- triggers: \n  - \"write tests\"\n  - \"add tests\"\n  - \"test coverage\"\n  - \"pytest\"\n  - \"unit test\"\n  - \"testing\"\n- required_tools: [\"pytest\"]\n\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-acb2e52c",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:53:45.839236+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill with comprehensive trigger phrases:\n- title: \"Test Writing\"\n- type: skill\n- scope: global\n- description: \"Write unit tests using pytest with proper coverage\"\n- skill_level: intermediate\n- triggers: \n  - \"write tests\"\n  - \"add tests\"\n  - \"test coverage\"\n  - \"pytest\"\n  - \"unit test\"\n  - \"testing\"\n- required_tools: [\"pytest\"]\n\nUse notes_create with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll create a skill with the comprehensive trigger phrases you specified using the notes_create function."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Test Writing\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Write unit tests using pytest with proper coverage\", \"skill_level\": \"intermediate\", \"triggers\": [\"write tests\", \"add tests\", \"test coverage\", \"pytest\", \"unit test\", \"testing\"], \"required_tools\": [\"pytest\"]}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"content\": \"# Test Writing\\n\\nWrite unit tests using pytest with proper coverage.\\n\\n## Key Principles\\n\\n- Write clear, descriptive test names\\n- Test one thing per test\\n- Use appropriate assertions\\n- Mock external dependencies\\n- Aim for high coverage\\n- Follow the Arrange-Act-Assert pattern\\n\\n## Best Practices\\n\\n1. **Test Structure**: Use descriptive test functions that clearly indicate what they're testing\\n2. **Coverage**: Ensure all critical paths and edge cases are covered\\n3. **Mocking**: Use pytest fixtures and mocking for external dependencies\\n4. **Fixtures**: Create reusable fixtures for common test setup\\n5. **Assertion**: Use specific assertions and provide clear failure messages\\n\\n## Common Patterns\\n\\n```python\\nimport pytest\\nfrom unittest.mock import Mock, patch\\n\\n# Example test structure\\ndef test_function_should_return_expected_result():\\n    # Arrange\\n    input_data = {...}\\n    expected = {...}\\n    \\n    # Act\\n    result = function_under_test(input_data)\\n    \\n    # Assert\\n    assert result == expected\\n\\n# Example with mocking\\ndef test_function_should_call_external_service():\\n    with patch('module.external_service') as mock_service:\\n        mock_service.return_value = Mock(data=\\\"test\\\")\\n        \\n        result = function_under_test()\\n        \\n        mock_service.assert_called_once()\\n        assert result.success is True\\n```\\n\\n## Coverage Goals\\n\\n- Target 80%+ code coverage\\n- Ensure all critical business logic is tested\\n- Test error handling and edge cases\\n- Use pytest-cov for coverage reports\\n\\n## Related Skills\\n\\n- Test Debugging\\n- Test Refactoring\\n- Integration Testing\", \"frontmatter\": {\"description\": \"Write unit tests using pytest with proper coverage\", \"required_tools\": [\"pytest\"], \"scope\": \"global\", \"skill_level\": \"intermediate\", \"title\": \"Test Writing\", \"triggers\": [\"write tests\", \"add tests\", \"test coverage\", \"pytest\", \"unit test\", \"testing\"], \"type\": \"skill\"}}}, \"output\": \"3 validation errors for NoteCreateRequest\\ntitle\\n  Field required [type=missing, input_value={'content': '# Test Writi...ing'], 'type': 'skill'}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\ntype\\n  Field required [type=missing, input_value={'content': '# Test Writi...ing'], 'type': 'skill'}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\nscope\\n  Field required [type=missing, input_value={'content': '# Test Writi...ing'], 'type': 'skill'}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Test Writing\", \"type\": \"skill\", \"scope\": \"global\", \"content\": \"# Test Writing\\n\\nWrite unit tests using pytest with proper coverage.\\n\\n## Key Principles\\n\\n- Write clear, descriptive test names\\n- Test one thing per test\\n- Use appropriate assertions\\n- Mock external dependencies\\n- Aim for high coverage\\n- Follow the Arrange-Act-Assert pattern\\n\\n## Best Practices\\n\\n1. **Test Structure**: Use descriptive test functions that clearly indicate what they're testing\\n2. **Coverage**: Ensure all critical paths and edge cases are covered\\n3. **Mocking**: Use pytest fixtures and mocking for external dependencies\\n4. **Fixtures**: Create reusable fixtures for common test setup\\n5. **Assertion**: Use specific assertions and provide clear failure messages\\n\\n## Common Patterns\\n\\n```python\\nimport pytest\\nfrom unittest.mock import Mock, patch\\n\\n# Example test structure\\ndef test_function_should_return_expected_result():\\n    # Arrange\\n    input_data = {...}\\n    expected = {...}\\n    \\n    # Act\\n    result = function_under_test(input_data)\\n    \\n    # Assert\\n    assert result == expected\\n\\n# Example with mocking\\ndef test_function_should_call_external_service():\\n    with patch('module.external_service') as mock_service:\\n        mock_service.return_value = Mock(data=\\\"test\\\")\\n        \\n        result = function_under_test()\\n        \\n        mock_service.assert_called_once()\\n        assert result.success is True\\n```\\n\\n## Coverage Goals\\n\\n- Target 80%+ code coverage\\n- Ensure all critical business logic is tested\\n- Test error handling and edge cases\\n- Use pytest-cov for coverage reports\\n\\n## Related Skills\\n\\n- Test Debugging\\n- Test Refactoring\\n- Integration Testing\", \"frontmatter\": {\"description\": \"Write unit tests using pytest with proper coverage\", \"skill_level\": \"intermediate\", \"triggers\": [\"write tests\", \"add tests\", \"test coverage\", \"pytest\", \"unit test\", \"testing\"], \"required_tools\": [\"pytest\"]}}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-test-writing-a8d499e1\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-test-writing-a8d499e1.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Test Writing",
+                "type": "skill",
+                "scope": "global",
+                "description": "Write unit tests using pytest with proper coverage",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "write tests",
+                  "add tests",
+                  "test coverage",
+                  "pytest",
+                  "unit test",
+                  "testing"
+                ],
+                "required_tools": [
+                  "pytest"
+                ]
+              }
+            },
+            "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "content": "# Test Writing\n\nWrite unit tests using pytest with proper coverage.\n\n## Key Principles\n\n- Write clear, descriptive test names\n- Test one thing per test\n- Use appropriate assertions\n- Mock external dependencies\n- Aim for high coverage\n- Follow the Arrange-Act-Assert pattern\n\n## Best Practices\n\n1. **Test Structure**: Use descriptive test functions that clearly indicate what they're testing\n2. **Coverage**: Ensure all critical paths and edge cases are covered\n3. **Mocking**: Use pytest fixtures and mocking for external dependencies\n4. **Fixtures**: Create reusable fixtures for common test setup\n5. **Assertion**: Use specific assertions and provide clear failure messages\n\n## Common Patterns\n\n```python\nimport pytest\nfrom unittest.mock import Mock, patch\n\n# Example test structure\ndef test_function_should_return_expected_result():\n    # Arrange\n    input_data = {...}\n    expected = {...}\n    \n    # Act\n    result = function_under_test(input_data)\n    \n    # Assert\n    assert result == expected\n\n# Example with mocking\ndef test_function_should_call_external_service():\n    with patch('module.external_service') as mock_service:\n        mock_service.return_value = Mock(data=\"test\")\n        \n        result = function_under_test()\n        \n        mock_service.assert_called_once()\n        assert result.success is True\n```\n\n## Coverage Goals\n\n- Target 80%+ code coverage\n- Ensure all critical business logic is tested\n- Test error handling and edge cases\n- Use pytest-cov for coverage reports\n\n## Related Skills\n\n- Test Debugging\n- Test Refactoring\n- Integration Testing",
+                "frontmatter": {
+                  "description": "Write unit tests using pytest with proper coverage",
+                  "required_tools": [
+                    "pytest"
+                  ],
+                  "scope": "global",
+                  "skill_level": "intermediate",
+                  "title": "Test Writing",
+                  "triggers": [
+                    "write tests",
+                    "add tests",
+                    "test coverage",
+                    "pytest",
+                    "unit test",
+                    "testing"
+                  ],
+                  "type": "skill"
+                }
+              }
+            },
+            "output": "3 validation errors for NoteCreateRequest\ntitle\n  Field required [type=missing, input_value={'content': '# Test Writi...ing'], 'type': 'skill'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\ntype\n  Field required [type=missing, input_value={'content': '# Test Writi...ing'], 'type': 'skill'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nscope\n  Field required [type=missing, input_value={'content': '# Test Writi...ing'], 'type': 'skill'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Test Writing",
+                "type": "skill",
+                "scope": "global",
+                "content": "# Test Writing\n\nWrite unit tests using pytest with proper coverage.\n\n## Key Principles\n\n- Write clear, descriptive test names\n- Test one thing per test\n- Use appropriate assertions\n- Mock external dependencies\n- Aim for high coverage\n- Follow the Arrange-Act-Assert pattern\n\n## Best Practices\n\n1. **Test Structure**: Use descriptive test functions that clearly indicate what they're testing\n2. **Coverage**: Ensure all critical paths and edge cases are covered\n3. **Mocking**: Use pytest fixtures and mocking for external dependencies\n4. **Fixtures**: Create reusable fixtures for common test setup\n5. **Assertion**: Use specific assertions and provide clear failure messages\n\n## Common Patterns\n\n```python\nimport pytest\nfrom unittest.mock import Mock, patch\n\n# Example test structure\ndef test_function_should_return_expected_result():\n    # Arrange\n    input_data = {...}\n    expected = {...}\n    \n    # Act\n    result = function_under_test(input_data)\n    \n    # Assert\n    assert result == expected\n\n# Example with mocking\ndef test_function_should_call_external_service():\n    with patch('module.external_service') as mock_service:\n        mock_service.return_value = Mock(data=\"test\")\n        \n        result = function_under_test()\n        \n        mock_service.assert_called_once()\n        assert result.success is True\n```\n\n## Coverage Goals\n\n- Target 80%+ code coverage\n- Ensure all critical business logic is tested\n- Test error handling and edge cases\n- Use pytest-cov for coverage reports\n\n## Related Skills\n\n- Test Debugging\n- Test Refactoring\n- Integration Testing",
+                "frontmatter": {
+                  "description": "Write unit tests using pytest with proper coverage",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "write tests",
+                    "add tests",
+                    "test coverage",
+                    "pytest",
+                    "unit test",
+                    "testing"
+                  ],
+                  "required_tools": [
+                    "pytest"
+                  ]
+                }
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"skill-test-writing-a8d499e1\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-test-writing-a8d499e1.md\",\"warnings\":[]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7649,
+          "output": 513,
+          "reasoning": 56,
+          "cache_read": 6968,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 46.00079393386841,
+        "agent_response": null,
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent failed to include the trigger phrases in the final skill creation. After two error messages indicating that skill-specific fields (triggers, description, skill_level, required_tools) needed to be in a 'frontmatter' dict, the third attempt only included a markdown 'content' field without any of the specified trigger phrases. The skill was created with ok:true, but without implementing the required trigger functionality.",
+            "breakdown": {
+              "score": 0.0
+            },
+            "issues": [
+              "Did not include any trigger phrases in the final payload",
+              "Ignored the system error message that explained skill fields must be in a 'frontmatter' dict",
+              "The 6 specified trigger variations (write tests, add tests, test coverage, pytest, unit test, testing) were not implemented"
+            ],
+            "strengths": [],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "076085d9680f543c",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.0,\n  \"passed\": false,\n  \"reasoning\": \"The agent failed to include the trigger phrases in the final skill creation. After two error messages indicating that skill-specific fields (triggers, description, skill_level, required_tools) needed to be in a 'frontmatter' dict, the third attempt only included a markdown 'content' field without any of the specified trigger phrases. The skill was created with ok:true, but without implementing the required trigger functionality.\",\n  \"issues\": [\n    \"Did not include any trigger phrases in the final payload\",\n    \"Ignored the system error message that explained skill fields must be in a 'frontmatter' dict\",\n    \"The 6 specified trigger variations (write tests, add tests, test coverage, pytest, unit test, testing) were not implemented\"\n  ],\n  \"strengths\": []\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 22.71315622329712,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-acb2e52c",
+      "run_id": "run-1e30a78e",
+      "task_id": "skill.discoverability.triggers.cover-variations",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:52:59.838279+00:00",
+      "started_at": "2026-03-13T01:52:59.838215+00:00",
+      "completed_at": "2026-03-13T01:53:45.908099+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-acb2e52c",
+    "run_id": "run-1e30a78e",
+    "task_id": "skill.discoverability.triggers.cover-variations",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:52:59.838279+00:00",
+    "started_at": "2026-03-13T01:52:59.838215+00:00",
+    "completed_at": "2026-03-13T01:53:45.908099+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

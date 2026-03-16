@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-b63a79cd",
+    "task_id": "skill.clarity.description.quality",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill note with:\n- title: \"Error Handling Pattern\"\n- type: skill\n- scope: global\n- description: \"Standard error handling for API routes using HTTPException\"\n- skill_level: intermediate\n- triggers: [\"exception\", \"error\", \"validation error\"]\n- required_tools: [\"pydantic\", \"fastapi\"]\n- body: |\n    # Error Handling Pattern\n    \n    Use HTTPException for API errors with proper status codes.\n    \n    ## Example\n    ```python\n    raise HTTPException(400, \"Invalid input\")\n    ```\n\nUse notes_create with payload wrapper. All type-specific fields go in frontmatter.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-b63a79cd",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T19:53:28.336159+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 299.9992640018463,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-b63a79cd",
+      "run_id": "run-45fcbd79",
+      "task_id": "skill.clarity.description.quality",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T19:48:28.337031+00:00",
+      "started_at": "2026-03-12T19:48:28.336969+00:00",
+      "completed_at": "2026-03-12T19:53:28.336254+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-b63a79cd",
+    "run_id": "run-45fcbd79",
+    "task_id": "skill.clarity.description.quality",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T19:48:28.337031+00:00",
+    "started_at": "2026-03-12T19:48:28.336969+00:00",
+    "completed_at": "2026-03-12T19:53:28.336254+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

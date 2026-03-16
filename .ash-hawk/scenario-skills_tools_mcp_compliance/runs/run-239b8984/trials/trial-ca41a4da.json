@@ -1,0 +1,385 @@
+{
+  "trial": {
+    "id": "trial-ca41a4da",
+    "task_id": "skills_tools_mcp_compliance",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "skills_tools_mcp_compliance",
+        "description": "Compliance scenario: verify skill marker + MCP-prefixed tool usage constraints",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "mock_adapter",
+          "config": {}
+        },
+        "inputs": {
+          "prompt": "Load note-lark-memory skill, call note-lark MCP tools for memory lookup, and summarize the plan.",
+          "expected_output": "Using note-lark-memory for scoped capture and note-lark MCP calls only.",
+          "mock_tool_calls": [
+            {
+              "tool": "note-lark_memory_search",
+              "input": {
+                "query": "user preference"
+              }
+            },
+            {
+              "tool": "note-lark_notes_search",
+              "input": {
+                "query": "memory workflow"
+              }
+            }
+          ]
+        },
+        "tools": {
+          "allowed_tools": [
+            "bash",
+            "note-lark_memory_search",
+            "note-lark_notes_search"
+          ],
+          "mocks": {
+            "bash": {
+              "input": {
+                "command": "echo 'mock'"
+              },
+              "result": {
+                "stdout": "mock\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            },
+            "note-lark_memory_search": {
+              "input": {
+                "query": "user preference"
+              },
+              "result": {
+                "items": []
+              }
+            },
+            "note-lark_notes_search": {
+              "input": {
+                "query": "memory workflow"
+              },
+              "result": {
+                "items": []
+              }
+            }
+          },
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 6,
+          "max_tool_calls": 8,
+          "max_tokens": 500,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [
+            "ToolCallEvent"
+          ],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "budget",
+            "config": {
+              "max_steps": 6,
+              "max_tool_calls": 8,
+              "max_time_seconds": 30.0
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "trace_content",
+            "config": {
+              "required_event_types": [
+                "ToolCallEvent"
+              ],
+              "required_mcp_prefixes": [
+                "note-lark_"
+              ],
+              "required_skill_markers": [
+                "note-lark-memory"
+              ]
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/compliance/skills_tools_mcp_compliance.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/compliance"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-ca41a4da",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-10T21:04:11.154994+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Load note-lark-memory skill, call note-lark MCP tools for memory lookup, and summarize the plan."
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "bash",
+              "input": {
+                "command": "echo 'mock'"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "bash",
+              "result": {
+                "stdout": "mock\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "note-lark_memory_search",
+              "input": {
+                "query": "user preference"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "note-lark_memory_search",
+              "result": {
+                "ok": true
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "note-lark_notes_search",
+              "input": {
+                "query": "memory workflow"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "note-lark_notes_search",
+              "result": {
+                "ok": true
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "Mock verification passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "Using note-lark-memory for scoped capture and note-lark MCP calls only."
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-skills_tools_mcp_compliance/runs/run-239b8984/artifacts/trial-ca41a4da/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.00045418739318847656,
+        "agent_response": "Using note-lark-memory for scoped capture and note-lark MCP calls only.",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 10,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 4.363059997558594e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "budget",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: budget",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "trace_content",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "event_types": [
+              "ModelMessageEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "VerificationEvent",
+              "ModelMessageEvent",
+              "ArtifactEvent"
+            ],
+            "tool_names": [
+              "bash",
+              "note-lark_memory_search",
+              "note-lark_notes_search"
+            ],
+            "violations": [],
+            "tool_pattern_mode": "glob"
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.8358230590820312e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.6666666666666666,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-ca41a4da",
+      "run_id": "run-239b8984",
+      "task_id": "skills_tools_mcp_compliance",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-10T21:04:11.154460+00:00",
+      "started_at": "2026-03-10T21:04:11.154419+00:00",
+      "completed_at": "2026-03-10T21:04:11.155020+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-ca41a4da",
+    "run_id": "run-239b8984",
+    "task_id": "skills_tools_mcp_compliance",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-10T21:04:11.154460+00:00",
+    "started_at": "2026-03-10T21:04:11.154419+00:00",
+    "completed_at": "2026-03-10T21:04:11.155020+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "trial": {
+    "id": "trial-8f2fcad5",
+    "task_id": "skill.consistency.payload-wrapper",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-8f2fcad5",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:25:48.888452+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nnotes_create(payload={\n    \"title\": \"Payload Wrapper Guide\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Demonstrates the correct syntax and structure for creating a skill payload.\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"payload\", \"wrapper\", \"skill syntax\"],\n        \"required_tools\": []\n    },\n    \"body\": \"This skill serves as a template for other skills. Ensure the 'payload' argument is a dictionary containing keys such as 'title', 'type', 'scope', 'frontmatter', and 'body'. The 'frontmatter' must include metadata like description and triggers.\"\n})\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"notes_create\", \"input\": {}, \"error\": \"Tool not available: notes_create\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nnotes_create(payload={\n    \"title\": \"Task Manager\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"A simple skill to help organize and track daily tasks.\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"todo\", \"task\", \"reminder\"],\n        \"required_tools\": []\n    },\n    \"body\": \"To add a task, simply say 'Add [task description] to my list'. To view tasks, say 'Show my tasks'.\"\n})\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"notes_create\", \"input\": {}, \"error\": \"Tool not available: notes_create\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nnotes_create(payload={\n    \"title\": \"Recipe Assistant\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Provides quick recipe ideas and cooking tips.\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"cook\", \"recipe\", \"dinner\", \"ingredients\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Activate this skill by asking 'What can I cook for dinner?' or 'Give me a recipe for chicken'. I will suggest ingredients and step-by-step instructions.\"\n})\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"notes_create\", \"input\": {}, \"error\": \"Tool not available: notes_create\"}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "notes_create",
+            "input": {},
+            "error": "Tool not available: notes_create"
+          },
+          {
+            "tool": "notes_create",
+            "input": {},
+            "error": "Tool not available: notes_create"
+          },
+          {
+            "tool": "notes_create",
+            "input": {},
+            "error": "Tool not available: notes_create"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 425,
+          "output": 1672,
+          "reasoning": 1548,
+          "cache_read": 275,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 59.9250590801239,
+        "agent_response": "```python\nnotes_create(payload={\n    \"title\": \"Recipe Assistant\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Provides quick recipe ideas and cooking tips.\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"cook\", \"recipe\", \"dinner\", \"ingredients\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Activate this skill by asking 'What can I cook for dinner?' or 'Give me a recipe for chicken'. I will suggest ingredients and step-by-step instructions.\"\n})\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate:\n1. Was payload wrapper used?\n2. Were type-specific fields in frontmatter?\n3. Did the skill create successfully?\n\nScore:\n- 1.0: Perfect payload wrapper usage\n- 0.0: Incorrect structure\n.md. Expected prompt at: Evaluate:\n1. Was payload wrapper used?\n2. Were type-specific fields in frontmatter?\n3. Did the skill create successfully?\n\nScore:\n- 1.0: Perfect payload wrapper usage\n- 0.0: Incorrect structure\n.md",
+          "execution_time_seconds": 0.0012900829315185547,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-8f2fcad5",
+      "run_id": "run-55ee4e9f",
+      "task_id": "skill.consistency.payload-wrapper",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:24:48.963120+00:00",
+      "started_at": "2026-03-12T16:24:48.963025+00:00",
+      "completed_at": "2026-03-12T16:25:48.888521+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-8f2fcad5",
+    "run_id": "run-55ee4e9f",
+    "task_id": "skill.consistency.payload-wrapper",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:24:48.963120+00:00",
+    "started_at": "2026-03-12T16:24:48.963025+00:00",
+    "completed_at": "2026-03-12T16:25:48.888521+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

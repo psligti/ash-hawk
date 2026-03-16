@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-a5af474d",
+    "task_id": "traversal.basic.context-chain",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create parent skill \"Testing Fundamentals\":\n   - title: \"Testing Fundamentals\"\n   - type: skill\n   - scope: global\n   - description: \"Core testing principles\"\n   - skill_level: beginner\n   - triggers: [\"testing\", \"test\"]\n   - required_tools: []\n   \n2. Create child skill \"Unit Testing\":\n   - title: \"Unit Testing\"\n   - type: skill\n   - scope: global\n   - description: \"Write isolated unit tests\"\n   - skill_level: intermediate\n   - triggers: [\"unit test\", \"pytest\"]\n   - required_tools: [\"pytest\"]\n   \n3. Link parent to child using notes_link\n\n4. Run context_chain from parent with task \"unit testing\"\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-a5af474d",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T23:24:13.098760+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 300.0036509037018,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-a5af474d",
+      "run_id": "run-e49a08af",
+      "task_id": "traversal.basic.context-chain",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T23:19:13.095228+00:00",
+      "started_at": "2026-03-12T23:19:13.095176+00:00",
+      "completed_at": "2026-03-12T23:24:13.098843+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-a5af474d",
+    "run_id": "run-e49a08af",
+    "task_id": "traversal.basic.context-chain",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T23:19:13.095228+00:00",
+    "started_at": "2026-03-12T23:19:13.095176+00:00",
+    "completed_at": "2026-03-12T23:24:13.098843+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

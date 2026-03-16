@@ -1,0 +1,30 @@
+{
+  "command": "pulse",
+  "result": {
+    "command": "pulse",
+    "targets": [
+      {
+        "id": "tw_1",
+        "author": "signalbuilder",
+        "text": "How do you detect eval regressions quickly?",
+        "metrics": {
+          "likes": 12
+        }
+      },
+      {
+        "id": "tw_2",
+        "author": "opsfriend",
+        "text": "We moved to canary evals and cut incidents by 30%.",
+        "metrics": {
+          "likes": 44
+        }
+      }
+    ],
+    "targets_count": 2,
+    "sources": [
+      "x_feed"
+    ],
+    "execution_time_seconds": 1.5
+  },
+  "verification_passed": true
+}

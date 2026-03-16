@@ -1,0 +1,706 @@
+{
+  "envelope": {
+    "run_id": "run-3a80d100",
+    "suite_id": "note-lark-skill-quality-v1",
+    "suite_hash": "360e9cb04eadcab4",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "build",
+    "agent_version": null,
+    "provider": "zai-coding-plan",
+    "model": "glm-4.7",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-12T18:28:14.154544+00:00"
+  },
+  "metrics": {
+    "suite_id": "note-lark-skill-quality-v1",
+    "run_id": "run-3a80d100",
+    "total_tasks": 11,
+    "completed_tasks": 11,
+    "passed_tasks": 0,
+    "failed_tasks": 11,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.06868600845336914,
+    "latency_p50_seconds": 0.012592077255249023,
+    "latency_p95_seconds": 0.028683900833129883,
+    "latency_p99_seconds": 0.028683900833129883,
+    "pass_at_k": {},
+    "created_at": "2026-03-12T18:28:14.239977+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-5afc9374",
+      "task_id": "skill.clarity.description.not-empty",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-5afc9374",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.179900+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.004781007766723633,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-5afc9374",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.clarity.description.not-empty",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.171415+00:00",
+        "started_at": "2026-03-12T18:28:14.171376+00:00",
+        "completed_at": "2026-03-12T18:28:14.180173+00:00"
+      }
+    },
+    {
+      "id": "trial-4e4599d5",
+      "task_id": "skill.clarity.description.quality",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill note with:\n- title: \"Error Handling Pattern\"\n- type: skill\n- scope: global\n- description: \"Standard error handling for API routes using HTTPException\"\n- skill_level: intermediate\n- triggers: [\"exception\", \"error\", \"validation error\"]\n- required_tools: [\"pydantic\", \"fastapi\"]\n- body: |\n    # Error Handling Pattern\n    \n    Use HTTPException for API errors with proper status codes.\n    \n    ## Example\n    ```python\n    raise HTTPException(400, \"Invalid input\")\n    ```\n\nUse notes_create with payload wrapper. All type-specific fields go in frontmatter.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-4e4599d5",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.184523+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0032949447631835938,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-4e4599d5",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.clarity.description.quality",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.180607+00:00",
+        "started_at": "2026-03-12T18:28:14.180577+00:00",
+        "completed_at": "2026-03-12T18:28:14.184597+00:00"
+      }
+    },
+    {
+      "id": "trial-4b10d540",
+      "task_id": "skill.clarity.body.has-structure",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill with a well-structured body containing:\n- Overview section\n- When to Use section\n- How to Apply section\n- Examples section\n- Anti-Patterns section\n\nSkill details:\n- title: \"Git Atomic Commits\"\n- type: skill\n- scope: global\n- description: \"Make small, focused commits that do ONE thing\"\n- skill_level: intermediate\n- triggers: [\"commit\", \"git\", \"atomic\"]\n- required_tools: [\"git\"]\n\nUse notes_create with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-4b10d540",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.187782+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.002401113510131836,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-4b10d540",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.clarity.body.has-structure",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.184907+00:00",
+        "started_at": "2026-03-12T18:28:14.184888+00:00",
+        "completed_at": "2026-03-12T18:28:14.187843+00:00"
+      }
+    },
+    {
+      "id": "trial-56b4766a",
+      "task_id": "skill.discoverability.triggers.cover-variations",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill with comprehensive trigger phrases:\n- title: \"Test Writing\"\n- type: skill\n- scope: global\n- description: \"Write unit tests using pytest with proper coverage\"\n- skill_level: intermediate\n- triggers: \n  - \"write tests\"\n  - \"add tests\"\n  - \"test coverage\"\n  - \"pytest\"\n  - \"unit test\"\n  - \"testing\"\n- required_tools: [\"pytest\"]\n\nUse notes_create with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-56b4766a",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.190839+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0022902488708496094,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-56b4766a",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.discoverability.triggers.cover-variations",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.188155+00:00",
+        "started_at": "2026-03-12T18:28:14.188133+00:00",
+        "completed_at": "2026-03-12T18:28:14.190880+00:00"
+      }
+    },
+    {
+      "id": "trial-26e74687",
+      "task_id": "skill.discoverability.search-works",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-26e74687",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.195925+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0027768611907958984,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-26e74687",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.discoverability.search-works",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.192671+00:00",
+        "started_at": "2026-03-12T18:28:14.192649+00:00",
+        "completed_at": "2026-03-12T18:28:14.195997+00:00"
+      }
+    },
+    {
+      "id": "trial-63754a7c",
+      "task_id": "skill.consistency.naming.convention",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill and verify the generated ID follows naming convention.\n\nSkill details:\n- title: \"API Rate Limiting\"\n- type: skill\n- scope: global\n- description: \"Implement rate limiting for API endpoints\"\n- skill_level: intermediate\n- triggers: [\"rate limit\", \"throttle\", \"api limit\"]\n- required_tools: [\"fastapi\"]\n\nAfter creating, report the generated skill ID.\nUse notes_create with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-63754a7c",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.199086+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0021619796752929688,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-63754a7c",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.consistency.naming.convention",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.196535+00:00",
+        "started_at": "2026-03-12T18:28:14.196511+00:00",
+        "completed_at": "2026-03-12T18:28:14.199123+00:00"
+      }
+    },
+    {
+      "id": "trial-c3cba915",
+      "task_id": "skill.consistency.payload-wrapper",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-c3cba915",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.202447+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.002362966537475586,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-c3cba915",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.consistency.payload-wrapper",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.199588+00:00",
+        "started_at": "2026-03-12T18:28:14.199564+00:00",
+        "completed_at": "2026-03-12T18:28:14.202520+00:00"
+      }
+    },
+    {
+      "id": "trial-0c0879d5",
+      "task_id": "skill.depth.links.meaningful",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a parent skill \"Database Operations\":\n   - title: \"Database Operations\"\n   - type: skill\n   - scope: global\n   - description: \"Core database operations and patterns\"\n   - skill_level: intermediate\n   - triggers: [\"database\", \"db\", \"sql\"]\n   - required_tools: []\n   \n2. Create a child skill \"Query Optimization\":\n   - title: \"Query Optimization\"\n   - type: skill\n   - scope: global\n   - description: \"Optimize database queries for performance\"\n   - skill_level: advanced\n   - triggers: [\"optimize\", \"query\", \"performance\"]\n   - required_tools: []\n   \n3. Link parent to child using notes_link\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-0c0879d5",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.207249+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0036199092864990234,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-0c0879d5",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.depth.links.meaningful",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.203090+00:00",
+        "started_at": "2026-03-12T18:28:14.203069+00:00",
+        "completed_at": "2026-03-12T18:28:14.207337+00:00"
+      }
+    },
+    {
+      "id": "trial-6e9b58c5",
+      "task_id": "skill.scope.project.has-project-field",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a project-scoped skill:\n- title: \"Note Lark Specific Skill\"\n- type: skill\n- scope: project\n- project: \"note-lark\"\n- description: \"A skill specific to note-lark project\"\n- skill_level: intermediate\n- triggers: [\"note-lark\", \"mcp\"]\n- required_tools: [\"fastmcp\"]\n\nUse notes_create with payload wrapper. The project field\nshould be at the top level (not in frontmatter).\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-6e9b58c5",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.221116+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.009558916091918945,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-6e9b58c5",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.scope.project.has-project-field",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.210488+00:00",
+        "started_at": "2026-03-12T18:28:14.210454+00:00",
+        "completed_at": "2026-03-12T18:28:14.221258+00:00"
+      }
+    },
+    {
+      "id": "trial-d0aee450",
+      "task_id": "skill.integration.create-and-get",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill:\n   - title: \"Integration Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"Testing create and retrieve integration\"\n   - skill_level: beginner\n   - triggers: [\"integration-test\"]\n   - required_tools: []\n   \n2. Get the skill using notes_get with the returned ID\n\n3. Verify the retrieved skill has the correct title\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-d0aee450",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.232949+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.009190797805786133,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-d0aee450",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.integration.create-and-get",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.223004+00:00",
+        "started_at": "2026-03-12T18:28:14.222869+00:00",
+        "completed_at": "2026-03-12T18:28:14.233042+00:00"
+      }
+    },
+    {
+      "id": "trial-826a3437",
+      "task_id": "skill.memory.creates-learning",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-826a3437",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "[Errno 2] No such file or directory: 'note-lark-mcp-stdio'",
+          "completed_at": "2026-03-12T18:28:14.237835+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00344085693359375,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'note-lark-mcp-stdio'\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-826a3437",
+        "run_id": "run-3a80d100",
+        "task_id": "skill.memory.creates-learning",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T18:28:14.233766+00:00",
+        "started_at": "2026-03-12T18:28:14.233736+00:00",
+        "completed_at": "2026-03-12T18:28:14.237909+00:00"
+      }
+    }
+  ]
+}

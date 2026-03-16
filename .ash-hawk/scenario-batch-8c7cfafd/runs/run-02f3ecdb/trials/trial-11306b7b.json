@@ -1,0 +1,285 @@
+{
+  "trial": {
+    "id": "trial-11306b7b",
+    "task_id": "draft_specificity_single",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "draft_specificity_single",
+        "description": "Test that a single reply draft is specific to the tweet content, not generic",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_command",
+          "config": {}
+        },
+        "inputs": {
+          "command": "harness_tick",
+          "config": {
+            "max_new_actions": 1
+          },
+          "mock_bird_client": {
+            "new_tweets": [
+              {
+                "id": "2001",
+                "author_handle": "pythonguru",
+                "text": "Python's GIL is actually not a problem for I/O-bound workloads. We switched to async and saw 10x throughput improvement without changing languages. The key was identifying our bottleneck was database waits, not CPU.",
+                "public_metrics": {
+                  "like_count": 312,
+                  "retweet_count": 89,
+                  "reply_count": 45
+                }
+              }
+            ]
+          },
+          "database": {
+            "existing_actions": []
+          },
+          "review_notes": [],
+          "strategy": {
+            "voice_guidelines": [
+              "Technical and specific"
+            ],
+            "principles": [
+              "Evidence-first"
+            ]
+          }
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "new_actions_count",
+              "gte": 1
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "llm_judge",
+            "config": {
+              "rubric": "quality",
+              "pass_threshold": 0.7,
+              "custom_prompt": "Evaluate this Twitter reply draft for specificity, authenticity, and voice alignment.\n\n## User's Voice Profile (from soul.md):\n- Technical but accessible\n- Opinionated but open-minded\n- Evidence-based, not hype-driven\n- Quality over quantity\n- Building genuine connections\n\n## User's Writing Principles (from principles.md):\n- Evidence-first: Always show receipts\n- Be specific: Concrete examples beat abstract advice\n- Engage authentically: Reply to people you actually want to know\n\nThe original tweet was about:\n- Python's GIL not being a problem for I/O-bound workloads\n- 10x throughput improvement with async\n- Key insight: bottleneck was database waits, not CPU\n\nA GOOD reply should:\n- Reference the specific GIL/async/throughput topic\n- Add genuine value (related experience, follow-up question, nuance)\n- Sound like a real person with the voice profile above\n- NOT start with generic phrases like \"Interesting point\" or \"Great insight\"\n- Match the evidence-based, technical-but-accessible voice\n\nSCORING:\n- 1.0: Highly specific, references the actual content, adds unique value, matches voice\n- 0.8: Good but could be more specific or slightly off-voice\n- 0.6: Acceptable, mentions the topic but generic or missing voice\n- 0.4: Generic, could apply to any technical tweet, wrong voice\n- 0.2: Bot-like, no real engagement, sounds AI-generated\n- 0.0: Completely irrelevant or spam\n\nFAIL if the draft:\n- Does not mention GIL, async, or I/O-bound workloads\n- Starts with \"Interesting point\" without specifics\n- Could be sent to ANY tweet and make equal sense\n- Sounds like AI-generated corporate speak\n- Doesn't follow evidence-first or specific principles\n\nOutput JSON with:\n- score: float (0.0-1.0)\n- passed: boolean (true if score >= 0.7)\n- reasoning: string explaining the score\n- issues: list of specific problems found\n- strengths: list of what worked well\n- voice_alignment: float (0.0-1.0) separate score for voice match\n"
+            },
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/draft_specificity_single.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-11306b7b",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-11T17:57:50.293846+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Execute command: harness_tick",
+              "inputs": [
+                "command",
+                "config",
+                "mock_bird_client",
+                "database",
+                "review_notes",
+                "strategy"
+              ]
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "command": "harness_tick",
+              "status": "completed",
+              "notes_processed": 0,
+              "new_actions": 1
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "All assertions passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8c7cfafd/runs/run-02f3ecdb/artifacts/trial-11306b7b/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0003380775451660156,
+        "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 1, \"new_actions_created\": 1, \"new_actions_count\": 1, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [{\"tweet_id\": \"2001\", \"author_handle\": \"pythonguru\", \"action_type\": \"like\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": null, \"score\": 0.67}], \"llm_available\": true, \"used_fallback\": false, \"available_capacity\": 60, \"skipped_due_to_pending_limit\": false, \"total_pending\": 1, \"index_updated\": true}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 2.09808349609375e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "reasoning": "No Twitter reply draft was provided for evaluation. Please provide the specific reply draft you'd like me to evaluate based on the voice profile and writing principles you've outlined.",
+            "breakdown": null,
+            "issues": [],
+            "strengths": [],
+            "audit": {
+              "prompt_name": "custom_inline",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "c71889945e8d6cd4",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"answer\": \"No Twitter reply draft was provided for evaluation. Please provide the specific reply draft you'd like me to evaluate based on the voice profile and writing principles you've outlined.\"\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 29.81517791748047,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.5,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-11306b7b",
+      "run_id": "run-02f3ecdb",
+      "task_id": "draft_specificity_single",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-11T17:57:50.293455+00:00",
+      "started_at": "2026-03-11T17:57:50.293435+00:00",
+      "completed_at": "2026-03-11T17:57:50.293860+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-11306b7b",
+    "run_id": "run-02f3ecdb",
+    "task_id": "draft_specificity_single",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-11T17:57:50.293455+00:00",
+    "started_at": "2026-03-11T17:57:50.293435+00:00",
+    "completed_at": "2026-03-11T17:57:50.293860+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

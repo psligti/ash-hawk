@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-8418f65d",
+    "task_id": "skill.discoverability.triggers.cover-variations",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill with comprehensive trigger phrases:\n- title: \"Test Writing\"\n- type: skill\n- scope: global\n- description: \"Write unit tests using pytest with proper coverage\"\n- skill_level: intermediate\n- triggers: \n  - \"write tests\"\n  - \"add tests\"\n  - \"test coverage\"\n  - \"pytest\"\n  - \"unit test\"\n  - \"testing\"\n- required_tools: [\"pytest\"]\n\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-8418f65d",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:24:27.191864+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill with comprehensive trigger phrases:\n- title: \"Test Writing\"\n- type: skill\n- scope: global\n- description: \"Write unit tests using pytest with proper coverage\"\n- skill_level: intermediate\n- triggers: \n  - \"write tests\"\n  - \"add tests\"\n  - \"test coverage\"\n  - \"pytest\"\n  - \"unit test\"\n  - \"testing\"\n- required_tools: [\"pytest\"]\n\nUse notes_create with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"name\": \"notes_create\",\n  \"arguments\": {\n    \"payload\": {\n      \"title\": \"Test Writing\",\n      \"content\": \"type: skill\\ntitle: Test Writing\\nscope: global\\ndescription: Write unit tests using pytest with proper coverage\\nskill_level: intermediate\\ntriggers:\\n  - write tests\\n  - add tests\\n  - test coverage\\n  - pytest\\n  - unit test\\n  - testing\\nrequired_tools:\\n  - pytest\"\n    }\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 101,
+          "output": 1025,
+          "reasoning": 911,
+          "cache_read": 6,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 19.01116919517517,
+        "agent_response": "```json\n{\n  \"name\": \"notes_create\",\n  \"arguments\": {\n    \"payload\": {\n      \"title\": \"Test Writing\",\n      \"content\": \"type: skill\\ntitle: Test Writing\\nscope: global\\ndescription: Write unit tests using pytest with proper coverage\\nskill_level: intermediate\\ntriggers:\\n  - write tests\\n  - add tests\\n  - test coverage\\n  - pytest\\n  - unit test\\n  - testing\\nrequired_tools:\\n  - pytest\"\n    }\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate the trigger coverage:\n\n- 1.0: 5+ trigger variations covering different phrasings\n- 0.7: 3-4 trigger variations\n- 0.4: 1-2 trigger variations\n- 0.0: No triggers or single generic trigger\n\nCount distinct meaningful trigger variations.\n.md. Expected prompt at: Evaluate the trigger coverage:\n\n- 1.0: 5+ trigger variations covering different phrasings\n- 0.7: 3-4 trigger variations\n- 0.4: 1-2 trigger variations\n- 0.0: No triggers or single generic trigger\n\nCount distinct meaningful trigger variations.\n.md",
+          "execution_time_seconds": 0.0012500286102294922,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-8418f65d",
+      "run_id": "run-55ee4e9f",
+      "task_id": "skill.discoverability.triggers.cover-variations",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:24:08.180371+00:00",
+      "started_at": "2026-03-12T16:24:08.180343+00:00",
+      "completed_at": "2026-03-12T16:24:27.192023+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-8418f65d",
+    "run_id": "run-55ee4e9f",
+    "task_id": "skill.discoverability.triggers.cover-variations",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:24:08.180371+00:00",
+    "started_at": "2026-03-12T16:24:08.180343+00:00",
+    "completed_at": "2026-03-12T16:24:27.192023+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -18,9 +18,10 @@ def runner():
 @pytest.fixture(autouse=True)
 def mock_dawn_runner(monkeypatch):
     class FakeDawnKestrelAgentRunner:
-        def __init__(self, provider: str, model: str):
+        def __init__(self, provider: str, model: str, **kwargs):
             self.provider = provider
             self.model = model
+            self.kwargs = kwargs
 
         async def run(self, task, policy_enforcer, config):
             del policy_enforcer
@@ -165,14 +166,7 @@ class TestCliRun:
     def test_cli_agent_overrides_suite_agent_default(self, runner, sample_suite_file, temp_storage):
         result = runner.invoke(
             cli,
-            [
-                "run",
-                sample_suite_file,
-                "--storage",
-                temp_storage,
-                "--agent",
-                "general"
-            ],
+            ["run", sample_suite_file, "--storage", temp_storage, "--agent", "general"],
         )
         assert result.exit_code == 0
 
@@ -266,6 +260,66 @@ class TestCliRun:
             ],
         )
         assert result.exit_code == 0
+
+    def test_run_passes_mcp_servers_to_default_runner(
+        self, runner, temp_dir, temp_storage, monkeypatch
+    ):
+        captured: dict[str, object] = {}
+
+        class CapturingDawnKestrelAgentRunner:
+            def __init__(self, provider: str, model: str, **kwargs):
+                captured["provider"] = provider
+                captured["model"] = model
+                captured["kwargs"] = kwargs
+
+            async def run(self, task, policy_enforcer, config):
+                del task
+                del policy_enforcer
+                del config
+                return EvalTranscript(agent_response="ok"), EvalOutcome.success()
+
+        monkeypatch.setattr(
+            "ash_hawk.agents.DawnKestrelAgentRunner", CapturingDawnKestrelAgentRunner
+        )
+
+        suite_path = Path(temp_dir) / "suites" / "mcp-suite.yaml"
+        suite_path.parent.mkdir(parents=True, exist_ok=True)
+        suite_path.write_text(
+            yaml.safe_dump(
+                {
+                    "id": "mcp-suite",
+                    "name": "MCP Suite",
+                    "agent": {
+                        "name": "build",
+                        "mcp_servers": [
+                            {
+                                "name": "note-lark",
+                                "command": "note-lark-mcp-stdio",
+                            }
+                        ],
+                    },
+                    "tasks": [{"id": "task-1", "input": "hello"}],
+                }
+            )
+        )
+
+        result = runner.invoke(
+            cli,
+            ["run", str(suite_path), "--storage", temp_storage],
+        )
+        assert result.exit_code == 0
+        assert captured["provider"] == "zai-coding-plan"
+        assert isinstance(captured["kwargs"], dict)
+        assert captured["kwargs"] == {
+            "mcp_servers": [
+                {
+                    "name": "note-lark",
+                    "command": "note-lark-mcp-stdio",
+                    "args": [],
+                    "env": {},
+                }
+            ]
+        }
 
     def test_run_nonexistent_suite(self, runner, temp_storage):
         result = runner.invoke(

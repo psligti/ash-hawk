@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-36da78b3",
+    "task_id": "links.backlinks",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill A:\n   - title: \"Skill A Backlink Test\"\n   - type: skill\n   - scope: global\n   - description: \"First skill\"\n   - skill_level: beginner\n   - triggers: [\"skill-a\"]\n   - required_tools: []\n   \n2. Create skill B:\n   - title: \"Skill B Backlink Test\"\n   - type: skill\n   - scope: global\n   - description: \"Second skill\"\n   - skill_level: beginner\n   - triggers: [\"skill-b\"]\n   - required_tools: []\n   \n3. Link A -> B\n\n4. Get backlinks for B using notes_backlinks\n\n5. Verify A appears in B's backlinks\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-36da78b3",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T20:47:50.917225+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 299.9972448348999,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-36da78b3",
+      "run_id": "run-f3657450",
+      "task_id": "links.backlinks",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T20:42:50.920120+00:00",
+      "started_at": "2026-03-12T20:42:50.920048+00:00",
+      "completed_at": "2026-03-12T20:47:50.917314+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-36da78b3",
+    "run_id": "run-f3657450",
+    "task_id": "links.backlinks",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T20:42:50.920120+00:00",
+    "started_at": "2026-03-12T20:42:50.920048+00:00",
+    "completed_at": "2026-03-12T20:47:50.917314+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

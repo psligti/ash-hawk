@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-35e96664",
+    "task_id": "skill.clarity.body.has-structure",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill with a well-structured body containing:\n- Overview section\n- When to Use section\n- How to Apply section\n- Examples section\n- Anti-Patterns section\n\nSkill details:\n- title: \"Git Atomic Commits\"\n- type: skill\n- scope: global\n- description: \"Make small, focused commits that do ONE thing\"\n- skill_level: intermediate\n- triggers: [\"commit\", \"git\", \"atomic\"]\n- required_tools: [\"git\"]\n\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-35e96664",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:24:49.681029+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill with a well-structured body containing:\n- Overview section\n- When to Use section\n- How to Apply section\n- Examples section\n- Anti-Patterns section\n\nSkill details:\n- title: \"Git Atomic Commits\"\n- type: skill\n- scope: global\n- description: \"Make small, focused commits that do ONE thing\"\n- skill_level: intermediate\n- triggers: [\"commit\", \"git\", \"atomic\"]\n- required_tools: [\"git\"]\n\nUse notes_create with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"function\": \"notes_create\",\n  \"arguments\": {\n    \"title\": \"Git Atomic Commits\",\n    \"content\": \"# Git Atomic Commits\\n\\n**Description:** Make small, focused commits that do ONE thing.\\n\\n---\\n\\n## Overview\\n\\nAn atomic commit is a change that is limited to a single specific logical task. It represents the smallest indivisible unit of work that makes sense to revert or cherry-pick independently.\\n\\nThe goal is to create a history where each commit is meaningful, self-contained, and easy to understand. This granularity allows for safer code reviews, easier debugging (via `git bisect`), and simpler conflict resolution during merges.\\n\\n## When to Use\\n\\n- **Feature Development:** Breaking down complex features into individual steps (e.g., adding the API endpoint, adding the UI, wiring them together).\\n- **Bug Fixing:** Isolating the exact change that resolves the issue without including refactoring or formatting changes.\\n- **Refactoring:** Changing the structure of code in one commit, and fixing the behavior in a separate commit.\\n- **Code Review:** When you want reviewers to understand *why* a change happened without sifting through hundreds of lines of unrelated noise.\\n\\n## How to Apply\\n\\n1.  **Stage Selectively:** Use `git add <filepath>` to stage specific files rather than `git add .` which grabs everything.\\n2.  **Use Interactive Add:** Use `git add -p` (patch) to stage specific chunks of code within a single file. This allows you to keep a logic change separate from a typo fix in the same file.\\n3.  **Review Before Committing:** Always run `git diff --cached` before committing to ensure that *only* the intended changes are included in the snapshot.\\n4.  **Write Imperative Messages:** Use the conventional commit format (e.g., \\\"feat: add login button\\\" rather than \\\"added login button\\\" or \\\"fixes stuff\\\").\\n5.  **Reset If Necessary:** If you accidentally stage unrelated changes, reset the staged area (`git reset`) and start again.\\n\\n## Examples\\n\\n### Scenario: You fixed a login bug, updated the README, and changed the color of the header.\\n\\n**\u274c The \\\"Messy\\\" Commit:**\\n```bash\\ngit add .\\ngit commit -m \\\"Fixed login and updated colors\\\"\\n```\\n*Why this fails:* It mixes a critical bug fix with documentation and cosmetic changes. If the color change breaks a stylesheet, reverting it also removes the bug fix.\\n\\n**\u2705 The Atomic Approach:**\\n```bash\\n# 1. Fix the login logic\\ngit add src/auth.js\\ngit commit -m \\\"fix: resolve null pointer exception in login\\\"\\n\\n# 2. Update the header color\\ngit add src/styles/header.css\\ngit commit -m \\\"style: adjust header background to brand blue\\\"\\n\\n# 3. Update documentation\\ngit add README.md\\ngit commit -m \\\"docs: update installation instructions\\\"\\n```\\n\\n## Anti-Patterns\\n\\n- **\\\"WIP\\\" Commits:** Committing code that is broken or half-finished just to \\\"save\\\" it. This breaks `git bisect` and makes the history unreliable.\\n- **Whitespace/Format Drifts:** Mixing a logic change with reformatting code (e.g., changing indentation). This obscures the actual logic change in `git diff`.\\n- **The \\\"Merge Monster\\\":** A single commit containing a 5,000-line merge resolution that includes multiple features.\\n- **Coupled Changes:** Committing a database schema change *in the same commit* as the application logic that uses it. It is often better to separate the schema change (and migration) from the business logic to allow for easier rollbacks.\",\n    \"metadata\": {\n      \"type\": \"skill\",\n      \"scope\": \"global\",\n      \"skill_level\": \"intermediate\",\n      \"triggers\": [\n        \"commit\",\n        \"git\",\n        \"atomic\"\n      ],\n      \"required_tools\": [\n        \"git\"\n      ]\n    }\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 111,
+          "output": 2309,
+          "reasoning": 1419,
+          "cache_read": 2,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 41.50951671600342,
+        "agent_response": "```json\n{\n  \"function\": \"notes_create\",\n  \"arguments\": {\n    \"title\": \"Git Atomic Commits\",\n    \"content\": \"# Git Atomic Commits\\n\\n**Description:** Make small, focused commits that do ONE thing.\\n\\n---\\n\\n## Overview\\n\\nAn atomic commit is a change that is limited to a single specific logical task. It represents the smallest indivisible unit of work that makes sense to revert or cherry-pick independently.\\n\\nThe goal is to create a history where each commit is meaningful, self-contained, and easy to understand. This granularity allows for safer code reviews, easier debugging (via `git bisect`), and simpler conflict resolution during merges.\\n\\n## When to Use\\n\\n- **Feature Development:** Breaking down complex features into individual steps (e.g., adding the API endpoint, adding the UI, wiring them together).\\n- **Bug Fixing:** Isolating the exact change that resolves the issue without including refactoring or formatting changes.\\n- **Refactoring:** Changing the structure of code in one commit, and fixing the behavior in a separate commit.\\n- **Code Review:** When you want reviewers to understand *why* a change happened without sifting through hundreds of lines of unrelated noise.\\n\\n## How to Apply\\n\\n1.  **Stage Selectively:** Use `git add <filepath>` to stage specific files rather than `git add .` which grabs everything.\\n2.  **Use Interactive Add:** Use `git add -p` (patch) to stage specific chunks of code within a single file. This allows you to keep a logic change separate from a typo fix in the same file.\\n3.  **Review Before Committing:** Always run `git diff --cached` before committing to ensure that *only* the intended changes are included in the snapshot.\\n4.  **Write Imperative Messages:** Use the conventional commit format (e.g., \\\"feat: add login button\\\" rather than \\\"added login button\\\" or \\\"fixes stuff\\\").\\n5.  **Reset If Necessary:** If you accidentally stage unrelated changes, reset the staged area (`git reset`) and start again.\\n\\n## Examples\\n\\n### Scenario: You fixed a login bug, updated the README, and changed the color of the header.\\n\\n**\u274c The \\\"Messy\\\" Commit:**\\n```bash\\ngit add .\\ngit commit -m \\\"Fixed login and updated colors\\\"\\n```\\n*Why this fails:* It mixes a critical bug fix with documentation and cosmetic changes. If the color change breaks a stylesheet, reverting it also removes the bug fix.\\n\\n**\u2705 The Atomic Approach:**\\n```bash\\n# 1. Fix the login logic\\ngit add src/auth.js\\ngit commit -m \\\"fix: resolve null pointer exception in login\\\"\\n\\n# 2. Update the header color\\ngit add src/styles/header.css\\ngit commit -m \\\"style: adjust header background to brand blue\\\"\\n\\n# 3. Update documentation\\ngit add README.md\\ngit commit -m \\\"docs: update installation instructions\\\"\\n```\\n\\n## Anti-Patterns\\n\\n- **\\\"WIP\\\" Commits:** Committing code that is broken or half-finished just to \\\"save\\\" it. This breaks `git bisect` and makes the history unreliable.\\n- **Whitespace/Format Drifts:** Mixing a logic change with reformatting code (e.g., changing indentation). This obscures the actual logic change in `git diff`.\\n- **The \\\"Merge Monster\\\":** A single commit containing a 5,000-line merge resolution that includes multiple features.\\n- **Coupled Changes:** Committing a database schema change *in the same commit* as the application logic that uses it. It is often better to separate the schema change (and migration) from the business logic to allow for easier rollbacks.\",\n    \"metadata\": {\n      \"type\": \"skill\",\n      \"scope\": \"global\",\n      \"skill_level\": \"intermediate\",\n      \"triggers\": [\n        \"commit\",\n        \"git\",\n        \"atomic\"\n      ],\n      \"required_tools\": [\n        \"git\"\n      ]\n    }\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate the created skill body structure:\n\nCheck for these sections (1 point each, normalized to 0-1):\n1. Overview/Introduction section\n2. \"When to Use\" or similar guidance\n3. \"How to Apply\" or steps\n4. Code examples\n5. Anti-patterns or warnings\n\nScore: total_points / 5\n.md. Expected prompt at: Evaluate the created skill body structure:\n\nCheck for these sections (1 point each, normalized to 0-1):\n1. Overview/Introduction section\n2. \"When to Use\" or similar guidance\n3. \"How to Apply\" or steps\n4. Code examples\n5. Anti-patterns or warnings\n\nScore: total_points / 5\n.md",
+          "execution_time_seconds": 0.0015377998352050781,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-35e96664",
+      "run_id": "run-55ee4e9f",
+      "task_id": "skill.clarity.body.has-structure",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:24:08.171332+00:00",
+      "started_at": "2026-03-12T16:24:08.171310+00:00",
+      "completed_at": "2026-03-12T16:24:49.681103+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-35e96664",
+    "run_id": "run-55ee4e9f",
+    "task_id": "skill.clarity.body.has-structure",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:24:08.171332+00:00",
+    "started_at": "2026-03-12T16:24:08.171310+00:00",
+    "completed_at": "2026-03-12T16:24:49.681103+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

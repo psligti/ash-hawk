@@ -1,0 +1,31 @@
+{
+  "command": "harness_tick",
+  "result": {
+    "command": "harness_tick",
+    "notes_processed": 0,
+    "status_changes": [],
+    "new_tweets_fetched": 1,
+    "new_actions_created": 1,
+    "new_actions_count": 1,
+    "unique_draft_count": 0,
+    "generic_opener_count": 0,
+    "new_actions": [
+      {
+        "tweet_id": "2001",
+        "author_handle": "pythonguru",
+        "action_type": "like",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": null,
+        "score": 0.67
+      }
+    ],
+    "llm_available": true,
+    "used_fallback": false,
+    "available_capacity": 60,
+    "skipped_due_to_pending_limit": false,
+    "total_pending": 1,
+    "index_updated": true
+  },
+  "verification_passed": true
+}

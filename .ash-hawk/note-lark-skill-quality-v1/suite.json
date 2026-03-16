@@ -1,0 +1,378 @@
+{
+  "id": "note-lark-skill-quality-v1",
+  "name": "Note Lark Skill Quality",
+  "description": "Comprehensive evaluation suite ensuring note-lark delivers exceptional skill \ncreation, organization, and discoverability. Grounded in Apple design principles:\n\n- **Clarity**: Skills are self-evident, with obvious purpose and usage\n- **Deference**: Content is king; metadata supports discovery without noise\n- **Consistency**: Uniform patterns, conventions, and quality standards\n- **Depth**: Meaningful connections that reveal context when needed\n",
+  "tasks": [
+    {
+      "id": "skill.clarity.description.not-empty",
+      "description": "A skill MUST have a non-empty description. Empty descriptions violate \nthe clarity principle - users cannot know what the skill does.\n",
+      "input": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate whether the agent correctly REJECTS creating a skill \nwith an empty description. The agent should either:\n1. Return a validation error about empty description\n2. Refuse to create the skill with explanation\n\nScore:\n- 1.0: Agent correctly rejects the empty description\n- 0.5: Agent creates but warns about empty description\n- 0.0: Agent creates without any warning\n",
+            "pass_threshold": 1.0
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "clarity",
+        "validation"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.clarity.description.quality",
+      "description": "A skill description should be self-evident and immediately convey\nthe skill's purpose and when to use it.\n",
+      "input": "Create a skill note with:\n- title: \"Error Handling Pattern\"\n- type: skill\n- scope: global\n- description: \"Standard error handling for API routes using HTTPException\"\n- skill_level: intermediate\n- triggers: [\"exception\", \"error\", \"validation error\"]\n- required_tools: [\"pydantic\", \"fastapi\"]\n- body: |\n    # Error Handling Pattern\n    \n    Use HTTPException for API errors with proper status codes.\n    \n    ## Example\n    ```python\n    raise HTTPException(400, \"Invalid input\")\n    ```\n\nUse notes_create with payload wrapper. All type-specific fields go in frontmatter.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate the skill creation result:\n\n1. Was notes_create called correctly with payload wrapper? (0.3 points)\n2. Did the skill get created successfully? (0.4 points)\n3. Are all required fields present in frontmatter? (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "clarity",
+        "creation"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.clarity.body.has-structure",
+      "description": "Skill body should have clear structure: overview, when to use,\nhow to apply, examples, anti-patterns.\n",
+      "input": "Create a skill with a well-structured body containing:\n- Overview section\n- When to Use section\n- How to Apply section\n- Examples section\n- Anti-Patterns section\n\nSkill details:\n- title: \"Git Atomic Commits\"\n- type: skill\n- scope: global\n- description: \"Make small, focused commits that do ONE thing\"\n- skill_level: intermediate\n- triggers: [\"commit\", \"git\", \"atomic\"]\n- required_tools: [\"git\"]\n\nUse notes_create with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate the created skill body structure:\n\nCheck for these sections (1 point each, normalized to 0-1):\n1. Overview/Introduction section\n2. \"When to Use\" or similar guidance\n3. \"How to Apply\" or steps\n4. Code examples\n5. Anti-patterns or warnings\n\nScore: total_points / 5\n",
+            "pass_threshold": 0.6
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "clarity",
+        "body",
+        "structure"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.discoverability.triggers.cover-variations",
+      "description": "Triggers should cover multiple natural phrasings so agents can\ndiscover skills through different search terms.\n",
+      "input": "Create a skill with comprehensive trigger phrases:\n- title: \"Test Writing\"\n- type: skill\n- scope: global\n- description: \"Write unit tests using pytest with proper coverage\"\n- skill_level: intermediate\n- triggers: \n  - \"write tests\"\n  - \"add tests\"\n  - \"test coverage\"\n  - \"pytest\"\n  - \"unit test\"\n  - \"testing\"\n- required_tools: [\"pytest\"]\n\nUse notes_create with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate the trigger coverage:\n\n- 1.0: 5+ trigger variations covering different phrasings\n- 0.7: 3-4 trigger variations\n- 0.4: 1-2 trigger variations\n- 0.0: No triggers or single generic trigger\n\nCount distinct meaningful trigger variations.\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "triggers"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.discoverability.search-works",
+      "description": "After creating a skill with unique triggers, searching for those\ntriggers should find the skill.\n",
+      "input": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Was the skill created successfully? (0.3 points)\n2. Did the search return results? (0.3 points)\n3. Does the search result include the created skill? (0.4 points)\n\nScore: sum of points\n- If search fails or returns empty, give partial credit (0.6 points)\n",
+            "pass_threshold": 0.6
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "search"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.consistency.naming.convention",
+      "description": "Skill IDs should follow consistent naming: skill-{domain}-{name}.\nExample: skill-error-handling, skill-test-writing\n",
+      "input": "Create a skill and verify the generated ID follows naming convention.\n\nSkill details:\n- title: \"API Rate Limiting\"\n- type: skill\n- scope: global\n- description: \"Implement rate limiting for API endpoints\"\n- skill_level: intermediate\n- triggers: [\"rate limit\", \"throttle\", \"api limit\"]\n- required_tools: [\"fastapi\"]\n\nAfter creating, report the generated skill ID.\nUse notes_create with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate the skill ID format:\n\n- 1.0: ID follows pattern skill-{words} with hyphens\n- 0.5: ID contains skill but format is inconsistent\n- 0.0: ID doesn't indicate it's a skill\n\nValid examples: skill-api-rate-limiting, skill-rate-limit\nInvalid: random-uuid, api-rate-limiting (no skill prefix)\n",
+            "pass_threshold": 1.0
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "consistency",
+        "naming"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.consistency.payload-wrapper",
+      "description": "All MCP tool calls should use payload wrapper pattern.\nThis ensures consistency across all tool invocations.\n",
+      "input": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Was payload wrapper used? (0.5 points)\n2. Were type-specific fields in frontmatter? (0.5 points)\n\nScore: sum of points\n",
+            "pass_threshold": 1.0
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "consistency",
+        "mcp",
+        "payload"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.depth.links.meaningful",
+      "description": "Skills should link to related skills when there are dependencies\nor related concepts.\n",
+      "input": "1. Create a parent skill \"Database Operations\":\n   - title: \"Database Operations\"\n   - type: skill\n   - scope: global\n   - description: \"Core database operations and patterns\"\n   - skill_level: intermediate\n   - triggers: [\"database\", \"db\", \"sql\"]\n   - required_tools: []\n   \n2. Create a child skill \"Query Optimization\":\n   - title: \"Query Optimization\"\n   - type: skill\n   - scope: global\n   - description: \"Optimize database queries for performance\"\n   - skill_level: advanced\n   - triggers: [\"optimize\", \"query\", \"performance\"]\n   - required_tools: []\n   \n3. Link parent to child using notes_link\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Both skills created successfully (0.3 points each = 0.6)\n2. Link created between skills (0.4 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "depth",
+        "links",
+        "graph"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.scope.project.has-project-field",
+      "description": "Project-scoped skills MUST include the project field in frontmatter.\n",
+      "input": "Create a project-scoped skill:\n- title: \"Note Lark Specific Skill\"\n- type: skill\n- scope: project\n- project: \"note-lark\"\n- description: \"A skill specific to note-lark project\"\n- skill_level: intermediate\n- triggers: [\"note-lark\", \"mcp\"]\n- required_tools: [\"fastmcp\"]\n\nUse notes_create with payload wrapper. The project field\nshould be at the top level (not in frontmatter).\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Was scope set to project? (0.3 points)\n2. Was project field included? (0.4 points)\n3. Did skill create successfully? (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scope",
+        "project"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.integration.create-and-get",
+      "description": "Create a skill and then retrieve it to verify the roundtrip.\n",
+      "input": "1. Create a skill:\n   - title: \"Integration Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"Testing create and retrieve integration\"\n   - skill_level: beginner\n   - triggers: [\"integration-test\"]\n   - required_tools: []\n   \n2. Get the skill using notes_get with the returned ID\n\n3. Verify the retrieved skill has the correct title\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created and ID returned (0.3 points)\n2. notes_get successfully retrieved skill (0.4 points)\n3. Retrieved title matches created title (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "integration",
+        "crud"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.memory.creates-learning",
+      "description": "memory_structured should create a learning type note, not a skill.\n",
+      "input": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. memory_structured called with payload wrapper (0.3 points)\n2. Memory created successfully (0.4 points)\n3. Correct fields used (memory_type, status, confidence) (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "memory",
+        "learning"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.validation.frontmatter.required-fields",
+      "description": "Skill-specific fields must be nested under frontmatter. Top-level\nskill fields should be rejected with a validation error.\n",
+      "input": "1. Attempt to create a skill with skill-specific fields at top-level (intentionally wrong):\n   notes_create(payload={\n     \"title\": \"Broken Skill Schema\",\n     \"type\": \"skill\",\n     \"scope\": \"global\",\n     \"description\": \"Wrong placement\",\n     \"skill_level\": \"beginner\",\n     \"triggers\": [\"broken\"],\n     \"required_tools\": [],\n     \"body\": \"Should fail\"\n   })\n\n2. Then create the same skill correctly with those fields in frontmatter.\n\n3. Search for \"Broken Skill Schema\" and verify the corrected note is present.\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Incorrect top-level schema attempt was rejected (0.4 points)\n2. Corrected frontmatter-based creation succeeded (0.4 points)\n3. Search confirms corrected skill exists (0.2 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "validation",
+        "frontmatter",
+        "schema"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "skill.discoverability.alias-and-trigger-roundtrip",
+      "description": "A skill should be discoverable by both aliases and trigger phrases\nafter creation.\n",
+      "input": "1. Create a skill:\n   - title: \"Service Layer Testing\"\n   - type: skill\n   - scope: global\n   - description: \"Test service-layer behavior with focused fixtures\"\n   - skill_level: intermediate\n   - triggers: [\"service test\", \"fixture strategy\", \"unit isolation\"]\n   - aliases: [\"service-testing-playbook\", \"fixture-guide\"]\n   - required_tools: [\"pytest\"]\n\n2. Search for alias \"service-testing-playbook\".\n3. Search for trigger phrase \"fixture strategy\".\n4. Verify both searches return the created skill.\n\nUse notes_create and notes_search with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created with aliases and triggers (0.3 points)\n2. Alias search returned the created skill (0.35 points)\n3. Trigger-phrase search returned the created skill (0.35 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "aliases",
+        "triggers",
+        "integration"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [
+    "note-lark",
+    "skills",
+    "quality",
+    "apple-design"
+  ],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": {
+    "name": "build",
+    "provider": null,
+    "model": null,
+    "class_name": null,
+    "location": null,
+    "kwargs": {},
+    "mcp_servers": [
+      {
+        "name": "note-lark",
+        "command": "python3",
+        "args": [
+          "evals/mcp_stdio_bridge.py"
+        ],
+        "env": {},
+        "cwd": "/Users/parkersligting/develop/pt/note-lark"
+      }
+    ]
+  }
+}

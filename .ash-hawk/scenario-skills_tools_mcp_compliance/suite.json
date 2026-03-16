@@ -1,0 +1,183 @@
+{
+  "id": "scenario-skills_tools_mcp_compliance",
+  "name": "scenario-skills_tools_mcp_compliance",
+  "description": "",
+  "tasks": [
+    {
+      "id": "skills_tools_mcp_compliance",
+      "description": "Compliance scenario: verify skill marker + MCP-prefixed tool usage constraints",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "skills_tools_mcp_compliance",
+          "description": "Compliance scenario: verify skill marker + MCP-prefixed tool usage constraints",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Load note-lark-memory skill, call note-lark MCP tools for memory lookup, and summarize the plan.",
+            "expected_output": "Using note-lark-memory for scoped capture and note-lark MCP calls only.",
+            "mock_tool_calls": [
+              {
+                "tool": "note-lark_memory_search",
+                "input": {
+                  "query": "user preference"
+                }
+              },
+              {
+                "tool": "note-lark_notes_search",
+                "input": {
+                  "query": "memory workflow"
+                }
+              }
+            ]
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "note-lark_memory_search",
+              "note-lark_notes_search"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {
+                  "command": "echo 'mock'"
+                },
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "note-lark_memory_search": {
+                "input": {
+                  "query": "user preference"
+                },
+                "result": {
+                  "items": []
+                }
+              },
+              "note-lark_notes_search": {
+                "input": {
+                  "query": "memory workflow"
+                },
+                "result": {
+                  "items": []
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 20,
+            "max_tool_calls": 8,
+            "max_tokens": 500,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 20,
+                "max_tool_calls": 8,
+                "max_time_seconds": 30.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ToolCallEvent"
+                ],
+                "required_mcp_prefixes": [
+                  "note-lark_"
+                ],
+                "required_skill_markers": [
+                  "note-lark-memory"
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/compliance/skills_tools_mcp_compliance.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/compliance"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "budget",
+          "config": {
+            "max_steps": 20,
+            "max_tool_calls": 8,
+            "max_time_seconds": 30.0
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_content",
+          "config": {
+            "required_event_types": [
+              "ToolCallEvent"
+            ],
+            "required_mcp_prefixes": [
+              "note-lark_"
+            ],
+            "required_skill_markers": [
+              "note-lark-memory"
+            ]
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "mock_adapter"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/compliance/skills_tools_mcp_compliance.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

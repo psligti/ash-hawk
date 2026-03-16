@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-e0ade462",
+    "task_id": "discoverability.alias.resolution",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill with aliases:\n   - title: \"Unit Testing with Pytest\"\n   - type: skill\n   - scope: global\n   - description: \"Write unit tests using pytest framework\"\n   - skill_level: intermediate\n   - triggers: [\"test\", \"pytest\"]\n   - aliases: [\"pytest-testing\", \"python-testing-guide\"]\n   - required_tools: [\"pytest\"]\n   \n2. Search for \"pytest-testing\" (alias)\n\n3. Verify the skill is found via alias\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-e0ade462",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T23:39:13.135988+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 299.9949140548706,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-e0ade462",
+      "run_id": "run-e49a08af",
+      "task_id": "discoverability.alias.resolution",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T23:34:13.141271+00:00",
+      "started_at": "2026-03-12T23:34:13.141218+00:00",
+      "completed_at": "2026-03-12T23:39:13.136166+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-e0ade462",
+    "run_id": "run-e49a08af",
+    "task_id": "discoverability.alias.resolution",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T23:34:13.141271+00:00",
+    "started_at": "2026-03-12T23:34:13.141218+00:00",
+    "completed_at": "2026-03-12T23:39:13.136166+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

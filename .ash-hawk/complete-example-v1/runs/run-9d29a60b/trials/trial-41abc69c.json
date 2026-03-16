@@ -1,0 +1,123 @@
+{
+  "trial": {
+    "id": "trial-41abc69c",
+    "task_id": "string-match-task",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "What is 2 + 2?",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-41abc69c",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T00:14:28.440738+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "What is 2 + 2?"
+          },
+          {
+            "role": "assistant",
+            "content": "2 + 2 is 4."
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 13,
+          "output": 158,
+          "reasoning": 148,
+          "cache_read": 2,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 3.1846749782562256,
+        "agent_response": "2 + 2 is 4.",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "string_match",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown matching mode: contains",
+          "execution_time_seconds": 2.47955322265625e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-41abc69c",
+      "run_id": "run-9d29a60b",
+      "task_id": "string-match-task",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T00:14:25.255903+00:00",
+      "started_at": "2026-03-13T00:14:25.255873+00:00",
+      "completed_at": "2026-03-13T00:14:28.440824+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-41abc69c",
+    "run_id": "run-9d29a60b",
+    "task_id": "string-match-task",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T00:14:25.255903+00:00",
+    "started_at": "2026-03-13T00:14:25.255873+00:00",
+    "completed_at": "2026-03-13T00:14:28.440824+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-e74da14b",
+    "task_id": "search.feedback.tag-based",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill with unique tags:\n   - title: \"Tagged Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with specific tags\"\n   - skill_level: beginner\n   - triggers: [\"tagged\"]\n   - tags: [\"unique-tag-xyz-123\", \"testing\"]\n   - required_tools: []\n   \n2. Search for the unique tag \"unique-tag-xyz-123\"\n\nUse notes_create and notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-e74da14b",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:27:29.261056+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create a skill with unique tags:\n   - title: \"Tagged Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with specific tags\"\n   - skill_level: beginner\n   - triggers: [\"tagged\"]\n   - tags: [\"unique-tag-xyz-123\", \"testing\"]\n   - required_tools: []\n   \n2. Search for the unique tag \"unique-tag-xyz-123\"\n\nUse notes_create and notes_search with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"tool\": \"notes_create\",\n  \"payload\": {\n    \"title\": \"Tagged Skill\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"A skill with specific tags\",\n    \"skill_level\": \"beginner\",\n    \"triggers\": [\n      \"tagged\"\n    ],\n    \"tags\": [\n      \"unique-tag-xyz-123\",\n      \"testing\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"tool\": \"notes_search\",\n  \"payload\": {\n    \"tags\": [\n      \"unique-tag-xyz-123\"\n    ]\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 108,
+          "output": 1464,
+          "reasoning": 1321,
+          "cache_read": 9,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 17.958343029022217,
+        "agent_response": "```json\n{\n  \"tool\": \"notes_create\",\n  \"payload\": {\n    \"title\": \"Tagged Skill\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"A skill with specific tags\",\n    \"skill_level\": \"beginner\",\n    \"triggers\": [\n      \"tagged\"\n    ],\n    \"tags\": [\n      \"unique-tag-xyz-123\",\n      \"testing\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n```json\n{\n  \"tool\": \"notes_search\",\n  \"payload\": {\n    \"tags\": [\n      \"unique-tag-xyz-123\"\n    ]\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate:\n1. Skill created with tags (0.4 points)\n2. Search by tag returned results (0.3 points)\n3. Correct skill found (0.3 points)\n\nScore: sum of points\n.md. Expected prompt at: Evaluate:\n1. Skill created with tags (0.4 points)\n2. Search by tag returned results (0.3 points)\n3. Correct skill found (0.3 points)\n\nScore: sum of points\n.md",
+          "execution_time_seconds": 0.0002942085266113281,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-e74da14b",
+      "run_id": "run-a56f5c1c",
+      "task_id": "search.feedback.tag-based",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:27:11.302623+00:00",
+      "started_at": "2026-03-12T16:27:11.302591+00:00",
+      "completed_at": "2026-03-12T16:27:29.261073+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-e74da14b",
+    "run_id": "run-a56f5c1c",
+    "task_id": "search.feedback.tag-based",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:27:11.302623+00:00",
+    "started_at": "2026-03-12T16:27:11.302591+00:00",
+    "completed_at": "2026-03-12T16:27:29.261073+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "trial": {
+    "id": "trial-bcf0268f",
+    "task_id": "skill.discoverability.search-works",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-bcf0268f",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:54:11.602774+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll create a skill note with the unique trigger and then search for it."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Unique Test Skill\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"A skill with a unique trigger for testing search\", \"tags\": [\"test\", \"unique\"], \"frontmatter_override\": {\"skill_level\": \"beginner\", \"triggers\": [\"xyz-test-unique-trigger-123\"], \"required_tools\": []}, \"content\": \"# Unique Test Skill\\n\\nThis is a test skill with a unique trigger identifier for testing search functionality.\\n\\n## Purpose\\n\\nTo verify that notes_search can find skills based on their triggers.\\n\\n## Usage\\n\\nTrigger: `xyz-test-unique-trigger-123`\\n\\n## Content\\n\\nA skill with a unique trigger for testing search capabilities.\"}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Unique Test Skill",
+                "type": "skill",
+                "scope": "global",
+                "description": "A skill with a unique trigger for testing search",
+                "tags": [
+                  "test",
+                  "unique"
+                ],
+                "frontmatter_override": {
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "xyz-test-unique-trigger-123"
+                  ],
+                  "required_tools": []
+                },
+                "content": "# Unique Test Skill\n\nThis is a test skill with a unique trigger identifier for testing search functionality.\n\n## Purpose\n\nTo verify that notes_search can find skills based on their triggers.\n\n## Usage\n\nTrigger: `xyz-test-unique-trigger-123`\n\n## Content\n\nA skill with a unique trigger for testing search capabilities."
+              }
+            },
+            "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7059,
+          "output": 192,
+          "reasoning": 45,
+          "cache_read": 6780,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 22.867871046066284,
+        "agent_response": null,
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent failed to create the skill due to incorrect payload structure. The error message indicated that required skill fields (description, required_tools, skill_level, triggers) must be in the 'frontmatter' dict, but the agent placed 'description' at the top level instead of inside 'frontmatter_override'. No search was attempted because the skill creation failed.",
+            "breakdown": {
+              "score": 0.0
+            },
+            "issues": [
+              "Placed 'description' field at top level instead of inside frontmatter/frontmatter_override dict",
+              "Did not properly structure the notes_create payload for a skill type",
+              "Did not attempt the notes_search operation after the failure",
+              "Did not recover from the error or retry with corrected payload"
+            ],
+            "strengths": [
+              "Attempted to use the notes_create tool with payload wrapper as instructed",
+              "Included most required fields (skill_level, triggers, required_tools) in frontmatter_override",
+              "Started with appropriate content structure"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "875c59397212b835",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.0,\n  \"passed\": false,\n  \"reasoning\": \"The agent failed to create the skill due to incorrect payload structure. The error message indicated that required skill fields (description, required_tools, skill_level, triggers) must be in the 'frontmatter' dict, but the agent placed 'description' at the top level instead of inside 'frontmatter_override'. No search was attempted because the skill creation failed.\",\n  \"issues\": [\n    \"Placed 'description' field at top level instead of inside frontmatter/frontmatter_override dict\",\n    \"Did not properly structure the notes_create payload for a skill type\",\n    \"Did not attempt the notes_search operation after the failure\",\n    \"Did not recover from the error or retry with corrected payload\"\n  ],\n  \"strengths\": [\n    \"Attempted to use the notes_create tool with payload wrapper as instructed\",\n    \"Included most required fields (skill_level, triggers, required_tools) in frontmatter_override\",\n    \"Started with appropriate content structure\"\n  ]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 18.884212017059326,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-bcf0268f",
+      "run_id": "run-1e30a78e",
+      "task_id": "skill.discoverability.search-works",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:53:48.734817+00:00",
+      "started_at": "2026-03-13T01:53:48.734791+00:00",
+      "completed_at": "2026-03-13T01:54:11.672941+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-bcf0268f",
+    "run_id": "run-1e30a78e",
+    "task_id": "skill.discoverability.search-works",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:53:48.734817+00:00",
+    "started_at": "2026-03-13T01:53:48.734791+00:00",
+    "completed_at": "2026-03-13T01:54:11.672941+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "id": "note-lark-mini-abs-python",
+  "name": "Note Lark Mini Abs Python",
+  "description": "Single task timeout isolation with absolute python",
+  "tasks": [
+    {
+      "id": "mini.search.basic",
+      "description": "create then search",
+      "input": "1. Create a skill titled \"Mini Python Error Handling\" with payload wrapper.\n2. Search for \"mini python error\" with payload wrapper.\n3. Verify created skill appears.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created (0.4)\n2. Search ran (0.3)\n3. Skill present in results (0.3)\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": {
+    "name": "build",
+    "provider": null,
+    "model": null,
+    "class_name": null,
+    "location": null,
+    "kwargs": {},
+    "mcp_servers": [
+      {
+        "name": "note-lark",
+        "command": "/Users/parkersligting/develop/pt/note-lark/.venv/bin/python",
+        "args": [
+          "-m",
+          "note_lark"
+        ],
+        "env": {},
+        "cwd": "/Users/parkersligting/develop/pt/note-lark"
+      }
+    ]
+  }
+}

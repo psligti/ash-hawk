@@ -1,0 +1,706 @@
+{
+  "envelope": {
+    "run_id": "run-db905347",
+    "suite_id": "note-lark-skill-quality-v1",
+    "suite_hash": "c336b6941482dce9",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "build",
+    "agent_version": null,
+    "provider": "zai-coding-plan",
+    "model": "glm-4.7",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-12T20:22:50.169179+00:00"
+  },
+  "metrics": {
+    "suite_id": "note-lark-skill-quality-v1",
+    "run_id": "run-db905347",
+    "total_tasks": 11,
+    "completed_tasks": 11,
+    "passed_tasks": 0,
+    "failed_tasks": 11,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 899.9652199745178,
+    "latency_p50_seconds": 299.99537992477417,
+    "latency_p95_seconds": 300.0032181739807,
+    "latency_p99_seconds": 300.0032181739807,
+    "pass_at_k": {},
+    "created_at": "2026-03-12T20:37:50.151109+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-49b6e30d",
+      "task_id": "skill.clarity.description.not-empty",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-49b6e30d",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:27:50.125061+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.9400668144226,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-49b6e30d",
+        "run_id": "run-db905347",
+        "task_id": "skill.clarity.description.not-empty",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:22:50.186002+00:00",
+        "started_at": "2026-03-12T20:22:50.185969+00:00",
+        "completed_at": "2026-03-12T20:27:50.126085+00:00"
+      }
+    },
+    {
+      "id": "trial-24f30f10",
+      "task_id": "skill.clarity.description.quality",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill note with:\n- title: \"Error Handling Pattern\"\n- type: skill\n- scope: global\n- description: \"Standard error handling for API routes using HTTPException\"\n- skill_level: intermediate\n- triggers: [\"exception\", \"error\", \"validation error\"]\n- required_tools: [\"pydantic\", \"fastapi\"]\n- body: |\n    # Error Handling Pattern\n    \n    Use HTTPException for API errors with proper status codes.\n    \n    ## Example\n    ```python\n    raise HTTPException(400, \"Invalid input\")\n    ```\n\nUse notes_create with payload wrapper. All type-specific fields go in frontmatter.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-24f30f10",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:27:50.138361+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.946026802063,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-24f30f10",
+        "run_id": "run-db905347",
+        "task_id": "skill.clarity.description.quality",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:22:50.192540+00:00",
+        "started_at": "2026-03-12T20:22:50.192469+00:00",
+        "completed_at": "2026-03-12T20:27:50.138540+00:00"
+      }
+    },
+    {
+      "id": "trial-a46bb96a",
+      "task_id": "skill.clarity.body.has-structure",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill with a well-structured body containing:\n- Overview section\n- When to Use section\n- How to Apply section\n- Examples section\n- Anti-Patterns section\n\nSkill details:\n- title: \"Git Atomic Commits\"\n- type: skill\n- scope: global\n- description: \"Make small, focused commits that do ONE thing\"\n- skill_level: intermediate\n- triggers: [\"commit\", \"git\", \"atomic\"]\n- required_tools: [\"git\"]\n\nUse notes_create with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-a46bb96a",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:27:50.139501+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.9442210197449,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-a46bb96a",
+        "run_id": "run-db905347",
+        "task_id": "skill.clarity.body.has-structure",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:22:50.195380+00:00",
+        "started_at": "2026-03-12T20:22:50.195332+00:00",
+        "completed_at": "2026-03-12T20:27:50.139567+00:00"
+      }
+    },
+    {
+      "id": "trial-e88dcacd",
+      "task_id": "skill.discoverability.triggers.cover-variations",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill with comprehensive trigger phrases:\n- title: \"Test Writing\"\n- type: skill\n- scope: global\n- description: \"Write unit tests using pytest with proper coverage\"\n- skill_level: intermediate\n- triggers: \n  - \"write tests\"\n  - \"add tests\"\n  - \"test coverage\"\n  - \"pytest\"\n  - \"unit test\"\n  - \"testing\"\n- required_tools: [\"pytest\"]\n\nUse notes_create with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-e88dcacd",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:27:50.140684+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.9424059391022,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-e88dcacd",
+        "run_id": "run-db905347",
+        "task_id": "skill.discoverability.triggers.cover-variations",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:22:50.198587+00:00",
+        "started_at": "2026-03-12T20:22:50.198522+00:00",
+        "completed_at": "2026-03-12T20:27:50.140942+00:00"
+      }
+    },
+    {
+      "id": "trial-90c4b2c3",
+      "task_id": "skill.discoverability.search-works",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-90c4b2c3",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:32:50.125261+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.99500799179077,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-90c4b2c3",
+        "run_id": "run-db905347",
+        "task_id": "skill.discoverability.search-works",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:27:50.130543+00:00",
+        "started_at": "2026-03-12T20:27:50.130417+00:00",
+        "completed_at": "2026-03-12T20:32:50.125478+00:00"
+      }
+    },
+    {
+      "id": "trial-c2237f21",
+      "task_id": "skill.consistency.naming.convention",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a skill and verify the generated ID follows naming convention.\n\nSkill details:\n- title: \"API Rate Limiting\"\n- type: skill\n- scope: global\n- description: \"Implement rate limiting for API endpoints\"\n- skill_level: intermediate\n- triggers: [\"rate limit\", \"throttle\", \"api limit\"]\n- required_tools: [\"fastapi\"]\n\nAfter creating, report the generated skill ID.\nUse notes_create with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-c2237f21",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:32:50.139635+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.9939730167389,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-c2237f21",
+        "run_id": "run-db905347",
+        "task_id": "skill.consistency.naming.convention",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:27:50.145818+00:00",
+        "started_at": "2026-03-12T20:27:50.145756+00:00",
+        "completed_at": "2026-03-12T20:32:50.139768+00:00"
+      }
+    },
+    {
+      "id": "trial-164b5ac2",
+      "task_id": "skill.consistency.payload-wrapper",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-164b5ac2",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:32:50.151011+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.999657869339,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-164b5ac2",
+        "run_id": "run-db905347",
+        "task_id": "skill.consistency.payload-wrapper",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:27:50.151539+00:00",
+        "started_at": "2026-03-12T20:27:50.151478+00:00",
+        "completed_at": "2026-03-12T20:32:50.151173+00:00"
+      }
+    },
+    {
+      "id": "trial-94376ff5",
+      "task_id": "skill.depth.links.meaningful",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a parent skill \"Database Operations\":\n   - title: \"Database Operations\"\n   - type: skill\n   - scope: global\n   - description: \"Core database operations and patterns\"\n   - skill_level: intermediate\n   - triggers: [\"database\", \"db\", \"sql\"]\n   - required_tools: []\n   \n2. Create a child skill \"Query Optimization\":\n   - title: \"Query Optimization\"\n   - type: skill\n   - scope: global\n   - description: \"Optimize database queries for performance\"\n   - skill_level: advanced\n   - triggers: [\"optimize\", \"query\", \"performance\"]\n   - required_tools: []\n   \n3. Link parent to child using notes_link\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-94376ff5",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:32:50.152041+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.99724102020264,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-94376ff5",
+        "run_id": "run-db905347",
+        "task_id": "skill.depth.links.meaningful",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:27:50.154984+00:00",
+        "started_at": "2026-03-12T20:27:50.154909+00:00",
+        "completed_at": "2026-03-12T20:32:50.152261+00:00"
+      }
+    },
+    {
+      "id": "trial-4c3eacb3",
+      "task_id": "skill.scope.project.has-project-field",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a project-scoped skill:\n- title: \"Note Lark Specific Skill\"\n- type: skill\n- scope: project\n- project: \"note-lark\"\n- description: \"A skill specific to note-lark project\"\n- skill_level: intermediate\n- triggers: [\"note-lark\", \"mcp\"]\n- required_tools: [\"fastmcp\"]\n\nUse notes_create with payload wrapper. The project field\nshould be at the top level (not in frontmatter).\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-4c3eacb3",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:37:50.125394+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.99468898773193,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-4c3eacb3",
+        "run_id": "run-db905347",
+        "task_id": "skill.scope.project.has-project-field",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:32:50.130870+00:00",
+        "started_at": "2026-03-12T20:32:50.130765+00:00",
+        "completed_at": "2026-03-12T20:37:50.125473+00:00"
+      }
+    },
+    {
+      "id": "trial-48110569",
+      "task_id": "skill.integration.create-and-get",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill:\n   - title: \"Integration Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"Testing create and retrieve integration\"\n   - skill_level: beginner\n   - triggers: [\"integration-test\"]\n   - required_tools: []\n   \n2. Get the skill using notes_get with the returned ID\n\n3. Verify the retrieved skill has the correct title\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-48110569",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:37:50.137565+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.9944989681244,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-48110569",
+        "run_id": "run-db905347",
+        "task_id": "skill.integration.create-and-get",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:32:50.143163+00:00",
+        "started_at": "2026-03-12T20:32:50.143095+00:00",
+        "completed_at": "2026-03-12T20:37:50.137604+00:00"
+      }
+    },
+    {
+      "id": "trial-40c25eb7",
+      "task_id": "skill.memory.creates-learning",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-40c25eb7",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-12T20:37:50.149902+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 299.99445033073425,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-40c25eb7",
+        "run_id": "run-db905347",
+        "task_id": "skill.memory.creates-learning",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-12T20:32:50.155542+00:00",
+        "started_at": "2026-03-12T20:32:50.155484+00:00",
+        "completed_at": "2026-03-12T20:37:50.149943+00:00"
+      }
+    }
+  ]
+}

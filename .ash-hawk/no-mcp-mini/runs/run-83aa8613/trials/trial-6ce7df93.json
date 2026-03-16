@@ -1,0 +1,148 @@
+{
+  "trial": {
+    "id": "trial-6ce7df93",
+    "task_id": "ping",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Reply with exactly: pong\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-6ce7df93",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T00:24:15.331632+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with exactly: pong\n"
+          },
+          {
+            "role": "assistant",
+            "content": "pong"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 11,
+          "output": 81,
+          "reasoning": 78,
+          "cache_read": 2,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 6.880185842514038,
+        "agent_response": "pong",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent's response exactly matches the requested output 'pong' with no additional characters.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "Response exactly matched the requested format with no additional characters"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "c99ed1124c9eff19",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent's response exactly matches the requested output 'pong' with no additional characters.\",\n  \"issues\": [],\n  \"strengths\": [\"Response exactly matched the requested format with no additional characters\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 6.705938100814819,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-6ce7df93",
+      "run_id": "run-83aa8613",
+      "task_id": "ping",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T00:24:08.451088+00:00",
+      "started_at": "2026-03-13T00:24:08.451051+00:00",
+      "completed_at": "2026-03-13T00:24:15.332659+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-6ce7df93",
+    "run_id": "run-83aa8613",
+    "task_id": "ping",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T00:24:08.451088+00:00",
+    "started_at": "2026-03-13T00:24:08.451051+00:00",
+    "completed_at": "2026-03-13T00:24:15.332659+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

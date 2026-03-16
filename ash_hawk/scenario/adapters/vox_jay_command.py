@@ -15,7 +15,7 @@ Supported commands:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any, cast
 
@@ -264,7 +264,7 @@ class VoxJayCommandAdapter:
 
         result = {
             "command": "recap",
-            "date": config.get("date", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+            "date": config.get("date", datetime.now(UTC).strftime("%Y-%m-%d")),
             "metrics": metrics,
             "summary": {
                 "posts_made": 0,
@@ -535,7 +535,7 @@ class VoxJayCommandAdapter:
             base, _, field = path.partition("[*].")
             base_value = self._get_nested_value(data, base)
             if isinstance(base_value, list):
-                list_value = cast(list[Any], base_value)
+                list_value = base_value
                 if not field:
                     return list_value
                 extracted: list[Any] = []
@@ -554,7 +554,7 @@ class VoxJayCommandAdapter:
             if isinstance(value, dict):
                 value = value.get(key)
             elif isinstance(value, list) and key.isdigit():
-                list_value = cast(list[Any], value)
+                list_value = value
                 idx = int(key)
                 value = list_value[idx] if idx < len(list_value) else None
             else:

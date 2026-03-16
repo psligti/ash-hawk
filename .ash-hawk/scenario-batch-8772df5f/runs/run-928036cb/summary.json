@@ -1,0 +1,4037 @@
+{
+  "envelope": {
+    "run_id": "run-928036cb",
+    "suite_id": "scenario-batch-8772df5f",
+    "suite_hash": "87a0927d60cf16d3",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-11T15:19:56.856948+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-batch-8772df5f",
+    "run_id": "run-928036cb",
+    "total_tasks": 21,
+    "completed_tasks": 21,
+    "passed_tasks": 21,
+    "failed_tasks": 0,
+    "pass_rate": 1.0,
+    "mean_score": 0.9523809523809523,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 98.02960324287415,
+    "latency_p50_seconds": 0.0018260478973388672,
+    "latency_p95_seconds": 42.79588198661804,
+    "latency_p99_seconds": 97.95769119262695,
+    "pass_at_k": {},
+    "created_at": "2026-03-11T15:21:34.904648+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-758ee76d",
+      "task_id": "brief_edge_no_trends",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_edge_no_trends",
+          "description": "Test brief_edge_no_trends command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_edge_no_trends.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-758ee76d",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.875584+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-758ee76d/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00037097930908203125,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.6716461181640625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-758ee76d",
+        "run_id": "run-928036cb",
+        "task_id": "brief_edge_no_trends",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.875113+00:00",
+        "started_at": "2026-03-11T15:19:56.875085+00:00",
+        "completed_at": "2026-03-11T15:19:56.875790+00:00"
+      }
+    },
+    {
+      "id": "trial-abce5e7f",
+      "task_id": "brief_generate_basic",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_generate_basic",
+          "description": "Test brief_generate_basic command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_generate_basic.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-abce5e7f",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.888015+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-abce5e7f/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0002570152282714844,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.4066696166992188e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-abce5e7f",
+        "run_id": "run-928036cb",
+        "task_id": "brief_generate_basic",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.887713+00:00",
+        "started_at": "2026-03-11T15:19:56.887695+00:00",
+        "completed_at": "2026-03-11T15:19:56.888026+00:00"
+      }
+    },
+    {
+      "id": "trial-f98670e6",
+      "task_id": "brief_post_generation",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_post_generation",
+          "description": "Test brief_post_generation command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_post_generation.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-f98670e6",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.888502+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-f98670e6/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00024390220642089844,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.1682510375976562e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-f98670e6",
+        "run_id": "run-928036cb",
+        "task_id": "brief_post_generation",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.888234+00:00",
+        "started_at": "2026-03-11T15:19:56.888223+00:00",
+        "completed_at": "2026-03-11T15:19:56.888509+00:00"
+      }
+    },
+    {
+      "id": "trial-c90a0e6c",
+      "task_id": "decision_heuristic_fallback",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "decision_heuristic_fallback",
+          "description": "Test decision_heuristic_fallback command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/decision_heuristic_fallback.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-c90a0e6c",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.888867+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-c90a0e6c/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00015997886657714844,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0967254638671875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-c90a0e6c",
+        "run_id": "run-928036cb",
+        "task_id": "decision_heuristic_fallback",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.888686+00:00",
+        "started_at": "2026-03-11T15:19:56.888677+00:00",
+        "completed_at": "2026-03-11T15:19:56.888872+00:00"
+      }
+    },
+    {
+      "id": "trial-dc4ac2f4",
+      "task_id": "draft_quality_uniqueness",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "draft_quality_uniqueness",
+          "description": "Test that reply drafts are unique and contextually relevant, not generic templates",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 5
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "1001",
+                  "author_handle": "techfounder",
+                  "text": "Just shipped our new AI feature after 3 months of work. The key was breaking it into tiny PRs and shipping daily. What's your deployment strategy?",
+                  "public_metrics": {
+                    "like_count": 45,
+                    "retweet_count": 12,
+                    "reply_count": 8
+                  }
+                },
+                {
+                  "id": "1002",
+                  "author_handle": "devlife",
+                  "text": "Hot take: Most code comments are a code smell. If you need to explain WHAT the code does, rewrite it. Comments should explain WHY, not WHAT.",
+                  "public_metrics": {
+                    "like_count": 89,
+                    "retweet_count": 34,
+                    "reply_count": 67
+                  }
+                },
+                {
+                  "id": "1003",
+                  "author_handle": "indiehacker",
+                  "text": "What's your favorite VS Code extension for Python development? Looking for recommendations beyond the basics.",
+                  "public_metrics": {
+                    "like_count": 23,
+                    "retweet_count": 5,
+                    "reply_count": 34
+                  }
+                },
+                {
+                  "id": "1004",
+                  "author_handle": "saasbuilder",
+                  "text": "We reduced our API response time from 800ms to 50ms by switching from ORM to raw SQL for read-heavy endpoints. The ORM was doing N+1 queries we didn't notice.",
+                  "public_metrics": {
+                    "like_count": 156,
+                    "retweet_count": 45,
+                    "reply_count": 23
+                  }
+                },
+                {
+                  "id": "1005",
+                  "author_handle": "ctowriter",
+                  "text": "Unpopular opinion: Engineering managers should still write code. Not production features, but enough to stay connected to the developer experience.",
+                  "public_metrics": {
+                    "like_count": 234,
+                    "retweet_count": 78,
+                    "reply_count": 156
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {
+              "voice_guidelines": [
+                "Technical but accessible",
+                "Share specific examples"
+              ],
+              "principles": [
+                "Evidence-first",
+                "Build in public"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 60.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "new_actions_count",
+                "gte": 5
+              },
+              {
+                "path": "unique_draft_count",
+                "gte": 4
+              },
+              {
+                "path": "generic_opener_count",
+                "lte": 1
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "rubric": "quality",
+                "pass_threshold": 0.6,
+                "custom_prompt": "Evaluate these Twitter reply drafts for quality, authenticity, and voice alignment.\n\n## User's Voice Profile (from soul.md):\n- Technical but accessible\n- Opinionated but open-minded\n- Evidence-based, not hype-driven\n- Quality over quantity\n- Building genuine connections\n- Sharing real learnings, not hot takes\n\n## User's Writing Principles (from principles.md):\n- Evidence-first: Always show receipts\n- Build in public: Share progress, not just polished results\n- Be specific: Concrete examples beat abstract advice\n- Engage authentically: Reply to people you actually want to know\n\nFor each draft, assess:\n1. **Specificity**: Does it reference specific content from the original tweet?\n2. **Authenticity**: Does it sound like a real person with the above voice?\n3. **Value**: Does it add genuine value (evidence, example, thoughtful question)?\n4. **Uniqueness**: Is this draft distinct from the others?\n5. **Voice Alignment**: Does it match the technical-but-accessible, evidence-based voice?\n\nSCORING:\n- 1.0: Highly specific, authentic, valuable, unique, AND matches voice profile\n- 0.8: Good but minor issues in voice or specificity\n- 0.6: Acceptable but generic or slightly off-voice\n- 0.4: Generic, could apply to many tweets, doesn't match voice\n- 0.2: Obviously bot-generated, no real value, wrong voice\n- 0.0: Spam or completely irrelevant\n\nFAIL if:\n- Draft starts with \"Interesting point\" or \"Great question\" without specifics\n- Draft could apply to ANY tweet (generic praise)\n- Multiple drafts are identical or nearly identical\n- No reference to the actual tweet content\n- Sounds like AI-generated corporate speak\n- Doesn't follow evidence-first or specific principles\n\nOutput JSON with:\n- score: float (0.0-1.0)\n- passed: boolean (true if score >= 0.6)\n- reasoning: string explaining the score\n- issues: list of specific problems found\n- strengths: list of what worked well\n- voice_alignment: float (0.0-1.0) separate score for voice match\n"
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/draft_quality_uniqueness.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-dc4ac2f4",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.891698+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_bird_client",
+                  "database",
+                  "review_notes",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 5
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": false,
+                "message": "unique_draft_count: expected >= 4, got 2"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-dc4ac2f4/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0003161430358886719,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 5, \"new_actions_created\": 5, \"new_actions_count\": 5, \"unique_draft_count\": 2, \"generic_opener_count\": 0, \"new_actions\": [{\"tweet_id\": \"1001\", \"author_handle\": \"techfounder\", \"action_type\": \"reply\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": \"On just shipped our new ai feature after 3 - we switched to daily deploys last year. The cadence change was the real win, not the tools.\", \"score\": 0.65}, {\"tweet_id\": \"1002\", \"author_handle\": \"devlife\", \"action_type\": \"like\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": null, \"score\": 0.62}, {\"tweet_id\": \"1003\", \"author_handle\": \"indiehacker\", \"action_type\": \"reply\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": \"On what's your favorite vs code extension for python - what specific outcome are you optimizing for? Happy to share what worked for us.\", \"score\": 0.65}, {\"tweet_id\": \"1004\", \"author_handle\": \"saasbuilder\", \"action_type\": \"like\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": null, \"score\": 0.67}, {\"tweet_id\": \"1005\", \"author_handle\": \"ctowriter\", \"action_type\": \"like\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": null, \"score\": 0.67}], \"total_pending\": 5, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.2874603271484375e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "llm_judge",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "reasoning": "No Twitter reply drafts were provided in the request. Please provide the specific drafts you wish to have evaluated based on the voice profile and principles listed.",
+              "breakdown": null,
+              "issues": [],
+              "strengths": [],
+              "audit": {
+                "prompt_name": "custom_inline",
+                "prompt_version": "1.0.0",
+                "prompt_hash": "8f602ce0da055e66",
+                "judge_model": "glm-4.7",
+                "judge_provider": "zai-coding-plan",
+                "judge_params": {
+                  "temperature": 0.0,
+                  "max_tokens": 1024,
+                  "n_judges": 1,
+                  "consensus_mode": "mean"
+                },
+                "raw_output": "\n{\n  \"answer\": \"No Twitter reply drafts were provided in the request. Please provide the specific drafts you wish to have evaluated based on the voice profile and principles listed.\"\n}\n"
+              },
+              "n_judges": 1,
+              "consensus_mode": "mean"
+            },
+            "error_message": null,
+            "execution_time_seconds": 42.790316104888916,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.5,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-dc4ac2f4",
+        "run_id": "run-928036cb",
+        "task_id": "draft_quality_uniqueness",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.891360+00:00",
+        "started_at": "2026-03-11T15:19:56.891347+00:00",
+        "completed_at": "2026-03-11T15:19:56.891706+00:00"
+      }
+    },
+    {
+      "id": "trial-26d17b06",
+      "task_id": "draft_specificity_single",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "draft_specificity_single",
+          "description": "Test that a single reply draft is specific to the tweet content, not generic",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 1
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "2001",
+                  "author_handle": "pythonguru",
+                  "text": "Python's GIL is actually not a problem for I/O-bound workloads. We switched to async and saw 10x throughput improvement without changing languages. The key was identifying our bottleneck was database waits, not CPU.",
+                  "public_metrics": {
+                    "like_count": 312,
+                    "retweet_count": 89,
+                    "reply_count": 45
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {
+              "voice_guidelines": [
+                "Technical and specific"
+              ],
+              "principles": [
+                "Evidence-first"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "new_actions_count",
+                "gte": 1
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "rubric": "quality",
+                "pass_threshold": 0.7,
+                "custom_prompt": "Evaluate this Twitter reply draft for specificity, authenticity, and voice alignment.\n\n## User's Voice Profile (from soul.md):\n- Technical but accessible\n- Opinionated but open-minded\n- Evidence-based, not hype-driven\n- Quality over quantity\n- Building genuine connections\n\n## User's Writing Principles (from principles.md):\n- Evidence-first: Always show receipts\n- Be specific: Concrete examples beat abstract advice\n- Engage authentically: Reply to people you actually want to know\n\nThe original tweet was about:\n- Python's GIL not being a problem for I/O-bound workloads\n- 10x throughput improvement with async\n- Key insight: bottleneck was database waits, not CPU\n\nA GOOD reply should:\n- Reference the specific GIL/async/throughput topic\n- Add genuine value (related experience, follow-up question, nuance)\n- Sound like a real person with the voice profile above\n- NOT start with generic phrases like \"Interesting point\" or \"Great insight\"\n- Match the evidence-based, technical-but-accessible voice\n\nSCORING:\n- 1.0: Highly specific, references the actual content, adds unique value, matches voice\n- 0.8: Good but could be more specific or slightly off-voice\n- 0.6: Acceptable, mentions the topic but generic or missing voice\n- 0.4: Generic, could apply to any technical tweet, wrong voice\n- 0.2: Bot-like, no real engagement, sounds AI-generated\n- 0.0: Completely irrelevant or spam\n\nFAIL if the draft:\n- Does not mention GIL, async, or I/O-bound workloads\n- Starts with \"Interesting point\" without specifics\n- Could be sent to ANY tweet and make equal sense\n- Sounds like AI-generated corporate speak\n- Doesn't follow evidence-first or specific principles\n\nOutput JSON with:\n- score: float (0.0-1.0)\n- passed: boolean (true if score >= 0.7)\n- reasoning: string explaining the score\n- issues: list of specific problems found\n- strengths: list of what worked well\n- voice_alignment: float (0.0-1.0) separate score for voice match\n"
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/draft_specificity_single.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-26d17b06",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.946284+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_bird_client",
+                  "database",
+                  "review_notes",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 1
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-26d17b06/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0003447532653808594,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 1, \"new_actions_created\": 1, \"new_actions_count\": 1, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [{\"tweet_id\": \"2001\", \"author_handle\": \"pythonguru\", \"action_type\": \"like\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": null, \"score\": 0.67}], \"total_pending\": 1, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 2.002716064453125e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "llm_judge",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "reasoning": "The draft text to be evaluated was not provided in the prompt. Only the context (original tweet), voice profile, and evaluation criteria were present.",
+              "breakdown": {
+                "score": 0.0
+              },
+              "issues": [
+                "No draft text found",
+                "Cannot evaluate specificity or voice without input"
+              ],
+              "strengths": [],
+              "audit": {
+                "prompt_name": "custom_inline",
+                "prompt_version": "1.0.0",
+                "prompt_hash": "c71889945e8d6cd4",
+                "judge_model": "glm-4.7",
+                "judge_provider": "zai-coding-plan",
+                "judge_params": {
+                  "temperature": 0.0,
+                  "max_tokens": 1024,
+                  "n_judges": 1,
+                  "consensus_mode": "mean"
+                },
+                "raw_output": "\n{\n  \"score\": 0.0,\n  \"passed\": false,\n  \"reasoning\": \"The draft text to be evaluated was not provided in the prompt. Only the context (original tweet), voice profile, and evaluation criteria were present.\",\n  \"issues\": [\n    \"No draft text found\",\n    \"Cannot evaluate specificity or voice without input\"\n  ],\n  \"strengths\": [],\n  \"voice_alignment\": 0.0\n}\n"
+              },
+              "n_judges": 1,
+              "consensus_mode": "mean"
+            },
+            "error_message": null,
+            "execution_time_seconds": 97.9512529373169,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.5,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-26d17b06",
+        "run_id": "run-928036cb",
+        "task_id": "draft_specificity_single",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.945896+00:00",
+        "started_at": "2026-03-11T15:19:56.945871+00:00",
+        "completed_at": "2026-03-11T15:19:56.946295+00:00"
+      }
+    },
+    {
+      "id": "trial-c01da5df",
+      "task_id": "edge_llm_failure",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "edge_llm_failure",
+          "description": "Test edge_llm_failure command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_llm_failure.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-c01da5df",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.956505+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-c01da5df/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0003249645233154297,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 2.09808349609375e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-c01da5df",
+        "run_id": "run-928036cb",
+        "task_id": "edge_llm_failure",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.956135+00:00",
+        "started_at": "2026-03-11T15:19:56.956113+00:00",
+        "completed_at": "2026-03-11T15:19:56.956515+00:00"
+      }
+    },
+    {
+      "id": "trial-fa22f419",
+      "task_id": "edge_pending_limit_reached",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "edge_pending_limit_reached",
+          "description": "Test edge_pending_limit_reached command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_pending_limit_reached.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-fa22f419",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.957139+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-fa22f419/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00022101402282714844,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.621246337890625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-fa22f419",
+        "run_id": "run-928036cb",
+        "task_id": "edge_pending_limit_reached",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.956883+00:00",
+        "started_at": "2026-03-11T15:19:56.956866+00:00",
+        "completed_at": "2026-03-11T15:19:56.957148+00:00"
+      }
+    },
+    {
+      "id": "trial-9a174ba4",
+      "task_id": "review_parse_valid",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "review_parse_valid",
+          "description": "Test review_parse_valid command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/review_parse_valid.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-9a174ba4",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.959228+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-9a174ba4/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00018906593322753906,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.71661376953125e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-9a174ba4",
+        "run_id": "run-928036cb",
+        "task_id": "review_parse_valid",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.959011+00:00",
+        "started_at": "2026-03-11T15:19:56.958996+00:00",
+        "completed_at": "2026-03-11T15:19:56.959239+00:00"
+      }
+    },
+    {
+      "id": "trial-91c7cd41",
+      "task_id": "state_pending_to_approved",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_approved",
+          "description": "Test state_pending_to_approved command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_approved.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-91c7cd41",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.959819+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-91c7cd41/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0001881122589111328,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.2874603271484375e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-91c7cd41",
+        "run_id": "run-928036cb",
+        "task_id": "state_pending_to_approved",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.959607+00:00",
+        "started_at": "2026-03-11T15:19:56.959595+00:00",
+        "completed_at": "2026-03-11T15:19:56.959827+00:00"
+      }
+    },
+    {
+      "id": "trial-86994010",
+      "task_id": "state_pending_to_executed",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_executed",
+          "description": "Test state_pending_to_executed command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_executed.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-86994010",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.961247+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-86994010/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0001659393310546875,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.2159347534179688e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-86994010",
+        "run_id": "run-928036cb",
+        "task_id": "state_pending_to_executed",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.961056+00:00",
+        "started_at": "2026-03-11T15:19:56.961045+00:00",
+        "completed_at": "2026-03-11T15:19:56.961254+00:00"
+      }
+    },
+    {
+      "id": "trial-647311e8",
+      "task_id": "state_pending_to_needs_revision",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_needs_revision",
+          "description": "Test state_pending_to_needs_revision command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_needs_revision.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-647311e8",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.961946+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-647311e8/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00018596649169921875,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.4066696166992188e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-647311e8",
+        "run_id": "run-928036cb",
+        "task_id": "state_pending_to_needs_revision",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.961732+00:00",
+        "started_at": "2026-03-11T15:19:56.961718+00:00",
+        "completed_at": "2026-03-11T15:19:56.961954+00:00"
+      }
+    },
+    {
+      "id": "trial-1208f004",
+      "task_id": "tick_full_cycle",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "tick_full_cycle",
+          "description": "Test tick_full_cycle command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/tick_full_cycle.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-1208f004",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.963398+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-1208f004/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00016617774963378906,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.3113021850585938e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-1208f004",
+        "run_id": "run-928036cb",
+        "task_id": "tick_full_cycle",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.963210+00:00",
+        "started_at": "2026-03-11T15:19:56.963197+00:00",
+        "completed_at": "2026-03-11T15:19:56.963406+00:00"
+      }
+    },
+    {
+      "id": "trial-e878c684",
+      "task_id": "pulse_generate_basic",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "pulse_generate_basic",
+          "description": "Test pulse_generate_basic command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse/pulse_generate_basic.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-e878c684",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.963842+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-e878c684/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0001518726348876953,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0967254638671875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-e878c684",
+        "run_id": "run-928036cb",
+        "task_id": "pulse_generate_basic",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.963668+00:00",
+        "started_at": "2026-03-11T15:19:56.963658+00:00",
+        "completed_at": "2026-03-11T15:19:56.963850+00:00"
+      }
+    },
+    {
+      "id": "trial-34f5a5bf",
+      "task_id": "recap_record_metrics",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "recap_record_metrics",
+          "description": "Test recap_record_metrics command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/recap/recap_record_metrics.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/recap"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-34f5a5bf",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.965290+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-34f5a5bf/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00018167495727539062,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.5020370483398438e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-34f5a5bf",
+        "run_id": "run-928036cb",
+        "task_id": "recap_record_metrics",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.965082+00:00",
+        "started_at": "2026-03-11T15:19:56.965067+00:00",
+        "completed_at": "2026-03-11T15:19:56.965299+00:00"
+      }
+    },
+    {
+      "id": "trial-a9cca236",
+      "task_id": "weekly_pattern_recognition",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "weekly_pattern_recognition",
+          "description": "Test weekly_pattern_recognition command execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {},
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly/weekly_pattern_recognition.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-a9cca236",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.965833+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: harness_tick",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_data",
+                  "strategy"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "harness_tick",
+                "status": "completed",
+                "notes_processed": 0,
+                "new_actions": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-a9cca236/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0001590251922607422,
+          "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 0, \"new_actions_created\": 0, \"new_actions_count\": 0, \"unique_draft_count\": 0, \"generic_opener_count\": 0, \"new_actions\": [], \"total_pending\": 0, \"index_updated\": true}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.2159347534179688e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-a9cca236",
+        "run_id": "run-928036cb",
+        "task_id": "weekly_pattern_recognition",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.965651+00:00",
+        "started_at": "2026-03-11T15:19:56.965639+00:00",
+        "completed_at": "2026-03-11T15:19:56.965840+00:00"
+      }
+    },
+    {
+      "id": "trial-5c295482",
+      "task_id": "policy_edge_budget_exhaustion",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_edge_budget_exhaustion",
+          "description": "Test policy behavior when budget is exhausted",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "engagement",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "important_contact",
+                "author_name": "Important Contact",
+                "text": "Important question here?",
+                "created_at": "2026-03-06T15:00:00Z"
+              }
+            ],
+            "relationships": {},
+            "strategy": {},
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 10
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "BudgetExhaustedError raised or no actions proposed"
+            ],
+            "must_not_events": [
+              "Actions created despite budget exhaustion"
+            ],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions_count",
+                "expected": 0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp6qsxmjut/016-policy_edge_budget_exhaustion.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp6qsxmjut"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-5c295482",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.967086+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: brief",
+                "inputs": [
+                  "policy",
+                  "tweets",
+                  "relationships",
+                  "strategy",
+                  "budget"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "brief",
+                "status": "completed",
+                "trends_count": 0,
+                "posts_count": 3,
+                "replies_count": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": false,
+                "message": "actions_count: expected 0, got None"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-5c295482/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00017690658569335938,
+          "agent_response": "{\"command\": \"brief\", \"digest\": {\"trends\": [], \"trends_count\": 0, \"posts\": [], \"posts_count\": 3, \"replies\": [], \"replies_count\": 0, \"format\": \"terminal\"}, \"metrics\": {\"execution_time_seconds\": 2.5, \"sources_queried\": 0}}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0967254638671875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-5c295482",
+        "run_id": "run-928036cb",
+        "task_id": "policy_edge_budget_exhaustion",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.966886+00:00",
+        "started_at": "2026-03-11T15:19:56.966875+00:00",
+        "completed_at": "2026-03-11T15:19:56.967092+00:00"
+      }
+    },
+    {
+      "id": "trial-ad5a582c",
+      "task_id": "policy_engagement_tier_prioritization",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_engagement_tier_prioritization",
+          "description": "Test EngagementPolicy tier-based prioritization logic",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "engagement",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "tier1_contact",
+                "author_name": "Tier1 Contact",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              },
+              {
+                "id": "222",
+                "author_handle": "tier2_contact",
+                "author_name": "Tier2 Contact",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              },
+              {
+                "id": "333",
+                "author_handle": "random_user",
+                "author_name": "Random User",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              }
+            ],
+            "relationships": {
+              "tier1_contact": {
+                "handle": "tier1_contact",
+                "tier": 1
+              },
+              "tier2_contact": {
+                "handle": "tier2_contact",
+                "tier": 2
+              }
+            },
+            "strategy": {
+              "tiers": {
+                "tier1_handles": [
+                  "tier1_contact"
+                ],
+                "tier2_handles": [
+                  "tier2_contact"
+                ]
+              }
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "Tier 1 contact gets CRITICAL priority",
+              "Tier 2 contact gets HIGH priority",
+              "Random user gets MEDIUM or LOW priority",
+              "All get REPLY action type (questions detected)"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions[0].author_handle",
+                "expected": "tier1_contact"
+              },
+              {
+                "path": "actions[0].priority",
+                "expected": 1
+              },
+              {
+                "path": "actions[1].author_handle",
+                "expected": "tier2_contact"
+              },
+              {
+                "path": "actions[1].priority",
+                "expected": 2
+              },
+              {
+                "path": "actions[2].author_handle",
+                "expected": "random_user"
+              },
+              {
+                "path": "actions[2].priority",
+                "in": [
+                  3,
+                  4
+                ]
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "schema",
+              "config": {
+                "schema_type": "json"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp6qsxmjut/017-policy_engagement_tier_prioritization.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp6qsxmjut"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-ad5a582c",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.967604+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: brief",
+                "inputs": [
+                  "policy",
+                  "tweets",
+                  "relationships",
+                  "strategy",
+                  "budget"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "brief",
+                "status": "completed",
+                "trends_count": 0,
+                "posts_count": 3,
+                "replies_count": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": false,
+                "message": "actions[0].author_handle: expected tier1_contact, got None"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-ad5a582c/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0001811981201171875,
+          "agent_response": "{\"command\": \"brief\", \"digest\": {\"trends\": [], \"trends_count\": 0, \"posts\": [], \"posts_count\": 3, \"replies\": [], \"replies_count\": 0, \"format\": \"terminal\"}, \"metrics\": {\"execution_time_seconds\": 2.5, \"sources_queried\": 0}}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.2874603271484375e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "errors": [],
+              "field_count": 3,
+              "required_fields_present": 0
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.3113021850585938e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-ad5a582c",
+        "run_id": "run-928036cb",
+        "task_id": "policy_engagement_tier_prioritization",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.967397+00:00",
+        "started_at": "2026-03-11T15:19:56.967386+00:00",
+        "completed_at": "2026-03-11T15:19:56.967611+00:00"
+      }
+    },
+    {
+      "id": "trial-871407a2",
+      "task_id": "policy_ranking_score_calculation",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_ranking_score_calculation",
+          "description": "Test RankingPolicy multi-dimensional scoring",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "ranking",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "tech_expert",
+                "author_name": "Tech Expert",
+                "text": "Just published a deep dive on distributed systems consensus algorithms with code examples",
+                "created_at": "2026-03-06T14:30:00Z",
+                "public_metrics": {
+                  "like_count": 50,
+                  "reply_count": 10
+                },
+                "detected_topics": [
+                  "distributed systems"
+                ]
+              },
+              {
+                "id": "222",
+                "author_handle": "casual_poster",
+                "author_name": "Casual Poster",
+                "text": "Check out this link!",
+                "created_at": "2026-03-06T10:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 1
+                },
+                "detected_topics": []
+              }
+            ],
+            "relationships": {
+              "tech_expert": {
+                "handle": "tech_expert",
+                "tier": 1
+              }
+            },
+            "strategy": {
+              "topics": {
+                "primary_topics": [
+                  "distributed systems",
+                  "consensus"
+                ]
+              }
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "First tweet scores higher than second",
+              "High-quality content gets recognized"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions_count",
+                "gt": 0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp6qsxmjut/018-policy_ranking_score_calculation.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp6qsxmjut"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-871407a2",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.969149+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: brief",
+                "inputs": [
+                  "policy",
+                  "tweets",
+                  "relationships",
+                  "strategy",
+                  "budget"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "brief",
+                "status": "completed",
+                "trends_count": 0,
+                "posts_count": 3,
+                "replies_count": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-871407a2/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0001900196075439453,
+          "agent_response": "{\"command\": \"brief\", \"digest\": {\"trends\": [], \"trends_count\": 0, \"posts\": [], \"posts_count\": 3, \"replies\": [], \"replies_count\": 0, \"format\": \"terminal\"}, \"metrics\": {\"execution_time_seconds\": 2.5, \"sources_queried\": 0}}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.2159347534179688e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-871407a2",
+        "run_id": "run-928036cb",
+        "task_id": "policy_ranking_score_calculation",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.968937+00:00",
+        "started_at": "2026-03-11T15:19:56.968926+00:00",
+        "completed_at": "2026-03-11T15:19:56.969155+00:00"
+      }
+    },
+    {
+      "id": "trial-9575f4bb",
+      "task_id": "policy_strategy_violation_detection",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_strategy_violation_detection",
+          "description": "Test StrategyPolicy violation detection and enforcement",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "strategy",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "contact",
+                "author_name": "Contact",
+                "text": "Hello world",
+                "created_at": "2026-03-06T15:00:00Z"
+              },
+              {
+                "id": "222",
+                "author_handle": "contact2",
+                "author_name": "Contact2",
+                "text": "Amazing update!",
+                "created_at": "2026-03-06T15:00:00Z"
+              },
+              {
+                "id": "333",
+                "author_handle": "contact3",
+                "author_name": "Contact3",
+                "text": "Thoughts on the topic?",
+                "created_at": "2026-03-06T15:00:00Z"
+              }
+            ],
+            "relationships": {},
+            "strategy": {
+              "principles": [
+                "No engagement bait",
+                "Prefer build in public content"
+              ],
+              "boundaries": [
+                "No political content"
+              ]
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "Strategy policy evaluates tweets against principles",
+              "Strategy alignment score is calculated"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "strategy_alignment_score",
+                "gte": 0.0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp6qsxmjut/019-policy_strategy_violation_detection.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp6qsxmjut"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-9575f4bb",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.969709+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: brief",
+                "inputs": [
+                  "policy",
+                  "tweets",
+                  "relationships",
+                  "strategy",
+                  "budget"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "brief",
+                "status": "completed",
+                "trends_count": 0,
+                "posts_count": 3,
+                "replies_count": 0
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": false,
+                "message": "strategy_alignment_score: expected >= 0.0, got None"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-9575f4bb/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00017404556274414062,
+          "agent_response": "{\"command\": \"brief\", \"digest\": {\"trends\": [], \"trends_count\": 0, \"posts\": [], \"posts_count\": 3, \"replies\": [], \"replies_count\": 0, \"format\": \"terminal\"}, \"metrics\": {\"execution_time_seconds\": 2.5, \"sources_queried\": 0}}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0967254638671875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-9575f4bb",
+        "run_id": "run-928036cb",
+        "task_id": "policy_strategy_violation_detection",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.969512+00:00",
+        "started_at": "2026-03-11T15:19:56.969501+00:00",
+        "completed_at": "2026-03-11T15:19:56.969715+00:00"
+      }
+    },
+    {
+      "id": "trial-92671232",
+      "task_id": "sources_parallel_fetch",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "sources_parallel_fetch",
+          "description": "Test parallel fetching from multiple sources",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "pulse",
+            "config": {
+              "limit": 5
+            },
+            "mock_feed": {
+              "items": [
+                {
+                  "id": "hn_1",
+                  "author": "hackernews",
+                  "text": "Show HN: I built a distributed task queue",
+                  "metrics": {
+                    "likes": 150
+                  }
+                },
+                {
+                  "id": "lob_1",
+                  "author": "lobsters",
+                  "text": "Understanding memory models",
+                  "metrics": {
+                    "likes": 45
+                  }
+                },
+                {
+                  "id": "gh_1",
+                  "author": "github_trending",
+                  "text": "owner/awesome-tool: CLI tool for automation",
+                  "metrics": {
+                    "likes": 500
+                  }
+                }
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": null,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": null
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "targets_count",
+                "gte": 3
+              },
+              {
+                "path": "execution_time_seconds",
+                "lt": 30.0
+              },
+              {
+                "path": "command",
+                "expected": "pulse"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/sources/sources_parallel_fetch.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/sources"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-92671232",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-11T15:19:56.971149+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Execute command: pulse",
+                "inputs": [
+                  "command",
+                  "config",
+                  "mock_feed"
+                ]
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "command": "pulse",
+                "status": "completed",
+                "targets_count": 3
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "All assertions passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-8772df5f/runs/run-928036cb/artifacts/trial-92671232/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0002498626708984375,
+          "agent_response": "{\"command\": \"pulse\", \"targets\": [{\"id\": \"hn_1\", \"author\": \"hackernews\", \"text\": \"Show HN: I built a distributed task queue\", \"metrics\": {\"likes\": 150}}, {\"id\": \"lob_1\", \"author\": \"lobsters\", \"text\": \"Understanding memory models\", \"metrics\": {\"likes\": 45}}, {\"id\": \"gh_1\", \"author\": \"github_trending\", \"text\": \"owner/awesome-tool: CLI tool for automation\", \"metrics\": {\"likes\": 500}}], \"targets_count\": 3, \"sources\": [\"x_feed\"], \"execution_time_seconds\": 1.5}",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0967254638671875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-92671232",
+        "run_id": "run-928036cb",
+        "task_id": "sources_parallel_fetch",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T15:19:56.970877+00:00",
+        "started_at": "2026-03-11T15:19:56.970866+00:00",
+        "completed_at": "2026-03-11T15:19:56.971156+00:00"
+      }
+    }
+  ]
+}

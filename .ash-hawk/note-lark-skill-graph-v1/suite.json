@@ -1,0 +1,510 @@
+{
+  "id": "note-lark-skill-graph-v1",
+  "name": "Note Lark Skill Graph",
+  "description": "Evaluates the skill graph's effectiveness in organizing, searching,\nand discovering skills. Tests the core promise: \"The right skill at\nthe right time.\"\n\nApple Design Principles Applied:\n- **Feedback**: System provides relevant results with confidence\n- **Direct Manipulation**: Intuitive navigation through links\n- **Consistency**: Predictable search and traversal behavior\n- **User Control**: Agents can guide discovery with context\n",
+  "tasks": [
+    {
+      "id": "search.feedback.basic-query",
+      "description": "Basic search should return relevant skills based on title,\ndescription, and tags.\n",
+      "input": "1. Create a skill titled \"Python Error Handling\":\n   - title: \"Python Error Handling\"\n   - type: skill\n   - scope: global\n   - description: \"Handle exceptions gracefully in Python code\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"exception\", \"python\"]\n   - required_tools: []\n   \n2. Search for \"error handling\"\n\n3. Verify the created skill appears in results\n\nUse notes_create and notes_search with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created successfully (0.3 points)\n2. Search returned results (0.3 points)\n3. Created skill found in search results (0.4 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "search",
+        "feedback"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "search.feedback.tag-based",
+      "description": "Search should find skills based on tags in addition to title\nand description.\n",
+      "input": "1. Create a skill with unique tags:\n   - title: \"Tagged Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with specific tags\"\n   - skill_level: beginner\n   - triggers: [\"tagged\"]\n   - tags: [\"unique-tag-xyz-123\", \"testing\"]\n   - required_tools: []\n   \n2. Search for the unique tag \"unique-tag-xyz-123\"\n\nUse notes_create and notes_search with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created with tags (0.4 points)\n2. Search by tag returned results (0.3 points)\n3. Correct skill found (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "search",
+        "tags"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "search.feedback.empty-results",
+      "description": "Search with no matches should return empty results gracefully,\nnot an error.\n",
+      "input": "Search for something that definitely doesn't exist:\n\"zzzznonexistent987654321\"\n\nVerify the search returns an empty items array, not an error.\n\nUse notes_search with payload wrapper.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Search executed without error (0.5 points)\n2. Empty items array returned (0.5 points)\n\nScore: sum of points\n",
+            "pass_threshold": 1.0
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "search",
+        "edge-case"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "search.disambiguation.multiple-matches",
+      "description": "When multiple skills match a query, the system should return\nall relevant options.\n",
+      "input": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Both skills created (0.3 points)\n2. Search returned multiple results (0.3 points)\n3. Both skills found (0.4 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "search",
+        "disambiguation"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "traversal.basic.context-chain",
+      "description": "Context chain traversal should navigate from a starting node\nto related skills.\n",
+      "input": "1. Create parent skill \"Testing Fundamentals\":\n   - title: \"Testing Fundamentals\"\n   - type: skill\n   - scope: global\n   - description: \"Core testing principles\"\n   - skill_level: beginner\n   - triggers: [\"testing\", \"test\"]\n   - required_tools: []\n   \n2. Create child skill \"Unit Testing\":\n   - title: \"Unit Testing\"\n   - type: skill\n   - scope: global\n   - description: \"Write isolated unit tests\"\n   - skill_level: intermediate\n   - triggers: [\"unit test\", \"pytest\"]\n   - required_tools: [\"pytest\"]\n   \n3. Link parent to child using notes_link\n\n4. Run context_chain from parent with task \"unit testing\"\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Both skills created (0.3 points)\n2. Link created successfully (0.2 points)\n3. context_chain executed (0.3 points)\n4. Traversal path includes relevant nodes (0.2 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "traversal",
+        "context-chain"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "links.create-and-validate",
+      "description": "Links between skills should be created with proper wikilink format\nand validated.\n",
+      "input": "1. Create source skill:\n   - title: \"Source Skill for Links\"\n   - type: skill\n   - scope: global\n   - description: \"Source skill for link testing\"\n   - skill_level: beginner\n   - triggers: [\"source\"]\n   - required_tools: []\n   \n2. Create target skill:\n   - title: \"Target Skill for Links\"\n   - type: skill\n   - scope: global\n   - description: \"Target skill for link testing\"\n   - skill_level: beginner\n   - triggers: [\"target\"]\n   - required_tools: []\n   \n3. Link source to target using notes_link:\n   - source_note_id: (source skill ID)\n   - target_note_id_or_title: \"Target Skill for Links\"\n   - link_text: \"related\"\n   \n4. Validate links with notes_validate_links\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Both skills created (0.2 points each = 0.4)\n2. Link created successfully (0.3 points)\n3. Link validation passed (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "links",
+        "validation"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "links.backlinks",
+      "description": "When skill A links to skill B, skill B should have A in its backlinks.\n",
+      "input": "1. Create skill A:\n   - title: \"Skill A Backlink Test\"\n   - type: skill\n   - scope: global\n   - description: \"First skill\"\n   - skill_level: beginner\n   - triggers: [\"skill-a\"]\n   - required_tools: []\n   \n2. Create skill B:\n   - title: \"Skill B Backlink Test\"\n   - type: skill\n   - scope: global\n   - description: \"Second skill\"\n   - skill_level: beginner\n   - triggers: [\"skill-b\"]\n   - required_tools: []\n   \n3. Link A -> B\n\n4. Get backlinks for B using notes_backlinks\n\n5. Verify A appears in B's backlinks\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skills created and linked (0.4 points)\n2. notes_backlinks executed (0.3 points)\n3. Backlinks include skill A (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "links",
+        "backlinks"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "archive.create-and-archive",
+      "description": "Skills can be archived and removed from active search.\n",
+      "input": "1. Create a skill:\n   - title: \"Skill to Archive\"\n   - type: skill\n   - scope: global\n   - description: \"This skill will be archived\"\n   - skill_level: beginner\n   - triggers: [\"archive-test\"]\n   - required_tools: []\n   \n2. Archive the skill using notes_archive\n\n3. Search for \"archive-test\" - should NOT find the archived skill\n   (unless archive_search_enabled is true)\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created (0.3 points)\n2. Archive executed successfully (0.4 points)\n3. Skill no longer in active search (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "archive",
+        "lifecycle"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "reindex.after-changes",
+      "description": "After creating skills, reindex should update the search index.\n",
+      "input": "1. Create a skill:\n   - title: \"Reindex Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"Testing reindex functionality\"\n   - skill_level: beginner\n   - triggers: [\"reindex-test-unique\"]\n   - required_tools: []\n   \n2. Run notes_reindex\n\n3. Search for \"reindex-test-unique\" - should find the skill\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created (0.3 points)\n2. Reindex executed (0.3 points)\n3. Search finds the skill (0.4 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "reindex",
+        "search"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.ranking.relevance",
+      "description": "More relevant skills should be ranked higher in search results.\nExact title match should rank higher than description match.\n",
+      "input": "1. Create skill with exact match in title:\n   - title: \"Git Rebase Workflow\"\n   - type: skill\n   - scope: global\n   - description: \"General git operations\"\n   - skill_level: intermediate\n   - triggers: [\"git\", \"rebase\"]\n   - required_tools: []\n   \n2. Create skill with match only in description:\n   - title: \"Version Control Tips\"\n   - type: skill\n   - scope: global\n   - description: \"Tips for git rebase and other operations\"\n   - skill_level: beginner\n   - triggers: [\"version-control\"]\n   - required_tools: []\n   \n3. Search for \"git rebase\"\n\n4. Verify the exact title match ranks higher (appears first)\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Both skills created (0.3 points)\n2. Search returned both results (0.3 points)\n3. \"Git Rebase Workflow\" appears before \"Version Control Tips\" (0.4 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "ranking"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.context-aware.traversal",
+      "description": "Context chain traversal should use task context to prioritize\nrelevant skills over unrelated ones.\n",
+      "input": "1. Create skill \"API Development\":\n   - title: \"API Development\"\n   - type: skill\n   - scope: global\n   - description: \"Build REST APIs\"\n   - skill_level: intermediate\n   - triggers: [\"api\", \"rest\"]\n   - required_tools: []\n   \n2. Create skill \"API Testing\":\n   - title: \"API Testing\"\n   - type: skill\n   - scope: global\n   - description: \"Test REST APIs\"\n   - skill_level: intermediate\n   - triggers: [\"api\", \"test\"]\n   - required_tools: []\n   \n3. Create skill \"API Deployment\":\n   - title: \"API Deployment\"\n   - type: skill\n   - scope: global\n   - description: \"Deploy APIs to production\"\n   - skill_level: advanced\n   - triggers: [\"api\", \"deploy\"]\n   - required_tools: []\n   \n4. Link \"API Development\" -> \"API Testing\"\n5. Link \"API Development\" -> \"API Deployment\"\n\n6. Run context_chain from \"API Development\" with:\n   - task: \"I need to write tests for my API\"\n   \n7. Verify \"API Testing\" scores higher or appears earlier than \"API Deployment\"\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. All skills created (0.2 points)\n2. Links created (0.2 points)\n3. context_chain executed (0.3 points)\n4. \"API Testing\" prioritized over \"API Deployment\" given test context (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "context-aware",
+        "traversal"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.description-keywords",
+      "description": "Keywords in skill descriptions should enable discovery,\nnot just title and tags.\n",
+      "input": "1. Create skill with unique keyword ONLY in description:\n   - title: \"Code Organization\"\n   - type: skill\n   - scope: global\n   - description: \"Best practices for organizing code with xyz-unique-keyword-999\"\n   - skill_level: beginner\n   - triggers: [\"organize\", \"structure\"]\n   - required_tools: []\n   \n2. Search for \"xyz-unique-keyword-999\"\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created with unique keyword in description (0.4 points)\n2. Search found the skill (0.6 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "description",
+        "keywords"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.natural-language.query",
+      "description": "Search should handle natural language queries, not just\nexact keyword matches.\n",
+      "input": "1. Create skill:\n   - title: \"Database Migration Strategy\"\n   - type: skill\n   - scope: global\n   - description: \"How to safely migrate database schemas in production\"\n   - skill_level: advanced\n   - triggers: [\"database\", \"migration\", \"schema\"]\n   - required_tools: []\n   \n2. Search using natural language: \"change database schema safely\"\n\n3. Verify the skill is found despite not matching exact words\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created (0.3 points)\n2. Natural language search executed (0.3 points)\n3. Skill found despite word differences (0.4 points)\n\nNote: \"migrate\" ~= \"change\", \"schema\" matches, \"safely\" in description\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "natural-language",
+        "fuzzy"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.cross-skill.graph",
+      "description": "Agents should be able to discover skills through the graph,\nnot just direct search.\n",
+      "input": "1. Create skill \"Python Fundamentals\":\n   - title: \"Python Fundamentals\"\n   - type: skill\n   - scope: global\n   - description: \"Core Python concepts\"\n   - skill_level: beginner\n   - triggers: [\"python\", \"basics\"]\n   - required_tools: []\n   \n2. Create skill \"Python Decorators\":\n   - title: \"Python Decorators\"\n   - type: skill\n   - scope: global\n   - description: \"Advanced decorator patterns\"\n   - skill_level: advanced\n   - triggers: [\"decorator\", \"python\"]\n   - required_tools: []\n   \n3. Create skill \"Python Context Managers\":\n   - title: \"Python Context Managers\"\n   - type: skill\n   - scope: global\n   - description: \"Using with statements and context managers\"\n   - skill_level: intermediate\n   - triggers: [\"context\", \"with\", \"python\"]\n   - required_tools: []\n   \n4. Link \"Python Fundamentals\" -> \"Python Decorators\"\n5. Link \"Python Fundamentals\" -> \"Python Context Managers\"\n\n6. Start from \"Python Fundamentals\" and use context_chain to discover related skills\n\n7. Verify both child skills are discovered through the graph\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. All skills created (0.2 points)\n2. Links created (0.2 points)\n3. context_chain discovered related skills (0.4 points)\n4. Both child skills found through traversal (0.2 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "cross-skill",
+        "graph"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.partial-title.match",
+      "description": "Search should find skills with partial title matches,\nenabling flexible discovery.\n",
+      "input": "1. Create skill:\n   - title: \"FastAPI Request Validation\"\n   - type: skill\n   - scope: global\n   - description: \"Validate incoming requests in FastAPI\"\n   - skill_level: intermediate\n   - triggers: [\"fastapi\", \"validation\"]\n   - required_tools: []\n   \n2. Search for just \"FastAPI\" (partial title)\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created (0.3 points)\n2. Partial title search executed (0.3 points)\n3. Skill found via partial match (0.4 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "partial-match",
+        "title"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.trigger.activation",
+      "description": "Skills should be discoverable via their trigger phrases,\nnot just title and description.\n",
+      "input": "1. Create skill with unique trigger:\n   - title: \"Logging Best Practices\"\n   - type: skill\n   - scope: global\n   - description: \"How to implement logging\"\n   - skill_level: intermediate\n   - triggers: [\"logging\", \"logs\", \"unique-trigger-abc-789\"]\n   - required_tools: []\n   \n2. Search for \"unique-trigger-abc-789\" (which is ONLY in triggers)\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created with unique trigger (0.4 points)\n2. Search by trigger phrase found the skill (0.6 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "triggers",
+        "activation"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.case-insensitive",
+      "description": "Search should be case-insensitive for better discoverability.\n",
+      "input": "1. Create skill:\n   - title: \"Docker Container Management\"\n   - type: skill\n   - scope: global\n   - description: \"Manage Docker containers efficiently\"\n   - skill_level: intermediate\n   - triggers: [\"docker\", \"container\"]\n   - required_tools: []\n   \n2. Search for \"DOCKER\" (all uppercase)\n3. Search for \"docker\" (all lowercase)\n4. Search for \"Docker\" (mixed case)\n\n5. Verify all searches find the same skill\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created (0.2 points)\n2. Uppercase search found skill (0.2 points)\n3. Lowercase search found skill (0.3 points)\n4. Mixed case search found skill (0.3 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "case-insensitive",
+        "search"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "discoverability.alias.resolution",
+      "description": "Skills with aliases should be discoverable via those aliases.\n",
+      "input": "1. Create skill with aliases:\n   - title: \"Unit Testing with Pytest\"\n   - type: skill\n   - scope: global\n   - description: \"Write unit tests using pytest framework\"\n   - skill_level: intermediate\n   - triggers: [\"test\", \"pytest\"]\n   - aliases: [\"pytest-testing\", \"python-testing-guide\"]\n   - required_tools: [\"pytest\"]\n   \n2. Search for \"pytest-testing\" (alias)\n\n3. Verify the skill is found via alias\n\nUse payload wrapper for all calls.\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Skill created with aliases (0.4 points)\n2. Search by alias found the skill (0.6 points)\n\nScore: sum of points\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "discoverability",
+        "aliases",
+        "resolution"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [
+    "note-lark",
+    "graph",
+    "search",
+    "traversal"
+  ],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": {
+    "name": "build",
+    "provider": null,
+    "model": null,
+    "class_name": null,
+    "location": null,
+    "kwargs": {},
+    "mcp_servers": [
+      {
+        "name": "note-lark",
+        "command": "python3",
+        "args": [
+          "evals/mcp_stdio_bridge.py"
+        ],
+        "env": {},
+        "cwd": "/Users/parkersligting/develop/pt/note-lark"
+      }
+    ]
+  }
+}

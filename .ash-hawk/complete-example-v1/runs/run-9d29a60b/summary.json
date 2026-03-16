@@ -1,0 +1,687 @@
+{
+  "envelope": {
+    "run_id": "run-9d29a60b",
+    "suite_id": "complete-example-v1",
+    "suite_hash": "3c7904cd82ee2573",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "build",
+    "agent_version": null,
+    "provider": "zai-coding-plan",
+    "model": "glm-4.7",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-13T00:14:25.238996+00:00"
+  },
+  "metrics": {
+    "suite_id": "complete-example-v1",
+    "run_id": "run-9d29a60b",
+    "total_tasks": 3,
+    "completed_tasks": 3,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.22666666666666666,
+    "total_tokens": {
+      "input": 2095,
+      "output": 1637,
+      "reasoning": 1198,
+      "cache_read": 906,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 205.74247193336487,
+    "latency_p50_seconds": 84.33018374443054,
+    "latency_p95_seconds": 118.20062494277954,
+    "latency_p99_seconds": 118.20062494277954,
+    "pass_at_k": {},
+    "created_at": "2026-03-13T00:17:50.998285+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-41abc69c",
+      "task_id": "string-match-task",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "What is 2 + 2?",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-41abc69c",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-13T00:14:28.440738+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 2 + 2?"
+            },
+            {
+              "role": "assistant",
+              "content": "2 + 2 is 4."
+            }
+          ],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 13,
+            "output": 158,
+            "reasoning": 148,
+            "cache_read": 2,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 3.1846749782562256,
+          "agent_response": "2 + 2 is 4.",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "string_match",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown matching mode: contains",
+            "execution_time_seconds": 2.47955322265625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-41abc69c",
+        "run_id": "run-9d29a60b",
+        "task_id": "string-match-task",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T00:14:25.255903+00:00",
+        "started_at": "2026-03-13T00:14:25.255873+00:00",
+        "completed_at": "2026-03-13T00:14:28.440824+00:00"
+      }
+    },
+    {
+      "id": "trial-74a038e5",
+      "task_id": "code-quality-task",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "prompt": "Write a Python function `calculate_average(numbers: list[float]) -> float`\nthat calculates the arithmetic mean of a list of numbers.\n\nThe function should:\n- Handle empty lists by returning 0.0\n- Handle None by returning 0.0\n- Be well-documented with a docstring\n",
+        "language": "python"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-74a038e5",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-13T00:15:43.491612+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Write a Python function `calculate_average(numbers: list[float]) -> float`\nthat calculates the arithmetic mean of a list of numbers.\n\nThe function should:\n- Handle empty lists by returning 0.0\n- Handle None by returning 0.0\n- Be well-documented with a docstring\n"
+            },
+            {
+              "role": "assistant",
+              "content": "```python\n\ndef calculate_average(numbers: list[float]) -> float:\n    \"\"\"\n    Calculate the arithmetic mean of a list of numbers.\n\n    Parameters\n    ----------\n    numbers : list[float]\n        A list of floating point numbers. If an empty list or None is provided,\n        the function returns 0.0.\n\n    Returns\n    -------\n    float\n        The arithmetic mean of the numbers, or 0.0 for empty or None input.\n    \"\"\"\n    if not numbers:  # covers both None and empty list\n        return 0.0\n    return sum(numbers) / len(numbers)\n\n```"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"calculate_average\", \"input\": {}, \"error\": \"Tool not available: calculate_average\"}, {\"tool\": \"sum\", \"input\": {}, \"error\": \"Tool not available: sum\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}]"
+            },
+            {
+              "role": "assistant",
+              "content": "```python\ndef calculate_average(numbers: list[float]) -> float:\n    \"\"\"\n    Calculates the arithmetic mean of a list of numbers.\n\n    This function handles cases where the input list is empty or None by \n    returning 0.0. It uses the built-in sum() and len() functions for \n    calculation.\n\n    Parameters\n    ----------\n    numbers : list[float]\n        A list of floating point numbers.\n\n    Returns\n    -------\n    float\n        The arithmetic mean of the numbers, or 0.0 if the list is empty or None.\n    \"\"\"\n    if not numbers:  # Checks if list is empty or None\n        return 0.0\n    return sum(numbers) / len(numbers)\n```"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"calculate_average\", \"input\": {}, \"error\": \"Tool not available: calculate_average\"}, {\"tool\": \"sum\", \"input\": {}, \"error\": \"Tool not available: sum\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}, {\"tool\": \"sum\", \"input\": {}, \"error\": \"Tool not available: sum\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}]"
+            },
+            {
+              "role": "assistant",
+              "content": "```python\ndef calculate_average(numbers: list[float]) -> float:\n    \"\"\"\n    Calculates the arithmetic mean of a list of numbers.\n\n    This function handles cases where the input list is empty or None by \n    returning 0.0.\n\n    Parameters\n    ----------\n    numbers : list[float]\n        A list of floating point numbers.\n\n    Returns\n    -------\n    float\n        The arithmetic mean of the numbers, or 0.0 if the list is empty or None.\n    \"\"\"\n    if not numbers:\n        return 0.0\n    return sum(numbers) / len(numbers)\n```"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"calculate_average\", \"input\": {}, \"error\": \"Tool not available: calculate_average\"}, {\"tool\": \"sum\", \"input\": {}, \"error\": \"Tool not available: sum\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}]"
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "calculate_average",
+              "input": {},
+              "error": "Tool not available: calculate_average"
+            },
+            {
+              "tool": "sum",
+              "input": {},
+              "error": "Tool not available: sum"
+            },
+            {
+              "tool": "len",
+              "input": {},
+              "error": "Tool not available: len"
+            },
+            {
+              "tool": "calculate_average",
+              "input": {},
+              "error": "Tool not available: calculate_average"
+            },
+            {
+              "tool": "sum",
+              "input": {},
+              "error": "Tool not available: sum"
+            },
+            {
+              "tool": "len",
+              "input": {},
+              "error": "Tool not available: len"
+            },
+            {
+              "tool": "sum",
+              "input": {},
+              "error": "Tool not available: sum"
+            },
+            {
+              "tool": "len",
+              "input": {},
+              "error": "Tool not available: len"
+            },
+            {
+              "tool": "calculate_average",
+              "input": {},
+              "error": "Tool not available: calculate_average"
+            },
+            {
+              "tool": "sum",
+              "input": {},
+              "error": "Tool not available: sum"
+            },
+            {
+              "tool": "len",
+              "input": {},
+              "error": "Tool not available: len"
+            }
+          ],
+          "trace_events": [],
+          "token_usage": {
+            "input": 519,
+            "output": 528,
+            "reasoning": 405,
+            "cache_read": 259,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 75.02520489692688,
+          "agent_response": "```python\ndef calculate_average(numbers: list[float]) -> float:\n    \"\"\"\n    Calculates the arithmetic mean of a list of numbers.\n\n    This function handles cases where the input list is empty or None by \n    returning 0.0.\n\n    Parameters\n    ----------\n    numbers : list[float]\n        A list of floating point numbers.\n\n    Returns\n    -------\n    float\n        The arithmetic mean of the numbers, or 0.0 if the list is empty or None.\n    \"\"\"\n    if not numbers:\n        return 0.0\n    return sum(numbers) / len(numbers)\n```",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "test_runner",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "test_path is required in config",
+            "execution_time_seconds": 3.409385681152344e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "llm_judge",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "reasoning": "The function meets all requirements: it has proper docstring documentation with NumPy-style formatting including Parameters and Returns sections, correct type hints, handles both empty list and None edge cases correctly (using the condition `if not numbers:`), and uses clear variable naming.",
+              "breakdown": {
+                "score": 1.0
+              },
+              "issues": [],
+              "strengths": [
+                "Excellent docstring following NumPy style documentation format",
+                "Correct type hints present",
+                "Properly handles empty list and None edge cases",
+                "Clean and simple implementation using built-in functions"
+              ],
+              "audit": {
+                "prompt_name": "custom_inline_rubric",
+                "prompt_version": "1.0.0",
+                "prompt_hash": "6cd8eb3c16f8a849",
+                "judge_model": "glm-4.7",
+                "judge_provider": "zai-coding-plan",
+                "judge_params": {
+                  "temperature": 0.0,
+                  "max_tokens": 1024,
+                  "n_judges": 1,
+                  "consensus_mode": "mean"
+                },
+                "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The function meets all requirements: it has proper docstring documentation with NumPy-style formatting including Parameters and Returns sections, correct type hints, handles both empty list and None edge cases correctly (using the condition `if not numbers:`), and uses clear variable naming.\",\n  \"issues\": [],\n  \"strengths\": [\"Excellent docstring following NumPy style documentation format\", \"Correct type hints present\", \"Properly handles empty list and None edge cases\", \"Clean and simple implementation using built-in functions\"]\n}\n"
+              },
+              "n_judges": 1,
+              "consensus_mode": "mean"
+            },
+            "error_message": null,
+            "execution_time_seconds": 9.301664113998413,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.4,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-74a038e5",
+        "run_id": "run-9d29a60b",
+        "task_id": "code-quality-task",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T00:14:28.466191+00:00",
+        "started_at": "2026-03-13T00:14:28.465945+00:00",
+        "completed_at": "2026-03-13T00:15:43.491683+00:00"
+      }
+    },
+    {
+      "id": "trial-acd9825f",
+      "task_id": "production-ready-task",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "prompt": "Implement a `UserRepository` class with the following methods:\n- `get_user(user_id: int) -> User | None`\n- `save_user(user: User) -> bool`\n- `delete_user(user_id: int) -> bool`\n- `list_users(limit: int = 100) -> list[User]`\n\nUse the provided User model from $model_file.\nTests are located at $test_file.\n",
+        "language": "python"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-acd9825f",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-13T00:17:35.933349+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Implement a `UserRepository` class with the following methods:\n- `get_user(user_id: int) -> User | None`\n- `save_user(user: User) -> bool`\n- `delete_user(user_id: int) -> bool`\n- `list_users(limit: int = 100) -> list[User]`\n\nUse the provided User model from /Users/parkersligting/develop/pt/ash-hawk/examples/complete-eval/suites/fixtures/src/models.py.\nTests are located at /Users/parkersligting/develop/pt/ash-hawk/examples/complete-eval/suites/fixtures/tests/test_user_repository.py.\n"
+            },
+            {
+              "role": "assistant",
+              "content": "```python\nfrom models import User\n\nclass UserRepository:\n    def __init__(self):\n        # using a simple dictionary to simulate a database\n        # key: user_id (int), value: User object\n        self._storage = {}\n\n    def get_user(self, user_id: int) -> User | None:\n        return self._storage.get(user_id)\n\n    def save_user(self, user: User) -> bool:\n        # Ensure the user object is valid\n        if user is None:\n            return False\n            \n        # If the user doesn't have an ID or the ID is None, generate one\n        if not hasattr(user, 'id') or user.id is None:\n            # Find the highest existing ID and add 1\n            max_id = max(self._storage.keys(), default=0)\n            user.id = max_id + 1\n        \n        self._storage[user.id] = user\n        return True\n\n    def delete_user(self, user_id: int) -> bool:\n        if user_id in self._storage:\n            del self._storage[user_id]\n            return True\n        return False\n\n    def list_users(self, limit: int = 100) -> list[User]:\n        all_users = list(self._storage.values())\n        # Sort users by ID to ensure consistent ordering in tests\n        all_users.sort(key=lambda u: u.id)\n        return all_users[:limit]\n```"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"get_user\", \"input\": {}, \"error\": \"Tool not available: get_user\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"save_user\", \"input\": {}, \"error\": \"Tool not available: save_user\"}, {\"tool\": \"hasattr\", \"input\": {}, \"error\": \"Tool not available: hasattr\"}, {\"tool\": \"max\", \"input\": {}, \"error\": \"Tool not available: max\"}, {\"tool\": \"delete_user\", \"input\": {}, \"error\": \"Tool not available: delete_user\"}, {\"tool\": \"list_users\", \"input\": {}, \"error\": \"Tool not available: list_users\"}, {\"tool\": \"list\", \"input\": {}, \"error\": \"Tool not available: list\"}, {\"tool\": \"sort\", \"input\": {}, \"error\": \"Tool not available: sort\"}]"
+            },
+            {
+              "role": "assistant",
+              "content": "```python\nimport sys\nimport os\nfrom typing import Optional, List\n\n# Assuming the models.py file is located relative to where this script is run or accessible via PYTHONPATH\n# Adding specific path handling might be necessary if the provided paths are absolute, \n# but typically in these environments we just import the name.\n\n# Simulating the existence of the User model based on the context\nclass User:\n    def __init__(self, id: Optional[int] = None, name: str = \"\", email: str = \"\"):\n        self.id = id\n        self.name = name\n        self.email = email\n\n    def __eq__(self, other):\n        if not isinstance(other, User):\n            return False\n        return self.id == other.id and self.name == other.name and self.email == other.email\n    \n    def __repr__(self):\n        return f\"User(id={self.id}, name='{self.name}', email='{self.email}')\"\n\nclass UserRepository:\n    def __init__(self):\n        # Using an in-memory dictionary to simulate a database.\n        # Key is user_id (int), Value is User object.\n        self._storage = {}\n\n    def get_user(self, user_id: int) -> Optional[User]:\n        \"\"\"Retrieves a user by ID. Returns None if not found.\"\"\"\n        return self._storage.get(user_id)\n\n    def save_user(self, user: User) -> bool:\n        \"\"\"\n        Saves a user. \n        If the user has an ID, it updates the existing record.\n        If the user has no ID (None), it generates a new ID and saves it.\n        Returns True on success.\n        \"\"\"\n        if user is None:\n            return False\n            \n        # Auto-generation of ID if not present\n        if user.id is None:\n            # Find the max ID currently in storage to generate the next one\n            # We use default=0 if storage is empty\n            max_id = max((k for k in self._storage.keys()), default=0)\n            user.id = max_id + 1\n        \n        self._storage[user.id] = user\n        return True\n\n    def delete_user(self, user_id: int) -> bool:\n        \"\"\"Deletes a user by ID. Returns True if deleted, False if not found.\"\"\"\n        if user_id in self._storage:\n            del self._storage[user_id]\n            return True\n        return False\n\n    def list_users(self, limit: int = 100) -> List[User]:\n        \"\"\"\n        Lists all users up to the specified limit.\n        Returns a list of User objects sorted by ID for consistency.\n        \"\"\"\n        all_users = list(self._storage.values())\n        # Sorting by ID ensures consistent output for testing\n        all_users.sort(key=lambda u: u.id if u.id is not None else 0)\n        return all_users[:limit]\n```"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"__init__\", \"input\": {\"str\": \"\"}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"__eq__\", \"input\": {}, \"error\": \"Tool not available: __eq__\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"__repr__\", \"input\": {}, \"error\": \"Tool not available: __repr__\"}, {\"tool\": \"user\", \"input\": {\"name\": \"{self.name}\", \"email\": \"{self.email}\"}, \"error\": \"Tool not available: user\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"get_user\", \"input\": {}, \"error\": \"Tool not available: get_user\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"save_user\", \"input\": {}, \"error\": \"Tool not available: save_user\"}, {\"tool\": \"max\", \"input\": {}, \"error\": \"Tool not available: max\"}, {\"tool\": \"delete_user\", \"input\": {}, \"error\": \"Tool not available: delete_user\"}, {\"tool\": \"list_users\", \"input\": {}, \"error\": \"Tool not available: list_users\"}, {\"tool\": \"list\", \"input\": {}, \"error\": \"Tool not available: list\"}, {\"tool\": \"sort\", \"input\": {}, \"error\": \"Tool not available: sort\"}]"
+            },
+            {
+              "role": "assistant",
+              "content": "```python\nfrom typing import Optional, List\nfrom models import User\n\nclass UserRepository:\n    def __init__(self) -> None:\n        self._storage: dict[int, User] = {}\n\n    def get_user(self, user_id: int) -> Optional[User]:\n        \"\"\"Retrieves a user by their ID.\"\"\"\n        return self._storage.get(user_id)\n\n    def save_user(self, user: User) -> bool:\n        \"\"\"Saves a user. Generates an ID if the user object does not have one.\"\"\"\n        if user is None:\n            return False\n        \n        if user.id is None:\n            # Generate a new ID based on the highest existing ID\n            max_id = max(self._storage.keys(), default=0)\n            user.id = max_id + 1\n            \n        self._storage[user.id] = user\n        return True\n\n    def delete_user(self, user_id: int) -> bool:\n        \"\"\"Deletes a user by their ID. Returns True if the user existed.\"\"\"\n        if user_id in self._storage:\n            del self._storage[user_id]\n            return True\n        return False\n\n    def list_users(self, limit: int = 100) -> List[User]:\n        \"\"\"Returns a list of users, limited by the specified count.\"\"\"\n        users = list(self._storage.values())\n        # Sort by ID to ensure consistent ordering in tests\n        users.sort(key=lambda u: u.id or 0)\n        return users[:limit]\n```"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"get_user\", \"input\": {}, \"error\": \"Tool not available: get_user\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"save_user\", \"input\": {}, \"error\": \"Tool not available: save_user\"}, {\"tool\": \"max\", \"input\": {}, \"error\": \"Tool not available: max\"}, {\"tool\": \"delete_user\", \"input\": {}, \"error\": \"Tool not available: delete_user\"}, {\"tool\": \"list_users\", \"input\": {}, \"error\": \"Tool not available: list_users\"}, {\"tool\": \"list\", \"input\": {}, \"error\": \"Tool not available: list\"}, {\"tool\": \"sort\", \"input\": {}, \"error\": \"Tool not available: sort\"}]"
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "__init__",
+              "input": {},
+              "error": "Tool not available: __init__"
+            },
+            {
+              "tool": "get_user",
+              "input": {},
+              "error": "Tool not available: get_user"
+            },
+            {
+              "tool": "get",
+              "input": {},
+              "error": "Tool not available: get"
+            },
+            {
+              "tool": "save_user",
+              "input": {},
+              "error": "Tool not available: save_user"
+            },
+            {
+              "tool": "hasattr",
+              "input": {},
+              "error": "Tool not available: hasattr"
+            },
+            {
+              "tool": "max",
+              "input": {},
+              "error": "Tool not available: max"
+            },
+            {
+              "tool": "delete_user",
+              "input": {},
+              "error": "Tool not available: delete_user"
+            },
+            {
+              "tool": "list_users",
+              "input": {},
+              "error": "Tool not available: list_users"
+            },
+            {
+              "tool": "list",
+              "input": {},
+              "error": "Tool not available: list"
+            },
+            {
+              "tool": "sort",
+              "input": {},
+              "error": "Tool not available: sort"
+            },
+            {
+              "tool": "__init__",
+              "input": {
+                "str": ""
+              },
+              "error": "Tool not available: __init__"
+            },
+            {
+              "tool": "__eq__",
+              "input": {},
+              "error": "Tool not available: __eq__"
+            },
+            {
+              "tool": "isinstance",
+              "input": {},
+              "error": "Tool not available: isinstance"
+            },
+            {
+              "tool": "__repr__",
+              "input": {},
+              "error": "Tool not available: __repr__"
+            },
+            {
+              "tool": "user",
+              "input": {
+                "name": "{self.name}",
+                "email": "{self.email}"
+              },
+              "error": "Tool not available: user"
+            },
+            {
+              "tool": "__init__",
+              "input": {},
+              "error": "Tool not available: __init__"
+            },
+            {
+              "tool": "get_user",
+              "input": {},
+              "error": "Tool not available: get_user"
+            },
+            {
+              "tool": "get",
+              "input": {},
+              "error": "Tool not available: get"
+            },
+            {
+              "tool": "save_user",
+              "input": {},
+              "error": "Tool not available: save_user"
+            },
+            {
+              "tool": "max",
+              "input": {},
+              "error": "Tool not available: max"
+            },
+            {
+              "tool": "delete_user",
+              "input": {},
+              "error": "Tool not available: delete_user"
+            },
+            {
+              "tool": "list_users",
+              "input": {},
+              "error": "Tool not available: list_users"
+            },
+            {
+              "tool": "list",
+              "input": {},
+              "error": "Tool not available: list"
+            },
+            {
+              "tool": "sort",
+              "input": {},
+              "error": "Tool not available: sort"
+            },
+            {
+              "tool": "__init__",
+              "input": {},
+              "error": "Tool not available: __init__"
+            },
+            {
+              "tool": "get_user",
+              "input": {},
+              "error": "Tool not available: get_user"
+            },
+            {
+              "tool": "get",
+              "input": {},
+              "error": "Tool not available: get"
+            },
+            {
+              "tool": "save_user",
+              "input": {},
+              "error": "Tool not available: save_user"
+            },
+            {
+              "tool": "max",
+              "input": {},
+              "error": "Tool not available: max"
+            },
+            {
+              "tool": "delete_user",
+              "input": {},
+              "error": "Tool not available: delete_user"
+            },
+            {
+              "tool": "list_users",
+              "input": {},
+              "error": "Tool not available: list_users"
+            },
+            {
+              "tool": "list",
+              "input": {},
+              "error": "Tool not available: list"
+            },
+            {
+              "tool": "sort",
+              "input": {},
+              "error": "Tool not available: sort"
+            }
+          ],
+          "trace_events": [],
+          "token_usage": {
+            "input": 1563,
+            "output": 951,
+            "reasoning": 645,
+            "cache_read": 645,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 103.13551187515259,
+          "agent_response": "```python\nfrom typing import Optional, List\nfrom models import User\n\nclass UserRepository:\n    def __init__(self) -> None:\n        self._storage: dict[int, User] = {}\n\n    def get_user(self, user_id: int) -> Optional[User]:\n        \"\"\"Retrieves a user by their ID.\"\"\"\n        return self._storage.get(user_id)\n\n    def save_user(self, user: User) -> bool:\n        \"\"\"Saves a user. Generates an ID if the user object does not have one.\"\"\"\n        if user is None:\n            return False\n        \n        if user.id is None:\n            # Generate a new ID based on the highest existing ID\n            max_id = max(self._storage.keys(), default=0)\n            user.id = max_id + 1\n            \n        self._storage[user.id] = user\n        return True\n\n    def delete_user(self, user_id: int) -> bool:\n        \"\"\"Deletes a user by their ID. Returns True if the user existed.\"\"\"\n        if user_id in self._storage:\n            del self._storage[user_id]\n            return True\n        return False\n\n    def list_users(self, limit: int = 100) -> List[User]:\n        \"\"\"Returns a list of users, limited by the specified count.\"\"\"\n        users = list(self._storage.values())\n        # Sort by ID to ensure consistent ordering in tests\n        users.sort(key=lambda u: u.id or 0)\n        return users[:limit]\n```",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "composite",
+            "grader_id": null,
+            "score": 0.27999999999999997,
+            "passed": false,
+            "details": {
+              "mode": "weighted",
+              "threshold": 0.7,
+              "grader_results": [
+                {
+                  "grader_type": "test_runner",
+                  "grader_id": null,
+                  "score": 0.0,
+                  "passed": false,
+                  "details": {},
+                  "error_message": "test_path is required in config",
+                  "execution_time_seconds": 7.152557373046875e-06,
+                  "confidence": null,
+                  "needs_review": false,
+                  "review_reason": null
+                },
+                {
+                  "grader_type": "static_analysis",
+                  "grader_id": null,
+                  "score": 0.0,
+                  "passed": false,
+                  "details": {},
+                  "error_message": "target_path is required in config",
+                  "execution_time_seconds": 4.0531158447265625e-06,
+                  "confidence": null,
+                  "needs_review": false,
+                  "review_reason": null
+                },
+                {
+                  "grader_type": "llm_judge",
+                  "grader_id": null,
+                  "score": 0.7,
+                  "passed": true,
+                  "details": {
+                    "reasoning": "The code is well-structured, implements all required methods with proper type hints and docstrings, and follows PEP 8 conventions. However, it lacks logging and comprehensive input validation which are important for production-ready code.",
+                    "breakdown": {
+                      "score": 0.7
+                    },
+                    "issues": [
+                      "No logging present for repository operations (creates, reads, updates, deletes)",
+                      "No input validation for negative limit values in list_users",
+                      "save_user doesn't handle the case where a user with an existing ID is being saved (would silently overwrite)",
+                      "No type checking for user_id parameter types",
+                      "Using typing.List instead of built-in list type (though both are valid)"
+                    ],
+                    "strengths": [
+                      "Complete type hints on all public method signatures",
+                      "Docstrings present on all public methods explaining their purpose",
+                      "Clean PEP 8 compliant naming and formatting (CapWords class, snake_case methods)",
+                      "Proper use of Optional[User] for nullable return type",
+                      "Logical in-memory storage implementation using dictionary",
+                      "Consistent ordering in list_users by sorting by ID"
+                    ],
+                    "audit": {
+                      "prompt_name": "custom_inline_rubric",
+                      "prompt_version": "1.0.0",
+                      "prompt_hash": "f42539af5944bd23",
+                      "judge_model": "glm-4.7",
+                      "judge_provider": "zai-coding-plan",
+                      "judge_params": {
+                        "temperature": 0.0,
+                        "max_tokens": 1024,
+                        "n_judges": 1,
+                        "consensus_mode": "mean"
+                      },
+                      "raw_output": "\n{\n  \"score\": 0.7,\n  \"passed\": true,\n  \"reasoning\": \"The code is well-structured, implements all required methods with proper type hints and docstrings, and follows PEP 8 conventions. However, it lacks logging and comprehensive input validation which are important for production-ready code.\",\n  \"issues\": [\n    \"No logging present for repository operations (creates, reads, updates, deletes)\",\n    \"No input validation for negative limit values in list_users\",\n    \"save_user doesn't handle the case where a user with an existing ID is being saved (would silently overwrite)\",\n    \"No type checking for user_id parameter types\",\n    \"Using typing.List instead of built-in list type (though both are valid)\"\n  ],\n  \"strengths\": [\n    \"Complete type hints on all public method signatures\",\n    \"Docstrings present on all public methods explaining their purpose\",\n    \"Clean PEP 8 compliant naming and formatting (CapWords class, snake_case methods)\",\n    \"Proper use of Optional[User] for nullable return type\",\n    \"Logical in-memory storage implementation using dictionary\",\n    \"Consistent ordering in list_users by sorting by ID\"\n  ]\n}\n"
+                    },
+                    "n_judges": 1,
+                    "consensus_mode": "mean"
+                  },
+                  "error_message": null,
+                  "execution_time_seconds": 15.062521934509277,
+                  "confidence": null,
+                  "needs_review": false,
+                  "review_reason": null
+                }
+              ],
+              "weights": [
+                0.4,
+                0.2,
+                0.4
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.27999999999999997,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-acd9825f",
+        "run_id": "run-9d29a60b",
+        "task_id": "production-ready-task",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T00:15:52.797737+00:00",
+        "started_at": "2026-03-13T00:15:52.797142+00:00",
+        "completed_at": "2026-03-13T00:17:35.933370+00:00"
+      }
+    }
+  ]
+}

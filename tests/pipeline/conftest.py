@@ -49,6 +49,10 @@ class MockRunArtifact(pd.BaseModel):
 
     model_config = pd.ConfigDict(extra="allow")
 
+    def is_successful(self) -> bool:
+        """Check if the run was successful."""
+        return self.outcome == "success"
+
 
 @pytest.fixture
 def mock_run_artifact() -> MockRunArtifact:

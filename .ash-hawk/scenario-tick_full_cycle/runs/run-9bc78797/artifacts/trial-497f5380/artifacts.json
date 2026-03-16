@@ -1,0 +1,14 @@
+{
+  "command": "harness_tick",
+  "result": {
+    "command": "harness_tick",
+    "notes_processed": 0,
+    "status_changes": [],
+    "new_tweets_fetched": 0,
+    "new_actions_created": 0,
+    "new_actions": [],
+    "total_pending": 0,
+    "index_updated": true
+  },
+  "verification_passed": true
+}

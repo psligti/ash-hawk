@@ -1,0 +1,143 @@
+{
+  "id": "complete-example-v1",
+  "name": "Complete Evaluation Example",
+  "description": "Demonstrates all three grader layers with fixtures",
+  "tasks": [
+    {
+      "id": "string-match-task",
+      "description": "Simple string matching task",
+      "input": "What is 2 + 2?",
+      "expected_output": "4",
+      "grader_specs": [
+        {
+          "grader_type": "string_match",
+          "config": {
+            "expected": "4",
+            "mode": "contains"
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "math",
+        "simple"
+      ],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "code-quality-task",
+      "description": "Write a function that passes tests AND is clean code",
+      "input": {
+        "prompt": "Write a Python function `calculate_average(numbers: list[float]) -> float`\nthat calculates the arithmetic mean of a list of numbers.\n\nThe function should:\n- Handle empty lists by returning 0.0\n- Handle None by returning 0.0\n- Be well-documented with a docstring\n",
+        "language": "python"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "test_runner",
+          "config": {
+            "test_file": "$test_file",
+            "pass_threshold": 1.0
+          },
+          "weight": 0.6,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate code quality on:\n1. Proper docstring with args/returns\n2. Type hints present and correct\n3. Edge cases handled\n4. Clear variable names\n",
+            "pass_threshold": 0.7
+          },
+          "weight": 0.4,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "code",
+        "quality"
+      ],
+      "metadata": {},
+      "fixtures": {
+        "test_file": "./fixtures/tests/test_calculate_average.py"
+      },
+      "timeout_seconds": null,
+      "max_attempts": 1
+    },
+    {
+      "id": "production-ready-task",
+      "description": "Write production-ready code with full evaluation",
+      "input": {
+        "prompt": "Implement a `UserRepository` class with the following methods:\n- `get_user(user_id: int) -> User | None`\n- `save_user(user: User) -> bool`\n- `delete_user(user_id: int) -> bool`\n- `list_users(limit: int = 100) -> list[User]`\n\nUse the provided User model from $model_file.\nTests are located at $test_file.\n",
+        "language": "python"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "composite",
+          "config": {
+            "graders": [
+              {
+                "grader_type": "test_runner",
+                "config": {
+                  "test_file": "$test_file",
+                  "pass_threshold": 1.0
+                },
+                "weight": 0.4
+              },
+              {
+                "grader_type": "static_analysis",
+                "config": {
+                  "tools": [
+                    "ruff",
+                    "mypy"
+                  ],
+                  "max_issues": 5
+                },
+                "weight": 0.2
+              },
+              {
+                "grader_type": "llm_judge",
+                "config": {
+                  "custom_prompt": "Evaluate as production-ready code:\n1. Proper error handling (not just pass/fail)\n2. Logging present\n3. Type hints complete\n4. Docstrings on public methods\n5. Follows Python conventions (PEP 8)\n",
+                  "pass_threshold": 0.7
+                },
+                "weight": 0.4
+              }
+            ],
+            "aggregation": "weighted_average"
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "code",
+        "production",
+        "oop"
+      ],
+      "metadata": {},
+      "fixtures": {
+        "model_file": "./fixtures/src/models.py",
+        "test_file": "./fixtures/tests/test_user_repository.py",
+        "expected_dir": "./fixtures/expected/"
+      },
+      "timeout_seconds": 600.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [
+    "example",
+    "demo"
+  ],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

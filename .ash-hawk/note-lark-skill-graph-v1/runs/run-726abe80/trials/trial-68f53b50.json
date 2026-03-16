@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-68f53b50",
+    "task_id": "search.feedback.basic-query",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill titled \"Python Error Handling\":\n   - title: \"Python Error Handling\"\n   - type: skill\n   - scope: global\n   - description: \"Handle exceptions gracefully in Python code\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"exception\", \"python\"]\n   - required_tools: []\n   \n2. Search for \"error handling\"\n\n3. Verify the created skill appears in results\n\nUse notes_create and notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-68f53b50",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T20:58:08.863560+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 299.9439549446106,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-68f53b50",
+      "run_id": "run-726abe80",
+      "task_id": "search.feedback.basic-query",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T20:53:08.919828+00:00",
+      "started_at": "2026-03-12T20:53:08.919787+00:00",
+      "completed_at": "2026-03-12T20:58:08.863788+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-68f53b50",
+    "run_id": "run-726abe80",
+    "task_id": "search.feedback.basic-query",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T20:53:08.919828+00:00",
+    "started_at": "2026-03-12T20:53:08.919787+00:00",
+    "completed_at": "2026-03-12T20:58:08.863788+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

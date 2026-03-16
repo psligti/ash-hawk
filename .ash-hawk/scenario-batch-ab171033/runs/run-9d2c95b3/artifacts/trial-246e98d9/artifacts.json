@@ -1,0 +1,19 @@
+{
+  "command": "state_transition",
+  "result": {
+    "command": "state_transition",
+    "action_id": 5003,
+    "from_status": "pending",
+    "to_status": "needs_revision",
+    "action_before": {
+      "id": 5003,
+      "status": "pending"
+    },
+    "action_after": {
+      "id": 5003,
+      "status": "needs_revision"
+    },
+    "transition_valid": true
+  },
+  "verification_passed": true
+}

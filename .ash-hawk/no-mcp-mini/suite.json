@@ -1,0 +1,42 @@
+{
+  "id": "no-mcp-mini",
+  "name": "No MCP Mini",
+  "description": "no mcp timeout check",
+  "tasks": [
+    {
+      "id": "ping",
+      "description": "simple no-tool response",
+      "input": "Reply with exactly: pong\n",
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate:\n1. Response is exactly \"pong\" (1.0)\n",
+            "pass_threshold": 1.0
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [],
+      "metadata": {},
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": {
+    "name": "build",
+    "provider": null,
+    "model": null,
+    "class_name": null,
+    "location": null,
+    "kwargs": {},
+    "mcp_servers": []
+  }
+}

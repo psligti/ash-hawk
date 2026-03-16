@@ -1,0 +1,259 @@
+{
+  "trial": {
+    "id": "trial-6ad495e7",
+    "task_id": "search.feedback.basic-query",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill titled \"Python Error Handling\":\n   - title: \"Python Error Handling\"\n   - type: skill\n   - scope: global\n   - description: \"Handle exceptions gracefully in Python code\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"exception\", \"python\"]\n   - required_tools: []\n   \n2. Search for \"error handling\"\n\n3. Verify the created skill appears in results\n\nUse notes_create and notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-6ad495e7",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:59:33.514404+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create a skill titled \"Python Error Handling\":\n   - title: \"Python Error Handling\"\n   - type: skill\n   - scope: global\n   - description: \"Handle exceptions gracefully in Python code\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"exception\", \"python\"]\n   - required_tools: []\n   \n2. Search for \"error handling\"\n\n3. Verify the created skill appears in results\n\nUse notes_create and notes_search with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll help you create the skill and search for it. Let me make both calls:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Python Error Handling\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Handle exceptions gracefully in Python code\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"exception\", \"python\"], \"required_tools\": []}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"error handling\"}, \"output\": \"{\\\"items\\\":[]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "I see the issue - the skill metadata needs to be wrapped in a `frontmatter` property. Let me fix that and try again:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Python Error Handling\", \"type\": \"skill\", \"frontmatter\": {\"scope\": \"global\", \"description\": \"Handle exceptions gracefully in Python code\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"exception\", \"python\"], \"required_tools\": []}}}, \"output\": \"1 validation error for NoteCreateRequest\\nscope\\n  Field required [type=missing, input_value={'title': 'Python Error H..., 'required_tools': []}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"error handling\"}, \"output\": \"{\\\"items\\\":[]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "Let me try a different structure:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Python Error Handling\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"Handle exceptions gracefully in Python code\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"exception\", \"python\"], \"required_tools\": []}}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-python-error-handling-f6f5ac94\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-python-error-handling-f6f5ac94.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"error handling\"}, \"output\": \"{\\\"items\\\":[{\\\"_mtime\\\":1773367173.504995,\\\"aliases\\\":[],\\\"description\\\":\\\"Handle exceptions gracefully in Python code\\\",\\\"id\\\":\\\"skill-python-error-handling-f6f5ac94\\\",\\\"links\\\":[],\\\"path\\\":\\\"global/skills/skill-python-error-handling-f6f5ac94.md\\\",\\\"project\\\":null,\\\"scope\\\":\\\"global\\\",\\\"status\\\":\\\"active\\\",\\\"tags\\\":[],\\\"title\\\":\\\"Python Error Handling\\\",\\\"type\\\":\\\"skill\\\",\\\"updated_at\\\":\\\"2026-03-13T01:59:33.503809Z\\\"}]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Python Error Handling",
+                "type": "skill",
+                "scope": "global",
+                "description": "Handle exceptions gracefully in Python code",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "error",
+                  "exception",
+                  "python"
+                ],
+                "required_tools": []
+              }
+            },
+            "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+          },
+          {
+            "tool": "note-lark_notes_search",
+            "input": {
+              "query": "error handling"
+            },
+            "output": "{\"items\":[]}"
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Python Error Handling",
+                "type": "skill",
+                "frontmatter": {
+                  "scope": "global",
+                  "description": "Handle exceptions gracefully in Python code",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "exception",
+                    "python"
+                  ],
+                  "required_tools": []
+                }
+              }
+            },
+            "output": "1 validation error for NoteCreateRequest\nscope\n  Field required [type=missing, input_value={'title': 'Python Error H..., 'required_tools': []}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+          },
+          {
+            "tool": "note-lark_notes_search",
+            "input": {
+              "query": "error handling"
+            },
+            "output": "{\"items\":[]}"
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Python Error Handling",
+                "type": "skill",
+                "scope": "global",
+                "frontmatter": {
+                  "description": "Handle exceptions gracefully in Python code",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "exception",
+                    "python"
+                  ],
+                  "required_tools": []
+                }
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"skill-python-error-handling-f6f5ac94\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-python-error-handling-f6f5ac94.md\",\"warnings\":[]}"
+          },
+          {
+            "tool": "note-lark_notes_search",
+            "input": {
+              "query": "error handling"
+            },
+            "output": "{\"items\":[{\"_mtime\":1773367173.504995,\"aliases\":[],\"description\":\"Handle exceptions gracefully in Python code\",\"id\":\"skill-python-error-handling-f6f5ac94\",\"links\":[],\"path\":\"global/skills/skill-python-error-handling-f6f5ac94.md\",\"project\":null,\"scope\":\"global\",\"status\":\"active\",\"tags\":[],\"title\":\"Python Error Handling\",\"type\":\"skill\",\"updated_at\":\"2026-03-13T01:59:33.503809Z\"}]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7294,
+          "output": 144,
+          "reasoning": 47,
+          "cache_read": 7018,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 20.665630102157593,
+        "agent_response": "Let me try a different structure:",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent successfully completed all three tasks: created the skill (after learning the correct structure through iteration), performed a search that returned results, and verified the created skill appeared in those results.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "Persisted through initial API errors to correctly structure the payload with 'scope' at top level and skill metadata in 'frontmatter'",
+              "Successfully created the Python Error Handling skill",
+              "Successfully searched for and found the created skill in results"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "d0c5c0ceff747c28",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent successfully completed all three tasks: created the skill (after learning the correct structure through iteration), performed a search that returned results, and verified the created skill appeared in those results.\",\n  \"issues\": [],\n  \"strengths\": [\"Persisted through initial API errors to correctly structure the payload with 'scope' at top level and skill metadata in 'frontmatter'\", \"Successfully created the Python Error Handling skill\", \"Successfully searched for and found the created skill in results\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 19.194267988204956,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-6ad495e7",
+      "run_id": "run-e9670d80",
+      "task_id": "search.feedback.basic-query",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:59:12.848599+00:00",
+      "started_at": "2026-03-13T01:59:12.848545+00:00",
+      "completed_at": "2026-03-13T01:59:33.579747+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-6ad495e7",
+    "run_id": "run-e9670d80",
+    "task_id": "search.feedback.basic-query",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:59:12.848599+00:00",
+    "started_at": "2026-03-13T01:59:12.848545+00:00",
+    "completed_at": "2026-03-13T01:59:33.579747+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

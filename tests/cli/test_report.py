@@ -173,6 +173,9 @@ class TestReportEnhancedMetrics:
         assert "Total Tasks" in result.output
         assert "Mean Score" in result.output
         assert "Duration" in result.output
+        assert "Task Fails" in result.output
+        assert "Timeouts" in result.output
+        assert "Grader Errors" in result.output
 
     def test_report_shows_token_breakdown(self, runner, sample_suite_file, temp_storage):
         """Report should display token breakdown (input/output/reasoning)."""

@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-47b2b967",
+    "task_id": "skill.discoverability.search-works",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-47b2b967",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "agent_error",
+        "error_message": "[Errno 2] No such file or directory: 'uv run python -m note_lark'",
+        "completed_at": "2026-03-12T19:36:01.400848+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0024361610412597656,
+        "agent_response": null,
+        "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 716, in run\n    mcp_clients = await self._register_mcp_tools(base_registry)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 340, in _register_mcp_tools\n    await client.start()\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 83, in start\n    self._process = await asyncio.create_subprocess_exec(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py\", line 1743, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 211, in _make_subprocess_transport\n    transp = _UnixSubprocessTransport(self, protocol, args, shell,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/base_subprocess.py\", line 36, in __init__\n    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/unix_events.py\", line 820, in _start\n    self._proc = subprocess.Popen(\n                 ^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'uv run python -m note_lark'\n"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-47b2b967",
+      "run_id": "run-ad9b907c",
+      "task_id": "skill.discoverability.search-works",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T19:36:01.397990+00:00",
+      "started_at": "2026-03-12T19:36:01.397967+00:00",
+      "completed_at": "2026-03-12T19:36:01.400904+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-47b2b967",
+    "run_id": "run-ad9b907c",
+    "task_id": "skill.discoverability.search-works",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T19:36:01.397990+00:00",
+    "started_at": "2026-03-12T19:36:01.397967+00:00",
+    "completed_at": "2026-03-12T19:36:01.400904+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

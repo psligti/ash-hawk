@@ -1,0 +1,159 @@
+{
+  "trial": {
+    "id": "trial-14e63d0e",
+    "task_id": "skill.discoverability.search-works",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-14e63d0e",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:25:20.161565+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nimport json\n\n# Step 1: Create the skill using notes_create\ncreate_payload = {\n    \"title\": \"Unique Test Skill\",\n    \"content\": json.dumps({\n        \"type\": \"skill\",\n        \"scope\": \"global\",\n        \"description\": \"A skill with a unique trigger for testing search\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"xyz-test-unique-trigger-123\"],\n        \"required_tools\": []\n    }),\n    \"metadata\": {\n        \"type\": \"skill\",\n        \"scope\": \"global\"\n    }\n}\n\n# Using notes_create function\ncreate_result = notes_create(payload=create_payload)\nprint(f\"Created Note ID: {create_result.get('id')}\")\n\n# Step 2: Search for the trigger using notes_search\nsearch_payload = {\n    \"query\": \"xyz-test-unique-trigger-123\"\n}\n\n# Using notes_search function\nsearch_result = notes_search(payload=search_payload)\n\n# Displaying results\nprint(f\"Search Results: {json.dumps(search_result, indent=2)}\")\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"dumps\", \"input\": {}, \"error\": \"Tool not available: dumps\"}, {\"tool\": \"notes_create\", \"input\": {}, \"error\": \"Tool not available: notes_create\"}, {\"tool\": \"print\", \"input\": {}, \"error\": \"Tool not available: print\"}, {\"tool\": \"notes_search\", \"input\": {}, \"error\": \"Tool not available: notes_search\"}, {\"tool\": \"print\", \"input\": {}, \"error\": \"Tool not available: print\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "I will execute the requested steps. First, I'll create the note with the specific skill details using `notes_create`. Then, I'll perform a search for the unique trigger using `notes_search`.\n\n```json\n[\n  {\n    \"function\": \"notes_create\",\n    \"arguments\": \"{\\\"payload\\\": {\\\"title\\\": \\\"Unique Test Skill\\\", \\\"content\\\": \\\"A skill with a unique trigger for testing search. Triggers: xyz-test-unique-trigger-123.\\\", \\\"metadata\\\": {\\\"type\\\": \\\"skill\\\", \\\"scope\\\": \\\"global\\\", \\\"skill_level\\\": \\\"beginner\\\", \\\"triggers\\\": [\\\"xyz-test-unique-trigger-123\\\"], \\\"required_tools\\\": []}}}\"\n  },\n  {\n    \"function\": \"notes_search\",\n    \"arguments\": \"{\\\"payload\\\": {\\\"query\\\": \\\"xyz-test-unique-trigger-123\\\"}}\"\n  }\n]\n```"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "dumps",
+            "input": {},
+            "error": "Tool not available: dumps"
+          },
+          {
+            "tool": "notes_create",
+            "input": {},
+            "error": "Tool not available: notes_create"
+          },
+          {
+            "tool": "print",
+            "input": {},
+            "error": "Tool not available: print"
+          },
+          {
+            "tool": "notes_search",
+            "input": {},
+            "error": "Tool not available: notes_search"
+          },
+          {
+            "tool": "print",
+            "input": {},
+            "error": "Tool not available: print"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 445,
+          "output": 1584,
+          "reasoning": 1403,
+          "cache_read": 110,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 52.93224096298218,
+        "agent_response": "I will execute the requested steps. First, I'll create the note with the specific skill details using `notes_create`. Then, I'll perform a search for the unique trigger using `notes_search`.\n\n```json\n[\n  {\n    \"function\": \"notes_create\",\n    \"arguments\": \"{\\\"payload\\\": {\\\"title\\\": \\\"Unique Test Skill\\\", \\\"content\\\": \\\"A skill with a unique trigger for testing search. Triggers: xyz-test-unique-trigger-123.\\\", \\\"metadata\\\": {\\\"type\\\": \\\"skill\\\", \\\"scope\\\": \\\"global\\\", \\\"skill_level\\\": \\\"beginner\\\", \\\"triggers\\\": [\\\"xyz-test-unique-trigger-123\\\"], \\\"required_tools\\\": []}}}\"\n  },\n  {\n    \"function\": \"notes_search\",\n    \"arguments\": \"{\\\"payload\\\": {\\\"query\\\": \\\"xyz-test-unique-trigger-123\\\"}}\"\n  }\n]\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate:\n1. Was the skill created successfully?\n2. Did the search return results?\n3. Does the search result include the created skill?\n\nScore:\n- 1.0: All three criteria met\n- 0.6: Skill created but search didn't find it\n- 0.0: Skill creation failed\n.md. Expected prompt at: Evaluate:\n1. Was the skill created successfully?\n2. Did the search return results?\n3. Does the search result include the created skill?\n\nScore:\n- 1.0: All three criteria met\n- 0.6: Skill created but search didn't find it\n- 0.0: Skill creation failed\n.md",
+          "execution_time_seconds": 0.0003349781036376953,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-14e63d0e",
+      "run_id": "run-55ee4e9f",
+      "task_id": "skill.discoverability.search-works",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:24:27.229231+00:00",
+      "started_at": "2026-03-12T16:24:27.229192+00:00",
+      "completed_at": "2026-03-12T16:25:20.161583+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-14e63d0e",
+    "run_id": "run-55ee4e9f",
+    "task_id": "skill.discoverability.search-works",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:24:27.229231+00:00",
+    "started_at": "2026-03-12T16:24:27.229192+00:00",
+    "completed_at": "2026-03-12T16:25:20.161583+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

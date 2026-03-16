@@ -1,0 +1,230 @@
+{
+  "trial": {
+    "id": "trial-b1c68006",
+    "task_id": "skill.clarity.description.quality",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill note with:\n- title: \"Error Handling Pattern\"\n- type: skill\n- scope: global\n- description: \"Standard error handling for API routes using HTTPException\"\n- skill_level: intermediate\n- triggers: [\"exception\", \"error\", \"validation error\"]\n- required_tools: [\"pydantic\", \"fastapi\"]\n- body: |\n    # Error Handling Pattern\n    \n    Use HTTPException for API errors with proper status codes.\n    \n    ## Example\n    ```python\n    raise HTTPException(400, \"Invalid input\")\n    ```\n\nUse notes_create with payload wrapper. All type-specific fields go in frontmatter.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-b1c68006",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:53:45.463929+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill note with:\n- title: \"Error Handling Pattern\"\n- type: skill\n- scope: global\n- description: \"Standard error handling for API routes using HTTPException\"\n- skill_level: intermediate\n- triggers: [\"exception\", \"error\", \"validation error\"]\n- required_tools: [\"pydantic\", \"fastapi\"]\n- body: |\n    # Error Handling Pattern\n    \n    Use HTTPException for API errors with proper status codes.\n    \n    ## Example\n    ```python\n    raise HTTPException(400, \"Invalid input\")\n    ```\n\nUse notes_create with payload wrapper. All type-specific fields go in frontmatter.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll create the skill note with the frontmatter containing all the type-specific fields as requested."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"content\": \"---\\ntitle: \\\"Error Handling Pattern\\\"\\ntype: skill\\nscope: global\\ndescription: \\\"Standard error handling for API routes using HTTPException\\\"\\nskill_level: intermediate\\ntriggers:\\n  - exception\\n  - error\\n  - validation error\\nrequired_tools:\\n  - pydantic\\n  - fastapi\\n---\\n\\n# Error Handling Pattern\\n\\nUse HTTPException for API errors with proper status codes.\\n\\n## Example\\n```python\\nraise HTTPException(400, \\\"Invalid input\\\")\\n```\"}}, \"output\": \"3 validation errors for NoteCreateRequest\\ntitle\\n  Field required [type=missing, input_value={'content': '---\\\\ntitle: ... \\\"Invalid input\\\")\\\\n```'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\ntype\\n  Field required [type=missing, input_value={'content': '---\\\\ntitle: ... \\\"Invalid input\\\")\\\\n```'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\nscope\\n  Field required [type=missing, input_value={'content': '---\\\\ntitle: ... \\\"Invalid input\\\")\\\\n```'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Error Handling Pattern\", \"type\": \"skill\", \"scope\": \"global\", \"content\": \"# Error Handling Pattern\\n\\nUse HTTPException for API errors with proper status codes.\\n\\n## Example\\n```python\\nraise HTTPException(400, \\\"Invalid input\\\")\\n```\", \"description\": \"Standard error handling for API routes using HTTPException\", \"skill_level\": \"intermediate\", \"triggers\": [\"exception\", \"error\", \"validation error\"], \"required_tools\": [\"pydantic\", \"fastapi\"]}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Error Handling Pattern\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"Standard error handling for API routes using HTTPException\", \"skill_level\": \"intermediate\", \"triggers\": [\"exception\", \"error\", \"validation error\"], \"required_tools\": [\"pydantic\", \"fastapi\"]}, \"content\": \"# Error Handling Pattern\\n\\nUse HTTPException for API errors with proper status codes.\\n\\n## Example\\n```python\\nraise HTTPException(400, \\\"Invalid input\\\")\\n```\"}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-error-handling-pattern-fe53c57c\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-error-handling-pattern-fe53c57c.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "content": "---\ntitle: \"Error Handling Pattern\"\ntype: skill\nscope: global\ndescription: \"Standard error handling for API routes using HTTPException\"\nskill_level: intermediate\ntriggers:\n  - exception\n  - error\n  - validation error\nrequired_tools:\n  - pydantic\n  - fastapi\n---\n\n# Error Handling Pattern\n\nUse HTTPException for API errors with proper status codes.\n\n## Example\n```python\nraise HTTPException(400, \"Invalid input\")\n```"
+              }
+            },
+            "output": "3 validation errors for NoteCreateRequest\ntitle\n  Field required [type=missing, input_value={'content': '---\\ntitle: ... \"Invalid input\")\\n```'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\ntype\n  Field required [type=missing, input_value={'content': '---\\ntitle: ... \"Invalid input\")\\n```'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nscope\n  Field required [type=missing, input_value={'content': '---\\ntitle: ... \"Invalid input\")\\n```'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Error Handling Pattern",
+                "type": "skill",
+                "scope": "global",
+                "content": "# Error Handling Pattern\n\nUse HTTPException for API errors with proper status codes.\n\n## Example\n```python\nraise HTTPException(400, \"Invalid input\")\n```",
+                "description": "Standard error handling for API routes using HTTPException",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "exception",
+                  "error",
+                  "validation error"
+                ],
+                "required_tools": [
+                  "pydantic",
+                  "fastapi"
+                ]
+              }
+            },
+            "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Error Handling Pattern",
+                "type": "skill",
+                "scope": "global",
+                "frontmatter": {
+                  "description": "Standard error handling for API routes using HTTPException",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "exception",
+                    "error",
+                    "validation error"
+                  ],
+                  "required_tools": [
+                    "pydantic",
+                    "fastapi"
+                  ]
+                },
+                "content": "# Error Handling Pattern\n\nUse HTTPException for API errors with proper status codes.\n\n## Example\n```python\nraise HTTPException(400, \"Invalid input\")\n```"
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"skill-error-handling-pattern-fe53c57c\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-error-handling-pattern-fe53c57c.md\",\"warnings\":[]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7398,
+          "output": 232,
+          "reasoning": 102,
+          "cache_read": 7177,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 45.63147783279419,
+        "agent_response": null,
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent successfully created the skill note after two failed attempts. The third and final call correctly structured the payload with title, type, and scope at the top level, and all skill-specific fields (description, skill_level, triggers, required_tools) in the frontmatter dictionary. The tool returned successful confirmation with an ID.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [
+              "First attempt incorrectly placed all fields in content with YAML frontmatter",
+              "Second attempt placed skill-specific fields at top level instead of frontmatter"
+            ],
+            "strengths": [
+              "Agent recovered from errors by reading tool output carefully",
+              "Final call used correct payload structure with frontmatter dict",
+              "All required fields properly included",
+              "Content body correctly separated from metadata"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "3d5ea427c1762da1",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent successfully created the skill note after two failed attempts. The third and final call correctly structured the payload with title, type, and scope at the top level, and all skill-specific fields (description, skill_level, triggers, required_tools) in the frontmatter dictionary. The tool returned successful confirmation with an ID.\",\n  \"issues\": [\"First attempt incorrectly placed all fields in content with YAML frontmatter\", \"Second attempt placed skill-specific fields at top level instead of frontmatter\"],\n  \"strengths\": [\"Agent recovered from errors by reading tool output carefully\", \"Final call used correct payload structure with frontmatter dict\", \"All required fields properly included\", \"Content body correctly separated from metadata\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 22.084301710128784,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-b1c68006",
+      "run_id": "run-1e30a78e",
+      "task_id": "skill.clarity.description.quality",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:52:59.832298+00:00",
+      "started_at": "2026-03-13T01:52:59.832223+00:00",
+      "completed_at": "2026-03-13T01:53:45.530553+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-b1c68006",
+    "run_id": "run-1e30a78e",
+    "task_id": "skill.clarity.description.quality",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:52:59.832298+00:00",
+    "started_at": "2026-03-13T01:52:59.832223+00:00",
+    "completed_at": "2026-03-13T01:53:45.530553+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

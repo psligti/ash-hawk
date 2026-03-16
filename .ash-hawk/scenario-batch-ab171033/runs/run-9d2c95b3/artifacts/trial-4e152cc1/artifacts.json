@@ -1,0 +1,31 @@
+{
+  "command": "harness_tick",
+  "result": {
+    "command": "harness_tick",
+    "notes_processed": 0,
+    "status_changes": [],
+    "new_tweets_fetched": 1,
+    "new_actions_created": 1,
+    "new_actions_count": 1,
+    "unique_draft_count": 1,
+    "generic_opener_count": 0,
+    "new_actions": [
+      {
+        "tweet_id": "2001",
+        "author_handle": "pythonguru",
+        "action_type": "reply",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": "On python's gil is actually not a problem for - we saw similar gains when we moved our DB waits to async. The key was measuring before optimizing.",
+        "score": 0.7
+      }
+    ],
+    "llm_available": true,
+    "used_fallback": false,
+    "available_capacity": 60,
+    "skipped_due_to_pending_limit": false,
+    "total_pending": 1,
+    "index_updated": true
+  },
+  "verification_passed": true
+}

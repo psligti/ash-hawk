@@ -1,0 +1,106 @@
+{
+  "envelope": {
+    "run_id": "run-fddd002a",
+    "suite_id": "note-lark-mini-abs-python",
+    "suite_hash": "a29422e37f4a7b31",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "build",
+    "agent_version": null,
+    "provider": "zai-coding-plan",
+    "model": "glm-4.7",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-13T00:30:12.944471+00:00"
+  },
+  "metrics": {
+    "suite_id": "note-lark-mini-abs-python",
+    "run_id": "run-fddd002a",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 1,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 300.01358699798584,
+    "latency_p50_seconds": 300.01276111602783,
+    "latency_p95_seconds": 300.01276111602783,
+    "latency_p99_seconds": 300.01276111602783,
+    "pass_at_k": {},
+    "created_at": "2026-03-13T00:35:12.975281+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-cce4cdc1",
+      "task_id": "mini.search.basic",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill titled \"Mini Python Error Handling\" with payload wrapper.\n2. Search for \"mini python error\" with payload wrapper.\n3. Verify created skill appears.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-cce4cdc1",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "timeout",
+          "error_message": "Trial timed out after 300.0s",
+          "completed_at": "2026-03-13T00:35:12.965083+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 300.00422406196594,
+          "agent_response": null,
+          "error_trace": "Trial execution timed out"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-cce4cdc1",
+        "run_id": "run-fddd002a",
+        "task_id": "mini.search.basic",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T00:30:12.961802+00:00",
+        "started_at": "2026-03-13T00:30:12.961769+00:00",
+        "completed_at": "2026-03-13T00:35:12.966217+00:00"
+      }
+    }
+  ]
+}

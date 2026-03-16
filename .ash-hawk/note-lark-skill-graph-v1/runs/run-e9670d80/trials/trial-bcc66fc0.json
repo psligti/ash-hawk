@@ -1,0 +1,107 @@
+{
+  "trial": {
+    "id": "trial-bcc66fc0",
+    "task_id": "discoverability.alias.resolution",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill with aliases:\n   - title: \"Unit Testing with Pytest\"\n   - type: skill\n   - scope: global\n   - description: \"Write unit tests using pytest framework\"\n   - skill_level: intermediate\n   - triggers: [\"test\", \"pytest\"]\n   - aliases: [\"pytest-testing\", \"python-testing-guide\"]\n   - required_tools: [\"pytest\"]\n   \n2. Search for \"pytest-testing\" (alias)\n\n3. Verify the skill is found via alias\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-bcc66fc0",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "agent_error",
+        "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+        "completed_at": "2026-03-13T02:00:43.101201+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 1.7231700420379639,
+        "agent_response": null,
+        "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-bcc66fc0",
+      "run_id": "run-e9670d80",
+      "task_id": "discoverability.alias.resolution",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T02:00:41.375530+00:00",
+      "started_at": "2026-03-13T02:00:41.375510+00:00",
+      "completed_at": "2026-03-13T02:00:43.190806+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-bcc66fc0",
+    "run_id": "run-e9670d80",
+    "task_id": "discoverability.alias.resolution",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T02:00:41.375530+00:00",
+    "started_at": "2026-03-13T02:00:41.375510+00:00",
+    "completed_at": "2026-03-13T02:00:43.190806+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

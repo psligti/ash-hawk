@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-36ac6aa3",
+    "task_id": "search.disambiguation.multiple-matches",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-36ac6aa3",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:27:33.264233+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "Here are the payload calls to execute the requested steps.\n\n### 1. Create skill \"Error Handling - Python\"\n\n```json\n{\n  \"payload\": {\n    \"title\": \"Error Handling - Python\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"Python specific error handling\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"error\",\n      \"python\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n### 2. Create skill \"Error Handling - JavaScript\"\n\n```json\n{\n  \"payload\": {\n    \"title\": \"Error Handling - JavaScript\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"JavaScript specific error handling\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"error\",\n      \"javascript\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n### 3. Search for \"error handling\"\n\n```json\n{\n  \"payload\": {\n    \"query\": \"error handling\"\n  }\n}\n```\n\n### 4. Verification\nUpon executing the search payload (Step 3), the results list is expected to contain both:\n1.  **\"Error Handling - Python\"** (matching trigger \"error\")\n2.  **\"Error Handling - JavaScript\"** (matching trigger \"error\")"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 161,
+          "output": 1932,
+          "reasoning": 1646,
+          "cache_read": 5,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 21.944199085235596,
+        "agent_response": "Here are the payload calls to execute the requested steps.\n\n### 1. Create skill \"Error Handling - Python\"\n\n```json\n{\n  \"payload\": {\n    \"title\": \"Error Handling - Python\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"Python specific error handling\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"error\",\n      \"python\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n### 2. Create skill \"Error Handling - JavaScript\"\n\n```json\n{\n  \"payload\": {\n    \"title\": \"Error Handling - JavaScript\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"JavaScript specific error handling\",\n    \"skill_level\": \"intermediate\",\n    \"triggers\": [\n      \"error\",\n      \"javascript\"\n    ],\n    \"required_tools\": []\n  }\n}\n```\n\n### 3. Search for \"error handling\"\n\n```json\n{\n  \"payload\": {\n    \"query\": \"error handling\"\n  }\n}\n```\n\n### 4. Verification\nUpon executing the search payload (Step 3), the results list is expected to contain both:\n1.  **\"Error Handling - Python\"** (matching trigger \"error\")\n2.  **\"Error Handling - JavaScript\"** (matching trigger \"error\")",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate:\n1. Both skills created (0.3 points)\n2. Search returned multiple results (0.3 points)\n3. Both skills found (0.4 points)\n\nScore: sum of points\n.md. Expected prompt at: Evaluate:\n1. Both skills created (0.3 points)\n2. Search returned multiple results (0.3 points)\n3. Both skills found (0.4 points)\n\nScore: sum of points\n.md",
+          "execution_time_seconds": 0.0015649795532226562,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-36ac6aa3",
+      "run_id": "run-a56f5c1c",
+      "task_id": "search.disambiguation.multiple-matches",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:27:11.319790+00:00",
+      "started_at": "2026-03-12T16:27:11.319774+00:00",
+      "completed_at": "2026-03-12T16:27:33.264294+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-36ac6aa3",
+    "run_id": "run-a56f5c1c",
+    "task_id": "search.disambiguation.multiple-matches",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:27:11.319790+00:00",
+    "started_at": "2026-03-12T16:27:11.319774+00:00",
+    "completed_at": "2026-03-12T16:27:33.264294+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

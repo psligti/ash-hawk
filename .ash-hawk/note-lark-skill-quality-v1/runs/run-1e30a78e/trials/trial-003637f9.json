@@ -1,0 +1,240 @@
+{
+  "trial": {
+    "id": "trial-003637f9",
+    "task_id": "skill.consistency.naming.convention",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill and verify the generated ID follows naming convention.\n\nSkill details:\n- title: \"API Rate Limiting\"\n- type: skill\n- scope: global\n- description: \"Implement rate limiting for API endpoints\"\n- skill_level: intermediate\n- triggers: [\"rate limit\", \"throttle\", \"api limit\"]\n- required_tools: [\"fastapi\"]\n\nAfter creating, report the generated skill ID.\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-003637f9",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:55:04.726758+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill and verify the generated ID follows naming convention.\n\nSkill details:\n- title: \"API Rate Limiting\"\n- type: skill\n- scope: global\n- description: \"Implement rate limiting for API endpoints\"\n- skill_level: intermediate\n- triggers: [\"rate limit\", \"throttle\", \"api limit\"]\n- required_tools: [\"fastapi\"]\n\nAfter creating, report the generated skill ID.\nUse notes_create with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll create the skill using the note creation tool and verify the generated ID follows naming conventions."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"content\": \"# API Rate Limiting\\n\\nImplement rate limiting for API endpoints.\\n\\n## Overview\\n\\nRate limiting is a crucial technique for protecting API endpoints from abuse, ensuring fair usage, and maintaining system stability.\\n\\n## Key Concepts\\n\\n- **Rate Limiting**: Restricting the number of requests a client can make within a time period\\n- **Throttling**: Temporarily blocking or slowing down requests when limits are exceeded\\n- **API Limit**: Configurable thresholds for different user types or endpoints\\n\\n## Implementation Approaches\\n\\n1. **Token Bucket Algorithm**: Tokens are refilled at a constant rate, requests consume tokens\\n2. **Leaky Bucket Algorithm**: Requests queue up and are processed at a constant rate\\n3. **Sliding Window**: Tracks requests within a rolling time window\\n4. **Fixed Window**: Resets counters at fixed time intervals\\n\\n## FastAPI Implementation\\n\\n```python\\nfrom fastapi import FastAPI, HTTPException, Request, Depends\\nfrom fastapi.middleware import Middleware\\nfrom fastapi.middleware.cors import CORSMiddleware\\nfrom slowapi import Limiter, _rate_limit_exceeded_handler\\nfrom slowapi.util import get_remote_address\\nfrom slowapi.errors import RateLimitExceeded\\nfrom slowapi.middleware import SlowAPIMiddleware\\n\\nlimiter = Limiter(key_func=get_remote_address)\\napp = FastAPI()\\napp.state.limiter = limiter\\napp.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)\\napp.add_middleware(SlowAPIMiddleware)\\n\\n@app.get(\\\"/api/data\\\")\\n@limiter.limit(\\\"100/minute\\\")\\nasync def get_data(request: Request):\\n    return {\\\"data\\\": \\\"example\\\"}\\n```\\n\\n## Best Practices\\n\\n- Set appropriate limits based on your use case\\n- Provide clear error messages when limits are exceeded\\n- Consider different limits for authenticated vs. anonymous users\\n- Monitor and adjust limits based on traffic patterns\\n- Use Redis for distributed rate limiting in production\\n\\n## Tools Required\\n\\n- fastapi\\n\\n## Skill Level\\n\\nIntermediate\", \"frontmatter\": {\"title\": \"API Rate Limiting\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Implement rate limiting for API endpoints\", \"skill_level\": \"intermediate\", \"triggers\": [\"rate limit\", \"throttle\", \"api limit\"], \"required_tools\": [\"fastapi\"], \"tags\": [\"api\", \"rate-limiting\", \"fastapi\", \"middleware\", \"performance\"], \"created_at\": \"2025-06-18\", \"status\": \"active\"}}}, \"output\": \"3 validation errors for NoteCreateRequest\\ntitle\\n  Field required [type=missing, input_value={'content': '# API Rate L...8', 'status': 'active'}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\ntype\\n  Field required [type=missing, input_value={'content': '# API Rate L...8', 'status': 'active'}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\nscope\\n  Field required [type=missing, input_value={'content': '# API Rate L...8', 'status': 'active'}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "Let me fix the payload structure - the title, type, and scope need to be at the top level of the payload, not in frontmatter:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"API Rate Limiting\", \"type\": \"skill\", \"scope\": \"global\", \"content\": \"# API Rate Limiting\\n\\nImplement rate limiting for API endpoints.\\n\\n## Overview\\n\\nRate limiting is a crucial technique for protecting API endpoints from abuse, ensuring fair usage, and maintaining system stability.\\n\\n## Key Concepts\\n\\n- **Rate Limiting**: Restricting the number of requests a client can make within a time period\\n- **Throttling**: Temporarily blocking or slowing down requests when limits are exceeded\\n- **API Limit**: Configurable thresholds for different user types or endpoints\\n\\n## Implementation Approaches\\n\\n1. **Token Bucket Algorithm**: Tokens are refilled at a constant rate, requests consume tokens\\n2. **Leaky Bucket Algorithm**: Requests queue up and are processed at a constant rate\\n3. **Sliding Window**: Tracks requests within a rolling time window\\n4. **Fixed Window**: Resets counters at fixed time intervals\\n\\n## FastAPI Implementation\\n\\n```python\\nfrom fastapi import FastAPI, HTTPException, Request, Depends\\nfrom fastapi.middleware import Middleware\\nfrom fastapi.middleware.cors import CORSMiddleware\\nfrom slowapi import Limiter, _rate_limit_exceeded_handler\\nfrom slowapi.util import get_remote_address\\nfrom slowapi.errors import RateLimitExceeded\\nfrom slowapi.middleware import SlowAPIMiddleware\\n\\nlimiter = Limiter(key_func=get_remote_address)\\napp = FastAPI()\\napp.state.limiter = limiter\\napp.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)\\napp.add_middleware(SlowAPIMiddleware)\\n\\n@app.get(\\\"/api/data\\\")\\n@limiter.limit(\\\"100/minute\\\")\\nasync def get_data(request: Request):\\n    return {\\\"data\\\": \\\"example\\\"}\\n```\\n\\n## Best Practices\\n\\n- Set appropriate limits based on your use case\\n- Provide clear error messages when limits are exceeded\\n- Consider different limits for authenticated vs. anonymous users\\n- Monitor and adjust limits based on traffic patterns\\n- Use Redis for distributed rate limiting in production\\n\\n## Tools Required\\n\\n- fastapi\\n\\n## Skill Level\\n\\nIntermediate\", \"frontmatter\": {\"description\": \"Implement rate limiting for API endpoints\", \"skill_level\": \"intermediate\", \"triggers\": [\"rate limit\", \"throttle\", \"api limit\"], \"required_tools\": [\"fastapi\"], \"tags\": [\"api\", \"rate-limiting\", \"fastapi\", \"middleware\", \"performance\"], \"created_at\": \"2025-06-18\", \"status\": \"active\"}}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-api-rate-limiting-634ac658\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-api-rate-limiting-634ac658.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "Perfect! The skill has been created successfully. Here's the report:\n\n## Skill Creation Result\n\n**Generated Skill ID:** `skill-api-rate-limiting-634ac658`\n\n## Naming Convention Verification \u2705\n\nThe generated ID follows the proper naming convention:\n\n1. **Type prefix**: `skill-` - Correctly identifies this as a skill resource\n2. **Title normalization**: `api-rate-limiting` - Title converted to lowercase kebab-case\n   - Original: \"API Rate Limiting\"\n   - Normalized: `api-rate-limiting`\n3. **Unique identifier**: `634ac658` - Appended with a hyphen to ensure uniqueness\n\n**Convention structure**: `{type}-{normalized-title}-{unique-id}`\n\nThe skill has been created with all the specified details:\n- Title: \"API Rate Limiting\"\n- Type: skill\n- Scope: global\n- Description: \"Implement rate limiting for API endpoints\"\n- Skill level: intermediate\n- Triggers: [\"rate limit\", \"throttle\", \"api limit\"]\n- Required tools: [\"fastapi\"]\n\nThe skill is now available globally and can be loaded using the Skill tool with the name \"api-rate-limiting\"."
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "content": "# API Rate Limiting\n\nImplement rate limiting for API endpoints.\n\n## Overview\n\nRate limiting is a crucial technique for protecting API endpoints from abuse, ensuring fair usage, and maintaining system stability.\n\n## Key Concepts\n\n- **Rate Limiting**: Restricting the number of requests a client can make within a time period\n- **Throttling**: Temporarily blocking or slowing down requests when limits are exceeded\n- **API Limit**: Configurable thresholds for different user types or endpoints\n\n## Implementation Approaches\n\n1. **Token Bucket Algorithm**: Tokens are refilled at a constant rate, requests consume tokens\n2. **Leaky Bucket Algorithm**: Requests queue up and are processed at a constant rate\n3. **Sliding Window**: Tracks requests within a rolling time window\n4. **Fixed Window**: Resets counters at fixed time intervals\n\n## FastAPI Implementation\n\n```python\nfrom fastapi import FastAPI, HTTPException, Request, Depends\nfrom fastapi.middleware import Middleware\nfrom fastapi.middleware.cors import CORSMiddleware\nfrom slowapi import Limiter, _rate_limit_exceeded_handler\nfrom slowapi.util import get_remote_address\nfrom slowapi.errors import RateLimitExceeded\nfrom slowapi.middleware import SlowAPIMiddleware\n\nlimiter = Limiter(key_func=get_remote_address)\napp = FastAPI()\napp.state.limiter = limiter\napp.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)\napp.add_middleware(SlowAPIMiddleware)\n\n@app.get(\"/api/data\")\n@limiter.limit(\"100/minute\")\nasync def get_data(request: Request):\n    return {\"data\": \"example\"}\n```\n\n## Best Practices\n\n- Set appropriate limits based on your use case\n- Provide clear error messages when limits are exceeded\n- Consider different limits for authenticated vs. anonymous users\n- Monitor and adjust limits based on traffic patterns\n- Use Redis for distributed rate limiting in production\n\n## Tools Required\n\n- fastapi\n\n## Skill Level\n\nIntermediate",
+                "frontmatter": {
+                  "title": "API Rate Limiting",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "Implement rate limiting for API endpoints",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "rate limit",
+                    "throttle",
+                    "api limit"
+                  ],
+                  "required_tools": [
+                    "fastapi"
+                  ],
+                  "tags": [
+                    "api",
+                    "rate-limiting",
+                    "fastapi",
+                    "middleware",
+                    "performance"
+                  ],
+                  "created_at": "2025-06-18",
+                  "status": "active"
+                }
+              }
+            },
+            "output": "3 validation errors for NoteCreateRequest\ntitle\n  Field required [type=missing, input_value={'content': '# API Rate L...8', 'status': 'active'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\ntype\n  Field required [type=missing, input_value={'content': '# API Rate L...8', 'status': 'active'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nscope\n  Field required [type=missing, input_value={'content': '# API Rate L...8', 'status': 'active'}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "API Rate Limiting",
+                "type": "skill",
+                "scope": "global",
+                "content": "# API Rate Limiting\n\nImplement rate limiting for API endpoints.\n\n## Overview\n\nRate limiting is a crucial technique for protecting API endpoints from abuse, ensuring fair usage, and maintaining system stability.\n\n## Key Concepts\n\n- **Rate Limiting**: Restricting the number of requests a client can make within a time period\n- **Throttling**: Temporarily blocking or slowing down requests when limits are exceeded\n- **API Limit**: Configurable thresholds for different user types or endpoints\n\n## Implementation Approaches\n\n1. **Token Bucket Algorithm**: Tokens are refilled at a constant rate, requests consume tokens\n2. **Leaky Bucket Algorithm**: Requests queue up and are processed at a constant rate\n3. **Sliding Window**: Tracks requests within a rolling time window\n4. **Fixed Window**: Resets counters at fixed time intervals\n\n## FastAPI Implementation\n\n```python\nfrom fastapi import FastAPI, HTTPException, Request, Depends\nfrom fastapi.middleware import Middleware\nfrom fastapi.middleware.cors import CORSMiddleware\nfrom slowapi import Limiter, _rate_limit_exceeded_handler\nfrom slowapi.util import get_remote_address\nfrom slowapi.errors import RateLimitExceeded\nfrom slowapi.middleware import SlowAPIMiddleware\n\nlimiter = Limiter(key_func=get_remote_address)\napp = FastAPI()\napp.state.limiter = limiter\napp.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)\napp.add_middleware(SlowAPIMiddleware)\n\n@app.get(\"/api/data\")\n@limiter.limit(\"100/minute\")\nasync def get_data(request: Request):\n    return {\"data\": \"example\"}\n```\n\n## Best Practices\n\n- Set appropriate limits based on your use case\n- Provide clear error messages when limits are exceeded\n- Consider different limits for authenticated vs. anonymous users\n- Monitor and adjust limits based on traffic patterns\n- Use Redis for distributed rate limiting in production\n\n## Tools Required\n\n- fastapi\n\n## Skill Level\n\nIntermediate",
+                "frontmatter": {
+                  "description": "Implement rate limiting for API endpoints",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "rate limit",
+                    "throttle",
+                    "api limit"
+                  ],
+                  "required_tools": [
+                    "fastapi"
+                  ],
+                  "tags": [
+                    "api",
+                    "rate-limiting",
+                    "fastapi",
+                    "middleware",
+                    "performance"
+                  ],
+                  "created_at": "2025-06-18",
+                  "status": "active"
+                }
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"skill-api-rate-limiting-634ac658\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-api-rate-limiting-634ac658.md\",\"warnings\":[]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 8291,
+          "output": 412,
+          "reasoning": 163,
+          "cache_read": 7565,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 57.10997986793518,
+        "agent_response": "Perfect! The skill has been created successfully. Here's the report:\n\n## Skill Creation Result\n\n**Generated Skill ID:** `skill-api-rate-limiting-634ac658`\n\n## Naming Convention Verification \u2705\n\nThe generated ID follows the proper naming convention:\n\n1. **Type prefix**: `skill-` - Correctly identifies this as a skill resource\n2. **Title normalization**: `api-rate-limiting` - Title converted to lowercase kebab-case\n   - Original: \"API Rate Limiting\"\n   - Normalized: `api-rate-limiting`\n3. **Unique identifier**: `634ac658` - Appended with a hyphen to ensure uniqueness\n\n**Convention structure**: `{type}-{normalized-title}-{unique-id}`\n\nThe skill has been created with all the specified details:\n- Title: \"API Rate Limiting\"\n- Type: skill\n- Scope: global\n- Description: \"Implement rate limiting for API endpoints\"\n- Skill level: intermediate\n- Triggers: [\"rate limit\", \"throttle\", \"api limit\"]\n- Required tools: [\"fastapi\"]\n\nThe skill is now available globally and can be loaded using the Skill tool with the name \"api-rate-limiting\".",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The generated skill ID 'skill-api-rate-limiting-634ac658' follows the required pattern with the 'skill-' prefix and uses hyphens to separate words. The format is consistent and clearly indicates it's a skill resource.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "Generated ID contains the required 'skill-' prefix",
+              "Uses proper kebab-case formatting with hyphens throughout",
+              "Agent provided detailed verification of naming convention",
+              "Skill was successfully created via the note creation tool"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "e46bd18d9ca98d3c",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The generated skill ID 'skill-api-rate-limiting-634ac658' follows the required pattern with the 'skill-' prefix and uses hyphens to separate words. The format is consistent and clearly indicates it's a skill resource.\",\n  \"issues\": [],\n  \"strengths\": [\n    \"Generated ID contains the required 'skill-' prefix\",\n    \"Uses proper kebab-case formatting with hyphens throughout\",\n    \"Agent provided detailed verification of naming convention\",\n    \"Skill was successfully created via the note creation tool\"\n  ]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 22.449429035186768,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-003637f9",
+      "run_id": "run-1e30a78e",
+      "task_id": "skill.consistency.naming.convention",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:54:07.616515+00:00",
+      "started_at": "2026-03-13T01:54:07.616481+00:00",
+      "completed_at": "2026-03-13T01:55:04.808273+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-003637f9",
+    "run_id": "run-1e30a78e",
+    "task_id": "skill.consistency.naming.convention",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:54:07.616515+00:00",
+    "started_at": "2026-03-13T01:54:07.616481+00:00",
+    "completed_at": "2026-03-13T01:55:04.808273+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

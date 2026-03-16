@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-b5af8dd7",
+    "task_id": "skill.scope.project.has-project-field",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a project-scoped skill:\n- title: \"Note Lark Specific Skill\"\n- type: skill\n- scope: project\n- project: \"note-lark\"\n- description: \"A skill specific to note-lark project\"\n- skill_level: intermediate\n- triggers: [\"note-lark\", \"mcp\"]\n- required_tools: [\"fastmcp\"]\n\nUse notes_create with payload wrapper. The project field\nshould be at the top level (not in frontmatter).\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-b5af8dd7",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:25:48.248462+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a project-scoped skill:\n- title: \"Note Lark Specific Skill\"\n- type: skill\n- scope: project\n- project: \"note-lark\"\n- description: \"A skill specific to note-lark project\"\n- skill_level: intermediate\n- triggers: [\"note-lark\", \"mcp\"]\n- required_tools: [\"fastmcp\"]\n\nUse notes_create with payload wrapper. The project field\nshould be at the top level (not in frontmatter).\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"title\": \"Note Lark Specific Skill\",\n  \"type\": \"skill\",\n  \"scope\": \"project\",\n  \"project\": \"note-lark\",\n  \"description\": \"A skill specific to note-lark project\",\n  \"skill_level\": \"intermediate\",\n  \"triggers\": [\"note-lark\", \"mcp\"],\n  \"required_tools\": [\"fastmcp\"]\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 103,
+          "output": 1669,
+          "reasoning": 1580,
+          "cache_read": 4,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 28.08446502685547,
+        "agent_response": "```json\n{\n  \"title\": \"Note Lark Specific Skill\",\n  \"type\": \"skill\",\n  \"scope\": \"project\",\n  \"project\": \"note-lark\",\n  \"description\": \"A skill specific to note-lark project\",\n  \"skill_level\": \"intermediate\",\n  \"triggers\": [\"note-lark\", \"mcp\"],\n  \"required_tools\": [\"fastmcp\"]\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate:\n1. Was scope set to project? (0.3 points)\n2. Was project field included? (0.4 points)\n3. Did skill create successfully? (0.3 points)\n\nScore: sum of points\n.md. Expected prompt at: Evaluate:\n1. Was scope set to project? (0.3 points)\n2. Was project field included? (0.4 points)\n3. Did skill create successfully? (0.3 points)\n\nScore: sum of points\n.md",
+          "execution_time_seconds": 0.001035928726196289,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-b5af8dd7",
+      "run_id": "run-55ee4e9f",
+      "task_id": "skill.scope.project.has-project-field",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:25:20.163867+00:00",
+      "started_at": "2026-03-12T16:25:20.163841+00:00",
+      "completed_at": "2026-03-12T16:25:48.248528+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-b5af8dd7",
+    "run_id": "run-55ee4e9f",
+    "task_id": "skill.scope.project.has-project-field",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:25:20.163867+00:00",
+    "started_at": "2026-03-12T16:25:20.163841+00:00",
+    "completed_at": "2026-03-12T16:25:48.248528+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

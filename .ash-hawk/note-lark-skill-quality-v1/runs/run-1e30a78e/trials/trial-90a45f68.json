@@ -1,0 +1,206 @@
+{
+  "trial": {
+    "id": "trial-90a45f68",
+    "task_id": "skill.consistency.payload-wrapper",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-90a45f68",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:54:25.787750+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll create a skill following the correct payload wrapper pattern you provided:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Payload Test\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"Test\", \"skill_level\": \"beginner\", \"triggers\": [\"test\"], \"required_tools\": []}, \"body\": \"Test body\"}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-payload-test-6cd4363c\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-payload-test-6cd4363c.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "Perfect! The skill has been successfully created using the correct payload wrapper pattern. Let me read it to verify:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"filePath\": \"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-payload-test-6cd4363c.md\"}, \"output\": \"Path rejected by security policy: Absolute path not allowed: /var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-payload-test-6cd4363c.md\", \"title\": \"Security Error: /var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-payload-test-6cd4363c.md\", \"metadata\": {\"error\": \"Absolute path not allowed: /var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-payload-test-6cd4363c.md\", \"security_error\": true}}]"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_get\", \"input\": {\"note_id\": \"skill-payload-test-6cd4363c\"}, \"output\": \"{\\\"_mtime\\\":1773366855.9661014,\\\"aliases\\\":[],\\\"description\\\":\\\"Test\\\",\\\"id\\\":\\\"skill-payload-test-6cd4363c\\\",\\\"links\\\":[],\\\"path\\\":\\\"global/skills/skill-payload-test-6cd4363c.md\\\",\\\"project\\\":null,\\\"scope\\\":\\\"global\\\",\\\"status\\\":\\\"active\\\",\\\"tags\\\":[],\\\"title\\\":\\\"Payload Test\\\",\\\"type\\\":\\\"skill\\\",\\\"updated_at\\\":\\\"2026-03-13T01:54:15.965680Z\\\"}\", \"title\": \"note-lark_notes_get completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_get\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Payload Test",
+                "type": "skill",
+                "scope": "global",
+                "frontmatter": {
+                  "description": "Test",
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "test"
+                  ],
+                  "required_tools": []
+                },
+                "body": "Test body"
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"skill-payload-test-6cd4363c\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-payload-test-6cd4363c.md\",\"warnings\":[]}"
+          },
+          {
+            "tool": "read",
+            "input": {
+              "filePath": "/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-payload-test-6cd4363c.md"
+            },
+            "output": "Path rejected by security policy: Absolute path not allowed: /var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-payload-test-6cd4363c.md"
+          },
+          {
+            "tool": "note-lark_notes_get",
+            "input": {
+              "note_id": "skill-payload-test-6cd4363c"
+            },
+            "output": "{\"_mtime\":1773366855.9661014,\"aliases\":[],\"description\":\"Test\",\"id\":\"skill-payload-test-6cd4363c\",\"links\":[],\"path\":\"global/skills/skill-payload-test-6cd4363c.md\",\"project\":null,\"scope\":\"global\",\"status\":\"active\",\"tags\":[],\"title\":\"Payload Test\",\"type\":\"skill\",\"updated_at\":\"2026-03-13T01:54:15.965680Z\"}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7305,
+          "output": 47,
+          "reasoning": 21,
+          "cache_read": 6984,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 17.164753913879395,
+        "agent_response": null,
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent correctly used the payload wrapper pattern for note-lark_notes_create, with all skill-specific fields properly nested in the frontmatter section as required.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "Correct payload wrapper usage",
+              "Skill-specific fields (skill_level, triggers, required_tools) properly placed in frontmatter"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "a5b7da00b390b64c",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent correctly used the payload wrapper pattern for note-lark_notes_create, with all skill-specific fields properly nested in the frontmatter section as required.\",\n  \"issues\": [],\n  \"strengths\": [\"Correct payload wrapper usage\", \"Skill-specific fields (skill_level, triggers, required_tools) properly placed in frontmatter\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 15.057132005691528,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-90a45f68",
+      "run_id": "run-1e30a78e",
+      "task_id": "skill.consistency.payload-wrapper",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:54:08.622923+00:00",
+      "started_at": "2026-03-13T01:54:08.622899+00:00",
+      "completed_at": "2026-03-13T01:54:25.857708+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-90a45f68",
+    "run_id": "run-1e30a78e",
+    "task_id": "skill.consistency.payload-wrapper",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:54:08.622923+00:00",
+    "started_at": "2026-03-13T01:54:08.622899+00:00",
+    "completed_at": "2026-03-13T01:54:25.857708+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

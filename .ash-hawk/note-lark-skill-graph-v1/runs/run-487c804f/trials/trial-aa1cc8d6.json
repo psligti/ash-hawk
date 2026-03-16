@@ -1,0 +1,151 @@
+{
+  "trial": {
+    "id": "trial-aa1cc8d6",
+    "task_id": "archive.create-and-archive",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill:\n   - title: \"Skill to Archive\"\n   - type: skill\n   - scope: global\n   - description: \"This skill will be archived\"\n   - skill_level: beginner\n   - triggers: [\"archive-test\"]\n   - required_tools: []\n   \n2. Archive the skill using notes_archive\n\n3. Search for \"archive-test\" - should NOT find the archived skill\n   (unless archive_search_enabled is true)\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-aa1cc8d6",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:29:25.949580+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create a skill:\n   - title: \"Skill to Archive\"\n   - type: skill\n   - scope: global\n   - description: \"This skill will be archived\"\n   - skill_level: beginner\n   - triggers: [\"archive-test\"]\n   - required_tools: []\n   \n2. Archive the skill using notes_archive\n\n3. Search for \"archive-test\" - should NOT find the archived skill\n   (unless archive_search_enabled is true)\n\nUse payload wrapper for all calls.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"action\": \"notes_create\",\n  \"payload\": {\n    \"title\": \"Skill to Archive\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"This skill will be archived\",\n    \"skill_level\": \"beginner\",\n    \"triggers\": [\"archive-test\"],\n    \"required_tools\": []\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 106,
+          "output": 152,
+          "reasoning": 71,
+          "cache_read": 13,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 2.5826828479766846,
+        "agent_response": "```json\n{\n  \"action\": \"notes_create\",\n  \"payload\": {\n    \"title\": \"Skill to Archive\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"This skill will be archived\",\n    \"skill_level\": \"beginner\",\n    \"triggers\": [\"archive-test\"],\n    \"required_tools\": []\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.3,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent only completed the first step of creating the skill. It failed to archive the skill using notes_archive and failed to search for 'archive-test' to verify the archived skill is not found.",
+            "breakdown": {
+              "score": 0.3
+            },
+            "issues": [
+              "Did not archive the skill using notes_archive",
+              "Did not search for 'archive-test' to verify the skill is archived"
+            ],
+            "strengths": [
+              "Correctly created the skill with all required attributes including title, type, scope, description, skill_level, triggers, and required_tools"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "a7442f405ddbd643",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.3,\n  \"passed\": false,\n  \"reasoning\": \"The agent only completed the first step of creating the skill. It failed to archive the skill using notes_archive and failed to search for 'archive-test' to verify the archived skill is not found.\",\n  \"issues\": [\"Did not archive the skill using notes_archive\", \"Did not search for 'archive-test' to verify the skill is archived\"],\n  \"strengths\": [\"Correctly created the skill with all required attributes including title, type, scope, description, skill_level, triggers, and required_tools\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 7.51978325843811,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.3,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-aa1cc8d6",
+      "run_id": "run-487c804f",
+      "task_id": "archive.create-and-archive",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:29:23.366762+00:00",
+      "started_at": "2026-03-12T17:29:23.366718+00:00",
+      "completed_at": "2026-03-12T17:29:25.949612+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-aa1cc8d6",
+    "run_id": "run-487c804f",
+    "task_id": "archive.create-and-archive",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:29:23.366762+00:00",
+    "started_at": "2026-03-12T17:29:23.366718+00:00",
+    "completed_at": "2026-03-12T17:29:25.949612+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

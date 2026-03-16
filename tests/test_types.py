@@ -7,6 +7,7 @@ import pytest
 from ash_hawk.types import (
     CalibrationSample,
     EvalAgentConfig,
+    EvalMcpServerConfig,
     EvalOutcome,
     EvalRunSummary,
     EvalStatus,
@@ -322,6 +323,28 @@ class TestEvalSuite:
         assert suite.agent is not None
         assert suite.agent.class_name == "my_package.runner:CustomRunner"
         assert suite.agent.location == "./evals/custom_runner.py"
+
+    def test_suite_with_agent_mcp_servers(self):
+        suite = EvalSuite(
+            id="suite-agent-mcp",
+            name="Suite With MCP",
+            agent=EvalAgentConfig(
+                name="build",
+                mcp_servers=[
+                    EvalMcpServerConfig(
+                        name="note-lark",
+                        command="note-lark-mcp-stdio",
+                    )
+                ],
+            ),
+        )
+
+        assert suite.agent is not None
+        assert len(suite.agent.mcp_servers) == 1
+        assert suite.agent.mcp_servers[0].name == "note-lark"
+        assert suite.agent.mcp_servers[0].command == "note-lark-mcp-stdio"
+        assert suite.agent.mcp_servers[0].args == []
+        assert suite.agent.mcp_servers[0].env == {}
 
     def test_extra_forbidden(self):
         """Test that extra fields are forbidden."""

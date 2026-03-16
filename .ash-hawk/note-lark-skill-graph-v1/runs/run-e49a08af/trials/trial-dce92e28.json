@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-dce92e28",
+    "task_id": "discoverability.trigger.activation",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill with unique trigger:\n   - title: \"Logging Best Practices\"\n   - type: skill\n   - scope: global\n   - description: \"How to implement logging\"\n   - skill_level: intermediate\n   - triggers: [\"logging\", \"logs\", \"unique-trigger-abc-789\"]\n   - required_tools: []\n   \n2. Search for \"unique-trigger-abc-789\" (which is ONLY in triggers)\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-dce92e28",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T23:34:13.151887+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 300.00296998023987,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-dce92e28",
+      "run_id": "run-e49a08af",
+      "task_id": "discoverability.trigger.activation",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T23:29:13.149059+00:00",
+      "started_at": "2026-03-12T23:29:13.148945+00:00",
+      "completed_at": "2026-03-12T23:34:13.151922+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-dce92e28",
+    "run_id": "run-e49a08af",
+    "task_id": "discoverability.trigger.activation",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T23:29:13.149059+00:00",
+    "started_at": "2026-03-12T23:29:13.148945+00:00",
+    "completed_at": "2026-03-12T23:34:13.151922+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

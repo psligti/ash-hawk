@@ -1,0 +1,253 @@
+{
+  "trial": {
+    "id": "trial-e5ac3afd",
+    "task_id": "edge_llm_failure",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "edge_llm_failure",
+        "description": "Harness tick degrades gracefully when LLM is unavailable",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_command",
+          "config": {}
+        },
+        "inputs": {
+          "command": "harness_tick",
+          "config": {
+            "max_new_actions": 2,
+            "simulate_llm_failure": true
+          },
+          "mock_bird_client": {
+            "new_tweets": [
+              {
+                "id": "9101",
+                "author_handle": "founderx",
+                "text": "What eval checkpoints do you use for coding agents?",
+                "public_metrics": {
+                  "like_count": 30
+                }
+              },
+              {
+                "id": "9102",
+                "author_handle": "infraops",
+                "text": "We switched to raw SQL after ORM N+1 issues.",
+                "public_metrics": {
+                  "like_count": 110
+                }
+              }
+            ]
+          },
+          "database": {
+            "existing_actions": []
+          },
+          "review_notes": [],
+          "strategy": {}
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "command",
+              "expected": "harness_tick"
+            },
+            {
+              "path": "llm_available",
+              "expected": false
+            },
+            {
+              "path": "used_fallback",
+              "expected": true
+            },
+            {
+              "path": "new_actions_count",
+              "expected": 2
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_llm_failure.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-e5ac3afd",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-11T18:00:06.349655+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Execute command: harness_tick",
+              "inputs": [
+                "command",
+                "config",
+                "mock_bird_client",
+                "database",
+                "review_notes",
+                "strategy"
+              ]
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "command": "harness_tick",
+              "status": "completed",
+              "notes_processed": 0,
+              "new_actions": 2
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "All assertions passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-f22fdbc2/runs/run-40e99ce3/artifacts/trial-e5ac3afd/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0003757476806640625,
+        "agent_response": "{\"command\": \"harness_tick\", \"notes_processed\": 0, \"status_changes\": [], \"new_tweets_fetched\": 2, \"new_actions_created\": 2, \"new_actions_count\": 2, \"unique_draft_count\": 1, \"generic_opener_count\": 0, \"new_actions\": [{\"tweet_id\": \"9101\", \"author_handle\": \"founderx\", \"action_type\": \"reply\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": \"On what eval checkpoints do you use for coding - what specific outcome are you optimizing for? Happy to share what worked for us.\", \"score\": 0.65}, {\"tweet_id\": \"9102\", \"author_handle\": \"infraops\", \"action_type\": \"like\", \"priority\": 3, \"status\": \"pending\", \"draft_text\": null, \"score\": 0.67}], \"llm_available\": false, \"used_fallback\": true, \"available_capacity\": 60, \"skipped_due_to_pending_limit\": false, \"total_pending\": 2, \"index_updated\": true}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 2.09808349609375e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-e5ac3afd",
+      "run_id": "run-40e99ce3",
+      "task_id": "edge_llm_failure",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-11T18:00:06.349240+00:00",
+      "started_at": "2026-03-11T18:00:06.349220+00:00",
+      "completed_at": "2026-03-11T18:00:06.349665+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-e5ac3afd",
+    "run_id": "run-40e99ce3",
+    "task_id": "edge_llm_failure",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-11T18:00:06.349240+00:00",
+    "started_at": "2026-03-11T18:00:06.349220+00:00",
+    "completed_at": "2026-03-11T18:00:06.349665+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

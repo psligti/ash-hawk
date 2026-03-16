@@ -1,0 +1,4 @@
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "user", "content": "Execute command: state_transition", "inputs": ["command", "action_state_before", "review_note"]}}
+{"schema_version": 1, "event_type": "ToolCallEvent", "ts": "1970-01-01T00:00:00Z", "data": {"command": "state_transition", "action_id": 5003, "from": "pending", "to": "needs_revision"}}
+{"schema_version": 1, "event_type": "VerificationEvent", "ts": "1970-01-01T00:00:00Z", "data": {"pass": true, "message": "All assertions passed"}}
+{"schema_version": 1, "event_type": "ArtifactEvent", "ts": "1970-01-01T00:00:00Z", "data": {"path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-f22fdbc2/runs/run-40e99ce3/artifacts/trial-e624c688/artifacts.json", "artifact_key": "artifacts"}}

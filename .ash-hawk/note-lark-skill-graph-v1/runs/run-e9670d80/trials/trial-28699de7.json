@@ -1,0 +1,293 @@
+{
+  "trial": {
+    "id": "trial-28699de7",
+    "task_id": "search.disambiguation.multiple-matches",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-28699de7",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:59:45.840932+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll create both skills using the memory system and then verify they appear in the search results."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Error Handling - Python\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Python specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"python\"], \"required_tools\": []}}, \"output\": \"1 validation error for MemoryStructuredRequest\\nmemory_type\\n  Field required [type=missing, input_value={'title': 'Error Handling...], 'required_tools': []}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}, {\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Error Handling - JavaScript\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"JavaScript specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"javascript\"], \"required_tools\": []}}, \"output\": \"1 validation error for MemoryStructuredRequest\\nmemory_type\\n  Field required [type=missing, input_value={'title': 'Error Handling...], 'required_tools': []}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "I see the issue - the `memory_type` field is required. Let me retry with that field included:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Error Handling - Python\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Python specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"python\"], \"required_tools\": [], \"memory_type\": \"skill\"}}, \"output\": \"1 validation error for MemoryStructuredRequest\\nmemory_type\\n  Input should be 'append_only', 'structured', 'episodic', 'semantic', 'procedural', 'session', 'project' or 'global' [type=enum, input_value='skill', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/enum\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}, {\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Error Handling - JavaScript\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"JavaScript specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"javascript\"], \"required_tools\": [], \"memory_type\": \"skill\"}}, \"output\": \"1 validation error for MemoryStructuredRequest\\nmemory_type\\n  Input should be 'append_only', 'structured', 'episodic', 'semantic', 'procedural', 'session', 'project' or 'global' [type=enum, input_value='skill', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/enum\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "Let me adjust the memory_type to use a valid value:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"memory_type\": \"procedural\", \"title\": \"Error Handling - Python\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Python specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"python\"], \"required_tools\": []}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"mem-global-a072621c\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/learnings/mem-global-a072621c.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}, {\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"memory_type\": \"procedural\", \"title\": \"Error Handling - JavaScript\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"JavaScript specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"javascript\"], \"required_tools\": []}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"mem-global-02845bef\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/learnings/mem-global-02845bef.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_memory_structured",
+            "input": {
+              "payload": {
+                "title": "Error Handling - Python",
+                "type": "skill",
+                "scope": "global",
+                "description": "Python specific error handling",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "error",
+                  "python"
+                ],
+                "required_tools": []
+              }
+            },
+            "output": "1 validation error for MemoryStructuredRequest\nmemory_type\n  Field required [type=missing, input_value={'title': 'Error Handling...], 'required_tools': []}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+          },
+          {
+            "tool": "note-lark_memory_structured",
+            "input": {
+              "payload": {
+                "title": "Error Handling - JavaScript",
+                "type": "skill",
+                "scope": "global",
+                "description": "JavaScript specific error handling",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "error",
+                  "javascript"
+                ],
+                "required_tools": []
+              }
+            },
+            "output": "1 validation error for MemoryStructuredRequest\nmemory_type\n  Field required [type=missing, input_value={'title': 'Error Handling...], 'required_tools': []}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+          },
+          {
+            "tool": "note-lark_memory_structured",
+            "input": {
+              "payload": {
+                "title": "Error Handling - Python",
+                "type": "skill",
+                "scope": "global",
+                "description": "Python specific error handling",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "error",
+                  "python"
+                ],
+                "required_tools": [],
+                "memory_type": "skill"
+              }
+            },
+            "output": "1 validation error for MemoryStructuredRequest\nmemory_type\n  Input should be 'append_only', 'structured', 'episodic', 'semantic', 'procedural', 'session', 'project' or 'global' [type=enum, input_value='skill', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/enum"
+          },
+          {
+            "tool": "note-lark_memory_structured",
+            "input": {
+              "payload": {
+                "title": "Error Handling - JavaScript",
+                "type": "skill",
+                "scope": "global",
+                "description": "JavaScript specific error handling",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "error",
+                  "javascript"
+                ],
+                "required_tools": [],
+                "memory_type": "skill"
+              }
+            },
+            "output": "1 validation error for MemoryStructuredRequest\nmemory_type\n  Input should be 'append_only', 'structured', 'episodic', 'semantic', 'procedural', 'session', 'project' or 'global' [type=enum, input_value='skill', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/enum"
+          },
+          {
+            "tool": "note-lark_memory_structured",
+            "input": {
+              "payload": {
+                "memory_type": "procedural",
+                "title": "Error Handling - Python",
+                "type": "skill",
+                "scope": "global",
+                "description": "Python specific error handling",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "error",
+                  "python"
+                ],
+                "required_tools": []
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"mem-global-a072621c\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/learnings/mem-global-a072621c.md\",\"warnings\":[]}"
+          },
+          {
+            "tool": "note-lark_memory_structured",
+            "input": {
+              "payload": {
+                "memory_type": "procedural",
+                "title": "Error Handling - JavaScript",
+                "type": "skill",
+                "scope": "global",
+                "description": "JavaScript specific error handling",
+                "skill_level": "intermediate",
+                "triggers": [
+                  "error",
+                  "javascript"
+                ],
+                "required_tools": []
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"mem-global-02845bef\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/learnings/mem-global-02845bef.md\",\"warnings\":[]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7626,
+          "output": 217,
+          "reasoning": 51,
+          "cache_read": 7198,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 32.982670068740845,
+        "agent_response": "Let me adjust the memory_type to use a valid value:",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.3,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent successfully created both skills after multiple attempts to resolve validation errors with the memory_type field. However, the agent failed to perform the required search for 'error handling' and consequently did not verify that both skills appear in search results.",
+            "breakdown": {
+              "score": 0.3
+            },
+            "issues": [
+              "Did not perform a search for 'error handling'",
+              "Did not verify both skills appear in search results",
+              "Multiple validation errors were encountered before successfully creating skills"
+            ],
+            "strengths": [
+              "Successfully created both 'Error Handling - Python' and 'Error Handling - JavaScript' skills",
+              "Persisted through validation errors and correctly adjusted memory_type to 'procedural'",
+              "Used payload wrapper for all tool calls as required"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "ab93517f0b56bd73",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.3,\n  \"passed\": false,\n  \"reasoning\": \"The agent successfully created both skills after multiple attempts to resolve validation errors with the memory_type field. However, the agent failed to perform the required search for 'error handling' and consequently did not verify that both skills appear in search results.\",\n  \"issues\": [\n    \"Did not perform a search for 'error handling'\",\n    \"Did not verify both skills appear in search results\",\n    \"Multiple validation errors were encountered before successfully creating skills\"\n  ],\n  \"strengths\": [\n    \"Successfully created both 'Error Handling - Python' and 'Error Handling - JavaScript' skills\",\n    \"Persisted through validation errors and correctly adjusted memory_type to 'procedural'\",\n    \"Used payload wrapper for all tool calls as required\"\n  ]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 51.9800751209259,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.3,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-28699de7",
+      "run_id": "run-e9670d80",
+      "task_id": "search.disambiguation.multiple-matches",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:59:12.858077+00:00",
+      "started_at": "2026-03-13T01:59:12.858032+00:00",
+      "completed_at": "2026-03-13T01:59:45.893678+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-28699de7",
+    "run_id": "run-e9670d80",
+    "task_id": "search.disambiguation.multiple-matches",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:59:12.858077+00:00",
+    "started_at": "2026-03-13T01:59:12.858032+00:00",
+    "completed_at": "2026-03-13T01:59:45.893678+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,2422 @@
+{
+  "id": "scenario-batch-f22fdbc2",
+  "name": "scenario-batch-f22fdbc2",
+  "description": "",
+  "tasks": [
+    {
+      "id": "brief_edge_no_trends",
+      "description": "Brief gracefully handles zero trends without generating empty noise",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_edge_no_trends",
+          "description": "Brief gracefully handles zero trends without generating empty noise",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "brief",
+            "config": {
+              "posts": 3,
+              "replies": 2,
+              "trends_limit": 5
+            },
+            "mock_sources": {
+              "trends": [],
+              "feed_items": [
+                {
+                  "handle": "dev1",
+                  "text": "What is your eval baseline?",
+                  "tier": 1,
+                  "is_question": true
+                }
+              ]
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "brief"
+              },
+              {
+                "path": "digest.trends_count",
+                "expected": 0
+              },
+              {
+                "path": "digest.posts_count",
+                "expected": 0
+              },
+              {
+                "path": "digest.replies_count",
+                "expected": 1
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_edge_no_trends.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_edge_no_trends.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "brief_generate_basic",
+      "description": "Generate a brief with trends, posts, and replies using realistic mock inputs",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_generate_basic",
+          "description": "Generate a brief with trends, posts, and replies using realistic mock inputs",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "brief",
+            "config": {
+              "posts": 2,
+              "replies": 3,
+              "trends_limit": 2,
+              "output": "json"
+            },
+            "mock_sources": {
+              "trends": [
+                {
+                  "topic": "Agent eval design"
+                },
+                {
+                  "topic": "Reward shaping"
+                },
+                {
+                  "topic": "Latency budgets"
+                }
+              ],
+              "feed_items": [
+                {
+                  "handle": "alice",
+                  "text": "How do you avoid reward hacking in agent tests?",
+                  "tier": 1,
+                  "is_question": true
+                },
+                {
+                  "handle": "bob",
+                  "text": "Dense checkpoints improved our model reliability by 25%.",
+                  "tier": 2,
+                  "is_question": false
+                },
+                {
+                  "handle": "carol",
+                  "text": "Any practical strategy for incremental eval rollouts?",
+                  "tier": 3,
+                  "is_question": true
+                }
+              ]
+            },
+            "strategy": {
+              "primary_topics": [
+                "agents",
+                "evals"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "brief"
+              },
+              {
+                "path": "digest.trends_count",
+                "expected": 2
+              },
+              {
+                "path": "digest.posts_count",
+                "expected": 2
+              },
+              {
+                "path": "digest.replies_count",
+                "expected": 3
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_generate_basic.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_generate_basic.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "brief_post_generation",
+      "description": "Validate brief generates post drafts for available trends",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "brief_post_generation",
+          "description": "Validate brief generates post drafts for available trends",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "brief",
+            "config": {
+              "posts": 3,
+              "replies": 1,
+              "trends_limit": 3
+            },
+            "mock_sources": {
+              "trends": [
+                {
+                  "topic": "Eval-driven development"
+                },
+                {
+                  "topic": "Agent reliability"
+                },
+                {
+                  "topic": "Signal design"
+                }
+              ],
+              "feed_items": [
+                {
+                  "handle": "opslead",
+                  "text": "How do you measure eval drift?",
+                  "tier": 2,
+                  "is_question": true
+                }
+              ]
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "brief"
+              },
+              {
+                "path": "digest.posts_count",
+                "expected": 3
+              },
+              {
+                "path": "digest.posts.0.topic",
+                "expected": "Eval-driven development"
+              },
+              {
+                "path": "digest.posts.0.draft",
+                "expected": "Draft for Eval-driven development"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_post_generation.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_post_generation.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "decision_heuristic_fallback",
+      "description": "When LLM is unavailable, harness still produces deterministic fallback drafts",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "decision_heuristic_fallback",
+          "description": "When LLM is unavailable, harness still produces deterministic fallback drafts",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 2,
+              "simulate_llm_failure": true
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "9301",
+                  "author_handle": "fallback_a",
+                  "text": "How do you benchmark eval stability?",
+                  "public_metrics": {
+                    "like_count": 25
+                  }
+                },
+                {
+                  "id": "9302",
+                  "author_handle": "fallback_b",
+                  "text": "Any advice on reducing flaky test retries?",
+                  "public_metrics": {
+                    "like_count": 19
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "used_fallback",
+                "expected": true
+              },
+              {
+                "path": "new_actions_count",
+                "expected": 2
+              },
+              {
+                "path": "generic_opener_count",
+                "lte": 0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/decision_heuristic_fallback.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/decision_heuristic_fallback.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "draft_quality_uniqueness",
+      "description": "Test that reply drafts are unique and contextually relevant, not generic templates",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "draft_quality_uniqueness",
+          "description": "Test that reply drafts are unique and contextually relevant, not generic templates",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 5
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "1001",
+                  "author_handle": "techfounder",
+                  "text": "Just shipped our new AI feature after 3 months of work. The key was breaking it into tiny PRs and shipping daily. What's your deployment strategy?",
+                  "public_metrics": {
+                    "like_count": 45,
+                    "retweet_count": 12,
+                    "reply_count": 8
+                  }
+                },
+                {
+                  "id": "1002",
+                  "author_handle": "devlife",
+                  "text": "Hot take: Most code comments are a code smell. If you need to explain WHAT the code does, rewrite it. Comments should explain WHY, not WHAT.",
+                  "public_metrics": {
+                    "like_count": 89,
+                    "retweet_count": 34,
+                    "reply_count": 67
+                  }
+                },
+                {
+                  "id": "1003",
+                  "author_handle": "indiehacker",
+                  "text": "What's your favorite VS Code extension for Python development? Looking for recommendations beyond the basics.",
+                  "public_metrics": {
+                    "like_count": 23,
+                    "retweet_count": 5,
+                    "reply_count": 34
+                  }
+                },
+                {
+                  "id": "1004",
+                  "author_handle": "saasbuilder",
+                  "text": "We reduced our API response time from 800ms to 50ms by switching from ORM to raw SQL for read-heavy endpoints. The ORM was doing N+1 queries we didn't notice.",
+                  "public_metrics": {
+                    "like_count": 156,
+                    "retweet_count": 45,
+                    "reply_count": 23
+                  }
+                },
+                {
+                  "id": "1005",
+                  "author_handle": "ctowriter",
+                  "text": "Unpopular opinion: Engineering managers should still write code. Not production features, but enough to stay connected to the developer experience.",
+                  "public_metrics": {
+                    "like_count": 234,
+                    "retweet_count": 78,
+                    "reply_count": 156
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {
+              "voice_guidelines": [
+                "Technical but accessible",
+                "Share specific examples"
+              ],
+              "principles": [
+                "Evidence-first",
+                "Build in public"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 60.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "new_actions_count",
+                "gte": 5
+              },
+              {
+                "path": "unique_draft_count",
+                "gte": 4
+              },
+              {
+                "path": "generic_opener_count",
+                "lte": 1
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "rubric": "quality",
+                "pass_threshold": 0.6,
+                "custom_prompt": "Evaluate these Twitter reply drafts for quality, authenticity, and voice alignment.\n\n## User's Voice Profile (from soul.md):\n- Technical but accessible\n- Opinionated but open-minded\n- Evidence-based, not hype-driven\n- Quality over quantity\n- Building genuine connections\n- Sharing real learnings, not hot takes\n\n## User's Writing Principles (from principles.md):\n- Evidence-first: Always show receipts\n- Build in public: Share progress, not just polished results\n- Be specific: Concrete examples beat abstract advice\n- Engage authentically: Reply to people you actually want to know\n\nFor each draft, assess:\n1. **Specificity**: Does it reference specific content from the original tweet?\n2. **Authenticity**: Does it sound like a real person with the above voice?\n3. **Value**: Does it add genuine value (evidence, example, thoughtful question)?\n4. **Uniqueness**: Is this draft distinct from the others?\n5. **Voice Alignment**: Does it match the technical-but-accessible, evidence-based voice?\n\nSCORING:\n- 1.0: Highly specific, authentic, valuable, unique, AND matches voice profile\n- 0.8: Good but minor issues in voice or specificity\n- 0.6: Acceptable but generic or slightly off-voice\n- 0.4: Generic, could apply to many tweets, doesn't match voice\n- 0.2: Obviously bot-generated, no real value, wrong voice\n- 0.0: Spam or completely irrelevant\n\nFAIL if:\n- Draft starts with \"Interesting point\" or \"Great question\" without specifics\n- Draft could apply to ANY tweet (generic praise)\n- Multiple drafts are identical or nearly identical\n- No reference to the actual tweet content\n- Sounds like AI-generated corporate speak\n- Doesn't follow evidence-first or specific principles\n\nOutput JSON with:\n- score: float (0.0-1.0)\n- passed: boolean (true if score >= 0.6)\n- reasoning: string explaining the score\n- issues: list of specific problems found\n- strengths: list of what worked well\n- voice_alignment: float (0.0-1.0) separate score for voice match\n"
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/draft_quality_uniqueness.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "rubric": "quality",
+            "pass_threshold": 0.6,
+            "custom_prompt": "Evaluate these Twitter reply drafts for quality, authenticity, and voice alignment.\n\n## User's Voice Profile (from soul.md):\n- Technical but accessible\n- Opinionated but open-minded\n- Evidence-based, not hype-driven\n- Quality over quantity\n- Building genuine connections\n- Sharing real learnings, not hot takes\n\n## User's Writing Principles (from principles.md):\n- Evidence-first: Always show receipts\n- Build in public: Share progress, not just polished results\n- Be specific: Concrete examples beat abstract advice\n- Engage authentically: Reply to people you actually want to know\n\nFor each draft, assess:\n1. **Specificity**: Does it reference specific content from the original tweet?\n2. **Authenticity**: Does it sound like a real person with the above voice?\n3. **Value**: Does it add genuine value (evidence, example, thoughtful question)?\n4. **Uniqueness**: Is this draft distinct from the others?\n5. **Voice Alignment**: Does it match the technical-but-accessible, evidence-based voice?\n\nSCORING:\n- 1.0: Highly specific, authentic, valuable, unique, AND matches voice profile\n- 0.8: Good but minor issues in voice or specificity\n- 0.6: Acceptable but generic or slightly off-voice\n- 0.4: Generic, could apply to many tweets, doesn't match voice\n- 0.2: Obviously bot-generated, no real value, wrong voice\n- 0.0: Spam or completely irrelevant\n\nFAIL if:\n- Draft starts with \"Interesting point\" or \"Great question\" without specifics\n- Draft could apply to ANY tweet (generic praise)\n- Multiple drafts are identical or nearly identical\n- No reference to the actual tweet content\n- Sounds like AI-generated corporate speak\n- Doesn't follow evidence-first or specific principles\n\nOutput JSON with:\n- score: float (0.0-1.0)\n- passed: boolean (true if score >= 0.6)\n- reasoning: string explaining the score\n- issues: list of specific problems found\n- strengths: list of what worked well\n- voice_alignment: float (0.0-1.0) separate score for voice match\n"
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/draft_quality_uniqueness.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 60.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "draft_specificity_single",
+      "description": "Test that a single reply draft is specific to the tweet content, not generic",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "draft_specificity_single",
+          "description": "Test that a single reply draft is specific to the tweet content, not generic",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 1
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "2001",
+                  "author_handle": "pythonguru",
+                  "text": "Python's GIL is actually not a problem for I/O-bound workloads. We switched to async and saw 10x throughput improvement without changing languages. The key was identifying our bottleneck was database waits, not CPU.",
+                  "public_metrics": {
+                    "like_count": 312,
+                    "retweet_count": 89,
+                    "reply_count": 45
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {
+              "voice_guidelines": [
+                "Technical and specific"
+              ],
+              "principles": [
+                "Evidence-first"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "new_actions_count",
+                "gte": 1
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "rubric": "quality",
+                "pass_threshold": 0.7,
+                "custom_prompt": "Evaluate this Twitter reply draft for specificity, authenticity, and voice alignment.\n\n## User's Voice Profile (from soul.md):\n- Technical but accessible\n- Opinionated but open-minded\n- Evidence-based, not hype-driven\n- Quality over quantity\n- Building genuine connections\n\n## User's Writing Principles (from principles.md):\n- Evidence-first: Always show receipts\n- Be specific: Concrete examples beat abstract advice\n- Engage authentically: Reply to people you actually want to know\n\nThe original tweet was about:\n- Python's GIL not being a problem for I/O-bound workloads\n- 10x throughput improvement with async\n- Key insight: bottleneck was database waits, not CPU\n\nA GOOD reply should:\n- Reference the specific GIL/async/throughput topic\n- Add genuine value (related experience, follow-up question, nuance)\n- Sound like a real person with the voice profile above\n- NOT start with generic phrases like \"Interesting point\" or \"Great insight\"\n- Match the evidence-based, technical-but-accessible voice\n\nSCORING:\n- 1.0: Highly specific, references the actual content, adds unique value, matches voice\n- 0.8: Good but could be more specific or slightly off-voice\n- 0.6: Acceptable, mentions the topic but generic or missing voice\n- 0.4: Generic, could apply to any technical tweet, wrong voice\n- 0.2: Bot-like, no real engagement, sounds AI-generated\n- 0.0: Completely irrelevant or spam\n\nFAIL if the draft:\n- Does not mention GIL, async, or I/O-bound workloads\n- Starts with \"Interesting point\" without specifics\n- Could be sent to ANY tweet and make equal sense\n- Sounds like AI-generated corporate speak\n- Doesn't follow evidence-first or specific principles\n\nOutput JSON with:\n- score: float (0.0-1.0)\n- passed: boolean (true if score >= 0.7)\n- reasoning: string explaining the score\n- issues: list of specific problems found\n- strengths: list of what worked well\n- voice_alignment: float (0.0-1.0) separate score for voice match\n"
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/draft_specificity_single.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "rubric": "quality",
+            "pass_threshold": 0.7,
+            "custom_prompt": "Evaluate this Twitter reply draft for specificity, authenticity, and voice alignment.\n\n## User's Voice Profile (from soul.md):\n- Technical but accessible\n- Opinionated but open-minded\n- Evidence-based, not hype-driven\n- Quality over quantity\n- Building genuine connections\n\n## User's Writing Principles (from principles.md):\n- Evidence-first: Always show receipts\n- Be specific: Concrete examples beat abstract advice\n- Engage authentically: Reply to people you actually want to know\n\nThe original tweet was about:\n- Python's GIL not being a problem for I/O-bound workloads\n- 10x throughput improvement with async\n- Key insight: bottleneck was database waits, not CPU\n\nA GOOD reply should:\n- Reference the specific GIL/async/throughput topic\n- Add genuine value (related experience, follow-up question, nuance)\n- Sound like a real person with the voice profile above\n- NOT start with generic phrases like \"Interesting point\" or \"Great insight\"\n- Match the evidence-based, technical-but-accessible voice\n\nSCORING:\n- 1.0: Highly specific, references the actual content, adds unique value, matches voice\n- 0.8: Good but could be more specific or slightly off-voice\n- 0.6: Acceptable, mentions the topic but generic or missing voice\n- 0.4: Generic, could apply to any technical tweet, wrong voice\n- 0.2: Bot-like, no real engagement, sounds AI-generated\n- 0.0: Completely irrelevant or spam\n\nFAIL if the draft:\n- Does not mention GIL, async, or I/O-bound workloads\n- Starts with \"Interesting point\" without specifics\n- Could be sent to ANY tweet and make equal sense\n- Sounds like AI-generated corporate speak\n- Doesn't follow evidence-first or specific principles\n\nOutput JSON with:\n- score: float (0.0-1.0)\n- passed: boolean (true if score >= 0.7)\n- reasoning: string explaining the score\n- issues: list of specific problems found\n- strengths: list of what worked well\n- voice_alignment: float (0.0-1.0) separate score for voice match\n"
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/draft_specificity_single.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "edge_llm_failure",
+      "description": "Harness tick degrades gracefully when LLM is unavailable",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "edge_llm_failure",
+          "description": "Harness tick degrades gracefully when LLM is unavailable",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 2,
+              "simulate_llm_failure": true
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "9101",
+                  "author_handle": "founderx",
+                  "text": "What eval checkpoints do you use for coding agents?",
+                  "public_metrics": {
+                    "like_count": 30
+                  }
+                },
+                {
+                  "id": "9102",
+                  "author_handle": "infraops",
+                  "text": "We switched to raw SQL after ORM N+1 issues.",
+                  "public_metrics": {
+                    "like_count": 110
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "harness_tick"
+              },
+              {
+                "path": "llm_available",
+                "expected": false
+              },
+              {
+                "path": "used_fallback",
+                "expected": true
+              },
+              {
+                "path": "new_actions_count",
+                "expected": 2
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_llm_failure.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_llm_failure.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "edge_pending_limit_reached",
+      "description": "Harness tick respects pending queue capacity and avoids overflow",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "edge_pending_limit_reached",
+          "description": "Harness tick respects pending queue capacity and avoids overflow",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 5,
+              "max_pending_actions": 2
+            },
+            "database": {
+              "existing_actions": [
+                {
+                  "id": 1
+                },
+                {
+                  "id": 2
+                }
+              ]
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "9201",
+                  "author_handle": "overflow1",
+                  "text": "Any thoughts on eval observability?"
+                },
+                {
+                  "id": "9202",
+                  "author_handle": "overflow2",
+                  "text": "How do you reduce reward hacking?"
+                },
+                {
+                  "id": "9203",
+                  "author_handle": "overflow3",
+                  "text": "What makes a trustworthy benchmark?"
+                },
+                {
+                  "id": "9204",
+                  "author_handle": "overflow4",
+                  "text": "Can we make evals self-healing?"
+                },
+                {
+                  "id": "9205",
+                  "author_handle": "overflow5",
+                  "text": "Do you gate merges on eval trends?"
+                }
+              ]
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "new_actions_count",
+                "expected": 0
+              },
+              {
+                "path": "available_capacity",
+                "expected": 0
+              },
+              {
+                "path": "skipped_due_to_pending_limit",
+                "expected": true
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_pending_limit_reached.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_pending_limit_reached.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "review_parse_valid",
+      "description": "Harness tick parses valid review notes and applies status updates",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "review_parse_valid",
+          "description": "Harness tick parses valid review notes and applies status updates",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 0
+            },
+            "database": {
+              "existing_actions": [
+                {
+                  "id": 101,
+                  "status": "pending"
+                },
+                {
+                  "id": 102,
+                  "status": "pending"
+                }
+              ]
+            },
+            "review_notes": [
+              {
+                "action_id": 101,
+                "status": "approved"
+              },
+              {
+                "action_id": 102,
+                "status": "needs_revision"
+              }
+            ],
+            "mock_bird_client": {
+              "new_tweets": []
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "notes_processed",
+                "expected": 2
+              },
+              {
+                "path": "status_changes.0.status",
+                "expected": "approved"
+              },
+              {
+                "path": "status_changes.1.status",
+                "expected": "needs_revision"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/review_parse_valid.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/review_parse_valid.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "state_pending_to_approved",
+      "description": "Valid review note transitions action from pending to approved",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_approved",
+          "description": "Valid review note transitions action from pending to approved",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "state_transition",
+            "action_state_before": {
+              "id": 5001,
+              "status": "pending"
+            },
+            "review_note": {
+              "action_id": 5001,
+              "status": "approved"
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "state_transition"
+              },
+              {
+                "path": "from_status",
+                "expected": "pending"
+              },
+              {
+                "path": "to_status",
+                "expected": "approved"
+              },
+              {
+                "path": "transition_valid",
+                "expected": true
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_approved.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_approved.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "state_pending_to_executed",
+      "description": "Valid review note transitions action from pending to executed",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_executed",
+          "description": "Valid review note transitions action from pending to executed",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "state_transition",
+            "action_state_before": {
+              "id": 5002,
+              "status": "pending"
+            },
+            "review_note": {
+              "action_id": 5002,
+              "status": "executed"
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "state_transition"
+              },
+              {
+                "path": "from_status",
+                "expected": "pending"
+              },
+              {
+                "path": "to_status",
+                "expected": "executed"
+              },
+              {
+                "path": "transition_valid",
+                "expected": true
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_executed.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_executed.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "state_pending_to_needs_revision",
+      "description": "Valid review note transitions action from pending to needs_revision",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "state_pending_to_needs_revision",
+          "description": "Valid review note transitions action from pending to needs_revision",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "state_transition",
+            "action_state_before": {
+              "id": 5003,
+              "status": "pending"
+            },
+            "review_note": {
+              "action_id": 5003,
+              "status": "needs_revision"
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "state_transition"
+              },
+              {
+                "path": "from_status",
+                "expected": "pending"
+              },
+              {
+                "path": "to_status",
+                "expected": "needs_revision"
+              },
+              {
+                "path": "transition_valid",
+                "expected": true
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_needs_revision.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/state_pending_to_needs_revision.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "tick_full_cycle",
+      "description": "Harness tick creates pending actions from actionable new tweets",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "tick_full_cycle",
+          "description": "Harness tick creates pending actions from actionable new tweets",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 2,
+              "max_pending_actions": 10
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "9001",
+                  "author_handle": "builder1",
+                  "text": "How are you measuring eval reliability over time?",
+                  "public_metrics": {
+                    "like_count": 22
+                  }
+                },
+                {
+                  "id": "9002",
+                  "author_handle": "builder2",
+                  "text": "We improved deploy confidence by adding canary checkpoints.",
+                  "public_metrics": {
+                    "like_count": 140
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {
+              "tier1_handles": [
+                "builder1"
+              ],
+              "tier2_handles": [
+                "builder2"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "harness_tick"
+              },
+              {
+                "path": "new_actions_count",
+                "expected": 2
+              },
+              {
+                "path": "total_pending",
+                "expected": 2
+              },
+              {
+                "path": "new_actions.0.status",
+                "expected": "pending"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/tick_full_cycle.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/tick_full_cycle.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "pulse_generate_basic",
+      "description": "Pulse returns a fast shortlist of feed-based targets",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "pulse_generate_basic",
+          "description": "Pulse returns a fast shortlist of feed-based targets",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "pulse",
+            "config": {
+              "limit": 2
+            },
+            "mock_feed": {
+              "items": [
+                {
+                  "id": "tw_1",
+                  "author": "signalbuilder",
+                  "text": "How do you detect eval regressions quickly?",
+                  "metrics": {
+                    "likes": 12
+                  }
+                },
+                {
+                  "id": "tw_2",
+                  "author": "opsfriend",
+                  "text": "We moved to canary evals and cut incidents by 30%.",
+                  "metrics": {
+                    "likes": 44
+                  }
+                },
+                {
+                  "id": "tw_3",
+                  "author": "lateitem",
+                  "text": "This should be truncated by limit",
+                  "metrics": {
+                    "likes": 1
+                  }
+                }
+              ]
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "pulse"
+              },
+              {
+                "path": "targets_count",
+                "expected": 2
+              },
+              {
+                "path": "sources.0",
+                "expected": "x_feed"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse/pulse_generate_basic.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/pulse/pulse_generate_basic.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "recap_record_metrics",
+      "description": "Recap records provided metrics and returns consistent summary fields",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "recap_record_metrics",
+          "description": "Recap records provided metrics and returns consistent summary fields",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "recap",
+            "config": {
+              "date": "2026-03-11"
+            },
+            "record_metrics": {
+              "followers": 1450,
+              "impressions": 12000,
+              "engagement": 4.2
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "recap"
+              },
+              {
+                "path": "date",
+                "expected": "2026-03-11"
+              },
+              {
+                "path": "metrics.followers",
+                "expected": 1450
+              },
+              {
+                "path": "summary.engagement_rate",
+                "expected": 4.2
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/recap/recap_record_metrics.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/recap"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/recap/recap_record_metrics.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "weekly_pattern_recognition",
+      "description": "Weekly report exposes recognizable patterns and recommendations",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "weekly_pattern_recognition",
+          "description": "Weekly report exposes recognizable patterns and recommendations",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "weekly",
+            "config": {
+              "week": "2026-W10"
+            },
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "weekly"
+              },
+              {
+                "path": "patterns.0",
+                "expected": "Morning posts get more engagement"
+              },
+              {
+                "path": "recommendations.0",
+                "expected": "Post more about Python"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly/weekly_pattern_recognition.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly/weekly_pattern_recognition.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "policy_edge_budget_exhaustion",
+      "description": "Test policy behavior when budget is exhausted",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_edge_budget_exhaustion",
+          "description": "Test policy behavior when budget is exhausted",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_policy",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "engagement",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "important_contact",
+                "author_name": "Important Contact",
+                "text": "Important question here?",
+                "created_at": "2026-03-06T15:00:00Z"
+              }
+            ],
+            "relationships": {},
+            "strategy": {},
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 10
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "BudgetExhaustedError raised or no actions proposed"
+            ],
+            "must_not_events": [
+              "Actions created despite budget exhaustion"
+            ],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions_count",
+                "expected": 0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_edge_budget_exhaustion.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_policy"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_edge_budget_exhaustion.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "policy_engagement_tier_prioritization",
+      "description": "Test EngagementPolicy tier-based prioritization logic",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_engagement_tier_prioritization",
+          "description": "Test EngagementPolicy tier-based prioritization logic",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_policy",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "engagement",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "tier1_contact",
+                "author_name": "Tier1 Contact",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              },
+              {
+                "id": "222",
+                "author_handle": "tier2_contact",
+                "author_name": "Tier2 Contact",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              },
+              {
+                "id": "333",
+                "author_handle": "random_user",
+                "author_name": "Random User",
+                "text": "What do you think about this approach?",
+                "created_at": "2026-03-06T15:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 2
+                }
+              }
+            ],
+            "relationships": {
+              "tier1_contact": {
+                "handle": "tier1_contact",
+                "tier": 1
+              },
+              "tier2_contact": {
+                "handle": "tier2_contact",
+                "tier": 2
+              }
+            },
+            "strategy": {
+              "tiers": {
+                "tier1_handles": [
+                  "tier1_contact"
+                ],
+                "tier2_handles": [
+                  "tier2_contact"
+                ]
+              }
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "Tier 1 contact gets CRITICAL priority",
+              "Tier 2 contact gets HIGH priority",
+              "Random user gets MEDIUM or LOW priority",
+              "All get REPLY action type (questions detected)"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions[0].author_handle",
+                "expected": "tier1_contact"
+              },
+              {
+                "path": "actions[0].priority",
+                "expected": 1
+              },
+              {
+                "path": "actions[1].author_handle",
+                "expected": "tier2_contact"
+              },
+              {
+                "path": "actions[1].priority",
+                "expected": 2
+              },
+              {
+                "path": "actions[2].author_handle",
+                "expected": "random_user"
+              },
+              {
+                "path": "actions[2].priority",
+                "in": [
+                  3,
+                  4
+                ]
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "schema",
+              "config": {
+                "schema_type": "json"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_engagement_tier_prioritization.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "schema",
+          "config": {
+            "schema_type": "json"
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_policy"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/engagement/policy_engagement_tier_prioritization.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "policy_ranking_score_calculation",
+      "description": "Test RankingPolicy multi-dimensional scoring",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_ranking_score_calculation",
+          "description": "Test RankingPolicy multi-dimensional scoring",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_policy",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "ranking",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "tech_expert",
+                "author_name": "Tech Expert",
+                "text": "Just published a deep dive on distributed systems consensus algorithms with code examples",
+                "created_at": "2026-03-06T14:30:00Z",
+                "public_metrics": {
+                  "like_count": 50,
+                  "reply_count": 10
+                },
+                "detected_topics": [
+                  "distributed systems"
+                ]
+              },
+              {
+                "id": "222",
+                "author_handle": "casual_poster",
+                "author_name": "Casual Poster",
+                "text": "Check out this link!",
+                "created_at": "2026-03-06T10:00:00Z",
+                "public_metrics": {
+                  "like_count": 5,
+                  "reply_count": 1
+                },
+                "detected_topics": []
+              }
+            ],
+            "relationships": {
+              "tech_expert": {
+                "handle": "tech_expert",
+                "tier": 1
+              }
+            },
+            "strategy": {
+              "topics": {
+                "primary_topics": [
+                  "distributed systems",
+                  "consensus"
+                ]
+              }
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "First tweet scores higher than second",
+              "High-quality content gets recognized"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "actions_count",
+                "gt": 0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/ranking/policy_ranking_score_calculation.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/ranking"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_policy"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/ranking/policy_ranking_score_calculation.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "policy_strategy_violation_detection",
+      "description": "Test StrategyPolicy violation detection and enforcement",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_strategy_violation_detection",
+          "description": "Test StrategyPolicy violation detection and enforcement",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_policy",
+            "config": {}
+          },
+          "inputs": {
+            "policy": "strategy",
+            "tweets": [
+              {
+                "id": "111",
+                "author_handle": "contact",
+                "author_name": "Contact",
+                "text": "Hello world",
+                "created_at": "2026-03-06T15:00:00Z"
+              },
+              {
+                "id": "222",
+                "author_handle": "contact2",
+                "author_name": "Contact2",
+                "text": "Amazing update!",
+                "created_at": "2026-03-06T15:00:00Z"
+              },
+              {
+                "id": "333",
+                "author_handle": "contact3",
+                "author_name": "Contact3",
+                "text": "Thoughts on the topic?",
+                "created_at": "2026-03-06T15:00:00Z"
+              }
+            ],
+            "relationships": {},
+            "strategy": {
+              "principles": [
+                "No engagement bait",
+                "Prefer build in public content"
+              ],
+              "boundaries": [
+                "No political content"
+              ]
+            },
+            "budget": {
+              "max_pending_actions": 10,
+              "current_pending_actions": 0
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "Strategy policy evaluates tweets against principles",
+              "Strategy alignment score is calculated"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "strategy_alignment_score",
+                "gte": 0.0
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/strategy/policy_strategy_violation_detection.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/strategy"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_policy"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/strategy/policy_strategy_violation_detection.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "sources_parallel_fetch",
+      "description": "Test parallel fetching from multiple sources",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "sources_parallel_fetch",
+          "description": "Test parallel fetching from multiple sources",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "pulse",
+            "config": {
+              "limit": 5
+            },
+            "mock_feed": {
+              "items": [
+                {
+                  "id": "hn_1",
+                  "author": "hackernews",
+                  "text": "Show HN: I built a distributed task queue",
+                  "metrics": {
+                    "likes": 150
+                  }
+                },
+                {
+                  "id": "lob_1",
+                  "author": "lobsters",
+                  "text": "Understanding memory models",
+                  "metrics": {
+                    "likes": 45
+                  }
+                },
+                {
+                  "id": "gh_1",
+                  "author": "github_trending",
+                  "text": "owner/awesome-tool: CLI tool for automation",
+                  "metrics": {
+                    "likes": 500
+                  }
+                }
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": null,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": null
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "targets_count",
+                "gte": 3
+              },
+              {
+                "path": "execution_time_seconds",
+                "lt": 30.0
+              },
+              {
+                "path": "command",
+                "expected": "pulse"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/sources/sources_parallel_fetch.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/sources"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/sources/sources_parallel_fetch.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": null,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

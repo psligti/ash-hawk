@@ -1,0 +1,244 @@
+{
+  "envelope": {
+    "run_id": "run-acb33c70",
+    "suite_id": "scenario-draft_quality_uniqueness",
+    "suite_hash": "24dc15005c8dfcce",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-11T13:45:30.459490+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-draft_quality_uniqueness",
+    "run_id": "run-acb33c70",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 1,
+    "pass_rate": 0.0,
+    "mean_score": 0.0,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.0012888908386230469,
+    "latency_p50_seconds": 0.0009431838989257812,
+    "latency_p95_seconds": 0.0009431838989257812,
+    "latency_p99_seconds": 0.0009431838989257812,
+    "pass_at_k": {},
+    "created_at": "2026-03-11T13:45:30.477471+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-1d302449",
+      "task_id": "draft_quality_uniqueness",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "draft_quality_uniqueness",
+          "description": "Test that reply drafts are unique and contextually relevant, not generic templates",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 5
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "1001",
+                  "author_handle": "techfounder",
+                  "text": "Just shipped our new AI feature after 3 months of work. The key was breaking it into tiny PRs and shipping daily. What's your deployment strategy?",
+                  "public_metrics": {
+                    "like_count": 45,
+                    "retweet_count": 12,
+                    "reply_count": 8
+                  }
+                },
+                {
+                  "id": "1002",
+                  "author_handle": "devlife",
+                  "text": "Hot take: Most code comments are a code smell. If you need to explain WHAT the code does, rewrite it. Comments should explain WHY, not WHAT.",
+                  "public_metrics": {
+                    "like_count": 89,
+                    "retweet_count": 34,
+                    "reply_count": 67
+                  }
+                },
+                {
+                  "id": "1003",
+                  "author_handle": "indiehacker",
+                  "text": "What's your favorite VS Code extension for Python development? Looking for recommendations beyond the basics.",
+                  "public_metrics": {
+                    "like_count": 23,
+                    "retweet_count": 5,
+                    "reply_count": 34
+                  }
+                },
+                {
+                  "id": "1004",
+                  "author_handle": "saasbuilder",
+                  "text": "We reduced our API response time from 800ms to 50ms by switching from ORM to raw SQL for read-heavy endpoints. The ORM was doing N+1 queries we didn't notice.",
+                  "public_metrics": {
+                    "like_count": 156,
+                    "retweet_count": 45,
+                    "reply_count": 23
+                  }
+                },
+                {
+                  "id": "1005",
+                  "author_handle": "ctowriter",
+                  "text": "Unpopular opinion: Engineering managers should still write code. Not production features, but enough to stay connected to the developer experience.",
+                  "public_metrics": {
+                    "like_count": 234,
+                    "retweet_count": 78,
+                    "reply_count": 156
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {
+              "voice_guidelines": [
+                "Technical but accessible",
+                "Share specific examples"
+              ],
+              "principles": [
+                "Evidence-first",
+                "Build in public"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 60.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "new_actions_count",
+                "gte": 5
+              },
+              {
+                "path": "unique_draft_count",
+                "gte": 4
+              },
+              {
+                "path": "generic_opener_count",
+                "lte": 1
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "rubric": "quality",
+                "pass_threshold": 0.6,
+                "custom_prompt": "Evaluate these Twitter reply drafts for quality, authenticity, and voice alignment.\n\n## User's Voice Profile (from soul.md):\n- Technical but accessible\n- Opinionated but open-minded\n- Evidence-based, not hype-driven\n- Quality over quantity\n- Building genuine connections\n- Sharing real learnings, not hot takes\n\n## User's Writing Principles (from principles.md):\n- Evidence-first: Always show receipts\n- Build in public: Share progress, not just polished results\n- Be specific: Concrete examples beat abstract advice\n- Engage authentically: Reply to people you actually want to know\n\nFor each draft, assess:\n1. **Specificity**: Does it reference specific content from the original tweet?\n2. **Authenticity**: Does it sound like a real person with the above voice?\n3. **Value**: Does it add genuine value (evidence, example, thoughtful question)?\n4. **Uniqueness**: Is this draft distinct from the others?\n5. **Voice Alignment**: Does it match the technical-but-accessible, evidence-based voice?\n\nSCORING:\n- 1.0: Highly specific, authentic, valuable, unique, AND matches voice profile\n- 0.8: Good but minor issues in voice or specificity\n- 0.6: Acceptable but generic or slightly off-voice\n- 0.4: Generic, could apply to many tweets, doesn't match voice\n- 0.2: Obviously bot-generated, no real value, wrong voice\n- 0.0: Spam or completely irrelevant\n\nFAIL if:\n- Draft starts with \"Interesting point\" or \"Great question\" without specifics\n- Draft could apply to ANY tweet (generic praise)\n- Multiple drafts are identical or nearly identical\n- No reference to the actual tweet content\n- Sounds like AI-generated corporate speak\n- Doesn't follow evidence-first or specific principles\n\nOutput JSON with:\n- score: float (0.0-1.0)\n- passed: boolean (true if score >= 0.6)\n- reasoning: string explaining the score\n- issues: list of specific problems found\n- strengths: list of what worked well\n- voice_alignment: float (0.0-1.0) separate score for voice match\n"
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/draft_quality_uniqueness.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-1d302449",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Scenario execution failed: '>' not supported between instances of 'NoneType' and 'int'",
+          "completed_at": "2026-03-11T13:45:30.476448+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00011110305786132812,
+          "agent_response": null,
+          "error_trace": "Scenario execution failed: '>' not supported between instances of 'NoneType' and 'int'"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-1d302449",
+        "run_id": "run-acb33c70",
+        "task_id": "draft_quality_uniqueness",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [],
+          "denied_tools": [],
+          "default_permission": "ask",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-11T13:45:30.476284+00:00",
+        "started_at": "2026-03-11T13:45:30.476256+00:00",
+        "completed_at": "2026-03-11T13:45:30.476476+00:00"
+      }
+    }
+  ]
+}

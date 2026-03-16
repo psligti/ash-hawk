@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-c34bbbab",
+    "task_id": "discoverability.cross-skill.graph",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill \"Python Fundamentals\":\n   - title: \"Python Fundamentals\"\n   - type: skill\n   - scope: global\n   - description: \"Core Python concepts\"\n   - skill_level: beginner\n   - triggers: [\"python\", \"basics\"]\n   - required_tools: []\n   \n2. Create skill \"Python Decorators\":\n   - title: \"Python Decorators\"\n   - type: skill\n   - scope: global\n   - description: \"Advanced decorator patterns\"\n   - skill_level: advanced\n   - triggers: [\"decorator\", \"python\"]\n   - required_tools: []\n   \n3. Create skill \"Python Context Managers\":\n   - title: \"Python Context Managers\"\n   - type: skill\n   - scope: global\n   - description: \"Using with statements and context managers\"\n   - skill_level: intermediate\n   - triggers: [\"context\", \"with\", \"python\"]\n   - required_tools: []\n   \n4. Link \"Python Fundamentals\" -> \"Python Decorators\"\n5. Link \"Python Fundamentals\" -> \"Python Context Managers\"\n\n6. Start from \"Python Fundamentals\" and use context_chain to discover related skills\n\n7. Verify both child skills are discovered through the graph\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-c34bbbab",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T23:34:13.138086+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 300.0033619403839,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-c34bbbab",
+      "run_id": "run-e49a08af",
+      "task_id": "discoverability.cross-skill.graph",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T23:29:13.134863+00:00",
+      "started_at": "2026-03-12T23:29:13.134802+00:00",
+      "completed_at": "2026-03-12T23:34:13.138196+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-c34bbbab",
+    "run_id": "run-e49a08af",
+    "task_id": "discoverability.cross-skill.graph",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T23:29:13.134863+00:00",
+    "started_at": "2026-03-12T23:29:13.134802+00:00",
+    "completed_at": "2026-03-12T23:34:13.138196+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

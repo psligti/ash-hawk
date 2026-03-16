@@ -1,6 +1,7 @@
 """Tests for ash_hawk.graders.llm_judge module."""
 
 import json
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -141,6 +142,20 @@ class TestLLMJudgeGrader:
         assert "## Messages" in context
         assert "## Tool Calls" in context
 
+    def test_format_transcript_context_handles_primitive_agent_response(self):
+        grader = LLMJudgeGrader()
+        transcript = EvalTranscript(
+            messages=[
+                {"role": "user", "content": "Return a number"},
+                {"role": "assistant", "content": "4"},
+            ]
+        )
+        primitive_response: Any = 4
+        object.__setattr__(transcript, "agent_response", primitive_response)
+        context = grader._format_transcript_context(transcript)
+        assert "## Messages" in context
+        assert "[assistant]: 4" in context
+
     def test_format_agent_response_from_transcript(self):
         grader = LLMJudgeGrader()
         transcript = EvalTranscript(agent_response="This is the agent's response.")
@@ -186,6 +201,7 @@ class TestLLMJudgeGrader:
         raw = "This is not JSON"
         with pytest.raises(ValueError, match="Failed to parse"):
             grader._parse_judge_output(raw)
+
     def test_parse_judge_output_with_nested_answer_payload(self):
         grader = LLMJudgeGrader()
         raw = json.dumps(
@@ -450,8 +466,10 @@ class TestCustomPrompt:
         grader = LLMJudgeGrader(config=JudgeConfig(custom_prompt=custom))
         prompt_info = grader._load_prompt()
 
-        assert prompt_info.name == "custom_inline"
-        assert prompt_info.content == custom
+        assert prompt_info.name == "custom_inline_rubric"
+        assert custom in prompt_info.content
+        assert "{task_input}" in prompt_info.content
+        assert "{agent_response}" in prompt_info.content
         assert len(prompt_info.content_hash) == 16
 
     def test_load_prompt_custom_prompt_takes_precedence(self, tmp_path):
@@ -470,8 +488,9 @@ class TestCustomPrompt:
         prompt_info = grader._load_prompt()
 
         # Inline should win
-        assert prompt_info.content == custom_inline
-        assert prompt_info.name == "custom_inline"
+        assert prompt_info.name == "custom_inline_rubric"
+        assert custom_inline in prompt_info.content
+        assert "This is from the file path." not in prompt_info.content
 
     def test_load_prompt_uses_path_when_no_inline(self, tmp_path):
         """Test that custom_prompt_path works when custom_prompt is None."""
@@ -481,7 +500,9 @@ class TestCustomPrompt:
         grader = LLMJudgeGrader(config=JudgeConfig(custom_prompt_path=str(prompt_file)))
         prompt_info = grader._load_prompt()
 
-        assert prompt_info.content == "Custom from file."
+        assert prompt_info.name == "custom"
+        assert "Custom from file." in prompt_info.content
+        assert "{task_input}" in prompt_info.content
 
     @pytest.mark.asyncio
     async def test_grade_with_inline_custom_prompt(self):
@@ -514,7 +535,7 @@ class TestCustomPrompt:
         assert result.passed is True
         assert result.score == 0.9
         # Verify the custom prompt was loaded
-        assert grader._prompt_info.name == "custom_inline"
+        assert grader._prompt_info.name == "custom_inline_rubric"
 
     @pytest.mark.asyncio
     async def test_grade_custom_prompt_in_built_judge_prompt(self):
@@ -549,6 +570,42 @@ class TestCustomPrompt:
         call_args = mock_client.complete.call_args
         messages = call_args.kwargs["messages"]
         assert "empathetic" in messages[0]["content"].lower()
+        assert "i understand your concern" in messages[0]["content"].lower()
+
+
+class TestInlineRubricFallback:
+    @pytest.mark.asyncio
+    async def test_multiline_rubric_is_wrapped_with_context(self):
+        mock_response = MagicMock()
+        mock_response.text = json.dumps(
+            {
+                "score": 0.75,
+                "passed": True,
+                "reasoning": "Looks good",
+                "issues": [],
+                "strengths": [],
+            }
+        )
+
+        mock_client = MagicMock()
+        mock_client.complete = AsyncMock(return_value=mock_response)
+
+        rubric = "Evaluate:\n1. Includes context\n2. Uses JSON output\n"
+        grader = LLMJudgeGrader(client=mock_client)
+        trial = EvalTrial(id="t1", task_id="task1", input_snapshot="My task")
+        transcript = EvalTranscript(agent_response="My response")
+        spec = GraderSpec(grader_type="llm_judge", config={"rubric": rubric})
+
+        result = await grader.grade(trial, transcript, spec)
+        assert result.passed is True
+        assert result.score == 0.75
+
+        call_args = mock_client.complete.call_args
+        messages = call_args.kwargs["messages"]
+        content = messages[0]["content"]
+        assert "My task" in content
+        assert "My response" in content
+        assert "Evaluate:" in content
 
 
 class TestNJudgeConsensus:

@@ -1,0 +1,154 @@
+{
+  "trial": {
+    "id": "trial-0fc0b4c6",
+    "task_id": "skill.discoverability.search-works",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-0fc0b4c6",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:24:09.238837+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create a skill with unique trigger \"xyz-test-unique-trigger-123\":\n   - title: \"Unique Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with a unique trigger for testing search\"\n   - skill_level: beginner\n   - triggers: [\"xyz-test-unique-trigger-123\"]\n   - required_tools: []\n   \n2. Search for \"xyz-test-unique-trigger-123\" using notes_search\n\nUse notes_create then notes_search with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I will execute the requests in order. First, I'll create the skill note, and then I'll search for the unique trigger.\n\n**Action 1: Create the skill note**\n\n```json\n{\n  \"tool_name\": \"notes_create\",\n  \"payload\": {\n    \"content\": \"{\\\"title\\\": \\\"Unique Test Skill\\\", \\\"type\\\": \\\"skill\\\", \\\"scope\\\": \\\"global\\\", \\\"description\\\": \\\"A skill with a unique trigger for testing search\\\", \\\"skill_level\\\": \\\"beginner\\\", \\\"triggers\\\": [\\\"xyz-test-unique-trigger-123\\\"], \\\"required_tools\\\": []}\"\n  }\n}\n```\n\n**Action 2: Search for the trigger**\n\n```json\n{\n  \"tool_name\": \"notes_search\",\n  \"payload\": {\n    \"query\": \"xyz-test-unique-trigger-123\"\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 112,
+          "output": 1142,
+          "reasoning": 968,
+          "cache_read": 2,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 17.98252511024475,
+        "agent_response": "I will execute the requests in order. First, I'll create the skill note, and then I'll search for the unique trigger.\n\n**Action 1: Create the skill note**\n\n```json\n{\n  \"tool_name\": \"notes_create\",\n  \"payload\": {\n    \"content\": \"{\\\"title\\\": \\\"Unique Test Skill\\\", \\\"type\\\": \\\"skill\\\", \\\"scope\\\": \\\"global\\\", \\\"description\\\": \\\"A skill with a unique trigger for testing search\\\", \\\"skill_level\\\": \\\"beginner\\\", \\\"triggers\\\": [\\\"xyz-test-unique-trigger-123\\\"], \\\"required_tools\\\": []}\"\n  }\n}\n```\n\n**Action 2: Search for the trigger**\n\n```json\n{\n  \"tool_name\": \"notes_search\",\n  \"payload\": {\n    \"query\": \"xyz-test-unique-trigger-123\"\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent correctly generated tool calls for notes_create and notes_search, but there are no execution results provided in the context. Without seeing the actual tool outputs, I cannot verify if the skill was created successfully, if the search returned results, or if the search found the created skill.",
+            "breakdown": {
+              "score": 0.0
+            },
+            "issues": [
+              "No execution results shown for notes_create",
+              "No execution results shown for notes_search",
+              "Unable to verify rubric criteria without tool output confirmation"
+            ],
+            "strengths": [
+              "Properly formatted notes_create call with all required fields",
+              "Correctly used notes_search with the unique trigger as the query",
+              "Followed instruction to use payload wrapper format"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "fcb2dd9deb6b210f",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.0,\n  \"passed\": false,\n  \"reasoning\": \"The agent correctly generated tool calls for notes_create and notes_search, but there are no execution results provided in the context. Without seeing the actual tool outputs, I cannot verify if the skill was created successfully, if the search returned results, or if the search found the created skill.\",\n  \"issues\": [\n    \"No execution results shown for notes_create\",\n    \"No execution results shown for notes_search\",\n    \"Unable to verify rubric criteria without tool output confirmation\"\n  ],\n  \"strengths\": [\n    \"Properly formatted notes_create call with all required fields\",\n    \"Correctly used notes_search with the unique trigger as the query\",\n    \"Followed instruction to use payload wrapper format\"\n  ]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 39.7553288936615,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-0fc0b4c6",
+      "run_id": "run-c3e3e36f",
+      "task_id": "skill.discoverability.search-works",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:23:51.256261+00:00",
+      "started_at": "2026-03-12T17:23:51.256242+00:00",
+      "completed_at": "2026-03-12T17:24:09.238849+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-0fc0b4c6",
+    "run_id": "run-c3e3e36f",
+    "task_id": "skill.discoverability.search-works",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:23:51.256261+00:00",
+    "started_at": "2026-03-12T17:23:51.256242+00:00",
+    "completed_at": "2026-03-12T17:24:09.238849+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

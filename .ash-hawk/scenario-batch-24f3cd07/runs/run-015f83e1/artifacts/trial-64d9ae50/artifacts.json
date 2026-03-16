@@ -1,0 +1,27 @@
+{
+  "command": "brief",
+  "result": {
+    "command": "brief",
+    "digest": {
+      "trends": [],
+      "trends_count": 0,
+      "posts": [],
+      "posts_count": 0,
+      "replies": [
+        {
+          "handle": "dev1",
+          "text": "What is your eval baseline?",
+          "tier": 1,
+          "is_question": true
+        }
+      ],
+      "replies_count": 1,
+      "format": "terminal"
+    },
+    "metrics": {
+      "execution_time_seconds": 2.5,
+      "sources_queried": 2
+    }
+  },
+  "verification_passed": true
+}

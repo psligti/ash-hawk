@@ -1,0 +1,67 @@
+{
+  "command": "harness_tick",
+  "result": {
+    "command": "harness_tick",
+    "notes_processed": 0,
+    "status_changes": [],
+    "new_tweets_fetched": 5,
+    "new_actions_created": 5,
+    "new_actions_count": 5,
+    "unique_draft_count": 5,
+    "generic_opener_count": 0,
+    "new_actions": [
+      {
+        "tweet_id": "1001",
+        "author_handle": "techfounder",
+        "action_type": "reply",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": "On just shipped our new ai feature after 3 - we switched to daily deploys last year. The cadence change was the real win, not the tools.",
+        "score": 0.65
+      },
+      {
+        "tweet_id": "1002",
+        "author_handle": "devlife",
+        "action_type": "reply",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": "Agreed on hot take: most code comments are a code. I still review PRs weekly to stay connected. Helps me give better feedback to the team.",
+        "score": 0.65
+      },
+      {
+        "tweet_id": "1003",
+        "author_handle": "indiehacker",
+        "action_type": "reply",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": "On what's your favorite vs code extension for python - what specific outcome are you optimizing for? Happy to share what worked for us.",
+        "score": 0.65
+      },
+      {
+        "tweet_id": "1004",
+        "author_handle": "saasbuilder",
+        "action_type": "reply",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": "Building on the we reduced our api response time from 800ms angle - we hit this with a large dataset. Raw SQL cut our p99 from 800ms to 50ms.",
+        "score": 0.7
+      },
+      {
+        "tweet_id": "1005",
+        "author_handle": "ctowriter",
+        "action_type": "reply",
+        "priority": 3,
+        "status": "pending",
+        "draft_text": "Agreed on unpopular opinion: engineering managers should still write code. I still review PRs weekly to stay connected. Helps me give better feedback to the team.",
+        "score": 0.7
+      }
+    ],
+    "llm_available": true,
+    "used_fallback": false,
+    "available_capacity": 60,
+    "skipped_due_to_pending_limit": false,
+    "total_pending": 5,
+    "index_updated": true
+  },
+  "verification_passed": true
+}

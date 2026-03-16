@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-703f9929",
+    "task_id": "discoverability.context-aware.traversal",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill \"API Development\":\n   - title: \"API Development\"\n   - type: skill\n   - scope: global\n   - description: \"Build REST APIs\"\n   - skill_level: intermediate\n   - triggers: [\"api\", \"rest\"]\n   - required_tools: []\n   \n2. Create skill \"API Testing\":\n   - title: \"API Testing\"\n   - type: skill\n   - scope: global\n   - description: \"Test REST APIs\"\n   - skill_level: intermediate\n   - triggers: [\"api\", \"test\"]\n   - required_tools: []\n   \n3. Create skill \"API Deployment\":\n   - title: \"API Deployment\"\n   - type: skill\n   - scope: global\n   - description: \"Deploy APIs to production\"\n   - skill_level: advanced\n   - triggers: [\"api\", \"deploy\"]\n   - required_tools: []\n   \n4. Link \"API Development\" -> \"API Testing\"\n5. Link \"API Development\" -> \"API Deployment\"\n\n6. Run context_chain from \"API Development\" with:\n   - task: \"I need to write tests for my API\"\n   \n7. Verify \"API Testing\" scores higher or appears earlier than \"API Deployment\"\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-703f9929",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T23:29:13.115449+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 300.0035810470581,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-703f9929",
+      "run_id": "run-e49a08af",
+      "task_id": "discoverability.context-aware.traversal",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T23:24:13.111984+00:00",
+      "started_at": "2026-03-12T23:24:13.111955+00:00",
+      "completed_at": "2026-03-12T23:29:13.115555+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-703f9929",
+    "run_id": "run-e49a08af",
+    "task_id": "discoverability.context-aware.traversal",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T23:24:13.111984+00:00",
+    "started_at": "2026-03-12T23:24:13.111955+00:00",
+    "completed_at": "2026-03-12T23:29:13.115555+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

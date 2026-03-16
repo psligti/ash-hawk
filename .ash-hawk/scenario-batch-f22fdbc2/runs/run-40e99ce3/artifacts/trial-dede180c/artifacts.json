@@ -1,0 +1,55 @@
+{
+  "command": "brief",
+  "result": {
+    "command": "brief",
+    "digest": {
+      "trends": [
+        {
+          "topic": "Agent eval design"
+        },
+        {
+          "topic": "Reward shaping"
+        }
+      ],
+      "trends_count": 2,
+      "posts": [
+        {
+          "topic": "Agent eval design",
+          "draft": "Draft for Agent eval design"
+        },
+        {
+          "topic": "Reward shaping",
+          "draft": "Draft for Reward shaping"
+        }
+      ],
+      "posts_count": 2,
+      "replies": [
+        {
+          "handle": "alice",
+          "text": "How do you avoid reward hacking in agent tests?",
+          "tier": 1,
+          "is_question": true
+        },
+        {
+          "handle": "bob",
+          "text": "Dense checkpoints improved our model reliability b",
+          "tier": 2,
+          "is_question": false
+        },
+        {
+          "handle": "carol",
+          "text": "Any practical strategy for incremental eval rollou",
+          "tier": 3,
+          "is_question": true
+        }
+      ],
+      "replies_count": 3,
+      "format": "json"
+    },
+    "metrics": {
+      "execution_time_seconds": 2.5,
+      "sources_queried": 2
+    }
+  },
+  "verification_passed": true
+}

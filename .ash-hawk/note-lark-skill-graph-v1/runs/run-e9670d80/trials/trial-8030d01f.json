@@ -1,0 +1,262 @@
+{
+  "trial": {
+    "id": "trial-8030d01f",
+    "task_id": "search.feedback.tag-based",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill with unique tags:\n   - title: \"Tagged Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with specific tags\"\n   - skill_level: beginner\n   - triggers: [\"tagged\"]\n   - tags: [\"unique-tag-xyz-123\", \"testing\"]\n   - required_tools: []\n   \n2. Search for the unique tag \"unique-tag-xyz-123\"\n\nUse notes_create and notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-8030d01f",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:59:45.617010+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create a skill with unique tags:\n   - title: \"Tagged Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with specific tags\"\n   - skill_level: beginner\n   - triggers: [\"tagged\"]\n   - tags: [\"unique-tag-xyz-123\", \"testing\"]\n   - required_tools: []\n   \n2. Search for the unique tag \"unique-tag-xyz-123\"\n\nUse notes_create and notes_search with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll help you create a skill with unique tags and then search for that tag. Let me do both operations:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Tagged Skill\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"A skill with specific tags\", \"skill_level\": \"beginner\", \"triggers\": [\"tagged\"], \"tags\": [\"unique-tag-xyz-123\", \"testing\"], \"required_tools\": []}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"unique-tag-xyz-123\"}, \"output\": \"{\\\"items\\\":[]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "I see the issue - the skill-specific fields need to be in the `frontmatter` section. Let me fix that and create the skill properly:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"frontmatter\": {\"title\": \"Tagged Skill\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"A skill with specific tags\", \"skill_level\": \"beginner\", \"triggers\": [\"tagged\"], \"tags\": [\"unique-tag-xyz-123\", \"testing\"], \"required_tools\": []}, \"content\": \"# Tagged Skill\\n\\nThis is a skill with specific tags for testing purposes.\\n\\n## Usage\\n\\nThis skill demonstrates how to create and tag skills in the note system.\"}}, \"output\": \"3 validation errors for NoteCreateRequest\\ntitle\\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\ntype\\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\nscope\\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "I see the structure issue now - I need to pass `title`, `type`, and `scope` at the top level of the payload, with only the skill-specific metadata in the `frontmatter` field. Let me fix this:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Tagged Skill\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"A skill with specific tags\", \"skill_level\": \"beginner\", \"triggers\": [\"tagged\"], \"tags\": [\"unique-tag-xyz-123\", \"testing\"], \"required_tools\": []}, \"content\": \"# Tagged Skill\\n\\nThis is a skill with specific tags for testing purposes.\\n\\n## Usage\\n\\nThis skill demonstrates how to create and tag skills in the note system.\"}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-tagged-skill-a6aab2f6\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-tagged-skill-a6aab2f6.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"unique-tag-xyz-123\"}, \"output\": \"{\\\"items\\\":[{\\\"_mtime\\\":1773367185.6031246,\\\"aliases\\\":[],\\\"description\\\":\\\"A skill with specific tags\\\",\\\"id\\\":\\\"skill-tagged-skill-a6aab2f6\\\",\\\"links\\\":[],\\\"path\\\":\\\"global/skills/skill-tagged-skill-a6aab2f6.md\\\",\\\"project\\\":null,\\\"scope\\\":\\\"global\\\",\\\"status\\\":\\\"active\\\",\\\"tags\\\":[\\\"unique-tag-xyz-123\\\",\\\"testing\\\"],\\\"title\\\":\\\"Tagged Skill\\\",\\\"type\\\":\\\"skill\\\",\\\"updated_at\\\":\\\"2026-03-13T01:59:45.600698Z\\\"}]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Tagged Skill",
+                "type": "skill",
+                "scope": "global",
+                "description": "A skill with specific tags",
+                "skill_level": "beginner",
+                "triggers": [
+                  "tagged"
+                ],
+                "tags": [
+                  "unique-tag-xyz-123",
+                  "testing"
+                ],
+                "required_tools": []
+              }
+            },
+            "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+          },
+          {
+            "tool": "note-lark_notes_search",
+            "input": {
+              "query": "unique-tag-xyz-123"
+            },
+            "output": "{\"items\":[]}"
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "frontmatter": {
+                  "title": "Tagged Skill",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "A skill with specific tags",
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "tagged"
+                  ],
+                  "tags": [
+                    "unique-tag-xyz-123",
+                    "testing"
+                  ],
+                  "required_tools": []
+                },
+                "content": "# Tagged Skill\n\nThis is a skill with specific tags for testing purposes.\n\n## Usage\n\nThis skill demonstrates how to create and tag skills in the note system."
+              }
+            },
+            "output": "3 validation errors for NoteCreateRequest\ntitle\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\ntype\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nscope\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Tagged Skill",
+                "type": "skill",
+                "scope": "global",
+                "frontmatter": {
+                  "description": "A skill with specific tags",
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "tagged"
+                  ],
+                  "tags": [
+                    "unique-tag-xyz-123",
+                    "testing"
+                  ],
+                  "required_tools": []
+                },
+                "content": "# Tagged Skill\n\nThis is a skill with specific tags for testing purposes.\n\n## Usage\n\nThis skill demonstrates how to create and tag skills in the note system."
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"skill-tagged-skill-a6aab2f6\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-tagged-skill-a6aab2f6.md\",\"warnings\":[]}"
+          },
+          {
+            "tool": "note-lark_notes_search",
+            "input": {
+              "query": "unique-tag-xyz-123"
+            },
+            "output": "{\"items\":[{\"_mtime\":1773367185.6031246,\"aliases\":[],\"description\":\"A skill with specific tags\",\"id\":\"skill-tagged-skill-a6aab2f6\",\"links\":[],\"path\":\"global/skills/skill-tagged-skill-a6aab2f6.md\",\"project\":null,\"scope\":\"global\",\"status\":\"active\",\"tags\":[\"unique-tag-xyz-123\",\"testing\"],\"title\":\"Tagged Skill\",\"type\":\"skill\",\"updated_at\":\"2026-03-13T01:59:45.600698Z\"}]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7410,
+          "output": 465,
+          "reasoning": 274,
+          "cache_read": 7039,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 32.76356601715088,
+        "agent_response": "I see the structure issue now - I need to pass `title`, `type`, and `scope` at the top level of the payload, with only the skill-specific metadata in the `frontmatter` field. Let me fix this:",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent successfully created a skill with unique tags and was able to search for it by the unique tag. After two initial failed attempts due to incorrect payload structure, the third attempt succeeded with title/type/scope at the top level and skill-specific metadata in frontmatter. The search returned the correct skill matching all expected fields.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [
+              "First two attempts failed due to misunderstanding the required payload structure - initially put all fields at top level, then put all fields in frontmatter before finding the correct split"
+            ],
+            "strengths": [
+              "Successfully created skill with specified tags including unique-tag-xyz-123",
+              "Iterated through failures to find correct API structure",
+              "Search by tag returned the correct skill with matching tags, title, and id"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "1d709c7d771fd14a",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent successfully created a skill with unique tags and was able to search for it by the unique tag. After two initial failed attempts due to incorrect payload structure, the third attempt succeeded with title/type/scope at the top level and skill-specific metadata in frontmatter. The search returned the correct skill matching all expected fields.\",\n  \"issues\": [\"First two attempts failed due to misunderstanding the required payload structure - initially put all fields at top level, then put all fields in frontmatter before finding the correct split\"],\n  \"strengths\": [\"Successfully created skill with specified tags including unique-tag-xyz-123\", \"Iterated through failures to find correct API structure\", \"Search by tag returned the correct skill with matching tags, title, and id\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 81.6942367553711,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-8030d01f",
+      "run_id": "run-e9670d80",
+      "task_id": "search.feedback.tag-based",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:59:12.853269+00:00",
+      "started_at": "2026-03-13T01:59:12.853209+00:00",
+      "completed_at": "2026-03-13T01:59:45.672837+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-8030d01f",
+    "run_id": "run-e9670d80",
+    "task_id": "search.feedback.tag-based",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:59:12.853269+00:00",
+    "started_at": "2026-03-13T01:59:12.853209+00:00",
+    "completed_at": "2026-03-13T01:59:45.672837+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

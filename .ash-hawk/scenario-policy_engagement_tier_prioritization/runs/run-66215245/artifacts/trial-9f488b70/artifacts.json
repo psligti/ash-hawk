@@ -1,0 +1,20 @@
+{
+  "command": "brief",
+  "result": {
+    "command": "brief",
+    "digest": {
+      "trends": [],
+      "trends_count": 0,
+      "posts": [],
+      "posts_count": 3,
+      "replies": [],
+      "replies_count": 0,
+      "format": "terminal"
+    },
+    "metrics": {
+      "execution_time_seconds": 2.5,
+      "sources_queried": 0
+    }
+  },
+  "verification_passed": false
+}

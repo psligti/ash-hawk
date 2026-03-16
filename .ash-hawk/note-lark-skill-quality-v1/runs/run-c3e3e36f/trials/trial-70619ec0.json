@@ -1,0 +1,186 @@
+{
+  "trial": {
+    "id": "trial-70619ec0",
+    "task_id": "skill.consistency.payload-wrapper",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-70619ec0",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:26:16.079554+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Demonstrate correct payload wrapper usage by creating a skill:\n\nCORRECT:\nnotes_create(payload={\n    \"title\": \"Payload Test\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Test\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"test\"],\n        \"required_tools\": []\n    },\n    \"body\": \"Test body\"\n})\n\nCreate the skill using this pattern.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nnotes_create(payload={\n    \"title\": \"Email Summarizer\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Summarizes long email threads into concise bullet points.\",\n        \"skill_level\": \"intermediate\",\n        \"triggers\": [\"summarize\", \"email\", \"digest\"],\n        \"required_tools\": [\"text_parser\"]\n    },\n    \"body\": \"This skill analyzes the subject line and body of an email to generate a 3-bullet point summary. It highlights action items and deadlines.\"\n})\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"notes_create\", \"input\": {}, \"error\": \"Tool not available: notes_create\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "It appears the `notes_create` tool is not available in this environment to execute the command. However, I can demonstrate the correct code pattern for creating a skill as requested:\n\n```python\nnotes_create(payload={\n    \"title\": \"Weather Forecaster\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Retrieves current weather conditions for a specified location.\",\n        \"skill_level\": \"beginner\",\n        \"triggers\": [\"weather\", \"forecast\", \"temperature\"],\n        \"required_tools\": [\"weather_api\"]\n    },\n    \"body\": \"This skill accepts a location string (e.g., 'New York, NY') and returns the current temperature, humidity, and conditions using the weather API.\"\n})\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"notes_create\", \"input\": {}, \"error\": \"Tool not available: notes_create\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nnotes_create(payload={\n    \"title\": \"CSV Data Cleaner\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Automatically cleans format inconsistencies in CSV files.\",\n        \"skill_level\": \"intermediate\",\n        \"triggers\": [\"clean\", \"csv\", \"format\"],\n        \"required_tools\": [\"pandas\", \"file_handler\"]\n    },\n    \"body\": \"Detects null values, standardizes date formats, and trims whitespace across the selected dataset.\"\n})\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"notes_create\", \"input\": {}, \"error\": \"Tool not available: notes_create\"}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "notes_create",
+            "input": {},
+            "error": "Tool not available: notes_create"
+          },
+          {
+            "tool": "notes_create",
+            "input": {},
+            "error": "Tool not available: notes_create"
+          },
+          {
+            "tool": "notes_create",
+            "input": {},
+            "error": "Tool not available: notes_create"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 444,
+          "output": 1187,
+          "reasoning": 1071,
+          "cache_read": 252,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 87.08009815216064,
+        "agent_response": "```python\nnotes_create(payload={\n    \"title\": \"CSV Data Cleaner\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"frontmatter\": {\n        \"description\": \"Automatically cleans format inconsistencies in CSV files.\",\n        \"skill_level\": \"intermediate\",\n        \"triggers\": [\"clean\", \"csv\", \"format\"],\n        \"required_tools\": [\"pandas\", \"file_handler\"]\n    },\n    \"body\": \"Detects null values, standardizes date formats, and trims whitespace across the selected dataset.\"\n})\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent correctly demonstrated the payload wrapper usage for creating a skill, following the exact pattern requested in the task. The response includes all required fields: title, type, scope, frontmatter (with description, skill_level, triggers, required_tools), and body. While the notes_create tool was not available in the environment, the demonstration of correct usage is perfect.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "Correct payload wrapper structure with notes_create(payload={...})",
+              "All type-specific fields present in frontmatter (description, skill_level, triggers, required_tools)",
+              "Follows the demonstrated pattern exactly with proper indentation and syntax"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "d8fe6e8a3f53dc35",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent correctly demonstrated the payload wrapper usage for creating a skill, following the exact pattern requested in the task. The response includes all required fields: title, type, scope, frontmatter (with description, skill_level, triggers, required_tools), and body. While the notes_create tool was not available in the environment, the demonstration of correct usage is perfect.\",\n  \"issues\": [],\n  \"strengths\": [\"Correct payload wrapper structure with notes_create(payload={...})\", \"All type-specific fields present in frontmatter (description, skill_level, triggers, required_tools)\", \"Follows the demonstrated pattern exactly with proper indentation and syntax\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 17.78043794631958,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-70619ec0",
+      "run_id": "run-c3e3e36f",
+      "task_id": "skill.consistency.payload-wrapper",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:24:48.999083+00:00",
+      "started_at": "2026-03-12T17:24:48.999011+00:00",
+      "completed_at": "2026-03-12T17:26:16.079638+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-70619ec0",
+    "run_id": "run-c3e3e36f",
+    "task_id": "skill.consistency.payload-wrapper",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:24:48.999083+00:00",
+    "started_at": "2026-03-12T17:24:48.999011+00:00",
+    "completed_at": "2026-03-12T17:26:16.079638+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

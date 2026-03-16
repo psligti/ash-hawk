@@ -1,0 +1,198 @@
+{
+  "trial": {
+    "id": "trial-4d5d30d5",
+    "task_id": "policy_ranking_score_calculation",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "policy_ranking_score_calculation",
+        "description": "Test RankingPolicy multi-dimensional scoring",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_policy",
+          "config": {}
+        },
+        "inputs": {
+          "policy": "ranking",
+          "tweets": [
+            {
+              "id": "111",
+              "author_handle": "tech_expert",
+              "author_name": "Tech Expert",
+              "text": "Just published a deep dive on distributed systems consensus algorithms with code examples",
+              "created_at": "2026-03-06T14:30:00Z",
+              "public_metrics": {
+                "like_count": 50,
+                "reply_count": 10
+              },
+              "detected_topics": [
+                "distributed systems"
+              ]
+            },
+            {
+              "id": "222",
+              "author_handle": "casual_poster",
+              "author_name": "Casual Poster",
+              "text": "Check out this link!",
+              "created_at": "2026-03-06T10:00:00Z",
+              "public_metrics": {
+                "like_count": 5,
+                "reply_count": 1
+              },
+              "detected_topics": []
+            }
+          ],
+          "relationships": {
+            "tech_expert": {
+              "handle": "tech_expert",
+              "tier": 1
+            }
+          },
+          "strategy": {
+            "topics": {
+              "primary_topics": [
+                "distributed systems",
+                "consensus"
+              ]
+            }
+          },
+          "budget": {
+            "max_pending_actions": 10,
+            "current_pending_actions": 0
+          }
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [
+            "First tweet scores higher than second",
+            "High-quality content gets recognized"
+          ],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "actions_count",
+              "gt": 0
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/ranking/policy_ranking_score_calculation.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/ranking"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-4d5d30d5",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "agent_error",
+        "error_message": "Scenario execution failed: No module named 'vox_jay'",
+        "completed_at": "2026-03-11T18:02:26.043198+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 9.107589721679688e-05,
+        "agent_response": null,
+        "error_trace": "Scenario execution failed: No module named 'vox_jay'"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-4d5d30d5",
+      "run_id": "run-9d2c95b3",
+      "task_id": "policy_ranking_score_calculation",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-11T18:02:26.043084+00:00",
+      "started_at": "2026-03-11T18:02:26.043074+00:00",
+      "completed_at": "2026-03-11T18:02:26.043207+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-4d5d30d5",
+    "run_id": "run-9d2c95b3",
+    "task_id": "policy_ranking_score_calculation",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-11T18:02:26.043084+00:00",
+    "started_at": "2026-03-11T18:02:26.043074+00:00",
+    "completed_at": "2026-03-11T18:02:26.043207+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

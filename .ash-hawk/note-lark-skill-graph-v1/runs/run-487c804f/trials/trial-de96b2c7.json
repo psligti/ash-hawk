@@ -1,0 +1,167 @@
+{
+  "trial": {
+    "id": "trial-de96b2c7",
+    "task_id": "search.feedback.empty-results",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Search for something that definitely doesn't exist:\n\"zzzznonexistent987654321\"\n\nVerify the search returns an empty items array, not an error.\n\nUse notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-de96b2c7",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:28:53.866135+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Search for something that definitely doesn't exist:\n\"zzzznonexistent987654321\"\n\nVerify the search returns an empty items array, not an error.\n\nUse notes_search with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nnotes_search(payload={\"query\": \"zzzznonexistent987654321\"})\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"notes_search\", \"input\": {}, \"error\": \"Tool not available: notes_search\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "I cannot execute this request because the `notes_search` tool is not available in the current environment. Therefore, I am unable to verify how it would respond to a non-existent query."
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "notes_search",
+            "input": {},
+            "error": "Tool not available: notes_search"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 99,
+          "output": 102,
+          "reasoning": 63,
+          "cache_read": 44,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 17.245046854019165,
+        "agent_response": "I cannot execute this request because the `notes_search` tool is not available in the current environment. Therefore, I am unable to verify how it would respond to a non-existent query.",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "reasoning": "The notes_search tool was not available in the environment, resulting in an error that prevented both the search execution and verification of an empty items array. Neither rubric criterion was met.",
+            "breakdown": {
+              "score": 0.0
+            },
+            "issues": [
+              "Tool 'notes_search' not available, causing execution failure",
+              "No empty items array was returned to verify",
+              "Unable to complete the requested verification"
+            ],
+            "strengths": [
+              "Agent correctly attempted to use notes_search with proper payload wrapper syntax",
+              "Agent appropriately handled the tool unavailability by explaining the situation"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "a8162d7c39cfc95f",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.0,\n  \"passed\": false,\n  \"reasoning\": \"The notes_search tool was not available in the environment, resulting in an error that prevented both the search execution and verification of an empty items array. Neither rubric criterion was met.\",\n  \"issues\": [\"Tool 'notes_search' not available, causing execution failure\", \"No empty items array was returned to verify\", \"Unable to complete the requested verification\"],\n  \"strengths\": [\"Agent correctly attempted to use notes_search with proper payload wrapper syntax\", \"Agent appropriately handled the tool unavailability by explaining the situation\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 9.479136943817139,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-de96b2c7",
+      "run_id": "run-487c804f",
+      "task_id": "search.feedback.empty-results",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:28:36.620940+00:00",
+      "started_at": "2026-03-12T17:28:36.620926+00:00",
+      "completed_at": "2026-03-12T17:28:53.866188+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-de96b2c7",
+    "run_id": "run-487c804f",
+    "task_id": "search.feedback.empty-results",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:28:36.620940+00:00",
+    "started_at": "2026-03-12T17:28:36.620926+00:00",
+    "completed_at": "2026-03-12T17:28:53.866188+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

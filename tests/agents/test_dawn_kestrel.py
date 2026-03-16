@@ -74,6 +74,28 @@ class TestDawnKestrelAgentRunnerInit:
         assert runner._model == "glm-4"
         assert runner._kwargs == {"temperature": 0.7, "max_tokens": 1000}
 
+    def test_init_with_mcp_servers(self):
+        runner = DawnKestrelAgentRunner(
+            provider="anthropic",
+            model="claude-3-5-sonnet",
+            mcp_servers=[
+                {
+                    "name": "note-lark",
+                    "command": "note-lark-mcp-stdio",
+                    "args": ["--stdio"],
+                    "env": {"NOTE_LARK_PROJECT": "ash-hawk"},
+                }
+            ],
+            temperature=0.2,
+        )
+
+        assert len(runner._mcp_servers) == 1
+        assert runner._mcp_servers[0].name == "note-lark"
+        assert runner._mcp_servers[0].command == "note-lark-mcp-stdio"
+        assert runner._mcp_servers[0].args == ["--stdio"]
+        assert runner._mcp_servers[0].env == {"NOTE_LARK_PROJECT": "ash-hawk"}
+        assert runner._kwargs == {"temperature": 0.2}
+
 
 class TestDawnKestrelAgentRunnerProtocol:
     def test_implements_agent_runner_protocol(self):
@@ -469,7 +491,12 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
 
         captured_enforcer = None
 
-        def capture_enforcer(pe, base=None):
+        def capture_enforcer(
+            pe,
+            base_registry=None,
+            allowed_tools_override=None,
+            denied_tools_override=None,
+        ):
             nonlocal captured_enforcer
             captured_enforcer = pe
             mock_result = MagicMock()
@@ -486,3 +513,108 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
                 )
 
         assert captured_enforcer is enforcer
+
+
+class TestDawnKestrelAgentRunnerMCPIntegration:
+    @pytest.mark.asyncio
+    async def test_run_registers_and_executes_mcp_tools(self, sample_task):
+        class MockResponseToolCall:
+            text = 'note-lark_notes_search(query="prefs")'
+            messages = []
+            tool_calls = []
+            usage = None
+            cost = 0.0
+
+        class MockResponseFinal:
+            text = "Done"
+            messages = []
+            tool_calls = []
+            usage = None
+            cost = 0.0
+
+        class FakeMcpClient:
+            instances: list["FakeMcpClient"] = []
+
+            def __init__(self, config):
+                self.config = config
+                self.calls = []
+                self.started = False
+                self.closed = False
+                FakeMcpClient.instances.append(self)
+
+            async def start(self):
+                self.started = True
+
+            async def list_tools(self):
+                return [
+                    {
+                        "name": "notes_search",
+                        "description": "Search notes",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string"},
+                            },
+                            "required": ["query"],
+                        },
+                    }
+                ]
+
+            async def call_tool(self, tool_name, arguments):
+                self.calls.append((tool_name, arguments))
+                query = arguments.get("query", "")
+                return {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"MCP tool {tool_name} called with {query}",
+                        }
+                    ]
+                }
+
+            async def close(self):
+                self.closed = True
+
+        runner = DawnKestrelAgentRunner(
+            provider="anthropic",
+            model="claude-3-5-sonnet",
+            mcp_servers=[
+                {
+                    "name": "note-lark",
+                    "command": "note-lark-mcp-stdio",
+                }
+            ],
+        )
+
+        policy = ToolSurfacePolicy(
+            allowed_tools=["note-lark_*"],
+            timeout_seconds=60.0,
+        )
+        enforcer = PolicyEnforcer(policy)
+
+        mock_client = MagicMock()
+        mock_client.complete = AsyncMock(side_effect=[MockResponseToolCall(), MockResponseFinal()])
+
+        with patch.object(runner, "_get_client", return_value=mock_client):
+            with patch("ash_hawk.agents.dawn_kestrel._McpStdioClient", FakeMcpClient):
+                with patch.object(
+                    runner,
+                    "_create_filtered_registry",
+                    side_effect=lambda policy_enforcer, base_registry=None, **kwargs: base_registry,
+                ):
+                    transcript, outcome = await runner.run(
+                        task=sample_task,
+                        policy_enforcer=enforcer,
+                        config={},
+                    )
+
+        assert outcome.status == EvalStatus.COMPLETED
+        assert len(transcript.tool_calls) == 1
+        assert transcript.tool_calls[0]["tool"] == "note-lark_notes_search"
+        assert "MCP tool notes_search called with prefs" in transcript.tool_calls[0]["output"]
+
+        assert len(FakeMcpClient.instances) == 1
+        client_instance = FakeMcpClient.instances[0]
+        assert client_instance.started is True
+        assert client_instance.closed is True
+        assert client_instance.calls == [("notes_search", {"query": "prefs"})]

@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-f0ee36ab",
+    "task_id": "search.feedback.empty-results",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Search for something that definitely doesn't exist:\n\"zzzznonexistent987654321\"\n\nVerify the search returns an empty items array, not an error.\n\nUse notes_search with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-f0ee36ab",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:27:57.974106+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Search for something that definitely doesn't exist:\n\"zzzznonexistent987654321\"\n\nVerify the search returns an empty items array, not an error.\n\nUse notes_search with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"name\": \"notes_search\",\n  \"arguments\": \"{\\\"query\\\": \\\"zzzznonexistent987654321\\\"}\"\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 46,
+          "output": 3733,
+          "reasoning": 3697,
+          "cache_read": 2,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 46.66276812553406,
+        "agent_response": "```json\n{\n  \"name\": \"notes_search\",\n  \"arguments\": \"{\\\"query\\\": \\\"zzzznonexistent987654321\\\"}\"\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate:\n1. Search executed without error (0.5 points)\n2. Empty items array returned (0.5 points)\n\nScore: sum of points\n.md. Expected prompt at: Evaluate:\n1. Search executed without error (0.5 points)\n2. Empty items array returned (0.5 points)\n\nScore: sum of points\n.md",
+          "execution_time_seconds": 0.0007739067077636719,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-f0ee36ab",
+      "run_id": "run-a56f5c1c",
+      "task_id": "search.feedback.empty-results",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:27:11.311238+00:00",
+      "started_at": "2026-03-12T16:27:11.311223+00:00",
+      "completed_at": "2026-03-12T16:27:57.974137+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-f0ee36ab",
+    "run_id": "run-a56f5c1c",
+    "task_id": "search.feedback.empty-results",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:27:11.311238+00:00",
+    "started_at": "2026-03-12T16:27:11.311223+00:00",
+    "completed_at": "2026-03-12T16:27:57.974137+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

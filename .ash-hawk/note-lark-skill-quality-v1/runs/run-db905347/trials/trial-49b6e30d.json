@@ -1,0 +1,101 @@
+{
+  "trial": {
+    "id": "trial-49b6e30d",
+    "task_id": "skill.clarity.description.not-empty",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-49b6e30d",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 300.0s",
+        "completed_at": "2026-03-12T20:27:50.125061+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 299.9400668144226,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-49b6e30d",
+      "run_id": "run-db905347",
+      "task_id": "skill.clarity.description.not-empty",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T20:22:50.186002+00:00",
+      "started_at": "2026-03-12T20:22:50.185969+00:00",
+      "completed_at": "2026-03-12T20:27:50.126085+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-49b6e30d",
+    "run_id": "run-db905347",
+    "task_id": "skill.clarity.description.not-empty",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T20:22:50.186002+00:00",
+    "started_at": "2026-03-12T20:22:50.185969+00:00",
+    "completed_at": "2026-03-12T20:27:50.126085+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

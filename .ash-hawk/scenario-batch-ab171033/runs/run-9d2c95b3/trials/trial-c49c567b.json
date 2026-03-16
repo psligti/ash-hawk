@@ -1,0 +1,250 @@
+{
+  "trial": {
+    "id": "trial-c49c567b",
+    "task_id": "brief_post_generation",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "brief_post_generation",
+        "description": "Validate brief generates post drafts for available trends",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_command",
+          "config": {}
+        },
+        "inputs": {
+          "command": "brief",
+          "config": {
+            "posts": 3,
+            "replies": 1,
+            "trends_limit": 3
+          },
+          "mock_sources": {
+            "trends": [
+              {
+                "topic": "Eval-driven development"
+              },
+              {
+                "topic": "Agent reliability"
+              },
+              {
+                "topic": "Signal design"
+              }
+            ],
+            "feed_items": [
+              {
+                "handle": "opslead",
+                "text": "How do you measure eval drift?",
+                "tier": 2,
+                "is_question": true
+              }
+            ]
+          },
+          "strategy": {}
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "command",
+              "expected": "brief"
+            },
+            {
+              "path": "digest.posts_count",
+              "expected": 3
+            },
+            {
+              "path": "digest.posts.0.topic",
+              "expected": "Eval-driven development"
+            },
+            {
+              "path": "digest.posts.0.draft",
+              "expected": "Draft for Eval-driven development"
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_post_generation.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-c49c567b",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-11T18:02:25.974612+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Execute command: brief",
+              "inputs": [
+                "command",
+                "config",
+                "mock_sources",
+                "strategy"
+              ]
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "command": "brief",
+              "status": "completed",
+              "trends_count": 3,
+              "posts_count": 3,
+              "replies_count": 1
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "All assertions passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-ab171033/runs/run-9d2c95b3/artifacts/trial-c49c567b/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0001888275146484375,
+        "agent_response": "{\"command\": \"brief\", \"digest\": {\"trends\": [{\"topic\": \"Eval-driven development\"}, {\"topic\": \"Agent reliability\"}, {\"topic\": \"Signal design\"}], \"trends_count\": 3, \"posts\": [{\"topic\": \"Eval-driven development\", \"draft\": \"Draft for Eval-driven development\"}, {\"topic\": \"Agent reliability\", \"draft\": \"Draft for Agent reliability\"}, {\"topic\": \"Signal design\", \"draft\": \"Draft for Signal design\"}], \"posts_count\": 3, \"replies\": [{\"handle\": \"opslead\", \"text\": \"How do you measure eval drift?\", \"tier\": 2, \"is_question\": true}], \"replies_count\": 1, \"format\": \"terminal\"}, \"metrics\": {\"execution_time_seconds\": 2.5, \"sources_queried\": 2}}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.0967254638671875e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-c49c567b",
+      "run_id": "run-9d2c95b3",
+      "task_id": "brief_post_generation",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-11T18:02:25.974403+00:00",
+      "started_at": "2026-03-11T18:02:25.974393+00:00",
+      "completed_at": "2026-03-11T18:02:25.974618+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-c49c567b",
+    "run_id": "run-9d2c95b3",
+    "task_id": "brief_post_generation",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-11T18:02:25.974403+00:00",
+    "started_at": "2026-03-11T18:02:25.974393+00:00",
+    "completed_at": "2026-03-11T18:02:25.974618+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -23,6 +23,11 @@ You can also set the default agent in suite YAML:
 ```yaml
 agent:
   name: build
+
+  # Optional: configure MCP servers for the runtime
+  mcp_servers:
+    - name: note-lark
+      command: note-lark-mcp-stdio
 ```
 
 Then run without CLI agent override:
@@ -34,6 +39,7 @@ ash-hawk run path/to/suite.yaml
 ## Documentation
 
 - **[SKILL.md](SKILL.md)** - Complete usage guide for coding agents
+- **[docs/skills/evals/README.md](docs/skills/evals/README.md)** - Skill graph for authoring evals (suites + scenarios)
 - **[docs/PHASE2.md](docs/PHASE2.md)** - Phase 2 roadmap (pytest-like features)
 
 ## Examples

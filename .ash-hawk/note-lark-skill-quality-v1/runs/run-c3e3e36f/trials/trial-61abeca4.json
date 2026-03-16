@@ -1,0 +1,166 @@
+{
+  "trial": {
+    "id": "trial-61abeca4",
+    "task_id": "skill.clarity.body.has-structure",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill with a well-structured body containing:\n- Overview section\n- When to Use section\n- How to Apply section\n- Examples section\n- Anti-Patterns section\n\nSkill details:\n- title: \"Git Atomic Commits\"\n- type: skill\n- scope: global\n- description: \"Make small, focused commits that do ONE thing\"\n- skill_level: intermediate\n- triggers: [\"commit\", \"git\", \"atomic\"]\n- required_tools: [\"git\"]\n\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-61abeca4",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:25:32.386926+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill with a well-structured body containing:\n- Overview section\n- When to Use section\n- How to Apply section\n- Examples section\n- Anti-Patterns section\n\nSkill details:\n- title: \"Git Atomic Commits\"\n- type: skill\n- scope: global\n- description: \"Make small, focused commits that do ONE thing\"\n- skill_level: intermediate\n- triggers: [\"commit\", \"git\", \"atomic\"]\n- required_tools: [\"git\"]\n\nUse notes_create with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nnotes_create(payload={\n    \"title\": \"Git Atomic Commits\",\n    \"content\": \"\"\"# Git Atomic Commits\n\n**Type:** skill  \n**Scope:** global  \n**Skill Level:** intermediate  \n**Required Tools:** git  \n\n## Overview\nAn atomic commit is a change set that is focused on a single, logical task. Ideally, it represents the smallest meaningful unit of work that can be independently understood, tested, and reverted. The commit should not leave the repository in a broken state and should not mix unrelated concerns (e.g., bug fixes, feature additions, and refactoring should be in separate commits).\n\n## When to Use\n- **Active Development:** When breaking down a complex feature into smaller, manageable pieces.\n- **Code Reviews:** To make it easier for reviewers to understand the intent and logic of changes without wading through unrelated \"noise.\"\n- **Debugging/Bisecting:** To make `git bisect` effective; if a bug was introduced, you want to narrow it down to a specific logical change, not a massive merge.\n- **Refactoring:** When cleaning up code, ensure the refactoring is committed separately from the functional changes that rely on it.\n\n## How to Apply\n1. **Plan Your Changes:** Before coding, mentally (or physically) separate the work into distinct steps.\n2. **Stage Selectively:** Do not use `git add .` blindly. Use `git add -p` (patch) to select specific hunks of code that relate to the current logical unit.\n3. **Verify Diff:** Run `git diff --staged` to ensure only the relevant changes for *this specific commit* are included.\n4. **Write Clear Messages:** Use the imperative mood (\"Add feature\" not \"Added feature\"). Ensure the message describes the \"why\" and \"what,\" not just the \"how.\"\n5. **Repeat:** Commit, then stage the next logical unit of work, and repeat until all changes are saved.\n\n## Examples\n\n### Scenario: Fixing a bug and adding a new feature.\n\n**Non-Atomic (Bad):**\n```bash\ngit add .\ngit commit -m \"Update user profile and fix login bug\"\n```\n*This commit mixes a feature addition (update profile) with a bug fix (login bug).*\n\n**Atomic (Good):**\n```bash\n# Step 1: Fix the bug\ngit add login_controller.js\ngit commit -m \"Fix null pointer exception in login validation\"\n\n# Step 2: Add the new feature\ngit add profile_view.js profile_model.js\ngit commit -m \"Add avatar upload to user profile\"\n```\n\n### Scenario: Refactoring syntax vs changing logic.\n\n**Atomic (Good):**\n```bash\n# Step 1: Refactor only (no logic change)\ngit add -p\ngit commit -m \"Refactor: convert functions to arrow syntax\"\n\n# Step 2: Change logic\ngit add -p\ngit commit -m \"Fix calculateTotal to include tax\"\n```\n\n## Anti-Patterns\n- **The \"Mega-Commit\":** Committing days of work in a single giant push with a message like \"WIP\" or \"lots of changes.\" This destroys history and makes reverting impossible.\n- **Formatting Mixing:** Mixing whitespace changes or import reordering with actual logic changes. This makes reading the diff extremely difficult.\n- **Incomplete Features:** Committing code that breaks the build or tests because the feature is only half-implemented. (Ideally, atomic commits are build-passing, though feature flags are sometimes needed).\n- **Debugging Artifacts:** Committing `console.log` statements, debugger breakpoints, or commented-out code.\n\"\"\"\n})\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"notes_create\", \"input\": {}, \"error\": \"Tool not available: notes_create\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "Since the `notes_create` tool is not available in this environment, I have compiled the skill content below for you to copy or use as needed.\n\n```markdown\n# Git Atomic Commits\n\n**Type:** skill  \n**Scope:** global  \n**Skill Level:** intermediate  \n**Required Tools:** git  \n**Triggers:** commit, git, atomic  \n\n## Overview\nAn atomic commit is a change set that is focused on a single, logical task. Ideally, it represents the smallest meaningful unit of work that can be independently understood, tested, and reverted. The commit should not leave the repository in a broken state and should not mix unrelated concerns (e.g., bug fixes, feature additions, and refactoring should be in separate commits).\n\n## When to Use\n- **Active Development:** When breaking down a complex feature into smaller, manageable pieces.\n- **Code Reviews:** To make it easier for reviewers to understand the intent and logic of changes without wading through unrelated \"noise.\"\n- **Debugging/Bisecting:** To make `git bisect` effective; if a bug was introduced, you want to narrow it down to a specific logical change, not a massive merge.\n- **Refactoring:** When cleaning up code, ensure the refactoring is committed separately from the functional changes that rely on it.\n\n## How to Apply\n1. **Plan Your Changes:** Before coding, mentally (or physically) separate the work into distinct steps.\n2. **Stage Selectively:** Do not use `git add .` blindly. Use `git add -p` (patch) to select specific hunks of code that relate to the current logical unit.\n3. **Verify Diff:** Run `git diff --staged` to ensure only the relevant changes for *this specific commit* are included.\n4. **Write Clear Messages:** Use the imperative mood (\"Add feature\" not \"Added feature\"). Ensure the message describes the \"why\" and \"what,\" not just the \"how.\"\n5. **Repeat:** Commit, then stage the next logical unit of work, and repeat until all changes are saved.\n\n## Examples\n\n### Scenario: Fixing a bug and adding a new feature.\n\n**Non-Atomic (Bad):**\n```bash\ngit add .\ngit commit -m \"Update user profile and fix login bug\"\n```\n*This commit mixes a feature addition (update profile) with a bug fix (login bug).*\n\n**Atomic (Good):**\n```bash\n# Step 1: Fix the bug\ngit add login_controller.js\ngit commit -m \"Fix null pointer exception in login validation\"\n\n# Step 2: Add the new feature\ngit add profile_view.js profile_model.js\ngit commit -m \"Add avatar upload to user profile\"\n```\n\n### Scenario: Refactoring syntax vs changing logic.\n\n**Atomic (Good):**\n```bash\n# Step 1: Refactor only (no logic change)\ngit add -p\ngit commit -m \"Refactor: convert functions to arrow syntax\"\n\n# Step 2: Change logic\ngit add -p\ngit commit -m \"Fix calculateTotal to include tax\"\n```\n\n## Anti-Patterns\n- **The \"Mega-Commit\":** Committing days of work in a single giant push with a message like \"WIP\" or \"lots of changes.\" This destroys history and makes reverting impossible.\n- **Formatting Mixing:** Mixing whitespace changes or import reordering with actual logic changes. This makes reading the diff extremely difficult.\n- **Incomplete Features:** Committing code that breaks the build or tests because the feature is only half-implemented. (Ideally, atomic commits are build-passing, though feature flags are sometimes needed).\n- **Debugging Artifacts:** Committing `console.log` statements, debugger breakpoints, or commented-out code.\n```"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "notes_create",
+            "input": {},
+            "error": "Tool not available: notes_create"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 899,
+          "output": 2438,
+          "reasoning": 1660,
+          "cache_read": 109,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 120.11382174491882,
+        "agent_response": "Since the `notes_create` tool is not available in this environment, I have compiled the skill content below for you to copy or use as needed.\n\n```markdown\n# Git Atomic Commits\n\n**Type:** skill  \n**Scope:** global  \n**Skill Level:** intermediate  \n**Required Tools:** git  \n**Triggers:** commit, git, atomic  \n\n## Overview\nAn atomic commit is a change set that is focused on a single, logical task. Ideally, it represents the smallest meaningful unit of work that can be independently understood, tested, and reverted. The commit should not leave the repository in a broken state and should not mix unrelated concerns (e.g., bug fixes, feature additions, and refactoring should be in separate commits).\n\n## When to Use\n- **Active Development:** When breaking down a complex feature into smaller, manageable pieces.\n- **Code Reviews:** To make it easier for reviewers to understand the intent and logic of changes without wading through unrelated \"noise.\"\n- **Debugging/Bisecting:** To make `git bisect` effective; if a bug was introduced, you want to narrow it down to a specific logical change, not a massive merge.\n- **Refactoring:** When cleaning up code, ensure the refactoring is committed separately from the functional changes that rely on it.\n\n## How to Apply\n1. **Plan Your Changes:** Before coding, mentally (or physically) separate the work into distinct steps.\n2. **Stage Selectively:** Do not use `git add .` blindly. Use `git add -p` (patch) to select specific hunks of code that relate to the current logical unit.\n3. **Verify Diff:** Run `git diff --staged` to ensure only the relevant changes for *this specific commit* are included.\n4. **Write Clear Messages:** Use the imperative mood (\"Add feature\" not \"Added feature\"). Ensure the message describes the \"why\" and \"what,\" not just the \"how.\"\n5. **Repeat:** Commit, then stage the next logical unit of work, and repeat until all changes are saved.\n\n## Examples\n\n### Scenario: Fixing a bug and adding a new feature.\n\n**Non-Atomic (Bad):**\n```bash\ngit add .\ngit commit -m \"Update user profile and fix login bug\"\n```\n*This commit mixes a feature addition (update profile) with a bug fix (login bug).*\n\n**Atomic (Good):**\n```bash\n# Step 1: Fix the bug\ngit add login_controller.js\ngit commit -m \"Fix null pointer exception in login validation\"\n\n# Step 2: Add the new feature\ngit add profile_view.js profile_model.js\ngit commit -m \"Add avatar upload to user profile\"\n```\n\n### Scenario: Refactoring syntax vs changing logic.\n\n**Atomic (Good):**\n```bash\n# Step 1: Refactor only (no logic change)\ngit add -p\ngit commit -m \"Refactor: convert functions to arrow syntax\"\n\n# Step 2: Change logic\ngit add -p\ngit commit -m \"Fix calculateTotal to include tax\"\n```\n\n## Anti-Patterns\n- **The \"Mega-Commit\":** Committing days of work in a single giant push with a message like \"WIP\" or \"lots of changes.\" This destroys history and makes reverting impossible.\n- **Formatting Mixing:** Mixing whitespace changes or import reordering with actual logic changes. This makes reading the diff extremely difficult.\n- **Incomplete Features:** Committing code that breaks the build or tests because the feature is only half-implemented. (Ideally, atomic commits are build-passing, though feature flags are sometimes needed).\n- **Debugging Artifacts:** Committing `console.log` statements, debugger breakpoints, or commented-out code.\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The skill content contains all 5 required sections: Overview, When to Use, How to Apply, Examples, and Anti-Patterns. Each section is well-developed with relevant, actionable content.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "All required sections present and properly labeled",
+              "Well-structured and comprehensive content",
+              "Practical code examples showing both correct and incorrect approaches",
+              "Clear anti-patterns section with specific warnings",
+              "Step-by-step guidance in the How to Apply section"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "37870da83f9291ed",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The skill content contains all 5 required sections: Overview, When to Use, How to Apply, Examples, and Anti-Patterns. Each section is well-developed with relevant, actionable content.\",\n  \"issues\": [],\n  \"strengths\": [\"All required sections present and properly labeled\", \"Well-structured and comprehensive content\", \"Practical code examples showing both correct and incorrect approaches\", \"Clear anti-patterns section with specific warnings\", \"Step-by-step guidance in the How to Apply section\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 15.323094129562378,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-61abeca4",
+      "run_id": "run-c3e3e36f",
+      "task_id": "skill.clarity.body.has-structure",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:23:32.273043+00:00",
+      "started_at": "2026-03-12T17:23:32.273025+00:00",
+      "completed_at": "2026-03-12T17:25:32.386938+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-61abeca4",
+    "run_id": "run-c3e3e36f",
+    "task_id": "skill.clarity.body.has-structure",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:23:32.273043+00:00",
+    "started_at": "2026-03-12T17:23:32.273025+00:00",
+    "completed_at": "2026-03-12T17:25:32.386938+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

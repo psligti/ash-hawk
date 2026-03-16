@@ -1,0 +1,268 @@
+{
+  "trial": {
+    "id": "trial-fade99fc",
+    "task_id": "brief_generate_basic",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "brief_generate_basic",
+        "description": "Generate a brief with trends, posts, and replies using realistic mock inputs",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_command",
+          "config": {}
+        },
+        "inputs": {
+          "command": "brief",
+          "config": {
+            "posts": 2,
+            "replies": 3,
+            "trends_limit": 2,
+            "output": "json"
+          },
+          "mock_sources": {
+            "trends": [
+              {
+                "topic": "Agent eval design"
+              },
+              {
+                "topic": "Reward shaping"
+              },
+              {
+                "topic": "Latency budgets"
+              }
+            ],
+            "feed_items": [
+              {
+                "handle": "alice",
+                "text": "How do you avoid reward hacking in agent tests?",
+                "tier": 1,
+                "is_question": true
+              },
+              {
+                "handle": "bob",
+                "text": "Dense checkpoints improved our model reliability by 25%.",
+                "tier": 2,
+                "is_question": false
+              },
+              {
+                "handle": "carol",
+                "text": "Any practical strategy for incremental eval rollouts?",
+                "tier": 3,
+                "is_question": true
+              }
+            ]
+          },
+          "strategy": {
+            "primary_topics": [
+              "agents",
+              "evals"
+            ]
+          }
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "command",
+              "expected": "brief"
+            },
+            {
+              "path": "digest.trends_count",
+              "expected": 2
+            },
+            {
+              "path": "digest.posts_count",
+              "expected": 2
+            },
+            {
+              "path": "digest.replies_count",
+              "expected": 3
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief/brief_generate_basic.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/brief"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-fade99fc",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-11T17:59:12.512131+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Execute command: brief",
+              "inputs": [
+                "command",
+                "config",
+                "mock_sources",
+                "strategy"
+              ]
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "command": "brief",
+              "status": "completed",
+              "trends_count": 2,
+              "posts_count": 2,
+              "replies_count": 3
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "All assertions passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-608841d9/runs/run-f1d2896a/artifacts/trial-fade99fc/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.00031113624572753906,
+        "agent_response": "{\"command\": \"brief\", \"digest\": {\"trends\": [{\"topic\": \"Agent eval design\"}, {\"topic\": \"Reward shaping\"}], \"trends_count\": 2, \"posts\": [{\"topic\": \"Agent eval design\", \"draft\": \"Draft for Agent eval design\"}, {\"topic\": \"Reward shaping\", \"draft\": \"Draft for Reward shaping\"}], \"posts_count\": 2, \"replies\": [{\"handle\": \"alice\", \"text\": \"How do you avoid reward hacking in agent tests?\", \"tier\": 1, \"is_question\": true}, {\"handle\": \"bob\", \"text\": \"Dense checkpoints improved our model reliability b\", \"tier\": 2, \"is_question\": false}, {\"handle\": \"carol\", \"text\": \"Any practical strategy for incremental eval rollou\", \"tier\": 3, \"is_question\": true}], \"replies_count\": 3, \"format\": \"json\"}, \"metrics\": {\"execution_time_seconds\": 2.5, \"sources_queried\": 2}}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.5020370483398438e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-fade99fc",
+      "run_id": "run-f1d2896a",
+      "task_id": "brief_generate_basic",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-11T17:59:12.511772+00:00",
+      "started_at": "2026-03-11T17:59:12.511752+00:00",
+      "completed_at": "2026-03-11T17:59:12.512144+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-fade99fc",
+    "run_id": "run-f1d2896a",
+    "task_id": "brief_generate_basic",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-11T17:59:12.511772+00:00",
+    "started_at": "2026-03-11T17:59:12.511752+00:00",
+    "completed_at": "2026-03-11T17:59:12.512144+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

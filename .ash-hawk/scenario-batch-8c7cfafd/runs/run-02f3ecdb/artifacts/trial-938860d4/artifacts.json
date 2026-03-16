@@ -1,0 +1,38 @@
+{
+  "command": "pulse",
+  "result": {
+    "command": "pulse",
+    "targets": [
+      {
+        "id": "hn_1",
+        "author": "hackernews",
+        "text": "Show HN: I built a distributed task queue",
+        "metrics": {
+          "likes": 150
+        }
+      },
+      {
+        "id": "lob_1",
+        "author": "lobsters",
+        "text": "Understanding memory models",
+        "metrics": {
+          "likes": 45
+        }
+      },
+      {
+        "id": "gh_1",
+        "author": "github_trending",
+        "text": "owner/awesome-tool: CLI tool for automation",
+        "metrics": {
+          "likes": 500
+        }
+      }
+    ],
+    "targets_count": 3,
+    "sources": [
+      "x_feed"
+    ],
+    "execution_time_seconds": 1.5
+  },
+  "verification_passed": true
+}

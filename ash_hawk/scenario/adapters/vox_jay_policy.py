@@ -6,7 +6,7 @@ It supports testing EngagementPolicy, RankingPolicy, StrategyPolicy, and MasterP
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -131,7 +131,7 @@ class VoxJayPolicyAdapter:
             try:
                 created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
             except ValueError:
-                created_at = datetime.now(timezone.utc)
+                created_at = datetime.now(UTC)
 
             tweet_context = TweetContext(
                 id=tweet_data.get("id", ""),

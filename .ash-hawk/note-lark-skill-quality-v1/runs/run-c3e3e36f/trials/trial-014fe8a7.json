@@ -1,0 +1,153 @@
+{
+  "trial": {
+    "id": "trial-014fe8a7",
+    "task_id": "skill.memory.creates-learning",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-014fe8a7",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:26:33.589302+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"payload\": {\n    \"title\": \"Test Learning\",\n    \"memory_type\": \"procedural\",\n    \"scope\": \"project\",\n    \"project\": \"note-lark\",\n    \"status\": \"structured\",\n    \"confidence\": 0.9,\n    \"tags\": [\n      \"test\",\n      \"learning\"\n    ],\n    \"body\": \"This is a test learning about note-lark.\"\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 93,
+          "output": 786,
+          "reasoning": 691,
+          "cache_read": 4,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 12.142452955245972,
+        "agent_response": "```json\n{\n  \"payload\": {\n    \"title\": \"Test Learning\",\n    \"memory_type\": \"procedural\",\n    \"scope\": \"project\",\n    \"project\": \"note-lark\",\n    \"status\": \"structured\",\n    \"confidence\": 0.9,\n    \"tags\": [\n      \"test\",\n      \"learning\"\n    ],\n    \"body\": \"This is a test learning about note-lark.\"\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.7,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent correctly structured the memory entry with all required fields and values. However, the rubric explicitly requires 'memory_structured called with payload wrapper', which would mean the agent should indicate they are calling the memory_structured function together with the payload wrapper. The agent only provided the JSON payload wrapper without showing that memory_structured was being called.",
+            "breakdown": {
+              "score": 0.7
+            },
+            "issues": [
+              "The agent did not indicate that memory_structured was being called, only provided the payload wrapper"
+            ],
+            "strengths": [
+              "All required fields were included with correct values (memory_type, status, confidence)",
+              "Proper JSON formatting",
+              "Correct use of payload wrapper structure",
+              "Memory entry created successfully"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "4cebcf684cc92fb7",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.7,\n  \"passed\": false,\n  \"reasoning\": \"The agent correctly structured the memory entry with all required fields and values. However, the rubric explicitly requires 'memory_structured called with payload wrapper', which would mean the agent should indicate they are calling the memory_structured function together with the payload wrapper. The agent only provided the JSON payload wrapper without showing that memory_structured was being called.\",\n  \"issues\": [\"The agent did not indicate that memory_structured was being called, only provided the payload wrapper\"],\n  \"strengths\": [\"All required fields were included with correct values (memory_type, status, confidence)\", \"Proper JSON formatting\", \"Correct use of payload wrapper structure\", \"Memory entry created successfully\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 116.43820309638977,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.7,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-014fe8a7",
+      "run_id": "run-c3e3e36f",
+      "task_id": "skill.memory.creates-learning",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:26:21.446740+00:00",
+      "started_at": "2026-03-12T17:26:21.446697+00:00",
+      "completed_at": "2026-03-12T17:26:33.589327+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-014fe8a7",
+    "run_id": "run-c3e3e36f",
+    "task_id": "skill.memory.creates-learning",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:26:21.446740+00:00",
+    "started_at": "2026-03-12T17:26:21.446697+00:00",
+    "completed_at": "2026-03-12T17:26:33.589327+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

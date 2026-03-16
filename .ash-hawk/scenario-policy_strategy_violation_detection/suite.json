@@ -13,7 +13,7 @@
           "description": "Test StrategyPolicy violation detection and enforcement",
           "sut": {
             "type": "agentic_sdk",
-            "adapter": "vox_jay_policy",
+            "adapter": "vox_jay_command",
             "config": {}
           },
           "inputs": {
@@ -92,8 +92,8 @@
             }
           ]
         },
-        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/strategy/policy_strategy_violation_detection.scenario.yaml",
-        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/strategy"
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp_74zlmt6/000-policy_strategy_violation_detection.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp_74zlmt6"
       },
       "expected_output": null,
       "grader_specs": [
@@ -107,10 +107,10 @@
       ],
       "tags": [
         "scenario",
-        "vox_jay_policy"
+        "vox_jay_command"
       ],
       "metadata": {
-        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/policies/strategy/policy_strategy_violation_detection.scenario.yaml"
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp_74zlmt6/000-policy_strategy_violation_detection.scenario.yaml"
       },
       "fixtures": {},
       "timeout_seconds": 30.0,

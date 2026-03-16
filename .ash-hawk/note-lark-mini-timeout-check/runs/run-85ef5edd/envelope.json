@@ -1,0 +1,18 @@
+{
+  "run_id": "run-85ef5edd",
+  "suite_id": "note-lark-mini-timeout-check",
+  "suite_hash": "4d8a5053eb148c58",
+  "harness_version": "0.1.0",
+  "git_commit": null,
+  "agent_name": "build",
+  "agent_version": null,
+  "provider": "zai-coding-plan",
+  "model": "glm-4.7",
+  "model_params": {},
+  "seed": null,
+  "tool_policy_hash": "d783e1cb5350e2e4",
+  "python_version": "3.12.6",
+  "os_info": "macOS-15.7.3-arm64-arm-64bit",
+  "config_snapshot": {},
+  "created_at": "2026-03-13T00:18:27.931680+00:00"
+}

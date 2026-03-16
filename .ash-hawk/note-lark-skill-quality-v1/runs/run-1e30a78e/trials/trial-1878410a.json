@@ -1,0 +1,214 @@
+{
+  "trial": {
+    "id": "trial-1878410a",
+    "task_id": "skill.validation.frontmatter.required-fields",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Attempt to create a skill with skill-specific fields at top-level (intentionally wrong):\n   notes_create(payload={\n     \"title\": \"Broken Skill Schema\",\n     \"type\": \"skill\",\n     \"scope\": \"global\",\n     \"description\": \"Wrong placement\",\n     \"skill_level\": \"beginner\",\n     \"triggers\": [\"broken\"],\n     \"required_tools\": [],\n     \"body\": \"Should fail\"\n   })\n\n2. Then create the same skill correctly with those fields in frontmatter.\n\n3. Search for \"Broken Skill Schema\" and verify the corrected note is present.\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-1878410a",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:56:44.021609+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Attempt to create a skill with skill-specific fields at top-level (intentionally wrong):\n   notes_create(payload={\n     \"title\": \"Broken Skill Schema\",\n     \"type\": \"skill\",\n     \"scope\": \"global\",\n     \"description\": \"Wrong placement\",\n     \"skill_level\": \"beginner\",\n     \"triggers\": [\"broken\"],\n     \"required_tools\": [],\n     \"body\": \"Should fail\"\n   })\n\n2. Then create the same skill correctly with those fields in frontmatter.\n\n3. Search for \"Broken Skill Schema\" and verify the corrected note is present.\n\nUse payload wrapper for all calls.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll help you test the skill schema by creating a broken note and then the corrected version."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Broken Skill Schema\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Wrong placement\", \"skill_level\": \"beginner\", \"triggers\": [\"broken\"], \"required_tools\": [], \"body\": \"Should fail\"}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Broken Skill Schema\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"Wrong placement\", \"skill_level\": \"beginner\", \"triggers\": [\"broken\"], \"required_tools\": []}, \"body\": \"Should fail\"}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-broken-skill-schema-7a6f0a5e\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-broken-skill-schema-7a6f0a5e.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"Broken Skill Schema\"}, \"output\": \"{\\\"items\\\":[{\\\"_mtime\\\":1773366998.4456885,\\\"aliases\\\":[],\\\"description\\\":\\\"Wrong placement\\\",\\\"id\\\":\\\"skill-broken-skill-schema-7a6f0a5e\\\",\\\"links\\\":[],\\\"path\\\":\\\"global/skills/skill-broken-skill-schema-7a6f0a5e.md\\\",\\\"project\\\":null,\\\"scope\\\":\\\"global\\\",\\\"status\\\":\\\"active\\\",\\\"tags\\\":[],\\\"title\\\":\\\"Broken Skill Schema\\\",\\\"type\\\":\\\"skill\\\",\\\"updated_at\\\":\\\"2026-03-13T01:56:38.442760Z\\\"}]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Broken Skill Schema",
+                "type": "skill",
+                "scope": "global",
+                "description": "Wrong placement",
+                "skill_level": "beginner",
+                "triggers": [
+                  "broken"
+                ],
+                "required_tools": [],
+                "body": "Should fail"
+              }
+            },
+            "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Broken Skill Schema",
+                "type": "skill",
+                "scope": "global",
+                "frontmatter": {
+                  "description": "Wrong placement",
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "broken"
+                  ],
+                  "required_tools": []
+                },
+                "body": "Should fail"
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"skill-broken-skill-schema-7a6f0a5e\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-broken-skill-schema-7a6f0a5e.md\",\"warnings\":[]}"
+          },
+          {
+            "tool": "note-lark_notes_search",
+            "input": {
+              "query": "Broken Skill Schema"
+            },
+            "output": "{\"items\":[{\"_mtime\":1773366998.4456885,\"aliases\":[],\"description\":\"Wrong placement\",\"id\":\"skill-broken-skill-schema-7a6f0a5e\",\"links\":[],\"path\":\"global/skills/skill-broken-skill-schema-7a6f0a5e.md\",\"project\":null,\"scope\":\"global\",\"status\":\"active\",\"tags\":[],\"title\":\"Broken Skill Schema\",\"type\":\"skill\",\"updated_at\":\"2026-03-13T01:56:38.442760Z\"}]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7196,
+          "output": 75,
+          "reasoning": 58,
+          "cache_read": 6982,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 25.554056882858276,
+        "agent_response": null,
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "reasoning": "The agent successfully completed all three required steps: (1) attempted to create a skill with top-level fields which was correctly rejected with an appropriate error message, (2) correctly created the same skill with skill-specific fields in the frontmatter dict which succeeded with ok:true, and (3) verified the corrected skill exists through search which returned the skill with ID 'skill-broken-skill-schema-7a6f0a5e' and title 'Broken Skill Schema'.",
+            "breakdown": {
+              "score": 1.0
+            },
+            "issues": [],
+            "strengths": [
+              "Properly handled the intentional schema error rejection",
+              "Correctly structured the second attempt with fields in frontmatter",
+              "Successfully verified the skill was created via search"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "66981bb4436bd46c",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent successfully completed all three required steps: (1) attempted to create a skill with top-level fields which was correctly rejected with an appropriate error message, (2) correctly created the same skill with skill-specific fields in the frontmatter dict which succeeded with ok:true, and (3) verified the corrected skill exists through search which returned the skill with ID 'skill-broken-skill-schema-7a6f0a5e' and title 'Broken Skill Schema'.\",\n  \"issues\": [],\n  \"strengths\": [\"Properly handled the intentional schema error rejection\", \"Correctly structured the second attempt with fields in frontmatter\", \"Successfully verified the skill was created via search\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 21.202433109283447,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-1878410a",
+      "run_id": "run-1e30a78e",
+      "task_id": "skill.validation.frontmatter.required-fields",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:56:18.467237+00:00",
+      "started_at": "2026-03-13T01:56:18.467173+00:00",
+      "completed_at": "2026-03-13T01:56:44.098057+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-1878410a",
+    "run_id": "run-1e30a78e",
+    "task_id": "skill.validation.frontmatter.required-fields",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:56:18.467237+00:00",
+    "started_at": "2026-03-13T01:56:18.467173+00:00",
+    "completed_at": "2026-03-13T01:56:44.098057+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

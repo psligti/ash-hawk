@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-451a8d4a",
+    "task_id": "skill.memory.creates-learning",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-451a8d4a",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:26:06.256087+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a structured memory entry:\n- title: \"Test Learning\"\n- memory_type: procedural\n- scope: project\n- project: \"note-lark\"\n- status: structured\n- confidence: 0.9\n- tags: [\"test\", \"learning\"]\n- body: \"This is a test learning about note-lark.\"\n\nUse memory_structured with payload wrapper.\nNote: memory_structured ALWAYS creates a learning type note.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"payload\": {\n    \"title\": \"Test Learning\",\n    \"memory_type\": \"procedural\",\n    \"scope\": \"project\",\n    \"project\": \"note-lark\",\n    \"status\": \"structured\",\n    \"confidence\": 0.9,\n    \"tags\": [\n      \"test\",\n      \"learning\"\n    ],\n    \"body\": \"This is a test learning about note-lark.\"\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 93,
+          "output": 1269,
+          "reasoning": 1174,
+          "cache_read": 4,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 18.00126075744629,
+        "agent_response": "```json\n{\n  \"payload\": {\n    \"title\": \"Test Learning\",\n    \"memory_type\": \"procedural\",\n    \"scope\": \"project\",\n    \"project\": \"note-lark\",\n    \"status\": \"structured\",\n    \"confidence\": 0.9,\n    \"tags\": [\n      \"test\",\n      \"learning\"\n    ],\n    \"body\": \"This is a test learning about note-lark.\"\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "Judge prompt file not found: /Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate:\n1. memory_structured called with payload wrapper (0.3 points)\n2. Memory created successfully (0.4 points)\n3. Correct fields used (memory_type, status, confidence) (0.3 points)\n\nScore: sum of points\n.md. Expected prompt at: Evaluate:\n1. memory_structured called with payload wrapper (0.3 points)\n2. Memory created successfully (0.4 points)\n3. Correct fields used (memory_type, status, confidence) (0.3 points)\n\nScore: sum of points\n.md",
+          "execution_time_seconds": 0.000270843505859375,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-451a8d4a",
+      "run_id": "run-55ee4e9f",
+      "task_id": "skill.memory.creates-learning",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:25:48.254680+00:00",
+      "started_at": "2026-03-12T16:25:48.254621+00:00",
+      "completed_at": "2026-03-12T16:26:06.256100+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-451a8d4a",
+    "run_id": "run-55ee4e9f",
+    "task_id": "skill.memory.creates-learning",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:25:48.254680+00:00",
+    "started_at": "2026-03-12T16:25:48.254621+00:00",
+    "completed_at": "2026-03-12T16:26:06.256100+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

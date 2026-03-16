@@ -1,0 +1,238 @@
+{
+  "trial": {
+    "id": "trial-b482bc81",
+    "task_id": "skill.clarity.description.not-empty",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-b482bc81",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-13T01:53:29.119521+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll create the skill note with the specified parameters using the notes_create function with a payload wrapper."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Test Skill\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"\", \"skill_level\": \"beginner\", \"triggers\": [\"test\"], \"required_tools\": [], \"body\": \"Test skill body\"}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "I see the error - the skill-specific fields need to be in the `frontmatter` dict. Let me fix the structure:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Test Skill\", \"body\": \"Test skill body\", \"frontmatter\": {\"type\": \"skill\", \"scope\": \"global\", \"description\": \"\", \"skill_level\": \"beginner\", \"triggers\": [\"test\"], \"required_tools\": []}}}, \"output\": \"2 validation errors for NoteCreateRequest\\ntype\\n  Field required [type=missing, input_value={'title': 'Test Skill', '..., 'required_tools': []}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\nscope\\n  Field required [type=missing, input_value={'title': 'Test Skill', '..., 'required_tools': []}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          },
+          {
+            "role": "assistant",
+            "content": "I see the issue - `type` and `scope` need to be at the top level along with `title` and `body`, while the skill-specific fields go in the `frontmatter`. Let me fix this:"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Test Skill\", \"type\": \"skill\", \"scope\": \"global\", \"body\": \"Test skill body\", \"frontmatter\": {\"description\": \"\", \"skill_level\": \"beginner\", \"triggers\": [\"test\"], \"required_tools\": []}}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-test-skill-712c4a56\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-test-skill-712c4a56.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Test Skill",
+                "type": "skill",
+                "scope": "global",
+                "description": "",
+                "skill_level": "beginner",
+                "triggers": [
+                  "test"
+                ],
+                "required_tools": [],
+                "body": "Test skill body"
+              }
+            },
+            "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Test Skill",
+                "body": "Test skill body",
+                "frontmatter": {
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "",
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "test"
+                  ],
+                  "required_tools": []
+                }
+              }
+            },
+            "output": "2 validation errors for NoteCreateRequest\ntype\n  Field required [type=missing, input_value={'title': 'Test Skill', '..., 'required_tools': []}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nscope\n  Field required [type=missing, input_value={'title': 'Test Skill', '..., 'required_tools': []}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+          },
+          {
+            "tool": "note-lark_notes_create",
+            "input": {
+              "payload": {
+                "title": "Test Skill",
+                "type": "skill",
+                "scope": "global",
+                "body": "Test skill body",
+                "frontmatter": {
+                  "description": "",
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "test"
+                  ],
+                  "required_tools": []
+                }
+              }
+            },
+            "output": "{\"ok\":true,\"id\":\"skill-test-skill-712c4a56\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-quality-fixed-88zki430/global/skills/skill-test-skill-712c4a56.md\",\"warnings\":[]}"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 7175,
+          "output": 197,
+          "reasoning": 82,
+          "cache_read": 6915,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 29.292062044143677,
+        "agent_response": "I see the issue - `type` and `scope` need to be at the top level along with `title` and `body`, while the skill-specific fields go in the `frontmatter`. Let me fix this:",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent successfully created the skill with an empty description ('') without any validation, warning, or rejection. The agent focused solely on fixing structural issues (moving fields between top-level and frontmatter) and never addressed whether an empty description is acceptable.",
+            "breakdown": {
+              "score": 0.0
+            },
+            "issues": [
+              "Agent did not validate that description was empty before creating",
+              "Agent created the skill without issuing any warning about the empty description",
+              "Agent never questioned or flagged the empty description field during any of the three attempts"
+            ],
+            "strengths": [
+              "Agent successfully resolved structural formatting issues through iterative attempts",
+              "Agent correctly understood and applied the payload/wrapper structure for notes_create"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "b876e8244e38150a",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.0,\n  \"passed\": false,\n  \"reasoning\": \"The agent successfully created the skill with an empty description ('') without any validation, warning, or rejection. The agent focused solely on fixing structural issues (moving fields between top-level and frontmatter) and never addressed whether an empty description is acceptable.\",\n  \"issues\": [\n    \"Agent did not validate that description was empty before creating\",\n    \"Agent created the skill without issuing any warning about the empty description\",\n    \"Agent never questioned or flagged the empty description field during any of the three attempts\"\n  ],\n  \"strengths\": [\n    \"Agent successfully resolved structural formatting issues through iterative attempts\",\n    \"Agent correctly understood and applied the payload/wrapper structure for notes_create\"\n  ]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 19.534045934677124,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-b482bc81",
+      "run_id": "run-1e30a78e",
+      "task_id": "skill.clarity.description.not-empty",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:52:59.827264+00:00",
+      "started_at": "2026-03-13T01:52:59.827234+00:00",
+      "completed_at": "2026-03-13T01:53:29.183761+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-b482bc81",
+    "run_id": "run-1e30a78e",
+    "task_id": "skill.clarity.description.not-empty",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:52:59.827264+00:00",
+    "started_at": "2026-03-13T01:52:59.827234+00:00",
+    "completed_at": "2026-03-13T01:53:29.183761+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,1917 @@
+{
+  "envelope": {
+    "run_id": "run-e9670d80",
+    "suite_id": "note-lark-skill-graph-v1",
+    "suite_hash": "37517573cd218401",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "build",
+    "agent_version": null,
+    "provider": "zai-coding-plan",
+    "model": "glm-4.7",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "81670fafd9c646c8",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-13T01:59:12.832156+00:00"
+  },
+  "metrics": {
+    "suite_id": "note-lark-skill-graph-v1",
+    "run_id": "run-e9670d80",
+    "total_tasks": 18,
+    "completed_tasks": 18,
+    "passed_tasks": 3,
+    "failed_tasks": 13,
+    "pass_rate": 0.16666666666666666,
+    "mean_score": 0.19999999999999998,
+    "total_tokens": {
+      "input": 36706,
+      "output": 1278,
+      "reasoning": 552,
+      "cache_read": 35147,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 218.20099091529846,
+    "latency_p50_seconds": 2.430346965789795,
+    "latency_p95_seconds": 181.90041279792786,
+    "latency_p99_seconds": 181.90041279792786,
+    "pass_at_k": {},
+    "created_at": "2026-03-13T02:02:51.049501+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-6ad495e7",
+      "task_id": "search.feedback.basic-query",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill titled \"Python Error Handling\":\n   - title: \"Python Error Handling\"\n   - type: skill\n   - scope: global\n   - description: \"Handle exceptions gracefully in Python code\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"exception\", \"python\"]\n   - required_tools: []\n   \n2. Search for \"error handling\"\n\n3. Verify the created skill appears in results\n\nUse notes_create and notes_search with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-6ad495e7",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-13T01:59:33.514404+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "1. Create a skill titled \"Python Error Handling\":\n   - title: \"Python Error Handling\"\n   - type: skill\n   - scope: global\n   - description: \"Handle exceptions gracefully in Python code\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"exception\", \"python\"]\n   - required_tools: []\n   \n2. Search for \"error handling\"\n\n3. Verify the created skill appears in results\n\nUse notes_create and notes_search with payload wrapper.\n"
+            },
+            {
+              "role": "assistant",
+              "content": "I'll help you create the skill and search for it. Let me make both calls:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Python Error Handling\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Handle exceptions gracefully in Python code\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"exception\", \"python\"], \"required_tools\": []}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"error handling\"}, \"output\": \"{\\\"items\\\":[]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "I see the issue - the skill metadata needs to be wrapped in a `frontmatter` property. Let me fix that and try again:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Python Error Handling\", \"type\": \"skill\", \"frontmatter\": {\"scope\": \"global\", \"description\": \"Handle exceptions gracefully in Python code\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"exception\", \"python\"], \"required_tools\": []}}}, \"output\": \"1 validation error for NoteCreateRequest\\nscope\\n  Field required [type=missing, input_value={'title': 'Python Error H..., 'required_tools': []}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"error handling\"}, \"output\": \"{\\\"items\\\":[]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "Let me try a different structure:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Python Error Handling\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"Handle exceptions gracefully in Python code\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"exception\", \"python\"], \"required_tools\": []}}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-python-error-handling-f6f5ac94\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-python-error-handling-f6f5ac94.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"error handling\"}, \"output\": \"{\\\"items\\\":[{\\\"_mtime\\\":1773367173.504995,\\\"aliases\\\":[],\\\"description\\\":\\\"Handle exceptions gracefully in Python code\\\",\\\"id\\\":\\\"skill-python-error-handling-f6f5ac94\\\",\\\"links\\\":[],\\\"path\\\":\\\"global/skills/skill-python-error-handling-f6f5ac94.md\\\",\\\"project\\\":null,\\\"scope\\\":\\\"global\\\",\\\"status\\\":\\\"active\\\",\\\"tags\\\":[],\\\"title\\\":\\\"Python Error Handling\\\",\\\"type\\\":\\\"skill\\\",\\\"updated_at\\\":\\\"2026-03-13T01:59:33.503809Z\\\"}]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Python Error Handling",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "Handle exceptions gracefully in Python code",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "exception",
+                    "python"
+                  ],
+                  "required_tools": []
+                }
+              },
+              "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+            },
+            {
+              "tool": "note-lark_notes_search",
+              "input": {
+                "query": "error handling"
+              },
+              "output": "{\"items\":[]}"
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Python Error Handling",
+                  "type": "skill",
+                  "frontmatter": {
+                    "scope": "global",
+                    "description": "Handle exceptions gracefully in Python code",
+                    "skill_level": "intermediate",
+                    "triggers": [
+                      "error",
+                      "exception",
+                      "python"
+                    ],
+                    "required_tools": []
+                  }
+                }
+              },
+              "output": "1 validation error for NoteCreateRequest\nscope\n  Field required [type=missing, input_value={'title': 'Python Error H..., 'required_tools': []}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+            },
+            {
+              "tool": "note-lark_notes_search",
+              "input": {
+                "query": "error handling"
+              },
+              "output": "{\"items\":[]}"
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Python Error Handling",
+                  "type": "skill",
+                  "scope": "global",
+                  "frontmatter": {
+                    "description": "Handle exceptions gracefully in Python code",
+                    "skill_level": "intermediate",
+                    "triggers": [
+                      "error",
+                      "exception",
+                      "python"
+                    ],
+                    "required_tools": []
+                  }
+                }
+              },
+              "output": "{\"ok\":true,\"id\":\"skill-python-error-handling-f6f5ac94\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-python-error-handling-f6f5ac94.md\",\"warnings\":[]}"
+            },
+            {
+              "tool": "note-lark_notes_search",
+              "input": {
+                "query": "error handling"
+              },
+              "output": "{\"items\":[{\"_mtime\":1773367173.504995,\"aliases\":[],\"description\":\"Handle exceptions gracefully in Python code\",\"id\":\"skill-python-error-handling-f6f5ac94\",\"links\":[],\"path\":\"global/skills/skill-python-error-handling-f6f5ac94.md\",\"project\":null,\"scope\":\"global\",\"status\":\"active\",\"tags\":[],\"title\":\"Python Error Handling\",\"type\":\"skill\",\"updated_at\":\"2026-03-13T01:59:33.503809Z\"}]}"
+            }
+          ],
+          "trace_events": [],
+          "token_usage": {
+            "input": 7294,
+            "output": 144,
+            "reasoning": 47,
+            "cache_read": 7018,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 20.665630102157593,
+          "agent_response": "Let me try a different structure:",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "llm_judge",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "reasoning": "The agent successfully completed all three tasks: created the skill (after learning the correct structure through iteration), performed a search that returned results, and verified the created skill appeared in those results.",
+              "breakdown": {
+                "score": 1.0
+              },
+              "issues": [],
+              "strengths": [
+                "Persisted through initial API errors to correctly structure the payload with 'scope' at top level and skill metadata in 'frontmatter'",
+                "Successfully created the Python Error Handling skill",
+                "Successfully searched for and found the created skill in results"
+              ],
+              "audit": {
+                "prompt_name": "custom_inline_rubric",
+                "prompt_version": "1.0.0",
+                "prompt_hash": "d0c5c0ceff747c28",
+                "judge_model": "glm-4.7",
+                "judge_provider": "zai-coding-plan",
+                "judge_params": {
+                  "temperature": 0.0,
+                  "max_tokens": 1024,
+                  "n_judges": 1,
+                  "consensus_mode": "mean"
+                },
+                "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent successfully completed all three tasks: created the skill (after learning the correct structure through iteration), performed a search that returned results, and verified the created skill appeared in those results.\",\n  \"issues\": [],\n  \"strengths\": [\"Persisted through initial API errors to correctly structure the payload with 'scope' at top level and skill metadata in 'frontmatter'\", \"Successfully created the Python Error Handling skill\", \"Successfully searched for and found the created skill in results\"]\n}\n"
+              },
+              "n_judges": 1,
+              "consensus_mode": "mean"
+            },
+            "error_message": null,
+            "execution_time_seconds": 19.194267988204956,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-6ad495e7",
+        "run_id": "run-e9670d80",
+        "task_id": "search.feedback.basic-query",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T01:59:12.848599+00:00",
+        "started_at": "2026-03-13T01:59:12.848545+00:00",
+        "completed_at": "2026-03-13T01:59:33.579747+00:00"
+      }
+    },
+    {
+      "id": "trial-8030d01f",
+      "task_id": "search.feedback.tag-based",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill with unique tags:\n   - title: \"Tagged Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with specific tags\"\n   - skill_level: beginner\n   - triggers: [\"tagged\"]\n   - tags: [\"unique-tag-xyz-123\", \"testing\"]\n   - required_tools: []\n   \n2. Search for the unique tag \"unique-tag-xyz-123\"\n\nUse notes_create and notes_search with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-8030d01f",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-13T01:59:45.617010+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "1. Create a skill with unique tags:\n   - title: \"Tagged Skill\"\n   - type: skill\n   - scope: global\n   - description: \"A skill with specific tags\"\n   - skill_level: beginner\n   - triggers: [\"tagged\"]\n   - tags: [\"unique-tag-xyz-123\", \"testing\"]\n   - required_tools: []\n   \n2. Search for the unique tag \"unique-tag-xyz-123\"\n\nUse notes_create and notes_search with payload wrapper.\n"
+            },
+            {
+              "role": "assistant",
+              "content": "I'll help you create a skill with unique tags and then search for that tag. Let me do both operations:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Tagged Skill\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"A skill with specific tags\", \"skill_level\": \"beginner\", \"triggers\": [\"tagged\"], \"tags\": [\"unique-tag-xyz-123\", \"testing\"], \"required_tools\": []}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"unique-tag-xyz-123\"}, \"output\": \"{\\\"items\\\":[]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "I see the issue - the skill-specific fields need to be in the `frontmatter` section. Let me fix that and create the skill properly:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"frontmatter\": {\"title\": \"Tagged Skill\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"A skill with specific tags\", \"skill_level\": \"beginner\", \"triggers\": [\"tagged\"], \"tags\": [\"unique-tag-xyz-123\", \"testing\"], \"required_tools\": []}, \"content\": \"# Tagged Skill\\n\\nThis is a skill with specific tags for testing purposes.\\n\\n## Usage\\n\\nThis skill demonstrates how to create and tag skills in the note system.\"}}, \"output\": \"3 validation errors for NoteCreateRequest\\ntitle\\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\ntype\\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\\nscope\\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "I see the structure issue now - I need to pass `title`, `type`, and `scope` at the top level of the payload, with only the skill-specific metadata in the `frontmatter` field. Let me fix this:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Tagged Skill\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"A skill with specific tags\", \"skill_level\": \"beginner\", \"triggers\": [\"tagged\"], \"tags\": [\"unique-tag-xyz-123\", \"testing\"], \"required_tools\": []}, \"content\": \"# Tagged Skill\\n\\nThis is a skill with specific tags for testing purposes.\\n\\n## Usage\\n\\nThis skill demonstrates how to create and tag skills in the note system.\"}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-tagged-skill-a6aab2f6\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-tagged-skill-a6aab2f6.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"unique-tag-xyz-123\"}, \"output\": \"{\\\"items\\\":[{\\\"_mtime\\\":1773367185.6031246,\\\"aliases\\\":[],\\\"description\\\":\\\"A skill with specific tags\\\",\\\"id\\\":\\\"skill-tagged-skill-a6aab2f6\\\",\\\"links\\\":[],\\\"path\\\":\\\"global/skills/skill-tagged-skill-a6aab2f6.md\\\",\\\"project\\\":null,\\\"scope\\\":\\\"global\\\",\\\"status\\\":\\\"active\\\",\\\"tags\\\":[\\\"unique-tag-xyz-123\\\",\\\"testing\\\"],\\\"title\\\":\\\"Tagged Skill\\\",\\\"type\\\":\\\"skill\\\",\\\"updated_at\\\":\\\"2026-03-13T01:59:45.600698Z\\\"}]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Tagged Skill",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "A skill with specific tags",
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "tagged"
+                  ],
+                  "tags": [
+                    "unique-tag-xyz-123",
+                    "testing"
+                  ],
+                  "required_tools": []
+                }
+              },
+              "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+            },
+            {
+              "tool": "note-lark_notes_search",
+              "input": {
+                "query": "unique-tag-xyz-123"
+              },
+              "output": "{\"items\":[]}"
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "frontmatter": {
+                    "title": "Tagged Skill",
+                    "type": "skill",
+                    "scope": "global",
+                    "description": "A skill with specific tags",
+                    "skill_level": "beginner",
+                    "triggers": [
+                      "tagged"
+                    ],
+                    "tags": [
+                      "unique-tag-xyz-123",
+                      "testing"
+                    ],
+                    "required_tools": []
+                  },
+                  "content": "# Tagged Skill\n\nThis is a skill with specific tags for testing purposes.\n\n## Usage\n\nThis skill demonstrates how to create and tag skills in the note system."
+                }
+              },
+              "output": "3 validation errors for NoteCreateRequest\ntitle\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\ntype\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nscope\n  Field required [type=missing, input_value={'frontmatter': {'title':...ls in the note system.'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Tagged Skill",
+                  "type": "skill",
+                  "scope": "global",
+                  "frontmatter": {
+                    "description": "A skill with specific tags",
+                    "skill_level": "beginner",
+                    "triggers": [
+                      "tagged"
+                    ],
+                    "tags": [
+                      "unique-tag-xyz-123",
+                      "testing"
+                    ],
+                    "required_tools": []
+                  },
+                  "content": "# Tagged Skill\n\nThis is a skill with specific tags for testing purposes.\n\n## Usage\n\nThis skill demonstrates how to create and tag skills in the note system."
+                }
+              },
+              "output": "{\"ok\":true,\"id\":\"skill-tagged-skill-a6aab2f6\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-tagged-skill-a6aab2f6.md\",\"warnings\":[]}"
+            },
+            {
+              "tool": "note-lark_notes_search",
+              "input": {
+                "query": "unique-tag-xyz-123"
+              },
+              "output": "{\"items\":[{\"_mtime\":1773367185.6031246,\"aliases\":[],\"description\":\"A skill with specific tags\",\"id\":\"skill-tagged-skill-a6aab2f6\",\"links\":[],\"path\":\"global/skills/skill-tagged-skill-a6aab2f6.md\",\"project\":null,\"scope\":\"global\",\"status\":\"active\",\"tags\":[\"unique-tag-xyz-123\",\"testing\"],\"title\":\"Tagged Skill\",\"type\":\"skill\",\"updated_at\":\"2026-03-13T01:59:45.600698Z\"}]}"
+            }
+          ],
+          "trace_events": [],
+          "token_usage": {
+            "input": 7410,
+            "output": 465,
+            "reasoning": 274,
+            "cache_read": 7039,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 32.76356601715088,
+          "agent_response": "I see the structure issue now - I need to pass `title`, `type`, and `scope` at the top level of the payload, with only the skill-specific metadata in the `frontmatter` field. Let me fix this:",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "llm_judge",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "reasoning": "The agent successfully created a skill with unique tags and was able to search for it by the unique tag. After two initial failed attempts due to incorrect payload structure, the third attempt succeeded with title/type/scope at the top level and skill-specific metadata in frontmatter. The search returned the correct skill matching all expected fields.",
+              "breakdown": {
+                "score": 1.0
+              },
+              "issues": [
+                "First two attempts failed due to misunderstanding the required payload structure - initially put all fields at top level, then put all fields in frontmatter before finding the correct split"
+              ],
+              "strengths": [
+                "Successfully created skill with specified tags including unique-tag-xyz-123",
+                "Iterated through failures to find correct API structure",
+                "Search by tag returned the correct skill with matching tags, title, and id"
+              ],
+              "audit": {
+                "prompt_name": "custom_inline_rubric",
+                "prompt_version": "1.0.0",
+                "prompt_hash": "1d709c7d771fd14a",
+                "judge_model": "glm-4.7",
+                "judge_provider": "zai-coding-plan",
+                "judge_params": {
+                  "temperature": 0.0,
+                  "max_tokens": 1024,
+                  "n_judges": 1,
+                  "consensus_mode": "mean"
+                },
+                "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent successfully created a skill with unique tags and was able to search for it by the unique tag. After two initial failed attempts due to incorrect payload structure, the third attempt succeeded with title/type/scope at the top level and skill-specific metadata in frontmatter. The search returned the correct skill matching all expected fields.\",\n  \"issues\": [\"First two attempts failed due to misunderstanding the required payload structure - initially put all fields at top level, then put all fields in frontmatter before finding the correct split\"],\n  \"strengths\": [\"Successfully created skill with specified tags including unique-tag-xyz-123\", \"Iterated through failures to find correct API structure\", \"Search by tag returned the correct skill with matching tags, title, and id\"]\n}\n"
+              },
+              "n_judges": 1,
+              "consensus_mode": "mean"
+            },
+            "error_message": null,
+            "execution_time_seconds": 81.6942367553711,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-8030d01f",
+        "run_id": "run-e9670d80",
+        "task_id": "search.feedback.tag-based",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T01:59:12.853269+00:00",
+        "started_at": "2026-03-13T01:59:12.853209+00:00",
+        "completed_at": "2026-03-13T01:59:45.672837+00:00"
+      }
+    },
+    {
+      "id": "trial-81c91fa5",
+      "task_id": "search.feedback.empty-results",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "Search for something that definitely doesn't exist:\n\"zzzznonexistent987654321\"\n\nVerify the search returns an empty items array, not an error.\n\nUse notes_search with payload wrapper.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-81c91fa5",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-13T01:59:38.335088+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Search for something that definitely doesn't exist:\n\"zzzznonexistent987654321\"\n\nVerify the search returns an empty items array, not an error.\n\nUse notes_search with payload wrapper.\n"
+            },
+            {
+              "role": "assistant",
+              "content": "I'll search for the non-existent term \"zzzznonexistent987654321\" using notes_search with a payload wrapper as requested."
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_search\", \"input\": {\"query\": \"zzzznonexistent987654321\"}, \"output\": \"{\\\"items\\\":[]}\", \"title\": \"note-lark_notes_search completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_search\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "\u2705 **Verification Complete**\n\nThe search for \"zzzznonexistent987654321\" executed successfully and returned:\n\n```json\n{\"items\":[]}\n```\n\n**Results:**\n- \u2705 No error was thrown\n- \u2705 Returns an empty `items` array (as expected)\n- \u2705 Gracefully handles non-existent search terms\n\nThe `notes_search` function correctly handles searches with no matching results by returning an empty array rather than throwing an error. This is the proper behavior for a search API."
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "note-lark_notes_search",
+              "input": {
+                "query": "zzzznonexistent987654321"
+              },
+              "output": "{\"items\":[]}"
+            }
+          ],
+          "trace_events": [],
+          "token_usage": {
+            "input": 6824,
+            "output": 191,
+            "reasoning": 82,
+            "cache_read": 6714,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 25.47916293144226,
+          "agent_response": "\u2705 **Verification Complete**\n\nThe search for \"zzzznonexistent987654321\" executed successfully and returned:\n\n```json\n{\"items\":[]}\n```\n\n**Results:**\n- \u2705 No error was thrown\n- \u2705 Returns an empty `items` array (as expected)\n- \u2705 Gracefully handles non-existent search terms\n\nThe `notes_search` function correctly handles searches with no matching results by returning an empty array rather than throwing an error. This is the proper behavior for a search API.",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "llm_judge",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "reasoning": "The agent successfully executed the search for a non-existent term and verified that it returned an empty items array without errors. Both criteria from the rubric were met.",
+              "breakdown": {
+                "score": 1.0
+              },
+              "issues": [],
+              "strengths": [
+                "Search executed without error",
+                "Empty items array correctly returned and verified",
+                "Clear and well-structured verification output"
+              ],
+              "audit": {
+                "prompt_name": "custom_inline_rubric",
+                "prompt_version": "1.0.0",
+                "prompt_hash": "a8162d7c39cfc95f",
+                "judge_model": "glm-4.7",
+                "judge_provider": "zai-coding-plan",
+                "judge_params": {
+                  "temperature": 0.0,
+                  "max_tokens": 1024,
+                  "n_judges": 1,
+                  "consensus_mode": "mean"
+                },
+                "raw_output": "\n{\n  \"score\": 1.0,\n  \"passed\": true,\n  \"reasoning\": \"The agent successfully executed the search for a non-existent term and verified that it returned an empty items array without errors. Both criteria from the rubric were met.\",\n  \"issues\": [],\n  \"strengths\": [\"Search executed without error\", \"Empty items array correctly returned and verified\", \"Clear and well-structured verification output\"]\n}\n"
+              },
+              "n_judges": 1,
+              "consensus_mode": "mean"
+            },
+            "error_message": null,
+            "execution_time_seconds": 10.719277143478394,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": {
+        "trial_id": "trial-81c91fa5",
+        "run_id": "run-e9670d80",
+        "task_id": "search.feedback.empty-results",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T01:59:12.855632+00:00",
+        "started_at": "2026-03-13T01:59:12.855571+00:00",
+        "completed_at": "2026-03-13T01:59:38.422026+00:00"
+      }
+    },
+    {
+      "id": "trial-28699de7",
+      "task_id": "search.disambiguation.multiple-matches",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-28699de7",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-13T01:59:45.840932+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "1. Create skill \"Error Handling - Python\":\n   - title: \"Error Handling - Python\"\n   - type: skill\n   - scope: global\n   - description: \"Python specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"python\"]\n   - required_tools: []\n   \n2. Create skill \"Error Handling - JavaScript\":\n   - title: \"Error Handling - JavaScript\"\n   - type: skill\n   - scope: global\n   - description: \"JavaScript specific error handling\"\n   - skill_level: intermediate\n   - triggers: [\"error\", \"javascript\"]\n   - required_tools: []\n   \n3. Search for \"error handling\"\n\n4. Verify both skills appear in results\n\nUse payload wrapper for all calls.\n"
+            },
+            {
+              "role": "assistant",
+              "content": "I'll create both skills using the memory system and then verify they appear in the search results."
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Error Handling - Python\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Python specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"python\"], \"required_tools\": []}}, \"output\": \"1 validation error for MemoryStructuredRequest\\nmemory_type\\n  Field required [type=missing, input_value={'title': 'Error Handling...], 'required_tools': []}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}, {\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Error Handling - JavaScript\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"JavaScript specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"javascript\"], \"required_tools\": []}}, \"output\": \"1 validation error for MemoryStructuredRequest\\nmemory_type\\n  Field required [type=missing, input_value={'title': 'Error Handling...], 'required_tools': []}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "I see the issue - the `memory_type` field is required. Let me retry with that field included:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Error Handling - Python\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Python specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"python\"], \"required_tools\": [], \"memory_type\": \"skill\"}}, \"output\": \"1 validation error for MemoryStructuredRequest\\nmemory_type\\n  Input should be 'append_only', 'structured', 'episodic', 'semantic', 'procedural', 'session', 'project' or 'global' [type=enum, input_value='skill', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/enum\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}, {\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"title\": \"Error Handling - JavaScript\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"JavaScript specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"javascript\"], \"required_tools\": [], \"memory_type\": \"skill\"}}, \"output\": \"1 validation error for MemoryStructuredRequest\\nmemory_type\\n  Input should be 'append_only', 'structured', 'episodic', 'semantic', 'procedural', 'session', 'project' or 'global' [type=enum, input_value='skill', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/enum\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "Let me adjust the memory_type to use a valid value:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"memory_type\": \"procedural\", \"title\": \"Error Handling - Python\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Python specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"python\"], \"required_tools\": []}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"mem-global-a072621c\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/learnings/mem-global-a072621c.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}, {\"tool\": \"note-lark_memory_structured\", \"input\": {\"payload\": {\"memory_type\": \"procedural\", \"title\": \"Error Handling - JavaScript\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"JavaScript specific error handling\", \"skill_level\": \"intermediate\", \"triggers\": [\"error\", \"javascript\"], \"required_tools\": []}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"mem-global-02845bef\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/learnings/mem-global-02845bef.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_memory_structured completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"memory_structured\"}}]"
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "note-lark_memory_structured",
+              "input": {
+                "payload": {
+                  "title": "Error Handling - Python",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "Python specific error handling",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "python"
+                  ],
+                  "required_tools": []
+                }
+              },
+              "output": "1 validation error for MemoryStructuredRequest\nmemory_type\n  Field required [type=missing, input_value={'title': 'Error Handling...], 'required_tools': []}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+            },
+            {
+              "tool": "note-lark_memory_structured",
+              "input": {
+                "payload": {
+                  "title": "Error Handling - JavaScript",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "JavaScript specific error handling",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "javascript"
+                  ],
+                  "required_tools": []
+                }
+              },
+              "output": "1 validation error for MemoryStructuredRequest\nmemory_type\n  Field required [type=missing, input_value={'title': 'Error Handling...], 'required_tools': []}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+            },
+            {
+              "tool": "note-lark_memory_structured",
+              "input": {
+                "payload": {
+                  "title": "Error Handling - Python",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "Python specific error handling",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "python"
+                  ],
+                  "required_tools": [],
+                  "memory_type": "skill"
+                }
+              },
+              "output": "1 validation error for MemoryStructuredRequest\nmemory_type\n  Input should be 'append_only', 'structured', 'episodic', 'semantic', 'procedural', 'session', 'project' or 'global' [type=enum, input_value='skill', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/enum"
+            },
+            {
+              "tool": "note-lark_memory_structured",
+              "input": {
+                "payload": {
+                  "title": "Error Handling - JavaScript",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "JavaScript specific error handling",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "javascript"
+                  ],
+                  "required_tools": [],
+                  "memory_type": "skill"
+                }
+              },
+              "output": "1 validation error for MemoryStructuredRequest\nmemory_type\n  Input should be 'append_only', 'structured', 'episodic', 'semantic', 'procedural', 'session', 'project' or 'global' [type=enum, input_value='skill', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/enum"
+            },
+            {
+              "tool": "note-lark_memory_structured",
+              "input": {
+                "payload": {
+                  "memory_type": "procedural",
+                  "title": "Error Handling - Python",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "Python specific error handling",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "python"
+                  ],
+                  "required_tools": []
+                }
+              },
+              "output": "{\"ok\":true,\"id\":\"mem-global-a072621c\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/learnings/mem-global-a072621c.md\",\"warnings\":[]}"
+            },
+            {
+              "tool": "note-lark_memory_structured",
+              "input": {
+                "payload": {
+                  "memory_type": "procedural",
+                  "title": "Error Handling - JavaScript",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "JavaScript specific error handling",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "error",
+                    "javascript"
+                  ],
+                  "required_tools": []
+                }
+              },
+              "output": "{\"ok\":true,\"id\":\"mem-global-02845bef\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/learnings/mem-global-02845bef.md\",\"warnings\":[]}"
+            }
+          ],
+          "trace_events": [],
+          "token_usage": {
+            "input": 7626,
+            "output": 217,
+            "reasoning": 51,
+            "cache_read": 7198,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 32.982670068740845,
+          "agent_response": "Let me adjust the memory_type to use a valid value:",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "llm_judge",
+            "grader_id": null,
+            "score": 0.3,
+            "passed": false,
+            "details": {
+              "reasoning": "The agent successfully created both skills after multiple attempts to resolve validation errors with the memory_type field. However, the agent failed to perform the required search for 'error handling' and consequently did not verify that both skills appear in search results.",
+              "breakdown": {
+                "score": 0.3
+              },
+              "issues": [
+                "Did not perform a search for 'error handling'",
+                "Did not verify both skills appear in search results",
+                "Multiple validation errors were encountered before successfully creating skills"
+              ],
+              "strengths": [
+                "Successfully created both 'Error Handling - Python' and 'Error Handling - JavaScript' skills",
+                "Persisted through validation errors and correctly adjusted memory_type to 'procedural'",
+                "Used payload wrapper for all tool calls as required"
+              ],
+              "audit": {
+                "prompt_name": "custom_inline_rubric",
+                "prompt_version": "1.0.0",
+                "prompt_hash": "ab93517f0b56bd73",
+                "judge_model": "glm-4.7",
+                "judge_provider": "zai-coding-plan",
+                "judge_params": {
+                  "temperature": 0.0,
+                  "max_tokens": 1024,
+                  "n_judges": 1,
+                  "consensus_mode": "mean"
+                },
+                "raw_output": "\n{\n  \"score\": 0.3,\n  \"passed\": false,\n  \"reasoning\": \"The agent successfully created both skills after multiple attempts to resolve validation errors with the memory_type field. However, the agent failed to perform the required search for 'error handling' and consequently did not verify that both skills appear in search results.\",\n  \"issues\": [\n    \"Did not perform a search for 'error handling'\",\n    \"Did not verify both skills appear in search results\",\n    \"Multiple validation errors were encountered before successfully creating skills\"\n  ],\n  \"strengths\": [\n    \"Successfully created both 'Error Handling - Python' and 'Error Handling - JavaScript' skills\",\n    \"Persisted through validation errors and correctly adjusted memory_type to 'procedural'\",\n    \"Used payload wrapper for all tool calls as required\"\n  ]\n}\n"
+              },
+              "n_judges": 1,
+              "consensus_mode": "mean"
+            },
+            "error_message": null,
+            "execution_time_seconds": 51.9800751209259,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.3,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-28699de7",
+        "run_id": "run-e9670d80",
+        "task_id": "search.disambiguation.multiple-matches",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T01:59:12.858077+00:00",
+        "started_at": "2026-03-13T01:59:12.858032+00:00",
+        "completed_at": "2026-03-13T01:59:45.893678+00:00"
+      }
+    },
+    {
+      "id": "trial-9260380e",
+      "task_id": "traversal.basic.context-chain",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create parent skill \"Testing Fundamentals\":\n   - title: \"Testing Fundamentals\"\n   - type: skill\n   - scope: global\n   - description: \"Core testing principles\"\n   - skill_level: beginner\n   - triggers: [\"testing\", \"test\"]\n   - required_tools: []\n   \n2. Create child skill \"Unit Testing\":\n   - title: \"Unit Testing\"\n   - type: skill\n   - scope: global\n   - description: \"Write isolated unit tests\"\n   - skill_level: intermediate\n   - triggers: [\"unit test\", \"pytest\"]\n   - required_tools: [\"pytest\"]\n   \n3. Link parent to child using notes_link\n\n4. Run context_chain from parent with task \"unit testing\"\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-9260380e",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-13T02:02:16.536599+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "1. Create parent skill \"Testing Fundamentals\":\n   - title: \"Testing Fundamentals\"\n   - type: skill\n   - scope: global\n   - description: \"Core testing principles\"\n   - skill_level: beginner\n   - triggers: [\"testing\", \"test\"]\n   - required_tools: []\n   \n2. Create child skill \"Unit Testing\":\n   - title: \"Unit Testing\"\n   - type: skill\n   - scope: global\n   - description: \"Write isolated unit tests\"\n   - skill_level: intermediate\n   - triggers: [\"unit test\", \"pytest\"]\n   - required_tools: [\"pytest\"]\n   \n3. Link parent to child using notes_link\n\n4. Run context_chain from parent with task \"unit testing\"\n\nUse payload wrapper for all calls.\n"
+            },
+            {
+              "role": "assistant",
+              "content": "I'll help you create the parent and child skills, link them, and run the context chain. Let me start by creating both skills in parallel."
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Testing Fundamentals\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Core testing principles\", \"skill_level\": \"beginner\", \"triggers\": [\"testing\", \"test\"], \"required_tools\": []}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Unit Testing\", \"type\": \"skill\", \"scope\": \"global\", \"description\": \"Write isolated unit tests\", \"skill_level\": \"intermediate\", \"triggers\": [\"unit test\", \"pytest\"], \"required_tools\": [\"pytest\"]}}, \"output\": \"Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level.\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "I need to restructure the payload with a `frontmatter` property. Let me fix this:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Testing Fundamentals\", \"type\": \"skill\", \"frontmatter\": {\"scope\": \"global\", \"description\": \"Core testing principles\", \"skill_level\": \"beginner\", \"triggers\": [\"testing\", \"test\"], \"required_tools\": []}}}, \"output\": \"1 validation error for NoteCreateRequest\\nscope\\n  Field required [type=missing, input_value={'title': 'Testing Fundam..., 'required_tools': []}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Unit Testing\", \"type\": \"skill\", \"frontmatter\": {\"scope\": \"global\", \"description\": \"Write isolated unit tests\", \"skill_level\": \"intermediate\", \"triggers\": [\"unit test\", \"pytest\"], \"required_tools\": [\"pytest\"]}}}, \"output\": \"1 validation error for NoteCreateRequest\\nscope\\n  Field required [type=missing, input_value={'title': 'Unit Testing',...red_tools': ['pytest']}}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "I see - let me restructure with `scope` at the top level along with the other required fields:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Testing Fundamentals\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"Core testing principles\", \"skill_level\": \"beginner\", \"triggers\": [\"testing\", \"test\"], \"required_tools\": []}}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-testing-fundamentals-9cf3bf7b\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-testing-fundamentals-9cf3bf7b.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}, {\"tool\": \"note-lark_notes_create\", \"input\": {\"payload\": {\"title\": \"Unit Testing\", \"type\": \"skill\", \"scope\": \"global\", \"frontmatter\": {\"description\": \"Write isolated unit tests\", \"skill_level\": \"intermediate\", \"triggers\": [\"unit test\", \"pytest\"], \"required_tools\": [\"pytest\"]}}}, \"output\": \"{\\\"ok\\\":true,\\\"id\\\":\\\"skill-unit-testing-0b84c258\\\",\\\"path\\\":\\\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-unit-testing-0b84c258.md\\\",\\\"warnings\\\":[]}\", \"title\": \"note-lark_notes_create completed\", \"metadata\": {\"mcp_server\": \"note-lark\", \"mcp_tool\": \"notes_create\"}}]"
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Testing Fundamentals",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "Core testing principles",
+                  "skill_level": "beginner",
+                  "triggers": [
+                    "testing",
+                    "test"
+                  ],
+                  "required_tools": []
+                }
+              },
+              "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Unit Testing",
+                  "type": "skill",
+                  "scope": "global",
+                  "description": "Write isolated unit tests",
+                  "skill_level": "intermediate",
+                  "triggers": [
+                    "unit test",
+                    "pytest"
+                  ],
+                  "required_tools": [
+                    "pytest"
+                  ]
+                }
+              },
+              "output": "Error calling tool 'notes_create': missing required fields for skill: ['description', 'required_tools', 'skill_level', 'triggers']. These fields must be in the 'frontmatter' dict, not at the top level."
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Testing Fundamentals",
+                  "type": "skill",
+                  "frontmatter": {
+                    "scope": "global",
+                    "description": "Core testing principles",
+                    "skill_level": "beginner",
+                    "triggers": [
+                      "testing",
+                      "test"
+                    ],
+                    "required_tools": []
+                  }
+                }
+              },
+              "output": "1 validation error for NoteCreateRequest\nscope\n  Field required [type=missing, input_value={'title': 'Testing Fundam..., 'required_tools': []}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Unit Testing",
+                  "type": "skill",
+                  "frontmatter": {
+                    "scope": "global",
+                    "description": "Write isolated unit tests",
+                    "skill_level": "intermediate",
+                    "triggers": [
+                      "unit test",
+                      "pytest"
+                    ],
+                    "required_tools": [
+                      "pytest"
+                    ]
+                  }
+                }
+              },
+              "output": "1 validation error for NoteCreateRequest\nscope\n  Field required [type=missing, input_value={'title': 'Unit Testing',...red_tools': ['pytest']}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Testing Fundamentals",
+                  "type": "skill",
+                  "scope": "global",
+                  "frontmatter": {
+                    "description": "Core testing principles",
+                    "skill_level": "beginner",
+                    "triggers": [
+                      "testing",
+                      "test"
+                    ],
+                    "required_tools": []
+                  }
+                }
+              },
+              "output": "{\"ok\":true,\"id\":\"skill-testing-fundamentals-9cf3bf7b\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-testing-fundamentals-9cf3bf7b.md\",\"warnings\":[]}"
+            },
+            {
+              "tool": "note-lark_notes_create",
+              "input": {
+                "payload": {
+                  "title": "Unit Testing",
+                  "type": "skill",
+                  "scope": "global",
+                  "frontmatter": {
+                    "description": "Write isolated unit tests",
+                    "skill_level": "intermediate",
+                    "triggers": [
+                      "unit test",
+                      "pytest"
+                    ],
+                    "required_tools": [
+                      "pytest"
+                    ]
+                  }
+                }
+              },
+              "output": "{\"ok\":true,\"id\":\"skill-unit-testing-0b84c258\",\"path\":\"/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/note-lark-skill-graph-fixed-em91ahzm/global/skills/skill-unit-testing-0b84c258.md\",\"warnings\":[]}"
+            }
+          ],
+          "trace_events": [],
+          "token_usage": {
+            "input": 7552,
+            "output": 261,
+            "reasoning": 98,
+            "cache_read": 7178,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 147.38885283470154,
+          "agent_response": "I see - let me restructure with `scope` at the top level along with the other required fields:",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "llm_judge",
+            "grader_id": null,
+            "score": 0.3,
+            "passed": false,
+            "details": {
+              "reasoning": "The agent successfully created both skills after several failed attempts due to structural issues with the payload. However, the agent did not complete steps 3 and 4 of the task: creating a link between parent and child using notes_link, and running context_chain from the parent with the task 'unit testing'. The agent stopped after skill creation.",
+              "breakdown": {
+                "score": 0.3
+              },
+              "issues": [
+                "Did not create a link between parent and child skills using notes_link",
+                "Did not execute context_chain from parent skill",
+                "No traversal path was established or evaluated",
+                "Required multiple attempts to understand correct payload structure (scope at top level, other fields in frontmatter)"
+              ],
+              "strengths": [
+                "Successfully created both 'Testing Fundamentals' and 'Unit Testing' skills with correct structure",
+                "Persisted through errors and learned the correct payload format",
+                "Used payload wrapper as instructed"
+              ],
+              "audit": {
+                "prompt_name": "custom_inline_rubric",
+                "prompt_version": "1.0.0",
+                "prompt_hash": "c7060686f333e08f",
+                "judge_model": "glm-4.7",
+                "judge_provider": "zai-coding-plan",
+                "judge_params": {
+                  "temperature": 0.0,
+                  "max_tokens": 1024,
+                  "n_judges": 1,
+                  "consensus_mode": "mean"
+                },
+                "raw_output": "\n{\n  \"score\": 0.3,\n  \"passed\": false,\n  \"reasoning\": \"The agent successfully created both skills after several failed attempts due to structural issues with the payload. However, the agent did not complete steps 3 and 4 of the task: creating a link between parent and child using notes_link, and running context_chain from the parent with the task 'unit testing'. The agent stopped after skill creation.\",\n  \"issues\": [\n    \"Did not create a link between parent and child skills using notes_link\",\n    \"Did not execute context_chain from parent skill\",\n    \"No traversal path was established or evaluated\",\n    \"Required multiple attempts to understand correct payload structure (scope at top level, other fields in frontmatter)\"\n  ],\n  \"strengths\": [\n    \"Successfully created both 'Testing Fundamentals' and 'Unit Testing' skills with correct structure\",\n    \"Persisted through errors and learned the correct payload format\",\n    \"Used payload wrapper as instructed\"\n  ]\n}\n"
+              },
+              "n_judges": 1,
+              "consensus_mode": "mean"
+            },
+            "error_message": null,
+            "execution_time_seconds": 34.441301107406616,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.3,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-9260380e",
+        "run_id": "run-e9670d80",
+        "task_id": "traversal.basic.context-chain",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T01:59:49.147549+00:00",
+        "started_at": "2026-03-13T01:59:49.147479+00:00",
+        "completed_at": "2026-03-13T02:02:16.600529+00:00"
+      }
+    },
+    {
+      "id": "trial-9fcfa211",
+      "task_id": "links.create-and-validate",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create source skill:\n   - title: \"Source Skill for Links\"\n   - type: skill\n   - scope: global\n   - description: \"Source skill for link testing\"\n   - skill_level: beginner\n   - triggers: [\"source\"]\n   - required_tools: []\n   \n2. Create target skill:\n   - title: \"Target Skill for Links\"\n   - type: skill\n   - scope: global\n   - description: \"Target skill for link testing\"\n   - skill_level: beginner\n   - triggers: [\"target\"]\n   - required_tools: []\n   \n3. Link source to target using notes_link:\n   - source_note_id: (source skill ID)\n   - target_note_id_or_title: \"Target Skill for Links\"\n   - link_text: \"related\"\n   \n4. Validate links with notes_validate_links\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-9fcfa211",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:19.853288+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 27.05594801902771,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-9fcfa211",
+        "run_id": "run-e9670d80",
+        "task_id": "links.create-and-validate",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T01:59:52.793854+00:00",
+        "started_at": "2026-03-13T01:59:52.793706+00:00",
+        "completed_at": "2026-03-13T02:00:19.929002+00:00"
+      }
+    },
+    {
+      "id": "trial-5a790a03",
+      "task_id": "links.backlinks",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill A:\n   - title: \"Skill A Backlink Test\"\n   - type: skill\n   - scope: global\n   - description: \"First skill\"\n   - skill_level: beginner\n   - triggers: [\"skill-a\"]\n   - required_tools: []\n   \n2. Create skill B:\n   - title: \"Skill B Backlink Test\"\n   - type: skill\n   - scope: global\n   - description: \"Second skill\"\n   - skill_level: beginner\n   - triggers: [\"skill-b\"]\n   - required_tools: []\n   \n3. Link A -> B\n\n4. Get backlinks for B using notes_backlinks\n\n5. Verify A appears in B's backlinks\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-5a790a03",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:21.933337+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 2.000764846801758,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-5a790a03",
+        "run_id": "run-e9670d80",
+        "task_id": "links.backlinks",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:19.930423+00:00",
+        "started_at": "2026-03-13T02:00:19.930406+00:00",
+        "completed_at": "2026-03-13T02:00:22.018424+00:00"
+      }
+    },
+    {
+      "id": "trial-8c583693",
+      "task_id": "archive.create-and-archive",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill:\n   - title: \"Skill to Archive\"\n   - type: skill\n   - scope: global\n   - description: \"This skill will be archived\"\n   - skill_level: beginner\n   - triggers: [\"archive-test\"]\n   - required_tools: []\n   \n2. Archive the skill using notes_archive\n\n3. Search for \"archive-test\" - should NOT find the archived skill\n   (unless archive_search_enabled is true)\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-8c583693",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:24.547433+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 2.5247130393981934,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-8c583693",
+        "run_id": "run-e9670d80",
+        "task_id": "archive.create-and-archive",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:22.020535+00:00",
+        "started_at": "2026-03-13T02:00:22.020514+00:00",
+        "completed_at": "2026-03-13T02:00:24.618498+00:00"
+      }
+    },
+    {
+      "id": "trial-6355af19",
+      "task_id": "reindex.after-changes",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create a skill:\n   - title: \"Reindex Test Skill\"\n   - type: skill\n   - scope: global\n   - description: \"Testing reindex functionality\"\n   - skill_level: beginner\n   - triggers: [\"reindex-test-unique\"]\n   - required_tools: []\n   \n2. Run notes_reindex\n\n3. Search for \"reindex-test-unique\" - should find the skill\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-6355af19",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:26.283079+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 1.66143798828125,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-6355af19",
+        "run_id": "run-e9670d80",
+        "task_id": "reindex.after-changes",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:24.619974+00:00",
+        "started_at": "2026-03-13T02:00:24.619954+00:00",
+        "completed_at": "2026-03-13T02:00:26.369486+00:00"
+      }
+    },
+    {
+      "id": "trial-40ab0891",
+      "task_id": "discoverability.ranking.relevance",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill with exact match in title:\n   - title: \"Git Rebase Workflow\"\n   - type: skill\n   - scope: global\n   - description: \"General git operations\"\n   - skill_level: intermediate\n   - triggers: [\"git\", \"rebase\"]\n   - required_tools: []\n   \n2. Create skill with match only in description:\n   - title: \"Version Control Tips\"\n   - type: skill\n   - scope: global\n   - description: \"Tips for git rebase and other operations\"\n   - skill_level: beginner\n   - triggers: [\"version-control\"]\n   - required_tools: []\n   \n3. Search for \"git rebase\"\n\n4. Verify the exact title match ranks higher (appears first)\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-40ab0891",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:28.287345+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 1.9143128395080566,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-40ab0891",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.ranking.relevance",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:26.370873+00:00",
+        "started_at": "2026-03-13T02:00:26.370853+00:00",
+        "completed_at": "2026-03-13T02:00:28.373038+00:00"
+      }
+    },
+    {
+      "id": "trial-e89d1e4b",
+      "task_id": "discoverability.context-aware.traversal",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill \"API Development\":\n   - title: \"API Development\"\n   - type: skill\n   - scope: global\n   - description: \"Build REST APIs\"\n   - skill_level: intermediate\n   - triggers: [\"api\", \"rest\"]\n   - required_tools: []\n   \n2. Create skill \"API Testing\":\n   - title: \"API Testing\"\n   - type: skill\n   - scope: global\n   - description: \"Test REST APIs\"\n   - skill_level: intermediate\n   - triggers: [\"api\", \"test\"]\n   - required_tools: []\n   \n3. Create skill \"API Deployment\":\n   - title: \"API Deployment\"\n   - type: skill\n   - scope: global\n   - description: \"Deploy APIs to production\"\n   - skill_level: advanced\n   - triggers: [\"api\", \"deploy\"]\n   - required_tools: []\n   \n4. Link \"API Development\" -> \"API Testing\"\n5. Link \"API Development\" -> \"API Deployment\"\n\n6. Run context_chain from \"API Development\" with:\n   - task: \"I need to write tests for my API\"\n   \n7. Verify \"API Testing\" scores higher or appears earlier than \"API Deployment\"\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-e89d1e4b",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:30.393264+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 2.0183091163635254,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-e89d1e4b",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.context-aware.traversal",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:28.374439+00:00",
+        "started_at": "2026-03-13T02:00:28.374420+00:00",
+        "completed_at": "2026-03-13T02:00:30.454976+00:00"
+      }
+    },
+    {
+      "id": "trial-659c26a5",
+      "task_id": "discoverability.description-keywords",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill with unique keyword ONLY in description:\n   - title: \"Code Organization\"\n   - type: skill\n   - scope: global\n   - description: \"Best practices for organizing code with xyz-unique-keyword-999\"\n   - skill_level: beginner\n   - triggers: [\"organize\", \"structure\"]\n   - required_tools: []\n   \n2. Search for \"xyz-unique-keyword-999\"\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-659c26a5",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:32.389803+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 1.93076491355896,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-659c26a5",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.description-keywords",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:30.456430+00:00",
+        "started_at": "2026-03-13T02:00:30.456405+00:00",
+        "completed_at": "2026-03-13T02:00:32.475129+00:00"
+      }
+    },
+    {
+      "id": "trial-6211fe09",
+      "task_id": "discoverability.natural-language.query",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill:\n   - title: \"Database Migration Strategy\"\n   - type: skill\n   - scope: global\n   - description: \"How to safely migrate database schemas in production\"\n   - skill_level: advanced\n   - triggers: [\"database\", \"migration\", \"schema\"]\n   - required_tools: []\n   \n2. Search using natural language: \"change database schema safely\"\n\n3. Verify the skill is found despite not matching exact words\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-6211fe09",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:34.672195+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 2.1928629875183105,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-6211fe09",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.natural-language.query",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:32.476637+00:00",
+        "started_at": "2026-03-13T02:00:32.476615+00:00",
+        "completed_at": "2026-03-13T02:00:34.758977+00:00"
+      }
+    },
+    {
+      "id": "trial-331c617e",
+      "task_id": "discoverability.cross-skill.graph",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill \"Python Fundamentals\":\n   - title: \"Python Fundamentals\"\n   - type: skill\n   - scope: global\n   - description: \"Core Python concepts\"\n   - skill_level: beginner\n   - triggers: [\"python\", \"basics\"]\n   - required_tools: []\n   \n2. Create skill \"Python Decorators\":\n   - title: \"Python Decorators\"\n   - type: skill\n   - scope: global\n   - description: \"Advanced decorator patterns\"\n   - skill_level: advanced\n   - triggers: [\"decorator\", \"python\"]\n   - required_tools: []\n   \n3. Create skill \"Python Context Managers\":\n   - title: \"Python Context Managers\"\n   - type: skill\n   - scope: global\n   - description: \"Using with statements and context managers\"\n   - skill_level: intermediate\n   - triggers: [\"context\", \"with\", \"python\"]\n   - required_tools: []\n   \n4. Link \"Python Fundamentals\" -> \"Python Decorators\"\n5. Link \"Python Fundamentals\" -> \"Python Context Managers\"\n\n6. Start from \"Python Fundamentals\" and use context_chain to discover related skills\n\n7. Verify both child skills are discovered through the graph\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-331c617e",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:37.058832+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 2.2966179847717285,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-331c617e",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.cross-skill.graph",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:34.760377+00:00",
+        "started_at": "2026-03-13T02:00:34.760356+00:00",
+        "completed_at": "2026-03-13T02:00:37.139955+00:00"
+      }
+    },
+    {
+      "id": "trial-f01d79d5",
+      "task_id": "discoverability.partial-title.match",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill:\n   - title: \"FastAPI Request Validation\"\n   - type: skill\n   - scope: global\n   - description: \"Validate incoming requests in FastAPI\"\n   - skill_level: intermediate\n   - triggers: [\"fastapi\", \"validation\"]\n   - required_tools: []\n   \n2. Search for just \"FastAPI\" (partial title)\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-f01d79d5",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:39.505706+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 2.36376690864563,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-f01d79d5",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.partial-title.match",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:37.141323+00:00",
+        "started_at": "2026-03-13T02:00:37.141305+00:00",
+        "completed_at": "2026-03-13T02:00:39.570567+00:00"
+      }
+    },
+    {
+      "id": "trial-a9297e15",
+      "task_id": "discoverability.trigger.activation",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill with unique trigger:\n   - title: \"Logging Best Practices\"\n   - type: skill\n   - scope: global\n   - description: \"How to implement logging\"\n   - skill_level: intermediate\n   - triggers: [\"logging\", \"logs\", \"unique-trigger-abc-789\"]\n   - required_tools: []\n   \n2. Search for \"unique-trigger-abc-789\" (which is ONLY in triggers)\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-a9297e15",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:41.288582+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 3.402853012084961,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-a9297e15",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.trigger.activation",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:37.883678+00:00",
+        "started_at": "2026-03-13T02:00:37.883556+00:00",
+        "completed_at": "2026-03-13T02:00:41.373408+00:00"
+      }
+    },
+    {
+      "id": "trial-4bb5c208",
+      "task_id": "discoverability.case-insensitive",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill:\n   - title: \"Docker Container Management\"\n   - type: skill\n   - scope: global\n   - description: \"Manage Docker containers efficiently\"\n   - skill_level: intermediate\n   - triggers: [\"docker\", \"container\"]\n   - required_tools: []\n   \n2. Search for \"DOCKER\" (all uppercase)\n3. Search for \"docker\" (all lowercase)\n4. Search for \"Docker\" (mixed case)\n\n5. Verify all searches find the same skill\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-4bb5c208",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:41.413366+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 1.8409349918365479,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-4bb5c208",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.case-insensitive",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:39.572064+00:00",
+        "started_at": "2026-03-13T02:00:39.572046+00:00",
+        "completed_at": "2026-03-13T02:00:41.469866+00:00"
+      }
+    },
+    {
+      "id": "trial-bcc66fc0",
+      "task_id": "discoverability.alias.resolution",
+      "status": "error",
+      "attempt_number": 1,
+      "input_snapshot": "1. Create skill with aliases:\n   - title: \"Unit Testing with Pytest\"\n   - type: skill\n   - scope: global\n   - description: \"Write unit tests using pytest framework\"\n   - skill_level: intermediate\n   - triggers: [\"test\", \"pytest\"]\n   - aliases: [\"pytest-testing\", \"python-testing-guide\"]\n   - required_tools: [\"pytest\"]\n   \n2. Search for \"pytest-testing\" (alias)\n\n3. Verify the skill is found via alias\n\nUse payload wrapper for all calls.\n",
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-bcc66fc0",
+        "outcome": {
+          "status": "error",
+          "failure_mode": "agent_error",
+          "error_message": "Z.AI API error (code=1302): Rate limit reached for requests",
+          "completed_at": "2026-03-13T02:00:43.101201+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 1.7231700420379639,
+          "agent_response": null,
+          "error_trace": "Traceback (most recent call last):\n  File \"/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/agents/dawn_kestrel.py\", line 747, in run\n    response = await client.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 617, in complete\n    events = await self._collect_stream_events_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 557, in _collect_stream_events_with_retry\n    async for attempt in AsyncRetrying(\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 170, in __anext__\n    do = await self.iter(retry_state=self._retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/tools/ash-hawk/lib/python3.12/site-packages/tenacity/__init__.py\", line 393, in <lambda>\n    self._add_action_func(lambda rs: rs.outcome.result())\n                                     ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 569, in _collect_stream_events_with_retry\n    return await execute_with_limits()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 550, in execute_with_limits\n    return await self._collect_stream_events_once(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 139, in wrapper\n    result = await func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 500, in _collect_stream_events_once\n    return await asyncio.wait_for(collect(), timeout=self.timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/parkersligting/.local/share/uv/python/cpython-3.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/llm/client.py\", line 491, in collect\n    async for event in self.provider.stream(\n  File \"/Users/parkersligting/develop/pt/dawn-kestrel/dawn_kestrel/providers/zai_base.py\", line 148, in stream\n    raise Exception(f\"Z.AI API error (code={error_code}): {error_msg}\")\nException: Z.AI API error (code=1302): Rate limit reached for requests\n"
+        },
+        "grader_results": [],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": {
+        "trial_id": "trial-bcc66fc0",
+        "run_id": "run-e9670d80",
+        "task_id": "discoverability.alias.resolution",
+        "attempt_number": 1,
+        "policy_snapshot": {
+          "allowed_tools": [
+            "*"
+          ],
+          "denied_tools": [],
+          "default_permission": "allow",
+          "allowed_roots": [],
+          "network_allowed": false,
+          "network_allowlist": [],
+          "max_tool_calls": null,
+          "timeout_seconds": 300.0,
+          "token_budget": null,
+          "cost_budget_usd": null,
+          "max_file_size_bytes": null,
+          "env_vars_allowed": [],
+          "max_tool_depth": 10
+        },
+        "created_at": "2026-03-13T02:00:41.375530+00:00",
+        "started_at": "2026-03-13T02:00:41.375510+00:00",
+        "completed_at": "2026-03-13T02:00:43.190806+00:00"
+      }
+    }
+  ]
+}

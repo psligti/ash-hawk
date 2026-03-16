@@ -1,0 +1,153 @@
+{
+  "trial": {
+    "id": "trial-6ff12aef",
+    "task_id": "discoverability.partial-title.match",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create skill:\n   - title: \"FastAPI Request Validation\"\n   - type: skill\n   - scope: global\n   - description: \"Validate incoming requests in FastAPI\"\n   - skill_level: intermediate\n   - triggers: [\"fastapi\", \"validation\"]\n   - required_tools: []\n   \n2. Search for just \"FastAPI\" (partial title)\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-6ff12aef",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:30:34.267208+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "1. Create skill:\n   - title: \"FastAPI Request Validation\"\n   - type: skill\n   - scope: global\n   - description: \"Validate incoming requests in FastAPI\"\n   - skill_level: intermediate\n   - triggers: [\"fastapi\", \"validation\"]\n   - required_tools: []\n   \n2. Search for just \"FastAPI\" (partial title)\n\n3. Verify the skill is found\n\nUse payload wrapper for all calls.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"payload\": [\n    {\n      \"function\": \"create\",\n      \"arguments\": {\n        \"title\": \"FastAPI Request Validation\",\n        \"type\": \"skill\",\n        \"scope\": \"global\",\n        \"description\": \"Validate incoming requests in FastAPI\",\n        \"skill_level\": \"intermediate\",\n        \"triggers\": [\"fastapi\", \"validation\"],\n        \"required_tools\": []\n      }\n    },\n    {\n      \"function\": \"search\",\n      \"arguments\": {\n        \"query\": \"FastAPI\"\n      }\n    },\n    {\n      \"function\": \"verify\",\n      \"arguments\": {\n        \"confirmation\": \"skill found\"\n      }\n    }\n  ]\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 97,
+          "output": 297,
+          "reasoning": 149,
+          "cache_read": 12,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 4.129801988601685,
+        "agent_response": "```json\n{\n  \"payload\": [\n    {\n      \"function\": \"create\",\n      \"arguments\": {\n        \"title\": \"FastAPI Request Validation\",\n        \"type\": \"skill\",\n        \"scope\": \"global\",\n        \"description\": \"Validate incoming requests in FastAPI\",\n        \"skill_level\": \"intermediate\",\n        \"triggers\": [\"fastapi\", \"validation\"],\n        \"required_tools\": []\n      }\n    },\n    {\n      \"function\": \"search\",\n      \"arguments\": {\n        \"query\": \"FastAPI\"\n      }\n    },\n    {\n      \"function\": \"verify\",\n      \"arguments\": {\n        \"confirmation\": \"skill found\"\n      }\n    }\n  ]\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.6,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent correctly structured the create and search function calls with proper parameters. However, the verification function uses a hardcoded 'skill found' confirmation rather than actually verifying the search results, which is insufficient for demonstrating the skill was found via partial match.",
+            "breakdown": {
+              "score": 0.6
+            },
+            "issues": [
+              "The verify function assumes success with hardcoded confirmation 'skill found' rather than checking actual search results",
+              "No indication that verification depends on search output"
+            ],
+            "strengths": [
+              "Correctly formatted all function calls within payload wrapper",
+              "Properly included all required parameters for skill creation",
+              "Search correctly uses partial title 'FastAPI' as requested"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "69609ad8a2ac272b",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.6,\n  \"passed\": false,\n  \"reasoning\": \"The agent correctly structured the create and search function calls with proper parameters. However, the verification function uses a hardcoded 'skill found' confirmation rather than actually verifying the search results, which is insufficient for demonstrating the skill was found via partial match.\",\n  \"issues\": [\"The verify function assumes success with hardcoded confirmation 'skill found' rather than checking actual search results\", \"No indication that verification depends on search output\"],\n  \"strengths\": [\"Correctly formatted all function calls within payload wrapper\", \"Properly included all required parameters for skill creation\", \"Search correctly uses partial title 'FastAPI' as requested\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 38.314502000808716,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.6,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-6ff12aef",
+      "run_id": "run-487c804f",
+      "task_id": "discoverability.partial-title.match",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:30:30.137267+00:00",
+      "started_at": "2026-03-12T17:30:30.137222+00:00",
+      "completed_at": "2026-03-12T17:30:34.267243+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-6ff12aef",
+    "run_id": "run-487c804f",
+    "task_id": "discoverability.partial-title.match",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:30:30.137267+00:00",
+    "started_at": "2026-03-12T17:30:30.137222+00:00",
+    "completed_at": "2026-03-12T17:30:34.267243+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

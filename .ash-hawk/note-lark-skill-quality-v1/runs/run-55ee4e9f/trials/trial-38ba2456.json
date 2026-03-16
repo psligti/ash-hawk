@@ -1,0 +1,161 @@
+{
+  "trial": {
+    "id": "trial-38ba2456",
+    "task_id": "skill.clarity.description.quality",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill note with:\n- title: \"Error Handling Pattern\"\n- type: skill\n- scope: global\n- description: \"Standard error handling for API routes using HTTPException\"\n- skill_level: intermediate\n- triggers: [\"exception\", \"error\", \"validation error\"]\n- required_tools: [\"pydantic\", \"fastapi\"]\n- body: |\n    # Error Handling Pattern\n    \n    Use HTTPException for API errors with proper status codes.\n    \n    ## Example\n    ```python\n    raise HTTPException(400, \"Invalid input\")\n    ```\n\nUse notes_create with payload wrapper. All type-specific fields go in frontmatter.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-38ba2456",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:26:59.917621+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill note with:\n- title: \"Error Handling Pattern\"\n- type: skill\n- scope: global\n- description: \"Standard error handling for API routes using HTTPException\"\n- skill_level: intermediate\n- triggers: [\"exception\", \"error\", \"validation error\"]\n- required_tools: [\"pydantic\", \"fastapi\"]\n- body: |\n    # Error Handling Pattern\n    \n    Use HTTPException for API errors with proper status codes.\n    \n    ## Example\n    ```python\n    raise HTTPException(400, \"Invalid input\")\n    ```\n\nUse notes_create with payload wrapper. All type-specific fields go in frontmatter.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"tool\": \"notes_create\",\n  \"payload\": {\n    \"content\": \"---\\ntitle: \\\"Error Handling Pattern\\\"\\ntype: skill\\nscope: global\\ndescription: \\\"Standard error handling for API routes using HTTPException\\\"\\nskill_level: intermediate\\ntriggers:\\n  - exception\\n  - error\\n  - validation error\\nrequired_tools:\\n  - pydantic\\n  - fastapi\\n---\\n\\n# Error Handling Pattern\\n\\nUse HTTPException for API errors with proper status codes.\\n\\n## Example\\n```python\\nraise HTTPException(400, \\\"Invalid input\\\")\\n```\"\n  }\n}\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"httpexception\", \"input\": {}, \"error\": \"Tool not available: httpexception\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"tool\": \"notes_create\",\n  \"payload\": {\n    \"content\": \"---\\ntitle: \\\"Error Handling Pattern\\\"\\ntype: skill\\nscope: global\\ndescription: \\\"Standard error handling for API routes using HTTPException\\\"\\nskill_level: intermediate\\ntriggers:\\n  - exception\\n  - error\\n  - validation error\\nrequired_tools:\\n  - pydantic\\n  - fastapi\\n---\\n\\n# Error Handling Pattern\\n\\nUse HTTPException for API errors with proper status codes.\\n\\n## Example\\n```python\\nraise HTTPException(400, \\\"Invalid input\\\")\\n```\"\n  }\n}\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"httpexception\", \"input\": {}, \"error\": \"Tool not available: httpexception\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"tool\": \"notes_create\",\n  \"payload\": {\n    \"content\": \"---\\ntitle: \\\"Error Handling Pattern\\\"\\ntype: skill\\nscope: global\\ndescription: \\\"Standard error handling for API routes using HTTPException\\\"\\nskill_level: intermediate\\ntriggers:\\n  - exception\\n  - error\\n  - validation error\\nrequired_tools:\\n  - pydantic\\n  - fastapi\\n---\\n\\n# Error Handling Pattern\\n\\nUse HTTPException for API errors with proper status codes.\\n\\n## Example\\n```python\\nraise HTTPException(400, \\\"Invalid input\\\")\\n```\"\n  }\n}\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"httpexception\", \"input\": {}, \"error\": \"Tool not available: httpexception\"}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "httpexception",
+            "input": {},
+            "error": "Tool not available: httpexception"
+          },
+          {
+            "tool": "httpexception",
+            "input": {},
+            "error": "Tool not available: httpexception"
+          },
+          {
+            "tool": "httpexception",
+            "input": {},
+            "error": "Tool not available: httpexception"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 476,
+          "output": 6496,
+          "reasoning": 6355,
+          "cache_read": 304,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 171.75595903396606,
+        "agent_response": "```json\n{\n  \"tool\": \"notes_create\",\n  \"payload\": {\n    \"content\": \"---\\ntitle: \\\"Error Handling Pattern\\\"\\ntype: skill\\nscope: global\\ndescription: \\\"Standard error handling for API routes using HTTPException\\\"\\nskill_level: intermediate\\ntriggers:\\n  - exception\\n  - error\\n  - validation error\\nrequired_tools:\\n  - pydantic\\n  - fastapi\\n---\\n\\n# Error Handling Pattern\\n\\nUse HTTPException for API errors with proper status codes.\\n\\n## Example\\n```python\\nraise HTTPException(400, \\\"Invalid input\\\")\\n```\"\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "[Errno 63] File name too long: '/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate the skill creation result:\\n\\n1. Was notes_create called correctly with payload wrapper?\\n2. Did the skill get created successfully?\\n3. Are all required fields present in frontmatter?\\n\\nScore:\\n- 1.0: Skill created correctly with proper structure\\n- 0.7: Created but minor issues\\n- 0.0: Failed or incorrect structure\\n.md'",
+          "execution_time_seconds": 0.0015408992767333984,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-38ba2456",
+      "run_id": "run-55ee4e9f",
+      "task_id": "skill.clarity.description.quality",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:24:08.161530+00:00",
+      "started_at": "2026-03-12T16:24:08.161503+00:00",
+      "completed_at": "2026-03-12T16:26:59.917658+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-38ba2456",
+    "run_id": "run-55ee4e9f",
+    "task_id": "skill.clarity.description.quality",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:24:08.161530+00:00",
+    "started_at": "2026-03-12T16:24:08.161503+00:00",
+    "completed_at": "2026-03-12T16:26:59.917658+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

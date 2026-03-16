@@ -41,7 +41,7 @@ tasks:
         required: true
       - grader_type: llm_judge
         config:
-          rubric: |
+          custom_prompt: |
             Evaluate code quality on:
             1. Proper docstring with args/returns
             2. Type hints present and correct
@@ -85,7 +85,7 @@ tasks:
               weight: 0.2
             - grader_type: llm_judge
               config:
-                rubric: |
+                custom_prompt: |
                   Evaluate as production-ready code:
                   1. Proper error handling (not just pass/fail)
                   2. Logging present

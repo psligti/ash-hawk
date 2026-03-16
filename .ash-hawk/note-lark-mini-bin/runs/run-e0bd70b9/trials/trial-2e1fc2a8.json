@@ -1,0 +1,107 @@
+{
+  "trial": {
+    "id": "trial-2e1fc2a8",
+    "task_id": "mini.search.basic",
+    "status": "error",
+    "attempt_number": 1,
+    "input_snapshot": "1. Create a skill titled \"Mini Python Error Handling\" with payload wrapper.\n2. Search for \"mini python error\" with payload wrapper.\n3. Verify created skill appears.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-2e1fc2a8",
+      "outcome": {
+        "status": "error",
+        "failure_mode": "timeout",
+        "error_message": "Trial timed out after 600.0s",
+        "completed_at": "2026-03-13T01:40:48.835776+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 600.003947019577,
+        "agent_response": null,
+        "error_trace": "Trial execution timed out"
+      },
+      "grader_results": [],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-2e1fc2a8",
+      "run_id": "run-e0bd70b9",
+      "task_id": "mini.search.basic",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [
+          "*"
+        ],
+        "denied_tools": [],
+        "default_permission": "allow",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 600.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-13T01:30:48.832036+00:00",
+      "started_at": "2026-03-13T01:30:48.832005+00:00",
+      "completed_at": "2026-03-13T01:40:48.836000+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-2e1fc2a8",
+    "run_id": "run-e0bd70b9",
+    "task_id": "mini.search.basic",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [
+        "*"
+      ],
+      "denied_tools": [],
+      "default_permission": "allow",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 600.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-13T01:30:48.832036+00:00",
+    "started_at": "2026-03-13T01:30:48.832005+00:00",
+    "completed_at": "2026-03-13T01:40:48.836000+00:00"
+  },
+  "policy": {
+    "allowed_tools": [
+      "*"
+    ],
+    "denied_tools": [],
+    "default_permission": "allow",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 600.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,4 @@
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "user", "content": "Execute command: harness_tick", "inputs": ["command", "config", "database", "review_notes", "mock_bird_client", "strategy"]}}
+{"schema_version": 1, "event_type": "ToolCallEvent", "ts": "1970-01-01T00:00:00Z", "data": {"command": "harness_tick", "status": "completed", "notes_processed": 2, "new_actions": 0}}
+{"schema_version": 1, "event_type": "VerificationEvent", "ts": "1970-01-01T00:00:00Z", "data": {"pass": true, "message": "All assertions passed"}}
+{"schema_version": 1, "event_type": "ArtifactEvent", "ts": "1970-01-01T00:00:00Z", "data": {"path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-f22fdbc2/runs/run-40e99ce3/artifacts/trial-04a96459/artifacts.json", "artifact_key": "artifacts"}}

@@ -1,0 +1,125 @@
+{
+  "trial": {
+    "id": "trial-1402ef18",
+    "task_id": "skill.clarity.description.not-empty",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-1402ef18",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T16:24:29.469320+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"function\": \"notes_create\",\n  \"arguments\": {\n    \"payload\": {\n      \"title\": \"Test Skill\",\n      \"type\": \"skill\",\n      \"scope\": \"global\",\n      \"description\": \"\",\n      \"skill_level\": \"beginner\",\n      \"triggers\": [\n        \"test\"\n      ],\n      \"required_tools\": [],\n      \"body\": \"Test skill body\"\n    }\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 67,
+          "output": 1113,
+          "reasoning": 1020,
+          "cache_read": 12,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 21.40176773071289,
+        "agent_response": "```json\n{\n  \"function\": \"notes_create\",\n  \"arguments\": {\n    \"payload\": {\n      \"title\": \"Test Skill\",\n      \"type\": \"skill\",\n      \"scope\": \"global\",\n      \"description\": \"\",\n      \"skill_level\": \"beginner\",\n      \"triggers\": [\n        \"test\"\n      ],\n      \"required_tools\": [],\n      \"body\": \"Test skill body\"\n    }\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "failure_mode": "judge_error"
+          },
+          "error_message": "[Errno 63] File name too long: '/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/prompts/judge/Evaluate whether the agent correctly REJECTS creating a skill \\nwith an empty description. The agent should either:\\n1. Return a validation error about empty description\\n2. Refuse to create the skill with explanation\\n\\nScore:\\n- 1.0: Agent correctly rejects the empty description\\n- 0.5: Agent creates but warns about empty description\\n- 0.0: Agent creates without any warning\\n.md'",
+          "execution_time_seconds": 0.003545045852661133,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-1402ef18",
+      "run_id": "run-55ee4e9f",
+      "task_id": "skill.clarity.description.not-empty",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T16:24:08.067417+00:00",
+      "started_at": "2026-03-12T16:24:08.067387+00:00",
+      "completed_at": "2026-03-12T16:24:29.469373+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-1402ef18",
+    "run_id": "run-55ee4e9f",
+    "task_id": "skill.clarity.description.not-empty",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T16:24:08.067417+00:00",
+    "started_at": "2026-03-12T16:24:08.067387+00:00",
+    "completed_at": "2026-03-12T16:24:29.469373+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "trial": {
+    "id": "trial-e4486fe3",
+    "task_id": "skill.clarity.description.not-empty",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n",
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-e4486fe3",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-12T17:23:46.284347+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Create a skill note with:\n- title: \"Test Skill\"\n- type: skill\n- scope: global\n- description: \"\" (EMPTY)\n- skill_level: beginner\n- triggers: [\"test\"]\n- required_tools: []\n- body: \"Test skill body\"\n\nUse notes_create with payload wrapper.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"command\": \"notes_create\",\n  \"payload\": {\n    \"title\": \"Test Skill\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"\",\n    \"skill_level\": \"beginner\",\n    \"triggers\": [\n      \"test\"\n    ],\n    \"required_tools\": [],\n    \"body\": \"Test skill body\"\n  }\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [],
+        "token_usage": {
+          "input": 67,
+          "output": 951,
+          "reasoning": 865,
+          "cache_read": 5,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 14.06046199798584,
+        "agent_response": "```json\n{\n  \"command\": \"notes_create\",\n  \"payload\": {\n    \"title\": \"Test Skill\",\n    \"type\": \"skill\",\n    \"scope\": \"global\",\n    \"description\": \"\",\n    \"skill_level\": \"beginner\",\n    \"triggers\": [\n      \"test\"\n    ],\n    \"required_tools\": [],\n    \"body\": \"Test skill body\"\n  }\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "reasoning": "The agent created the skill note with an empty description without any validation error, warning, or refusal. According to the rubric, the agent should reject creating a skill with an empty description, but it proceeded to create it anyway.",
+            "breakdown": {
+              "score": 0.0
+            },
+            "issues": [
+              "Failed to validate empty description field",
+              "Did not reject or warn about the empty description as required by the rubric"
+            ],
+            "strengths": [
+              "Correctly structured the notes_create command with all other specified fields"
+            ],
+            "audit": {
+              "prompt_name": "custom_inline_rubric",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "b876e8244e38150a",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"score\": 0.0,\n  \"passed\": false,\n  \"reasoning\": \"The agent created the skill note with an empty description without any validation error, warning, or refusal. According to the rubric, the agent should reject creating a skill with an empty description, but it proceeded to create it anyway.\",\n  \"issues\": [\"Failed to validate empty description field\", \"Did not reject or warn about the empty description as required by the rubric\"],\n  \"strengths\": [\"Correctly structured the notes_create command with all other specified fields\"]\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 4.938852071762085,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-e4486fe3",
+      "run_id": "run-c3e3e36f",
+      "task_id": "skill.clarity.description.not-empty",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-12T17:23:32.223538+00:00",
+      "started_at": "2026-03-12T17:23:32.223510+00:00",
+      "completed_at": "2026-03-12T17:23:46.284522+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-e4486fe3",
+    "run_id": "run-c3e3e36f",
+    "task_id": "skill.clarity.description.not-empty",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-12T17:23:32.223538+00:00",
+    "started_at": "2026-03-12T17:23:32.223510+00:00",
+    "completed_at": "2026-03-12T17:23:46.284522+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}
