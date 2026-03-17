@@ -9,7 +9,7 @@ Defines the core types used across the improvement pipeline:
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 import pydantic as pd
@@ -43,6 +43,7 @@ class PipelineContext(pd.BaseModel):
         review_request_id: ID of the review request that started this pipeline.
         role: Current active role in the pipeline.
         target_agent: Agent being evaluated.
+        experiment_id: Optional experiment ID for parallel trial isolation.
         inputs: Input data for the current role.
         outputs: Accumulated outputs from completed roles.
         metadata: Additional context metadata.
@@ -59,6 +60,10 @@ class PipelineContext(pd.BaseModel):
     )
     target_agent: str = pd.Field(
         description="Agent being evaluated",
+    )
+    experiment_id: str | None = pd.Field(
+        default=None,
+        description="Optional experiment ID for parallel trial isolation",
     )
     inputs: dict[str, Any] = pd.Field(
         default_factory=dict,
@@ -82,6 +87,7 @@ class PipelineContext(pd.BaseModel):
             review_request_id=self.review_request_id,
             role=next_role,
             target_agent=self.target_agent,
+            experiment_id=self.experiment_id,
             inputs={},
             outputs=self.outputs.copy(),
             metadata=self.metadata.copy(),

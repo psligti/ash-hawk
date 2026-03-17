@@ -13,6 +13,7 @@ from ash_hawk.contracts.lesson_payloads import (
     parse_lesson_payload,
 )
 from ash_hawk.services.lesson_service import LessonService
+from ash_hawk.strategies.registry import Strategy, SubStrategy, validate_strategy_pair
 
 
 class LessonInjector:
@@ -23,8 +24,34 @@ class LessonInjector:
     policy rules, and harness adjustments.
     """
 
-    def __init__(self, lesson_service: LessonService | None = None) -> None:
+    def __init__(
+        self,
+        lesson_service: LessonService | None = None,
+        strategy_filter: str | None = None,
+        sub_strategy_filter: str | None = None,
+    ) -> None:
         self._service = lesson_service or LessonService()
+        self._strategy_filter = strategy_filter
+        self._sub_strategy_filter = sub_strategy_filter
+
+    def _filter_lessons_by_strategy(self, lessons: list[CuratedLesson]) -> list[CuratedLesson]:
+        """Filter lessons by strategy/sub-strategy if filters are set."""
+        if not self._strategy_filter and not self._sub_strategy_filter:
+            return lessons
+
+        filtered: list[CuratedLesson] = []
+        for lesson in lessons:
+            lesson_strategy = getattr(lesson, "strategy", None)
+            lesson_sub_strategy = getattr(lesson, "sub_strategy", None)
+
+            if self._strategy_filter and lesson_strategy != self._strategy_filter:
+                continue
+            if self._sub_strategy_filter and lesson_sub_strategy != self._sub_strategy_filter:
+                continue
+
+            filtered.append(lesson)
+
+        return filtered
 
     def inject_into_prompt(self, agent_id: str, base_prompt: str) -> str:
         """Inject skill and policy lessons into agent prompt.
@@ -36,9 +63,9 @@ class LessonInjector:
         Returns:
             Augmented prompt with learned lessons appended.
         """
-        lessons = self._service.get_lessons_for_agent(agent_id)
-        skill_lessons = [l for l in lessons if l.lesson_type == "skill"]
-        policy_lessons = [l for l in lessons if l.lesson_type == "policy"]
+        lessons = self._filter_lessons_by_strategy(self._service.get_lessons_for_agent(agent_id))
+        skill_lessons = [lesson for lesson in lessons if lesson.lesson_type == "skill"]
+        policy_lessons = [lesson for lesson in lessons if lesson.lesson_type == "policy"]
 
         additions: list[str] = []
 
@@ -75,8 +102,8 @@ class LessonInjector:
         Returns:
             Dict mapping tool_id to override configuration.
         """
-        lessons = self._service.get_lessons_for_agent(agent_id)
-        tool_lessons = [l for l in lessons if l.lesson_type == "tool"]
+        lessons = self._filter_lessons_by_strategy(self._service.get_lessons_for_agent(agent_id))
+        tool_lessons = [lesson for lesson in lessons if lesson.lesson_type == "tool"]
 
         overrides: dict[str, dict[str, Any]] = {}
         for lesson in tool_lessons:
@@ -100,8 +127,8 @@ class LessonInjector:
         Returns:
             List of policy rule configurations.
         """
-        lessons = self._service.get_lessons_for_agent(agent_id)
-        policy_lessons = [l for l in lessons if l.lesson_type == "policy"]
+        lessons = self._filter_lessons_by_strategy(self._service.get_lessons_for_agent(agent_id))
+        policy_lessons = [lesson for lesson in lessons if lesson.lesson_type == "policy"]
 
         rules: list[dict[str, Any]] = []
         for lesson in policy_lessons:
@@ -130,8 +157,8 @@ class LessonInjector:
         Returns:
             Dict with grader_adjustments, fixture_overrides, timeout_adjustments.
         """
-        lessons = self._service.get_lessons_for_agent(agent_id)
-        harness_lessons = [l for l in lessons if l.lesson_type == "harness"]
+        lessons = self._filter_lessons_by_strategy(self._service.get_lessons_for_agent(agent_id))
+        harness_lessons = [lesson for lesson in lessons if lesson.lesson_type == "harness"]
 
         combined: dict[str, Any] = {
             "grader_adjustments": {},
@@ -160,7 +187,7 @@ class LessonInjector:
         Returns:
             List of all active CuratedLessons.
         """
-        return self._service.get_lessons_for_agent(agent_id)
+        return self._filter_lessons_by_strategy(self._service.get_lessons_for_agent(agent_id))
 
     def has_lessons(self, agent_id: str) -> bool:
         """Check if an agent has any active lessons.
@@ -171,4 +198,4 @@ class LessonInjector:
         Returns:
             True if agent has at least one active lesson.
         """
-        return len(self._service.get_lessons_for_agent(agent_id)) > 0
+        return len(self.get_all_lessons(agent_id)) > 0

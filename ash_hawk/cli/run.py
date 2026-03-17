@@ -125,6 +125,20 @@ def _create_run_envelope(suite: EvalSuite, agent_config: dict[str, Any]) -> RunE
     default=False,
     help="Enable lesson injection from curated improvements",
 )
+@click.option(
+    "--strategy",
+    "-S",
+    type=str,
+    default=None,
+    help="Filter lessons by strategy (e.g., policy-quality, tool-quality)",
+)
+@click.option(
+    "--sub-strategy",
+    "-ss",
+    type=str,
+    default=None,
+    help="Filter lessons by sub-strategy (e.g., tool-efficiency, error-recovery)",
+)
 def run(
     suite: str,
     parallelism: int | None,
@@ -135,6 +149,8 @@ def run(
     agent_class: str | None,
     agent_location: str | None,
     lessons: bool,
+    strategy: str | None,
+    sub_strategy: str | None,
 ) -> None:
     _run_suite(
         suite,
@@ -146,6 +162,8 @@ def run(
         agent_class,
         agent_location,
         lessons,
+        strategy,
+        sub_strategy,
     )
 
 
@@ -159,6 +177,8 @@ def _run_suite(
     agent_class: str | None,
     agent_location: str | None,
     lessons: bool = False,
+    strategy: str | None = None,
+    sub_strategy: str | None = None,
 ) -> None:
     asyncio.run(
         _run_suite_async(
@@ -171,6 +191,8 @@ def _run_suite(
             agent_class,
             agent_location,
             lessons,
+            strategy,
+            sub_strategy,
         )
     )
 
@@ -185,6 +207,8 @@ async def _run_suite_async(
     agent_class: str | None,
     agent_location: str | None,
     lessons: bool = False,
+    strategy: str | None = None,
+    sub_strategy: str | None = None,
 ) -> None:
     suite_file = Path(suite_path)
     if not suite_file.exists():
@@ -275,9 +299,16 @@ async def _run_suite_async(
     if lessons and hasattr(agent_runner, "set_lesson_injector"):
         from ash_hawk.services import LessonInjector
 
-        injector = LessonInjector()
+        injector = LessonInjector(
+            strategy_filter=strategy,
+            sub_strategy_filter=sub_strategy,
+        )
         agent_runner.set_lesson_injector(injector)
         console.print("[dim]Lesson injection enabled[/dim]")
+        if strategy:
+            console.print(f"[dim]Strategy filter: {strategy}[/dim]")
+        if sub_strategy:
+            console.print(f"[dim]Sub-strategy filter: {sub_strategy}[/dim]")
 
     trial_executor = TrialExecutor(
         storage_backend, policy, agent_runner=agent_runner, fixture_resolver=fixture_resolver

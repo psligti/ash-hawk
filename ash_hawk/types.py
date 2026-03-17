@@ -48,6 +48,7 @@ class FailureMode(enum.StrEnum):
     POLICY_VIOLATION = "policy_violation"
     AGENT_ERROR = "agent_error"
     VALIDATION_ERROR = "validation_error"
+    RESOURCE_EXCEEDED = "resource_exceeded"
 
 
 class ToolPermission(enum.StrEnum):

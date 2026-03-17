@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from ash_hawk.contracts import CuratedLesson
 
@@ -13,6 +14,7 @@ class LessonStore:
     """Persists and retrieves curated lessons.
 
     Lessons are stored with versioning and metadata for provenance tracking.
+    Supports both in-memory and file-backed persistence.
     """
 
     def __init__(self, storage_path: Path | None = None) -> None:
@@ -20,8 +22,51 @@ class LessonStore:
         self._lessons: dict[str, CuratedLesson] = {}
         self._by_agent: dict[str, list[str]] = {}
         self._by_proposal: dict[str, str] = {}
+        self._loaded = False
+
+    def _ensure_loaded(self) -> None:
+        """Load lessons from disk if not already loaded."""
+        if self._loaded:
+            return
+
+        if self._storage_path and self._storage_path.exists():
+            lessons_file = self._storage_path / "lessons.json"
+            if lessons_file.exists():
+                try:
+                    with open(lessons_file) as f:
+                        data = json.load(f)
+                    for lesson_data in data.get("lessons", []):
+                        lesson = CuratedLesson(**lesson_data)
+                        self._lessons[lesson.lesson_id] = lesson
+                        self._by_proposal[lesson.source_proposal_id] = lesson.lesson_id
+                        for agent in lesson.applies_to_agents:
+                            if agent not in self._by_agent:
+                                self._by_agent[agent] = []
+                            self._by_agent[agent].append(lesson.lesson_id)
+                except (json.JSONDecodeError, KeyError):
+                    pass
+        self._loaded = True
+
+    def _persist(self) -> None:
+        """Persist lessons to disk."""
+        if not self._storage_path:
+            return
+
+        self._storage_path.mkdir(parents=True, exist_ok=True)
+        lessons_file = self._storage_path / "lessons.json"
+
+        data: dict[str, Any] = {"lessons": []}
+        for lesson in self._lessons.values():
+            lesson_dict = lesson.model_dump()
+            lesson_dict["created_at"] = lesson.created_at.isoformat() if lesson.created_at else None
+            lesson_dict["updated_at"] = lesson.updated_at.isoformat() if lesson.updated_at else None
+            data["lessons"].append(lesson_dict)
+
+        with open(lessons_file, "w") as f:
+            json.dump(data, f, indent=2, default=str)
 
     def store(self, lesson: CuratedLesson) -> str:
+        self._ensure_loaded()
         lesson_id = lesson.lesson_id
         self._lessons[lesson_id] = lesson
         self._by_proposal[lesson.source_proposal_id] = lesson_id
@@ -29,14 +74,18 @@ class LessonStore:
         for agent in lesson.applies_to_agents:
             if agent not in self._by_agent:
                 self._by_agent[agent] = []
-            self._by_agent[agent].append(lesson_id)
+            if lesson_id not in self._by_agent[agent]:
+                self._by_agent[agent].append(lesson_id)
 
+        self._persist()
         return lesson_id
 
     def get(self, lesson_id: str) -> CuratedLesson | None:
+        self._ensure_loaded()
         return self._lessons.get(lesson_id)
 
     def get_by_proposal(self, proposal_id: str) -> CuratedLesson | None:
+        self._ensure_loaded()
         lesson_id = self._by_proposal.get(proposal_id)
         if lesson_id:
             return self._lessons.get(lesson_id)
@@ -47,8 +96,9 @@ class LessonStore:
         agent_id: str,
         experiment_id: str | None = None,
     ) -> list[CuratedLesson]:
+        self._ensure_loaded()
         lesson_ids = self._by_agent.get(agent_id, [])
-        lessons = []
+        lessons: list[CuratedLesson] = []
         for lid in lesson_ids:
             lesson = self._lessons.get(lid)
             if lesson and lesson.validation_status == "approved":
@@ -62,6 +112,7 @@ class LessonStore:
         lesson_type: str | None = None,
         experiment_id: str | None = None,
     ) -> list[CuratedLesson]:
+        self._ensure_loaded()
         lessons = list(self._lessons.values())
         if status:
             lessons = [lesson for lesson in lessons if lesson.validation_status == status]
@@ -76,6 +127,7 @@ class LessonStore:
         lesson_id: str,
         new_status: Literal["approved", "deprecated", "rolled_back"],
     ) -> CuratedLesson | None:
+        self._ensure_loaded()
         lesson = self._lessons.get(lesson_id)
         if not lesson:
             return None
@@ -95,9 +147,11 @@ class LessonStore:
             rollback_of=lesson.rollback_of,
         )
         self._lessons[lesson_id] = updated
+        self._persist()
         return updated
 
     def delete(self, lesson_id: str) -> bool:
+        self._ensure_loaded()
         if lesson_id not in self._lessons:
             return False
 
@@ -111,4 +165,5 @@ class LessonStore:
             if agent in self._by_agent:
                 self._by_agent[agent] = [lid for lid in self._by_agent[agent] if lid != lesson_id]
 
+        self._persist()
         return True

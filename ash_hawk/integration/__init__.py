@@ -9,6 +9,10 @@ from ash_hawk.integration.post_run_hook import (
     HookConfig,
     PostRunReviewHook,
 )
+from ash_hawk.integration.runtime_lesson_loader import (
+    LessonContext,
+    RuntimeLessonLoader,
+)
 
 __all__ = [
     "PostRunReviewHook",
@@ -16,4 +20,6 @@ __all__ = [
     "HookConfig",
     "DawnKestrelPostRunHook",
     "TranscriptToArtifactConverter",
+    "RuntimeLessonLoader",
+    "LessonContext",
 ]

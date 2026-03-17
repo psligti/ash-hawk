@@ -1,0 +1,168 @@
+{
+  "id": "bolt-merlin-codegen-v1",
+  "name": "Bolt Merlin Code Generation Suite",
+  "description": "Evaluates agent code generation capabilities",
+  "tasks": [
+    {
+      "id": "simple-func-001",
+      "description": "Generate a simple utility function",
+      "input": {
+        "prompt": "Write a Python function `format_currency(amount: float, currency: str = \"USD\") -> str`\nthat formats a number as currency with proper symbol placement.\n\nRequirements:\n- USD amounts: \"$1,234.56\"\n- EUR amounts: \"\u20ac1.234,56\" (European format with comma decimal)\n- GBP amounts: \"\u00a31,234.56\"\n- Default to USD if currency not recognized\n- Handle negative amounts: \"-$123.45\"\n\nWrite the function to a file called `format_currency.py`.\n",
+        "language": "python"
+      },
+      "expected_output": "A working format_currency function",
+      "grader_specs": [
+        {
+          "grader_type": "test_runner",
+          "config": {
+            "test_path": "$test_path",
+            "pass_threshold": 1.0
+          },
+          "weight": 0.7,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "static_analysis",
+          "config": {
+            "target_path": "$target_path",
+            "tools": [
+              "ruff"
+            ],
+            "max_issues": 5
+          },
+          "weight": 0.3,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "function",
+        "formatting"
+      ],
+      "metadata": {},
+      "fixtures": {
+        "test_path": "../fixtures/tests/test_format_currency.py",
+        "target_path": "./format_currency.py"
+      },
+      "timeout_seconds": 300.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "class-impl-001",
+      "description": "Implement a data processor class",
+      "input": {
+        "prompt": "Implement a `DataProcessor` class with the following interface:\n\n```python\nclass DataProcessor:\n    def __init__(self, config: dict[str, Any])\n    def process(self, data: list[dict]) -> list[dict]\n    def validate(self, item: dict) -> bool\n    def transform(self, item: dict) -> dict\n```\n\nThe class should:\n- Accept a config dict with 'required_fields' and 'transformations'\n- Validate items have all required fields\n- Apply transformations (e.g., 'uppercase', 'trim', 'to_int')\n- Filter out invalid items\n\nWrite the class to a file called `data_processor.py`.\n",
+        "language": "python"
+      },
+      "expected_output": "A complete DataProcessor implementation",
+      "grader_specs": [
+        {
+          "grader_type": "test_runner",
+          "config": {
+            "test_path": "$test_path",
+            "pass_threshold": 1.0
+          },
+          "weight": 0.6,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "static_analysis",
+          "config": {
+            "target_path": "$target_path",
+            "tools": [
+              "ruff",
+              "mypy"
+            ],
+            "max_issues": 3
+          },
+          "weight": 0.4,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "oop",
+        "data-processing"
+      ],
+      "metadata": {},
+      "fixtures": {
+        "test_path": "../fixtures/tests/test_data_processor.py",
+        "target_path": "./data_processor.py"
+      },
+      "timeout_seconds": 400.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "api-endpoint-001",
+      "description": "Implement REST API endpoints",
+      "input": {
+        "prompt": "Implement REST API endpoints for a todo list application using the Router pattern.\n\nRequired endpoints:\n- GET /todos - List all todos (optional ?completed=true filter)\n- POST /todos - Create a todo\n- PUT /todos/{id} - Update a todo\n- DELETE /todos/{id} - Delete a todo\n\nTodo model:\n```python\n@dataclass\nclass Todo:\n    id: int\n    title: str\n    completed: bool = False\n    created_at: datetime = field(default_factory=datetime.now)\n```\n\nUse the Request/Response classes from $api_module as reference.\nWrite the implementation to a file called `todo_api.py`.\n",
+        "language": "python"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "composite",
+          "config": {
+            "graders": [
+              {
+                "grader_type": "test_runner",
+                "config": {
+                  "test_path": "$test_path",
+                  "pass_threshold": 1.0
+                },
+                "weight": 0.6
+              },
+              {
+                "grader_type": "static_analysis",
+                "config": {
+                  "target_path": "$target_path",
+                  "tools": [
+                    "ruff"
+                  ],
+                  "max_issues": 5
+                },
+                "weight": 0.4
+              }
+            ],
+            "aggregation": "weighted_average"
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "api",
+        "rest",
+        "web"
+      ],
+      "metadata": {},
+      "fixtures": {
+        "api_module": "../fixtures/projects/sample_auth/api.py",
+        "test_path": "../fixtures/tests/test_todo_api.py",
+        "target_path": "./todo_api.py"
+      },
+      "timeout_seconds": 500.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [
+    "code-generation",
+    "python",
+    "bolt-merlin"
+  ],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": {
+    "name": "orchestrator",
+    "provider": "zai-coding-plan",
+    "model": "glm-4.7",
+    "class_name": null,
+    "location": null,
+    "kwargs": {},
+    "mcp_servers": []
+  }
+}

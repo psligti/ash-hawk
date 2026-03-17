@@ -106,5 +106,11 @@ class ImprovementProposal(pd.BaseModel):
         default_factory=list,
         description="Sub-strategies this proposal addresses",
     )
+    confidence: float | None = pd.Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score for this proposal (0.0 to 1.0)",
+    )
 
     model_config = pd.ConfigDict(extra="forbid")

@@ -1,0 +1,460 @@
+{
+  "trial": {
+    "id": "trial-8a53fa45",
+    "task_id": "class-impl-001",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "prompt": "Implement a `DataProcessor` class with the following interface:\n\n```python\nclass DataProcessor:\n    def __init__(self, config: dict[str, Any])\n    def process(self, data: list[dict]) -> list[dict]\n    def validate(self, item: dict) -> bool\n    def transform(self, item: dict) -> dict\n```\n\nThe class should:\n- Accept a config dict with 'required_fields' and 'transformations'\n- Validate items have all required fields\n- Apply transformations (e.g., 'uppercase', 'trim', 'to_int')\n- Filter out invalid items\n\nWrite the class to a file called `data_processor.py`.\n",
+      "language": "python"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-8a53fa45",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-16T22:04:46.258470+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Implement a `DataProcessor` class with the following interface:\n\n```python\nclass DataProcessor:\n    def __init__(self, config: dict[str, Any])\n    def process(self, data: list[dict]) -> list[dict]\n    def validate(self, item: dict) -> bool\n    def transform(self, item: dict) -> dict\n```\n\nThe class should:\n- Accept a config dict with 'required_fields' and 'transformations'\n- Validate items have all required fields\n- Apply transformations (e.g., 'uppercase', 'trim', 'to_int')\n- Filter out invalid items\n\nWrite the class to a file called `data_processor.py`.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nfrom typing import Any\n\n\nclass DataProcessor:\n    def __init__(self, config: dict[str, Any]):\n        \"\"\"\n        Initialize the DataProcessor with a configuration dict.\n        \n        Args:\n            config: A dictionary containing:\n                - 'required_fields': List of field names that must be present\n                - 'transformations': Dict mapping field names to transformations\n                  (can be a single transformation or list of transformations)\n        \"\"\"\n        self.required_fields = config.get('required_fields', [])\n        self.transformations = config.get('transformations', {})\n    \n    def validate(self, item: dict) -> bool:\n        \"\"\"\n        Validate that an item has all required fields.\n        \n        Args:\n            item: A dictionary representing a data item\n            \n        Returns:\n            True if all required fields are present, False otherwise\n        \"\"\"\n        for field in self.required_fields:\n            if field not in item:\n                return False\n        return True\n    \n    def _apply_transformation(self, value: Any, transformation: str) -> Any:\n        \"\"\"\n        Apply a single transformation to a value.\n        \n        Args:\n            value: The value to transform\n            transformation: The name of the transformation\n            \n        Returns:\n            The transformed value\n        \"\"\"\n        if transformation == 'uppercase':\n            if isinstance(value, str):\n                return value.upper()\n            return value\n        elif transformation == 'trim':\n            if isinstance(value, str):\n                return value.strip()\n            return value\n        elif transformation == 'to_int':\n            try:\n                return int(value)\n            except (ValueError, TypeError):\n                return value\n        return value\n    \n    def transform(self, item: dict) -> dict:\n        \"\"\"\n        Apply configured transformations to an item.\n        \n        Args:\n            item: A dictionary representing a data item\n            \n        Returns:\n            A new dictionary with the same keys, with values transformed\n        \"\"\"\n        result = item.copy()\n        \n        for field, transforms in self.transformations.items():\n            if field in result:\n                value = result[field]\n                if isinstance(transforms, list):\n                    for transform in transforms:\n                        value = self._apply_transformation(value, transform)\n                else:\n                    value = self._apply_transformation(value, transforms)\n                result[field] = value\n        \n        return result\n    \n    def process(self, data: list[dict]) -> list[dict]:\n        \"\"\"\n        Process a list of dictionaries by validating and transforming them.\n        \n        Args:\n            data: A list of dictionaries to process\n            \n        Returns:\n            A list of validated and transformed dictionaries\n        \"\"\"\n        result = []\n        \n        for item in data:\n            if self.validate(item):\n                transformed_item = self.transform(item)\n                result.append(transformed_item)\n        \n        return result\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"validate\", \"input\": {}, \"error\": \"Tool not available: validate\"}, {\"tool\": \"_apply_transformation\", \"input\": {}, \"error\": \"Tool not available: _apply_transformation\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"upper\", \"input\": {}, \"error\": \"Tool not available: upper\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"strip\", \"input\": {}, \"error\": \"Tool not available: strip\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"transform\", \"input\": {}, \"error\": \"Tool not available: transform\"}, {\"tool\": \"copy\", \"input\": {}, \"error\": \"Tool not available: copy\"}, {\"tool\": \"items\", \"input\": {}, \"error\": \"Tool not available: items\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"_apply_transformation\", \"input\": {}, \"error\": \"Tool not available: _apply_transformation\"}, {\"tool\": \"_apply_transformation\", \"input\": {}, \"error\": \"Tool not available: _apply_transformation\"}, {\"tool\": \"process\", \"input\": {}, \"error\": \"Tool not available: process\"}, {\"tool\": \"validate\", \"input\": {}, \"error\": \"Tool not available: validate\"}, {\"tool\": \"transform\", \"input\": {}, \"error\": \"Tool not available: transform\"}, {\"tool\": \"append\", \"input\": {}, \"error\": \"Tool not available: append\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nfrom typing import Any\n\nclass DataProcessor:\n    def __init__(self, config: dict[str, Any]) -> None:\n        \"\"\"\n        Initialize the DataProcessor with configuration.\n        \n        Args:\n            config: A dictionary containing 'required_fields' (list) \n                    and 'transformations' (dict).\n        \"\"\"\n        self.required_fields = config.get('required_fields', [])\n        self.transformations = config.get('transformations', {})\n\n    def validate(self, item: dict) -> bool:\n        \"\"\"\n        Validate that a data item contains all required fields.\n        \n        Args:\n            item: A dictionary representing a data item.\n            \n        Returns:\n            True if all required fields are present, False otherwise.\n        \"\"\"\n        for field in self.required_fields:\n            if field not in item:\n                return False\n        return True\n\n    def transform(self, item: dict) -> dict:\n        \"\"\"\n        Apply transformations to a data item based on the config.\n        \n        Args:\n            item: A dictionary representing a data item.\n            \n        Returns:\n            A new dictionary with transformed values.\n        \"\"\"\n        result = item.copy()\n        \n        for field, transform_type in self.transformations.items():\n            if field in result:\n                value = result[field]\n                \n                # Support a list of transformations or a single transformation\n                transforms = [transform_type] if isinstance(transform_type, str) else transform_type\n                \n                for t in transforms:\n                    if t == 'uppercase' and isinstance(value, str):\n                        value = value.upper()\n                    elif t == 'trim' and isinstance(value, str):\n                        value = value.strip()\n                    elif t == 'to_int':\n                        try:\n                            value = int(value)\n                        except (ValueError, TypeError):\n                            # Keep original value if conversion fails\n                            pass\n                \n                result[field] = value\n                \n        return result\n\n    def process(self, data: list[dict]) -> list[dict]:\n        \"\"\"\n        Process a list of data items by validating and transforming them.\n        \n        Args:\n            data: A list of dictionaries.\n            \n        Returns:\n            A list containing only valid items with transformations applied.\n        \"\"\"\n        processed_data = []\n        \n        for item in data:\n            if self.validate(item):\n                processed_item = self.transform(item)\n                processed_data.append(processed_item)\n                \n        return processed_data\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"validate\", \"input\": {}, \"error\": \"Tool not available: validate\"}, {\"tool\": \"transform\", \"input\": {}, \"error\": \"Tool not available: transform\"}, {\"tool\": \"copy\", \"input\": {}, \"error\": \"Tool not available: copy\"}, {\"tool\": \"items\", \"input\": {}, \"error\": \"Tool not available: items\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"upper\", \"input\": {}, \"error\": \"Tool not available: upper\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"strip\", \"input\": {}, \"error\": \"Tool not available: strip\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"process\", \"input\": {}, \"error\": \"Tool not available: process\"}, {\"tool\": \"validate\", \"input\": {}, \"error\": \"Tool not available: validate\"}, {\"tool\": \"transform\", \"input\": {}, \"error\": \"Tool not available: transform\"}, {\"tool\": \"append\", \"input\": {}, \"error\": \"Tool not available: append\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nfrom typing import Any\n\nclass DataProcessor:\n    def __init__(self, config: dict[str, Any]) -> None:\n        \"\"\"\n        Initialize the DataProcessor with configuration.\n        \n        Args:\n            config: A dictionary containing 'required_fields' (list) \n                    and 'transformations' (dict).\n        \"\"\"\n        self.required_fields = config.get('required_fields', [])\n        self.transformations = config.get('transformations', {})\n\n    def validate(self, item: dict) -> bool:\n        \"\"\"\n        Validate that a data item contains all required fields.\n        \n        Args:\n            item: A dictionary representing a data item.\n            \n        Returns:\n            True if all required fields are present, False otherwise.\n        \"\"\"\n        for field in self.required_fields:\n            if field not in item:\n                return False\n        return True\n\n    def transform(self, item: dict) -> dict:\n        \"\"\"\n        Apply transformations to a data item based on the config.\n        \n        Args:\n            item: A dictionary representing a data item.\n            \n        Returns:\n            A new dictionary with transformed values.\n        \"\"\"\n        result = item.copy()\n        \n        for field, transform_type in self.transformations.items():\n            if field in result:\n                value = result[field]\n                \n                # Support a list of transformations or a single transformation\n                transforms = [transform_type] if isinstance(transform_type, str) else transform_type\n                \n                for t in transforms:\n                    if t == 'uppercase' and isinstance(value, str):\n                        value = value.upper()\n                    elif t == 'trim' and isinstance(value, str):\n                        value = value.strip()\n                    elif t == 'to_int':\n                        try:\n                            value = int(value)\n                        except (ValueError, TypeError):\n                            # Keep original value if conversion fails\n                            pass\n                \n                result[field] = value\n                \n        return result\n\n    def process(self, data: list[dict]) -> list[dict]:\n        \"\"\"\n        Process a list of data items by validating and transforming them.\n        \n        Args:\n            data: A list of dictionaries.\n            \n        Returns:\n            A list containing only valid items with transformations applied.\n        \"\"\"\n        processed_data = []\n        \n        for item in data:\n            if self.validate(item):\n                processed_data.append(self.transform(item))\n                \n        return processed_data\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"validate\", \"input\": {}, \"error\": \"Tool not available: validate\"}, {\"tool\": \"transform\", \"input\": {}, \"error\": \"Tool not available: transform\"}, {\"tool\": \"copy\", \"input\": {}, \"error\": \"Tool not available: copy\"}, {\"tool\": \"items\", \"input\": {}, \"error\": \"Tool not available: items\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"upper\", \"input\": {}, \"error\": \"Tool not available: upper\"}, {\"tool\": \"isinstance\", \"input\": {}, \"error\": \"Tool not available: isinstance\"}, {\"tool\": \"strip\", \"input\": {}, \"error\": \"Tool not available: strip\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"process\", \"input\": {}, \"error\": \"Tool not available: process\"}, {\"tool\": \"validate\", \"input\": {}, \"error\": \"Tool not available: validate\"}, {\"tool\": \"append\", \"input\": {}, \"error\": \"Tool not available: append\"}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "validate",
+            "input": {},
+            "error": "Tool not available: validate"
+          },
+          {
+            "tool": "_apply_transformation",
+            "input": {},
+            "error": "Tool not available: _apply_transformation"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "upper",
+            "input": {},
+            "error": "Tool not available: upper"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "strip",
+            "input": {},
+            "error": "Tool not available: strip"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "transform",
+            "input": {},
+            "error": "Tool not available: transform"
+          },
+          {
+            "tool": "copy",
+            "input": {},
+            "error": "Tool not available: copy"
+          },
+          {
+            "tool": "items",
+            "input": {},
+            "error": "Tool not available: items"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "_apply_transformation",
+            "input": {},
+            "error": "Tool not available: _apply_transformation"
+          },
+          {
+            "tool": "_apply_transformation",
+            "input": {},
+            "error": "Tool not available: _apply_transformation"
+          },
+          {
+            "tool": "process",
+            "input": {},
+            "error": "Tool not available: process"
+          },
+          {
+            "tool": "validate",
+            "input": {},
+            "error": "Tool not available: validate"
+          },
+          {
+            "tool": "transform",
+            "input": {},
+            "error": "Tool not available: transform"
+          },
+          {
+            "tool": "append",
+            "input": {},
+            "error": "Tool not available: append"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "validate",
+            "input": {},
+            "error": "Tool not available: validate"
+          },
+          {
+            "tool": "transform",
+            "input": {},
+            "error": "Tool not available: transform"
+          },
+          {
+            "tool": "copy",
+            "input": {},
+            "error": "Tool not available: copy"
+          },
+          {
+            "tool": "items",
+            "input": {},
+            "error": "Tool not available: items"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "upper",
+            "input": {},
+            "error": "Tool not available: upper"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "strip",
+            "input": {},
+            "error": "Tool not available: strip"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "process",
+            "input": {},
+            "error": "Tool not available: process"
+          },
+          {
+            "tool": "validate",
+            "input": {},
+            "error": "Tool not available: validate"
+          },
+          {
+            "tool": "transform",
+            "input": {},
+            "error": "Tool not available: transform"
+          },
+          {
+            "tool": "append",
+            "input": {},
+            "error": "Tool not available: append"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "validate",
+            "input": {},
+            "error": "Tool not available: validate"
+          },
+          {
+            "tool": "transform",
+            "input": {},
+            "error": "Tool not available: transform"
+          },
+          {
+            "tool": "copy",
+            "input": {},
+            "error": "Tool not available: copy"
+          },
+          {
+            "tool": "items",
+            "input": {},
+            "error": "Tool not available: items"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "upper",
+            "input": {},
+            "error": "Tool not available: upper"
+          },
+          {
+            "tool": "isinstance",
+            "input": {},
+            "error": "Tool not available: isinstance"
+          },
+          {
+            "tool": "strip",
+            "input": {},
+            "error": "Tool not available: strip"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "process",
+            "input": {},
+            "error": "Tool not available: process"
+          },
+          {
+            "tool": "validate",
+            "input": {},
+            "error": "Tool not available: validate"
+          },
+          {
+            "tool": "append",
+            "input": {},
+            "error": "Tool not available: append"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 1974,
+          "output": 1403,
+          "reasoning": 927,
+          "cache_read": 1135,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 46.388315200805664,
+        "agent_response": "```python\nfrom typing import Any\n\nclass DataProcessor:\n    def __init__(self, config: dict[str, Any]) -> None:\n        \"\"\"\n        Initialize the DataProcessor with configuration.\n        \n        Args:\n            config: A dictionary containing 'required_fields' (list) \n                    and 'transformations' (dict).\n        \"\"\"\n        self.required_fields = config.get('required_fields', [])\n        self.transformations = config.get('transformations', {})\n\n    def validate(self, item: dict) -> bool:\n        \"\"\"\n        Validate that a data item contains all required fields.\n        \n        Args:\n            item: A dictionary representing a data item.\n            \n        Returns:\n            True if all required fields are present, False otherwise.\n        \"\"\"\n        for field in self.required_fields:\n            if field not in item:\n                return False\n        return True\n\n    def transform(self, item: dict) -> dict:\n        \"\"\"\n        Apply transformations to a data item based on the config.\n        \n        Args:\n            item: A dictionary representing a data item.\n            \n        Returns:\n            A new dictionary with transformed values.\n        \"\"\"\n        result = item.copy()\n        \n        for field, transform_type in self.transformations.items():\n            if field in result:\n                value = result[field]\n                \n                # Support a list of transformations or a single transformation\n                transforms = [transform_type] if isinstance(transform_type, str) else transform_type\n                \n                for t in transforms:\n                    if t == 'uppercase' and isinstance(value, str):\n                        value = value.upper()\n                    elif t == 'trim' and isinstance(value, str):\n                        value = value.strip()\n                    elif t == 'to_int':\n                        try:\n                            value = int(value)\n                        except (ValueError, TypeError):\n                            # Keep original value if conversion fails\n                            pass\n                \n                result[field] = value\n                \n        return result\n\n    def process(self, data: list[dict]) -> list[dict]:\n        \"\"\"\n        Process a list of data items by validating and transforming them.\n        \n        Args:\n            data: A list of dictionaries.\n            \n        Returns:\n            A list containing only valid items with transformations applied.\n        \"\"\"\n        processed_data = []\n        \n        for item in data:\n            if self.validate(item):\n                processed_data.append(self.transform(item))\n                \n        return processed_data\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "test_runner",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "command": "pytest $test_path -v --tb=short",
+            "return_code": -9,
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "skipped_tests": 0,
+            "pass_ratio": 0.0,
+            "execution_time_seconds": 60.118966579437256,
+            "timed_out": true
+          },
+          "error_message": null,
+          "execution_time_seconds": 60.11931490898132,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "static_analysis",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "tools_run": [
+              "ruff",
+              "mypy"
+            ],
+            "tool_results": {
+              "ruff": {
+                "command": "ruff check $target_path ",
+                "return_code": 1,
+                "issue_count": 0,
+                "error_count": 0,
+                "issues": [],
+                "execution_time_seconds": 0.07923603057861328
+              },
+              "mypy": {
+                "command": "mypy $target_path ",
+                "return_code": 2,
+                "issue_count": 0,
+                "error_count": 0,
+                "issues": [],
+                "execution_time_seconds": 0.24119877815246582
+              }
+            },
+            "total_issues": 0,
+            "total_errors": 0,
+            "max_issues": 3
+          },
+          "error_message": null,
+          "execution_time_seconds": 0.3211960792541504,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.4,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-8a53fa45",
+      "run_id": "run-e9b425d7",
+      "task_id": "class-impl-001",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-16T22:03:59.869886+00:00",
+      "started_at": "2026-03-16T22:03:59.869539+00:00",
+      "completed_at": "2026-03-16T22:04:46.258589+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-8a53fa45",
+    "run_id": "run-e9b425d7",
+    "task_id": "class-impl-001",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-16T22:03:59.869886+00:00",
+    "started_at": "2026-03-16T22:03:59.869539+00:00",
+    "completed_at": "2026-03-16T22:04:46.258589+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

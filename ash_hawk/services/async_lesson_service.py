@@ -7,6 +7,10 @@ from pathlib import Path
 from ash_hawk.contracts import CuratedLesson, ImprovementProposal
 from ash_hawk.curation.persistent_store import PersistentLessonStore
 from ash_hawk.curation.provenance import ProvenanceRecord, ProvenanceTracker
+from ash_hawk.services.lesson_service import (
+    ExperimentIdRequiredError,
+    LessonServiceError,
+)
 
 
 class AsyncLessonService:
@@ -14,6 +18,9 @@ class AsyncLessonService:
 
     Provides the same interface as LessonService but with async operations
     backed by SQLite for durability and concurrency safety.
+
+    IMPORTANT: For production use with parallel trials, always set
+    require_experiment_id=True to prevent cross-trial contamination.
     """
 
     def __init__(self, storage_path: Path | str | None = None) -> None:
@@ -27,7 +34,15 @@ class AsyncLessonService:
         experiment_id: str | None = None,
         strategy: str | None = None,
         sub_strategies: list[str] | None = None,
+        require_experiment_id: bool = True,
     ) -> CuratedLesson:
+        if experiment_id is None and require_experiment_id:
+            raise ExperimentIdRequiredError(
+                "experiment_id is REQUIRED for lesson curation in production. "
+                "Lessons without experiment_id pollute the global namespace and "
+                "can cause cross-trial contamination. Set require_experiment_id=False "
+                "only for local development or single-user scenarios."
+            )
         lesson_payload = proposal.diff_payload.copy()
         if experiment_id:
             lesson_payload["experiment_id"] = experiment_id

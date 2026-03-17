@@ -185,20 +185,32 @@ def curate_proposal(
 
     PROPOSAL_ID: ID of the proposal to curate.
     """
+    from ash_hawk.contracts import ImprovementProposal
+    from ash_hawk.services.lesson_service import LessonService
+
     console.print(f"[cyan]Curating proposal:[/cyan] {proposal_id}")
     console.print(f"[cyan]Action:[/cyan] {action}")
 
     if action == "approve":
-        lesson = CuratedLesson(
-            lesson_id=f"lesson-{uuid4().hex[:8]}",
-            source_proposal_id=proposal_id,
-            applies_to_agents=list(applies_to) if applies_to else [],
-            lesson_type="policy",
-            title="",
-            description="",
+        proposal = ImprovementProposal(
+            proposal_id=proposal_id,
+            origin_run_id="",
+            origin_review_id="",
+            target_agent="",
+            proposal_type="skill",
+            title=reason or "Approved proposal",
+            rationale=reason or "",
+            expected_benefit="",
+            risk_level="medium",
             created_at=datetime.now(UTC),
         )
+        service = LessonService()
+        lesson = service.approve_proposal(
+            proposal,
+            applies_to_agents=list(applies_to) if applies_to else None,
+        )
         console.print(f"[green]Created lesson:[/green] {lesson.lesson_id}")
+        console.print(f"[green]Applies to:[/green] {', '.join(lesson.applies_to_agents)}")
     elif action == "reject":
         console.print(f"[red]Rejected proposal:[/red] {reason or 'No reason provided'}")
     else:
@@ -226,16 +238,30 @@ def curate_proposal(
     default="proposal",
     help="List proposals or lessons",
 )
+@click.option(
+    "--strategy",
+    "-S",
+    default=None,
+    help="Filter by strategy (e.g., policy-quality, tool-quality)",
+)
+@click.option(
+    "--sub-strategy",
+    "-ss",
+    default=None,
+    help="Filter by sub-strategy (e.g., tool-efficiency, error-recovery)",
+)
 def list_improvements(
     agent: str | None,
     status: str | None,
     type: str,
+    strategy: str | None,
+    sub_strategy: str | None,
 ) -> None:
     """List improvement proposals or curated lessons."""
     if type == "proposal":
-        _list_proposals(agent, status)
+        _list_proposals(agent, status, strategy, sub_strategy)
     else:
-        _list_lessons(agent, status)
+        _list_lessons(agent, status, strategy, sub_strategy)
 
 
 @improve.command(name="rollback")
@@ -322,7 +348,12 @@ def _display_proposal(proposal: ImprovementProposal) -> None:
     console.print(f"[bold]Rationale:[/bold] {proposal.rationale}")
 
 
-def _list_proposals(agent: str | None, status: str | None) -> None:
+def _list_proposals(
+    agent: str | None,
+    status: str | None,
+    strategy: str | None = None,
+    sub_strategy: str | None = None,
+) -> None:
     console.print(
         "[yellow]Proposals are stored in-memory during review sessions.[/yellow]\n"
         "Use 'ash-hawk improve review <run-id>' to create proposals.\n"
@@ -333,6 +364,7 @@ def _list_proposals(agent: str | None, status: str | None) -> None:
     table.add_column("ID", style="cyan")
     table.add_column("Agent", style="magenta")
     table.add_column("Type", style="blue")
+    table.add_column("Strategy", style="green")
     table.add_column("Status", style="green")
     table.add_column("Title")
     table.add_column("Created")
@@ -341,6 +373,7 @@ def _list_proposals(agent: str | None, status: str | None) -> None:
         "(none)",
         agent or "-",
         "-",
+        strategy or "-",
         status or "-",
         "No pending proposals in persistent storage",
         "-",
@@ -349,13 +382,19 @@ def _list_proposals(agent: str | None, status: str | None) -> None:
     console.print(table)
 
 
-def _list_lessons(agent: str | None, status: str | None) -> None:
+def _list_lessons(
+    agent: str | None,
+    status: str | None,
+    strategy: str | None = None,
+    sub_strategy: str | None = None,
+) -> None:
     from ash_hawk.services.lesson_service import LessonService
 
     table = Table(title="Curated Lessons")
     table.add_column("ID", style="cyan")
     table.add_column("Agents", style="magenta")
     table.add_column("Type", style="blue")
+    table.add_column("Strategy", style="green")
     table.add_column("Version", style="green")
     table.add_column("Title")
     table.add_column("Status")
@@ -365,7 +404,13 @@ def _list_lessons(agent: str | None, status: str | None) -> None:
     lessons = service.list_lessons(status=status_filter)
 
     if agent:
-        lessons = [l for l in lessons if agent in l.applies_to_agents]
+        lessons = [lesson for lesson in lessons if agent in lesson.applies_to_agents]
+    if strategy:
+        lessons = [lesson for lesson in lessons if getattr(lesson, "strategy", None) == strategy]
+    if sub_strategy:
+        lessons = [
+            lesson for lesson in lessons if getattr(lesson, "sub_strategy", None) == sub_strategy
+        ]
 
     if not lessons:
         console.print("[yellow]No lessons found[/yellow]")
@@ -376,6 +421,7 @@ def _list_lessons(agent: str | None, status: str | None) -> None:
             lesson.lesson_id,
             ", ".join(lesson.applies_to_agents),
             lesson.lesson_type,
+            getattr(lesson, "strategy", "-") or "-",
             str(lesson.version),
             lesson.title[:40] if len(lesson.title) > 40 else lesson.title,
             lesson.validation_status,

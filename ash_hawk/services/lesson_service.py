@@ -3,18 +3,37 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ash_hawk.contracts import CuratedLesson, ImprovementProposal
 from ash_hawk.curation.provenance import ProvenanceRecord, ProvenanceTracker
 from ash_hawk.curation.rollback import RollbackManager
 from ash_hawk.curation.store import LessonStore
 
+if TYPE_CHECKING:
+    from ash_hawk.curation.persistent_store import PersistentLessonStore
+
+
+class LessonServiceError(Exception):
+    """Base error for lesson service operations."""
+
+    pass
+
+
+class ExperimentIdRequiredError(LessonServiceError):
+    """Raised when experiment_id is required but not provided."""
+
+    pass
+
 
 class LessonService:
     """Service for managing the lifecycle of curated lessons.
 
-    Provides a unified interface for storing, retrieving, and
-    managing lessons with provenance tracking and rollback support.
+    IMPORTANT: For production use with parallel trials and persistent
+    provenance tracking, use AsyncLessonService instead. This sync
+    service uses in-memory provenance tracking which is lost on restart.
+
+    Enforces experiment_id by default for parallel trial isolation.
     """
 
     def __init__(self, storage_path: Path | None = None) -> None:
@@ -27,13 +46,36 @@ class LessonService:
         proposal: ImprovementProposal,
         applies_to_agents: list[str] | None = None,
         experiment_id: str | None = None,
+        require_experiment_id: bool = True,
     ) -> CuratedLesson:
+        """Approve a proposal and create a curated lesson.
+
+        Args:
+            proposal: The improvement proposal to approve.
+            applies_to_agents: Agents this lesson applies to.
+            experiment_id: REQUIRED for parallel trial isolation.
+            require_experiment_id: If True, raises error when experiment_id is None.
+
+        Returns:
+            The created CuratedLesson.
+
+        Raises:
+            ExperimentIdRequiredError: If require_experiment_id=True and no experiment_id.
+        """
         if experiment_id is None:
+            if require_experiment_id:
+                raise ExperimentIdRequiredError(
+                    "experiment_id is REQUIRED for lesson curation in production. "
+                    "Lessons without experiment_id pollute the global namespace and "
+                    "can cause cross-trial contamination. Set require_experiment_id=False "
+                    "only for local development or single-user scenarios."
+                )
             import warnings
 
             warnings.warn(
                 "experiment_id not provided - lesson will be stored in global namespace. "
-                "Pass experiment_id for parallel trial isolation.",
+                "Pass experiment_id for parallel trial isolation. "
+                "Set require_experiment_id=True to enforce this requirement.",
                 UserWarning,
                 stacklevel=2,
             )

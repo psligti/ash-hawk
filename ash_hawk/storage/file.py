@@ -5,8 +5,9 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Iterator
 
 import aiofiles
 import aiofiles.os
@@ -22,6 +23,11 @@ from ash_hawk.types import (
     ToolSurfacePolicy,
     TrialEnvelope,
 )
+from ash_hawk.contracts import RunArtifact
+
+
+def _artifact_path(base_path: Path, run_id: str) -> Path:
+    return base_path / "artifacts" / f"{run_id}.json"
 
 
 def _dump_model(model: BaseModel) -> dict[str, Any]:
@@ -95,12 +101,57 @@ class FileStorage:
     async def _ensure_dir(self, path: Path) -> None:
         await aiofiles.os.makedirs(str(path), exist_ok=True)
 
+    @contextmanager
+    def _file_lock(self, path: Path) -> Iterator[None]:
+        """Cross-platform file locking for multi-process safety."""
+        lock_path = path.with_suffix(f"{path.suffix}.lock")
+        lock_fd = None
+        try:
+            lock_fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR)
+            import fcntl
+
+            fcntl.flock(lock_fd, fcntl.LOCK_EX)
+            yield
+        except (ImportError, AttributeError):
+            try:
+                import portalocker
+
+                if lock_fd is not None:
+                    portalocker.lock(lock_fd, portalocker.LOCK_EX)
+                yield
+            except ImportError:
+                yield
+        finally:
+            if lock_fd is not None:
+                try:
+                    import fcntl
+
+                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                except (ImportError, AttributeError):
+                    try:
+                        import portalocker
+
+                        portalocker.unlock(lock_fd)
+                    except (ImportError, Exception):
+                        pass
+                finally:
+                    os.close(lock_fd)
+                    try:
+                        os.unlink(str(lock_path))
+                    except OSError:
+                        pass
+
     async def _atomic_write(self, path: Path, content: str) -> None:
         await self._ensure_dir(path.parent)
         temp_path = path.with_suffix(f"{path.suffix}.tmp")
-        async with aiofiles.open(temp_path, "w") as f:
-            await f.write(content)
-        await aiofiles.os.replace(str(temp_path), str(path))
+
+        def _write_with_lock() -> None:
+            with self._file_lock(path):
+                with open(temp_path, "w") as f:
+                    f.write(content)
+                os.replace(str(temp_path), str(path))
+
+        await asyncio.to_thread(_write_with_lock)
 
     async def _atomic_write_trace(self, path: Path, events: list[TraceEvent]) -> None:
         await self._ensure_dir(path.parent)
@@ -221,3 +272,19 @@ class FileStorage:
         if data is None:
             return None
         return EvalRunSummary.model_validate(data)
+
+    async def load_run_artifact(self, run_id: str) -> RunArtifact | None:
+        artifact_file = _artifact_path(self._base_path, run_id)
+        if not artifact_file.exists():
+            return None
+        data = await self._read_json(artifact_file)
+        if data is None:
+            return None
+        return RunArtifact.model_validate(data)
+
+    async def save_run_artifact(self, run_id: str, artifact: RunArtifact) -> None:
+        artifact_file = _artifact_path(self._base_path, run_id)
+        await self._atomic_write(
+            artifact_file,
+            artifact.model_dump_json(indent=2),
+        )

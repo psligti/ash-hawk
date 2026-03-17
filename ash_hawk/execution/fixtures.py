@@ -96,10 +96,10 @@ class FixtureResolver:
         task: EvalTask,
         fixture_paths: dict[str, Path] | None = None,
     ) -> EvalTask:
-        """Inject resolved fixture paths into task input.
+        """Inject resolved fixture paths into task input and grader_specs.
 
-        This replaces $fixture_name references in the task input with
-        the resolved absolute paths.
+        This replaces $fixture_name references in the task input and
+        grader config with the resolved absolute paths.
 
         Args:
             task: The evaluation task.
@@ -111,16 +111,14 @@ class FixtureResolver:
         if fixture_paths is None:
             fixture_paths = self.resolve_task_fixtures(task)
 
-        # Only process dict inputs with string values
-        if not isinstance(task.input, dict):
-            return task
-
-        # Deep copy and substitute
-        injected_input = self._substitute_fixtures(task.input, fixture_paths)
-
-        # Create new task with injected input
         task_dict = task.model_dump()
-        task_dict["input"] = injected_input
+
+        if isinstance(task.input, dict):
+            task_dict["input"] = self._substitute_fixtures(task.input, fixture_paths)
+
+        task_dict["grader_specs"] = self._substitute_fixtures(
+            task_dict.get("grader_specs", []), fixture_paths
+        )
 
         from ash_hawk.types import EvalTask
 

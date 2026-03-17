@@ -149,9 +149,11 @@ class PersistentLessonStore:
                     lesson.created_at.isoformat() if lesson.created_at else None,
                     lesson.updated_at.isoformat() if lesson.updated_at else None,
                     lesson.applied_at.isoformat() if lesson.applied_at else None,
-                    lesson.lesson_payload.get("experiment_id"),
-                    lesson.lesson_payload.get("strategy"),
-                    json.dumps(lesson.lesson_payload.get("sub_strategies", [])),
+                    lesson.experiment_id,
+                    str(lesson.strategy) if lesson.strategy else None,
+                    json.dumps([str(s) for s in lesson.sub_strategies])
+                    if lesson.sub_strategies
+                    else "[]",
                 ),
             )
         return lesson.lesson_id
@@ -186,6 +188,26 @@ class PersistentLessonStore:
 
     def _row_to_lesson(self, row: aiosqlite.Row) -> CuratedLesson:
         """Convert a database row to CuratedLesson."""
+        from ash_hawk.strategies import Strategy, SubStrategy
+
+        strategy = None
+        if row["strategy"]:
+            try:
+                strategy = Strategy(row["strategy"])
+            except ValueError:
+                pass
+
+        sub_strategies = []
+        if row["sub_strategies"]:
+            try:
+                for s in json.loads(row["sub_strategies"]):
+                    try:
+                        sub_strategies.append(SubStrategy(s))
+                    except ValueError:
+                        pass
+            except json.JSONDecodeError:
+                pass
+
         return CuratedLesson(
             lesson_id=row["lesson_id"],
             source_proposal_id=row["source_proposal_id"],
@@ -205,6 +227,9 @@ class PersistentLessonStore:
             else datetime.now(UTC),
             updated_at=datetime.fromisoformat(row["updated_at"]) if row["updated_at"] else None,
             applied_at=datetime.fromisoformat(row["applied_at"]) if row["applied_at"] else None,
+            experiment_id=row["experiment_id"],
+            strategy=strategy,
+            sub_strategies=sub_strategies,
         )
 
     async def _get_raw(self, db: aiosqlite.Connection, lesson_id: str) -> CuratedLesson | None:
@@ -265,7 +290,7 @@ class PersistentLessonStore:
                     SELECT * FROM lessons
                     WHERE applies_to_agents LIKE ?
                     AND validation_status = 'approved'
-                    AND (experiment_id IS NULL OR experiment_id = ?)
+                    AND experiment_id = ?
                 """
                 params = (f'%"{agent_id}"%', experiment_id)
             else:

@@ -28,8 +28,10 @@ def pending_proposal() -> ImprovementProposal:
         expected_benefit="Improved reliability",
         risk_level="low",
         diff_payload={"timeout_seconds": 30},
+        evidence_refs=["test"],
         status="pending",
         created_at=datetime.now(UTC),
+        confidence=1.0,
     )
 
 
@@ -47,6 +49,7 @@ def approved_proposal() -> ImprovementProposal:
         risk_level="low",
         status="approved",
         created_at=datetime.now(UTC),
+        confidence=1.0,
     )
 
 
@@ -64,6 +67,7 @@ def rejected_proposal() -> ImprovementProposal:
         risk_level="high",
         status="rejected",
         created_at=datetime.now(UTC),
+        confidence=1.0,
     )
 
 
@@ -123,6 +127,8 @@ class TestCuratorRoleCurate:
             risk_level="medium",
             status="pending",
             created_at=datetime.now(UTC),
+            evidence_refs=["test"],
+            confidence=1.0,
         )
         lessons = curator.curate([pending_proposal, proposal2], auto_appro=True)
         assert len(lessons) == 2
@@ -168,6 +174,8 @@ class TestCuratorRoleLessonTypes:
             risk_level="low",
             status="pending",
             created_at=datetime.now(UTC),
+            evidence_refs=["test"],
+            confidence=1.0,
         )
         lessons = curator.curate([proposal], auto_appro=True)
         assert lessons[0].lesson_type == "policy"
@@ -184,6 +192,8 @@ class TestCuratorRoleLessonTypes:
             risk_level="medium",
             status="pending",
             created_at=datetime.now(UTC),
+            evidence_refs=["test"],
+            confidence=1.0,
         )
         lessons = curator.curate([proposal], auto_appro=True)
         assert lessons[0].lesson_type == "skill"
@@ -200,6 +210,8 @@ class TestCuratorRoleLessonTypes:
             risk_level="medium",
             status="pending",
             created_at=datetime.now(UTC),
+            evidence_refs=["test"],
+            confidence=1.0,
         )
         lessons = curator.curate([proposal], auto_appro=True)
         assert lessons[0].lesson_type == "tool"
@@ -216,6 +228,8 @@ class TestCuratorRoleLessonTypes:
             risk_level="low",
             status="pending",
             created_at=datetime.now(UTC),
+            evidence_refs=["test"],
+            confidence=1.0,
         )
         lessons = curator.curate([proposal], auto_appro=True)
         assert lessons[0].lesson_type == "harness"
@@ -232,6 +246,8 @@ class TestCuratorRoleLessonTypes:
             risk_level="low",
             status="pending",
             created_at=datetime.now(UTC),
+            evidence_refs=["test"],
+            confidence=1.0,
         )
         lessons = curator.curate([proposal], auto_appro=True)
         assert lessons[0].lesson_type == "eval"

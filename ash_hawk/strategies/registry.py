@@ -40,10 +40,14 @@ class SubStrategy(StrEnum):
     INSTRUCTION_CLARITY = "instruction-clarity"
     EXAMPLE_QUALITY = "example-quality"
     CONTEXT_RELEVANCE = "context-relevance"
+    VOICE_TONE = "voice-tone"
+    PLAYBOOK_ADHERENCE = "playbook-adherence"
 
     TOOL_EFFICIENCY = "tool-efficiency"
     TOOL_SELECTION = "tool-selection"
     ERROR_RECOVERY = "error-recovery"
+    RETRY_BEHAVIOR = "retry-behavior"
+    REPO_INSPECTION = "repo-inspection"
 
     GRADER_CALIBRATION = "grader-calibration"
     TIMEOUT_TUNING = "timeout-tuning"
@@ -57,6 +61,7 @@ class SubStrategy(StrEnum):
     TASK_COMPLETION = "task-completion"
     CHANGE_PRECISION = "change-precision"
     SAFETY_QUALITY = "safety-quality"
+    ENGAGEMENT_PROXY = "engagement-proxy"
 
 
 STRATEGY_HIERARCHY: dict[Strategy, list[SubStrategy]] = {
@@ -70,11 +75,15 @@ STRATEGY_HIERARCHY: dict[Strategy, list[SubStrategy]] = {
         SubStrategy.INSTRUCTION_CLARITY,
         SubStrategy.EXAMPLE_QUALITY,
         SubStrategy.CONTEXT_RELEVANCE,
+        SubStrategy.VOICE_TONE,
+        SubStrategy.PLAYBOOK_ADHERENCE,
     ],
     Strategy.TOOL_QUALITY: [
         SubStrategy.TOOL_EFFICIENCY,
         SubStrategy.TOOL_SELECTION,
         SubStrategy.ERROR_RECOVERY,
+        SubStrategy.RETRY_BEHAVIOR,
+        SubStrategy.REPO_INSPECTION,
     ],
     Strategy.HARNESS_QUALITY: [
         SubStrategy.GRADER_CALIBRATION,
@@ -91,6 +100,7 @@ STRATEGY_HIERARCHY: dict[Strategy, list[SubStrategy]] = {
         SubStrategy.TASK_COMPLETION,
         SubStrategy.CHANGE_PRECISION,
         SubStrategy.SAFETY_QUALITY,
+        SubStrategy.ENGAGEMENT_PROXY,
     ],
 }
 

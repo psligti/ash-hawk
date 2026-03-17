@@ -1,0 +1,1082 @@
+{
+  "trial": {
+    "id": "trial-794cbc64",
+    "task_id": "api-endpoint-001",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "prompt": "Implement REST API endpoints for a todo list application using the Router pattern.\n\nRequired endpoints:\n- GET /todos - List all todos (optional ?completed=true filter)\n- POST /todos - Create a todo\n- PUT /todos/{id} - Update a todo\n- DELETE /todos/{id} - Delete a todo\n\nTodo model:\n```python\n@dataclass\nclass Todo:\n    id: int\n    title: str\n    completed: bool = False\n    created_at: datetime = field(default_factory=datetime.now)\n```\n\nUse the Request/Response classes from /Users/parkersligting/develop/pt/bolt-merlin/evals/fixtures/projects/sample_auth/api.py as reference.\nWrite the implementation to a file called `todo_api.py`.\n",
+      "language": "python"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-794cbc64",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-16T22:34:08.785565+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Implement REST API endpoints for a todo list application using the Router pattern.\n\nRequired endpoints:\n- GET /todos - List all todos (optional ?completed=true filter)\n- POST /todos - Create a todo\n- PUT /todos/{id} - Update a todo\n- DELETE /todos/{id} - Delete a todo\n\nTodo model:\n```python\n@dataclass\nclass Todo:\n    id: int\n    title: str\n    completed: bool = False\n    created_at: datetime = field(default_factory=datetime.now)\n```\n\nUse the Request/Response classes from /Users/parkersligting/develop/pt/bolt-merlin/evals/fixtures/projects/sample_auth/api.py as reference.\nWrite the implementation to a file called `todo_api.py`.\n"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nfrom dataclasses import dataclass, field\nfrom datetime import datetime\nfrom typing import Any, Callable, Dict, List, Optional\n\n\n# Todo model\n@dataclass\nclass Todo:\n    id: int\n    title: str\n    completed: bool = False\n    created_at: datetime = field(default_factory=datetime.now)\n\n\n# Request/Response classes\nclass Request:\n    def __init__(\n        self,\n        method: str,\n        path: str,\n        query_params: Optional[Dict[str, Any]] = None,\n        json_body: Optional[Any] = None,\n    ):\n        self.method = method\n        self.path = path\n        self.query_params = query_params or {}\n        self._json_body = json_body\n\n    @property\n    def json(self) -> Any:\n        return self._json_body\n\n\nclass Response:\n    def __init__(self, body: Any = None, status_code: int = 200):\n        self.body = body\n        self.status_code = status_code\n\n\n# In-memory storage\n_todos: Dict[int, Todo] = {}\n_next_id = 1\n\n\n# Router class\nclass Router:\n    def __init__(self):\n        self.routes: List[Dict[str, Any]] = []\n\n    def add_route(self, method: str, path: str, handler: Callable) -> None:\n        self.routes.append({\"method\": method, \"path\": path, \"handler\": handler})\n\n    def get(self, path: str) -> Callable:\n        def decorator(handler: Callable) -> Callable:\n            self.add_route(\"GET\", path, handler)\n            return handler\n\n        return decorator\n\n    def post(self, path: str) -> Callable:\n        def decorator(handler: Callable) -> Callable:\n            self.add_route(\"POST\", path, handler)\n            return handler\n\n        return decorator\n\n    def put(self, path: str) -> Callable:\n        def decorator(handler: Callable) -> Callable:\n            self.add_route(\"PUT\", path, handler)\n            return handler\n\n        return decorator\n\n    def delete(self, path: str) -> Callable:\n        def decorator(handler: Callable) -> Callable:\n            self.add_route(\"DELETE\", path, handler)\n            return handler\n\n        return decorator\n\n    def match_route(self, method: str, path: str) -> tuple[Optional[Callable], Dict[str, str]]:\n        for route in self.routes:\n            if route[\"method\"] != method:\n                continue\n\n            route_path = route[\"path\"]\n            route_parts = route_path.split(\"/\")\n            path_parts = path.split(\"/\")\n\n            if len(route_parts) != len(path_parts):\n                continue\n\n            path_params: Dict[str, str] = {}\n            match = True\n\n            for route_part, path_part in zip(route_parts, path_parts):\n                if route_part.startswith(\"{\") and route_part.endswith(\"}\"):\n                    param_name = route_part[1:-1]\n                    path_params[param_name] = path_part\n                elif route_part != path_part:\n                    match = False\n                    break\n\n            if match:\n                return route[\"handler\"], path_params\n\n        return None, {}\n\n    def handle(self, request: Request) -> Response:\n        handler, path_params = self.match_route(request.method, request.path)\n        if handler:\n            return handler(request, **path_params)\n        return Response({\"error\": \"Not Found\"}, 404)\n\n\n# Helper function to serialize Todo\ndef _serialize_todo(todo: Todo) -> Dict[str, Any]:\n    return {\n        \"id\": todo.id,\n        \"title\": todo.title,\n        \"completed\": todo.completed,\n        \"created_at\": todo.created_at.isoformat(),\n    }\n\n\n# Create router and define routes\nrouter = Router()\n\n\n@router.get(\"/todos\")\ndef get_todos(request: Request) -> Response:\n    \"\"\"List all todos with optional ?completed=true filter.\"\"\"\n    completed = request.query_params.get(\"completed\")\n\n    todos_list = list(_todos.values())\n\n    if completed is not None:\n        is_completed = completed.lower() == \"true\"\n        todos_list = [t for t in todos_list if t.completed == is_completed]\n\n    return Response([_serialize_todo(t) for t in todos_list])\n\n\n@router.post(\"/todos\")\ndef create_todo(request: Request) -> Response:\n    \"\"\"Create a new todo.\"\"\"\n    global _next_id\n\n    data = request.json\n    if not data or \"title\" not in data:\n        return Response({\"error\": \"title is required\"}, 400)\n\n    todo = Todo(\n        id=_next_id,\n        title=data[\"title\"],\n        completed=bool(data.get(\"completed\", False)),\n    )\n    _todos[_next_id] = todo\n    _next_id += 1\n\n    return Response(_serialize_todo(todo), 201)\n\n\n@router.put(\"/todos/{id}\")\ndef update_todo(request: Request, id: str) -> Response:\n    \"\"\"Update an existing todo.\"\"\"\n    todo_id = int(id)\n\n    if todo_id not in _todos:\n        return Response({\"error\": \"Todo not found\"}, 404)\n\n    data = request.json\n    if not data:\n        return Response({\"error\": \"Request body required\"}, 400)\n\n    todo = _todos[todo_id]\n\n    if \"title\" in data:\n        todo.title = data[\"title\"]\n    if \"completed\" in data:\n        todo.completed = bool(data[\"completed\"])\n\n    return Response(_serialize_todo(todo))\n\n\n@router.delete(\"/todos/{id}\")\ndef delete_todo(request: Request, id: str) -> Response:\n    \"\"\"Delete a todo.\"\"\"\n    todo_id = int(id)\n\n    if todo_id not in _todos:\n        return Response({\"error\": \"Todo not found\"}, 404)\n\n    del _todos[todo_id]\n    return Response({\"message\": \"Todo deleted\"}, 200)\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"field\", \"input\": {}, \"error\": \"Tool not available: field\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"json\", \"input\": {}, \"error\": \"Tool not available: json\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"append\", \"input\": {}, \"error\": \"Tool not available: append\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"decorator\", \"input\": {}, \"error\": \"Tool not available: decorator\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"post\", \"input\": {}, \"error\": \"Tool not available: post\"}, {\"tool\": \"decorator\", \"input\": {}, \"error\": \"Tool not available: decorator\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"put\", \"input\": {}, \"error\": \"Tool not available: put\"}, {\"tool\": \"decorator\", \"input\": {}, \"error\": \"Tool not available: decorator\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"delete\", \"input\": {}, \"error\": \"Tool not available: delete\"}, {\"tool\": \"decorator\", \"input\": {}, \"error\": \"Tool not available: decorator\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"match_route\", \"input\": {}, \"error\": \"Tool not available: match_route\"}, {\"tool\": \"split\", \"input\": {}, \"error\": \"Tool not available: split\"}, {\"tool\": \"split\", \"input\": {}, \"error\": \"Tool not available: split\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}, {\"tool\": \"zip\", \"input\": {}, \"error\": \"Tool not available: zip\"}, {\"tool\": \"startswith\", \"input\": {}, \"error\": \"Tool not available: startswith\"}, {\"tool\": \"endswith\", \"input\": {}, \"error\": \"Tool not available: endswith\"}, {\"tool\": \"handle\", \"input\": {}, \"error\": \"Tool not available: handle\"}, {\"tool\": \"match_route\", \"input\": {}, \"error\": \"Tool not available: match_route\"}, {\"tool\": \"handler\", \"input\": {}, \"error\": \"Tool not available: handler\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"_serialize_todo\", \"input\": {}, \"error\": \"Tool not available: _serialize_todo\"}, {\"tool\": \"isoformat\", \"input\": {}, \"error\": \"Tool not available: isoformat\"}, {\"tool\": \"router\", \"input\": {}, \"error\": \"Tool not available: router\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"get_todos\", \"input\": {}, \"error\": \"Tool not available: get_todos\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"list\", \"input\": {}, \"error\": \"Tool not available: list\"}, {\"tool\": \"lower\", \"input\": {}, \"error\": \"Tool not available: lower\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"post\", \"input\": {}, \"error\": \"Tool not available: post\"}, {\"tool\": \"create_todo\", \"input\": {}, \"error\": \"Tool not available: create_todo\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"todo\", \"input\": {}, \"error\": \"Tool not available: todo\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"put\", \"input\": {}, \"error\": \"Tool not available: put\"}, {\"tool\": \"update_todo\", \"input\": {}, \"error\": \"Tool not available: update_todo\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"bool\", \"input\": {}, \"error\": \"Tool not available: bool\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"delete\", \"input\": {}, \"error\": \"Tool not available: delete\"}, {\"tool\": \"delete_todo\", \"input\": {}, \"error\": \"Tool not available: delete_todo\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\n\"\"\"\ntodo_api.py\nImplementation of a REST API for a Todo list using the Router pattern.\n\"\"\"\n\nfrom dataclasses import dataclass, field\nfrom datetime import datetime\nfrom typing import Any, Callable, Dict, List, Optional, Tuple\n\n\n# --- Todo Model ---\n@dataclass\nclass Todo:\n    id: int\n    title: str\n    completed: bool = False\n    created_at: datetime = field(default_factory=datetime.now)\n\n    def to_dict(self) -> Dict[str, Any]:\n        return {\n            \"id\": self.id,\n            \"title\": self.title,\n            \"completed\": self.completed,\n            \"created_at\": self.created_at.isoformat(),\n        }\n\n\n# --- Request / Response Classes ---\nclass Request:\n    def __init__(\n        self,\n        method: str,\n        path: str,\n        query_params: Optional[Dict[str, Any]] = None,\n        json_body: Optional[Any] = None,\n    ):\n        self.method = method\n        self.path = path\n        self.query_params = query_params or {}\n        self._json_body = json_body\n\n    @property\n    def json(self) -> Any:\n        return self._json_body\n\n\nclass Response:\n    def __init__(self, body: Any = None, status_code: int = 200):\n        self.body = body\n        self.status_code = status_code\n\n\n# --- Router Class ---\nclass Router:\n    def __init__(self):\n        self.routes: List[Dict[str, Any]] = []\n\n    def add_route(self, method: str, path: str, handler: Callable) -> None:\n        self.routes.append({\"method\": method, \"path\": path, \"handler\": handler})\n\n    def _decorator(self, method: str, path: str) -> Callable:\n        def wrapper(handler: Callable) -> Callable:\n            self.add_route(method, path, handler)\n            return handler\n\n        return wrapper\n\n    def get(self, path: str) -> Callable:\n        return self._decorator(\"GET\", path)\n\n    def post(self, path: str) -> Callable:\n        return self._decorator(\"POST\", path)\n\n    def put(self, path: str) -> Callable:\n        return self._decorator(\"PUT\", path)\n\n    def delete(self, path: str) -> Callable:\n        return self._decorator(\"DELETE\", path)\n\n    def match_route(self, method: str, path: str) -> Tuple[Optional[Callable], Dict[str, str]]:\n        for route in self.routes:\n            if route[\"method\"] != method:\n                continue\n\n            route_segments = route[\"path\"].split(\"/\")\n            path_segments = path.split(\"/\")\n\n            if len(route_segments) != len(path_segments):\n                continue\n\n            params: Dict[str, str] = {}\n            match = True\n\n            for r_seg, p_seg in zip(route_segments, path_segments):\n                if r_seg.startswith(\"{\") and r_seg.endswith(\"}\"):\n                    param_name = r_seg[1:-1]\n                    params[param_name] = p_seg\n                elif r_seg != p_seg:\n                    match = False\n                    break\n\n            if match:\n                return route[\"handler\"], params\n\n        return None, {}\n\n    def handle(self, request: Request) -> Response:\n        handler, params = self.match_route(request.method, request.path)\n        if handler:\n            try:\n                return handler(request, **params)\n            except TypeError:\n                # If handler doesn't accept kwargs, try calling without them\n                # or handle mismatches as appropriate for the framework\n                pass\n        return Response({\"error\": \"Not Found\"}, 404)\n\n\n# --- Todo Application Logic ---\nrouter = Router()\n_db: Dict[int, Todo] = {}\n_next_id = 1\n\n\n@router.get(\"/todos\")\ndef list_todos(request: Request) -> Response:\n    \"\"\"List all todos. Supports ?completed=true query param.\"\"\"\n    todos = list(_db.values())\n\n    completed_filter = request.query_params.get(\"completed\")\n    if completed_filter is not None:\n        is_completed = completed_filter.lower() == \"true\"\n        todos = [t for t in todos if t.completed == is_completed]\n\n    return Response([t.to_dict() for t in todos])\n\n\n@router.post(\"/todos\")\ndef create_todo(request: Request) -> Response:\n    \"\"\"Create a new todo.\"\"\"\n    global _next_id\n\n    body = request.json\n    if not body or \"title\" not in body:\n        return Response({\"error\": \"Title is required\"}, 400)\n\n    new_todo = Todo(\n        id=_next_id,\n        title=body[\"title\"],\n        completed=bool(body.get(\"completed\", False)),\n    )\n    _db[_next_id] = new_todo\n    _next_id += 1\n\n    return Response(new_todo.to_dict(), 201)\n\n\n@router.put(\"/todos/{id}\")\ndef update_todo(request: Request, id: str) -> Response:\n    \"\"\"Update an existing todo.\"\"\"\n    try:\n        todo_id = int(id)\n    except ValueError:\n        return Response({\"error\": \"Invalid ID\"}, 400)\n\n    if todo_id not in _db:\n        return Response({\"error\": \"Todo not found\"}, 404)\n\n    body = request.json\n    if not body:\n        return Response({\"error\": \"Body required\"}, 400)\n\n    todo = _db[todo_id]\n\n    if \"title\" in body:\n        todo.title = body[\"title\"]\n    if \"completed\" in body:\n        todo.completed = bool(body[\"completed\"])\n\n    return Response(todo.to_dict())\n\n\n@router.delete(\"/todos/{id}\")\ndef delete_todo(request: Request, id: str) -> Response:\n    \"\"\"Delete a todo.\"\"\"\n    try:\n        todo_id = int(id)\n    except ValueError:\n        return Response({\"error\": \"Invalid ID\"}, 400)\n\n    if todo_id not in _db:\n        return Response({\"error\": \"Todo not found\"}, 404)\n\n    del _db[todo_id]\n    return Response(None, 204)\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"field\", \"input\": {}, \"error\": \"Tool not available: field\"}, {\"tool\": \"to_dict\", \"input\": {}, \"error\": \"Tool not available: to_dict\"}, {\"tool\": \"isoformat\", \"input\": {}, \"error\": \"Tool not available: isoformat\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"json\", \"input\": {}, \"error\": \"Tool not available: json\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"append\", \"input\": {}, \"error\": \"Tool not available: append\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"wrapper\", \"input\": {}, \"error\": \"Tool not available: wrapper\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"post\", \"input\": {}, \"error\": \"Tool not available: post\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"put\", \"input\": {}, \"error\": \"Tool not available: put\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"delete\", \"input\": {}, \"error\": \"Tool not available: delete\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"match_route\", \"input\": {}, \"error\": \"Tool not available: match_route\"}, {\"tool\": \"split\", \"input\": {}, \"error\": \"Tool not available: split\"}, {\"tool\": \"split\", \"input\": {}, \"error\": \"Tool not available: split\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}, {\"tool\": \"zip\", \"input\": {}, \"error\": \"Tool not available: zip\"}, {\"tool\": \"startswith\", \"input\": {}, \"error\": \"Tool not available: startswith\"}, {\"tool\": \"endswith\", \"input\": {}, \"error\": \"Tool not available: endswith\"}, {\"tool\": \"handle\", \"input\": {}, \"error\": \"Tool not available: handle\"}, {\"tool\": \"match_route\", \"input\": {}, \"error\": \"Tool not available: match_route\"}, {\"tool\": \"handler\", \"input\": {}, \"error\": \"Tool not available: handler\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"router\", \"input\": {}, \"error\": \"Tool not available: router\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"list_todos\", \"input\": {}, \"error\": \"Tool not available: list_todos\"}, {\"tool\": \"list\", \"input\": {}, \"error\": \"Tool not available: list\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"lower\", \"input\": {}, \"error\": \"Tool not available: lower\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"post\", \"input\": {}, \"error\": \"Tool not available: post\"}, {\"tool\": \"create_todo\", \"input\": {}, \"error\": \"Tool not available: create_todo\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"todo\", \"input\": {}, \"error\": \"Tool not available: todo\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"put\", \"input\": {}, \"error\": \"Tool not available: put\"}, {\"tool\": \"update_todo\", \"input\": {}, \"error\": \"Tool not available: update_todo\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"bool\", \"input\": {}, \"error\": \"Tool not available: bool\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"delete\", \"input\": {}, \"error\": \"Tool not available: delete\"}, {\"tool\": \"delete_todo\", \"input\": {}, \"error\": \"Tool not available: delete_todo\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "```python\nimport json\nfrom dataclasses import dataclass, field\nfrom datetime import datetime\nfrom typing import Any, Callable, Dict, List, Optional, Tuple\n\n\n# --- Todo Model ---\n@dataclass\nclass Todo:\n    id: int\n    title: str\n    completed: bool = False\n    created_at: datetime = field(default_factory=datetime.now)\n\n    def to_dict(self) -> Dict[str, Any]:\n        return {\n            \"id\": self.id,\n            \"title\": self.title,\n            \"completed\": self.completed,\n            \"created_at\": self.created_at.isoformat(),\n        }\n\n\n# --- Request / Response Classes ---\nclass Request:\n    def __init__(\n        self,\n        method: str,\n        path: str,\n        query_params: Optional[Dict[str, Any]] = None,\n        json_body: Optional[Any] = None,\n    ):\n        self.method = method\n        self.path = path\n        self.query_params = query_params or {}\n        self._json_body = json_body\n\n    @property\n    def json(self) -> Any:\n        return self._json_body\n\n\nclass Response:\n    def __init__(self, body: Any = None, status_code: int = 200):\n        self.body = body\n        self.status_code = status_code\n        \n    def to_json(self) -> str:\n        return json.dumps(self.body)\n\n\n# --- Router Class ---\nclass Router:\n    def __init__(self):\n        self.routes: List[Dict[str, Any]] = []\n\n    def add_route(self, method: str, path: str, handler: Callable) -> None:\n        self.routes.append({\"method\": method, \"path\": path, \"handler\": handler})\n\n    def _decorator(self, method: str, path: str) -> Callable:\n        def wrapper(handler: Callable) -> Callable:\n            self.add_route(method, path, handler)\n            return handler\n        return wrapper\n\n    def get(self, path: str) -> Callable:\n        return self._decorator(\"GET\", path)\n\n    def post(self, path: str) -> Callable:\n        return self._decorator(\"POST\", path)\n\n    def put(self, path: str) -> Callable:\n        return self._decorator(\"PUT\", path)\n\n    def delete(self, path: str) -> Callable:\n        return self._decorator(\"DELETE\", path)\n\n    def match_route(self, method: str, path: str) -> Tuple[Optional[Callable], Dict[str, str]]:\n        for route in self.routes:\n            if route[\"method\"] != method:\n                continue\n\n            route_segments = route[\"path\"].split(\"/\")\n            path_segments = path.split(\"/\")\n\n            if len(route_segments) != len(path_segments):\n                continue\n\n            params: Dict[str, str] = {}\n            match = True\n\n            for r_seg, p_seg in zip(route_segments, path_segments):\n                if r_seg.startswith(\"{\") and r_seg.endswith(\"}\"):\n                    param_name = r_seg[1:-1]\n                    params[param_name] = p_seg\n                elif r_seg != p_seg:\n                    match = False\n                    break\n\n            if match:\n                return route[\"handler\"], params\n\n        return None, {}\n\n    def handle(self, request: Request) -> Response:\n        handler, params = self.match_route(request.method, request.path)\n        if handler:\n            try:\n                return handler(request, **params)\n            except TypeError:\n                # Fallback if the handler signature doesn't match expected kwargs\n                pass\n        return Response({\"error\": \"Not Found\"}, 404)\n\n\n# --- Todo Service / Application Logic ---\nrouter = Router()\n_db: Dict[int, Todo] = {}\n_next_id = 1\n\n\n@router.get(\"/todos\")\ndef list_todos(request: Request) -> Response:\n    \"\"\"List all todos. Supports ?completed=true query param.\"\"\"\n    todos = list(_db.values())\n\n    completed_filter = request.query_params.get(\"completed\")\n    if completed_filter is not None:\n        is_completed = completed_filter.lower() == \"true\"\n        todos = [t for t in todos if t.completed == is_completed]\n\n    return Response([t.to_dict() for t in todos])\n\n\n@router.post(\"/todos\")\ndef create_todo(request: Request) -> Response:\n    \"\"\"Create a new todo.\"\"\"\n    global _next_id\n\n    body = request.json\n    if not body or \"title\" not in body:\n        return Response({\"error\": \"Title is required\"}, 400)\n\n    new_todo = Todo(\n        id=_next_id,\n        title=body[\"title\"],\n        completed=bool(body.get(\"completed\", False)),\n    )\n    _db[_next_id] = new_todo\n    _next_id += 1\n\n    return Response(new_todo.to_dict(), 201)\n\n\n@router.put(\"/todos/{id}\")\ndef update_todo(request: Request, id: str) -> Response:\n    \"\"\"Update an existing todo.\"\"\"\n    try:\n        todo_id = int(id)\n    except ValueError:\n        return Response({\"error\": \"Invalid ID\"}, 400)\n\n    if todo_id not in _db:\n        return Response({\"error\": \"Todo not found\"}, 404)\n\n    body = request.json\n    if not body:\n        return Response({\"error\": \"Body required\"}, 400)\n\n    todo = _db[todo_id]\n\n    if \"title\" in body:\n        todo.title = body[\"title\"]\n    if \"completed\" in body:\n        todo.completed = bool(body[\"completed\"])\n\n    return Response(todo.to_dict())\n\n\n@router.delete(\"/todos/{id}\")\ndef delete_todo(request: Request, id: str) -> Response:\n    \"\"\"Delete a todo.\"\"\"\n    try:\n        todo_id = int(id)\n    except ValueError:\n        return Response({\"error\": \"Invalid ID\"}, 400)\n\n    if todo_id not in _db:\n        return Response({\"error\": \"Todo not found\"}, 404)\n\n    del _db[todo_id]\n    return Response(None, 204)\n```"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"field\", \"input\": {}, \"error\": \"Tool not available: field\"}, {\"tool\": \"to_dict\", \"input\": {}, \"error\": \"Tool not available: to_dict\"}, {\"tool\": \"isoformat\", \"input\": {}, \"error\": \"Tool not available: isoformat\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"json\", \"input\": {}, \"error\": \"Tool not available: json\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"to_json\", \"input\": {}, \"error\": \"Tool not available: to_json\"}, {\"tool\": \"dumps\", \"input\": {}, \"error\": \"Tool not available: dumps\"}, {\"tool\": \"__init__\", \"input\": {}, \"error\": \"Tool not available: __init__\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"append\", \"input\": {}, \"error\": \"Tool not available: append\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"wrapper\", \"input\": {}, \"error\": \"Tool not available: wrapper\"}, {\"tool\": \"add_route\", \"input\": {}, \"error\": \"Tool not available: add_route\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"post\", \"input\": {}, \"error\": \"Tool not available: post\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"put\", \"input\": {}, \"error\": \"Tool not available: put\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"delete\", \"input\": {}, \"error\": \"Tool not available: delete\"}, {\"tool\": \"_decorator\", \"input\": {}, \"error\": \"Tool not available: _decorator\"}, {\"tool\": \"match_route\", \"input\": {}, \"error\": \"Tool not available: match_route\"}, {\"tool\": \"split\", \"input\": {}, \"error\": \"Tool not available: split\"}, {\"tool\": \"split\", \"input\": {}, \"error\": \"Tool not available: split\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}, {\"tool\": \"len\", \"input\": {}, \"error\": \"Tool not available: len\"}, {\"tool\": \"zip\", \"input\": {}, \"error\": \"Tool not available: zip\"}, {\"tool\": \"startswith\", \"input\": {}, \"error\": \"Tool not available: startswith\"}, {\"tool\": \"endswith\", \"input\": {}, \"error\": \"Tool not available: endswith\"}, {\"tool\": \"handle\", \"input\": {}, \"error\": \"Tool not available: handle\"}, {\"tool\": \"match_route\", \"input\": {}, \"error\": \"Tool not available: match_route\"}, {\"tool\": \"handler\", \"input\": {}, \"error\": \"Tool not available: handler\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"router\", \"input\": {}, \"error\": \"Tool not available: router\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"list_todos\", \"input\": {}, \"error\": \"Tool not available: list_todos\"}, {\"tool\": \"list\", \"input\": {}, \"error\": \"Tool not available: list\"}, {\"tool\": \"get\", \"input\": {}, \"error\": \"Tool not available: get\"}, {\"tool\": \"lower\", \"input\": {}, \"error\": \"Tool not available: lower\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"post\", \"input\": {}, \"error\": \"Tool not available: post\"}, {\"tool\": \"create_todo\", \"input\": {}, \"error\": \"Tool not available: create_todo\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"todo\", \"input\": {}, \"error\": \"Tool not available: todo\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"put\", \"input\": {}, \"error\": \"Tool not available: put\"}, {\"tool\": \"update_todo\", \"input\": {}, \"error\": \"Tool not available: update_todo\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"bool\", \"input\": {}, \"error\": \"Tool not available: bool\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"delete\", \"input\": {}, \"error\": \"Tool not available: delete\"}, {\"tool\": \"delete_todo\", \"input\": {}, \"error\": \"Tool not available: delete_todo\"}, {\"tool\": \"int\", \"input\": {}, \"error\": \"Tool not available: int\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}, {\"tool\": \"response\", \"input\": {}, \"error\": \"Tool not available: response\"}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "field",
+            "input": {},
+            "error": "Tool not available: field"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "json",
+            "input": {},
+            "error": "Tool not available: json"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "append",
+            "input": {},
+            "error": "Tool not available: append"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "decorator",
+            "input": {},
+            "error": "Tool not available: decorator"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "post",
+            "input": {},
+            "error": "Tool not available: post"
+          },
+          {
+            "tool": "decorator",
+            "input": {},
+            "error": "Tool not available: decorator"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "put",
+            "input": {},
+            "error": "Tool not available: put"
+          },
+          {
+            "tool": "decorator",
+            "input": {},
+            "error": "Tool not available: decorator"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "delete",
+            "input": {},
+            "error": "Tool not available: delete"
+          },
+          {
+            "tool": "decorator",
+            "input": {},
+            "error": "Tool not available: decorator"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "match_route",
+            "input": {},
+            "error": "Tool not available: match_route"
+          },
+          {
+            "tool": "split",
+            "input": {},
+            "error": "Tool not available: split"
+          },
+          {
+            "tool": "split",
+            "input": {},
+            "error": "Tool not available: split"
+          },
+          {
+            "tool": "len",
+            "input": {},
+            "error": "Tool not available: len"
+          },
+          {
+            "tool": "len",
+            "input": {},
+            "error": "Tool not available: len"
+          },
+          {
+            "tool": "zip",
+            "input": {},
+            "error": "Tool not available: zip"
+          },
+          {
+            "tool": "startswith",
+            "input": {},
+            "error": "Tool not available: startswith"
+          },
+          {
+            "tool": "endswith",
+            "input": {},
+            "error": "Tool not available: endswith"
+          },
+          {
+            "tool": "handle",
+            "input": {},
+            "error": "Tool not available: handle"
+          },
+          {
+            "tool": "match_route",
+            "input": {},
+            "error": "Tool not available: match_route"
+          },
+          {
+            "tool": "handler",
+            "input": {},
+            "error": "Tool not available: handler"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "_serialize_todo",
+            "input": {},
+            "error": "Tool not available: _serialize_todo"
+          },
+          {
+            "tool": "isoformat",
+            "input": {},
+            "error": "Tool not available: isoformat"
+          },
+          {
+            "tool": "router",
+            "input": {},
+            "error": "Tool not available: router"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "get_todos",
+            "input": {},
+            "error": "Tool not available: get_todos"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "list",
+            "input": {},
+            "error": "Tool not available: list"
+          },
+          {
+            "tool": "lower",
+            "input": {},
+            "error": "Tool not available: lower"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "post",
+            "input": {},
+            "error": "Tool not available: post"
+          },
+          {
+            "tool": "create_todo",
+            "input": {},
+            "error": "Tool not available: create_todo"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "todo",
+            "input": {},
+            "error": "Tool not available: todo"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "put",
+            "input": {},
+            "error": "Tool not available: put"
+          },
+          {
+            "tool": "update_todo",
+            "input": {},
+            "error": "Tool not available: update_todo"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "bool",
+            "input": {},
+            "error": "Tool not available: bool"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "delete",
+            "input": {},
+            "error": "Tool not available: delete"
+          },
+          {
+            "tool": "delete_todo",
+            "input": {},
+            "error": "Tool not available: delete_todo"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "field",
+            "input": {},
+            "error": "Tool not available: field"
+          },
+          {
+            "tool": "to_dict",
+            "input": {},
+            "error": "Tool not available: to_dict"
+          },
+          {
+            "tool": "isoformat",
+            "input": {},
+            "error": "Tool not available: isoformat"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "json",
+            "input": {},
+            "error": "Tool not available: json"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "append",
+            "input": {},
+            "error": "Tool not available: append"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "wrapper",
+            "input": {},
+            "error": "Tool not available: wrapper"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "post",
+            "input": {},
+            "error": "Tool not available: post"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "put",
+            "input": {},
+            "error": "Tool not available: put"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "delete",
+            "input": {},
+            "error": "Tool not available: delete"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "match_route",
+            "input": {},
+            "error": "Tool not available: match_route"
+          },
+          {
+            "tool": "split",
+            "input": {},
+            "error": "Tool not available: split"
+          },
+          {
+            "tool": "split",
+            "input": {},
+            "error": "Tool not available: split"
+          },
+          {
+            "tool": "len",
+            "input": {},
+            "error": "Tool not available: len"
+          },
+          {
+            "tool": "len",
+            "input": {},
+            "error": "Tool not available: len"
+          },
+          {
+            "tool": "zip",
+            "input": {},
+            "error": "Tool not available: zip"
+          },
+          {
+            "tool": "startswith",
+            "input": {},
+            "error": "Tool not available: startswith"
+          },
+          {
+            "tool": "endswith",
+            "input": {},
+            "error": "Tool not available: endswith"
+          },
+          {
+            "tool": "handle",
+            "input": {},
+            "error": "Tool not available: handle"
+          },
+          {
+            "tool": "match_route",
+            "input": {},
+            "error": "Tool not available: match_route"
+          },
+          {
+            "tool": "handler",
+            "input": {},
+            "error": "Tool not available: handler"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "router",
+            "input": {},
+            "error": "Tool not available: router"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "list_todos",
+            "input": {},
+            "error": "Tool not available: list_todos"
+          },
+          {
+            "tool": "list",
+            "input": {},
+            "error": "Tool not available: list"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "lower",
+            "input": {},
+            "error": "Tool not available: lower"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "post",
+            "input": {},
+            "error": "Tool not available: post"
+          },
+          {
+            "tool": "create_todo",
+            "input": {},
+            "error": "Tool not available: create_todo"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "todo",
+            "input": {},
+            "error": "Tool not available: todo"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "put",
+            "input": {},
+            "error": "Tool not available: put"
+          },
+          {
+            "tool": "update_todo",
+            "input": {},
+            "error": "Tool not available: update_todo"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "bool",
+            "input": {},
+            "error": "Tool not available: bool"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "delete",
+            "input": {},
+            "error": "Tool not available: delete"
+          },
+          {
+            "tool": "delete_todo",
+            "input": {},
+            "error": "Tool not available: delete_todo"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "field",
+            "input": {},
+            "error": "Tool not available: field"
+          },
+          {
+            "tool": "to_dict",
+            "input": {},
+            "error": "Tool not available: to_dict"
+          },
+          {
+            "tool": "isoformat",
+            "input": {},
+            "error": "Tool not available: isoformat"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "json",
+            "input": {},
+            "error": "Tool not available: json"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "to_json",
+            "input": {},
+            "error": "Tool not available: to_json"
+          },
+          {
+            "tool": "dumps",
+            "input": {},
+            "error": "Tool not available: dumps"
+          },
+          {
+            "tool": "__init__",
+            "input": {},
+            "error": "Tool not available: __init__"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "append",
+            "input": {},
+            "error": "Tool not available: append"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "wrapper",
+            "input": {},
+            "error": "Tool not available: wrapper"
+          },
+          {
+            "tool": "add_route",
+            "input": {},
+            "error": "Tool not available: add_route"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "post",
+            "input": {},
+            "error": "Tool not available: post"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "put",
+            "input": {},
+            "error": "Tool not available: put"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "delete",
+            "input": {},
+            "error": "Tool not available: delete"
+          },
+          {
+            "tool": "_decorator",
+            "input": {},
+            "error": "Tool not available: _decorator"
+          },
+          {
+            "tool": "match_route",
+            "input": {},
+            "error": "Tool not available: match_route"
+          },
+          {
+            "tool": "split",
+            "input": {},
+            "error": "Tool not available: split"
+          },
+          {
+            "tool": "split",
+            "input": {},
+            "error": "Tool not available: split"
+          },
+          {
+            "tool": "len",
+            "input": {},
+            "error": "Tool not available: len"
+          },
+          {
+            "tool": "len",
+            "input": {},
+            "error": "Tool not available: len"
+          },
+          {
+            "tool": "zip",
+            "input": {},
+            "error": "Tool not available: zip"
+          },
+          {
+            "tool": "startswith",
+            "input": {},
+            "error": "Tool not available: startswith"
+          },
+          {
+            "tool": "endswith",
+            "input": {},
+            "error": "Tool not available: endswith"
+          },
+          {
+            "tool": "handle",
+            "input": {},
+            "error": "Tool not available: handle"
+          },
+          {
+            "tool": "match_route",
+            "input": {},
+            "error": "Tool not available: match_route"
+          },
+          {
+            "tool": "handler",
+            "input": {},
+            "error": "Tool not available: handler"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "router",
+            "input": {},
+            "error": "Tool not available: router"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "list_todos",
+            "input": {},
+            "error": "Tool not available: list_todos"
+          },
+          {
+            "tool": "list",
+            "input": {},
+            "error": "Tool not available: list"
+          },
+          {
+            "tool": "get",
+            "input": {},
+            "error": "Tool not available: get"
+          },
+          {
+            "tool": "lower",
+            "input": {},
+            "error": "Tool not available: lower"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "post",
+            "input": {},
+            "error": "Tool not available: post"
+          },
+          {
+            "tool": "create_todo",
+            "input": {},
+            "error": "Tool not available: create_todo"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "todo",
+            "input": {},
+            "error": "Tool not available: todo"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "put",
+            "input": {},
+            "error": "Tool not available: put"
+          },
+          {
+            "tool": "update_todo",
+            "input": {},
+            "error": "Tool not available: update_todo"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "bool",
+            "input": {},
+            "error": "Tool not available: bool"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "delete",
+            "input": {},
+            "error": "Tool not available: delete"
+          },
+          {
+            "tool": "delete_todo",
+            "input": {},
+            "error": "Tool not available: delete_todo"
+          },
+          {
+            "tool": "int",
+            "input": {},
+            "error": "Tool not available: int"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          },
+          {
+            "tool": "response",
+            "input": {},
+            "error": "Tool not available: response"
+          }
+        ],
+        "trace_events": [],
+        "token_usage": {
+          "input": 5019,
+          "output": 2571,
+          "reasoning": 1335,
+          "cache_read": 2554,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 86.92432808876038,
+        "agent_response": "```python\nimport json\nfrom dataclasses import dataclass, field\nfrom datetime import datetime\nfrom typing import Any, Callable, Dict, List, Optional, Tuple\n\n\n# --- Todo Model ---\n@dataclass\nclass Todo:\n    id: int\n    title: str\n    completed: bool = False\n    created_at: datetime = field(default_factory=datetime.now)\n\n    def to_dict(self) -> Dict[str, Any]:\n        return {\n            \"id\": self.id,\n            \"title\": self.title,\n            \"completed\": self.completed,\n            \"created_at\": self.created_at.isoformat(),\n        }\n\n\n# --- Request / Response Classes ---\nclass Request:\n    def __init__(\n        self,\n        method: str,\n        path: str,\n        query_params: Optional[Dict[str, Any]] = None,\n        json_body: Optional[Any] = None,\n    ):\n        self.method = method\n        self.path = path\n        self.query_params = query_params or {}\n        self._json_body = json_body\n\n    @property\n    def json(self) -> Any:\n        return self._json_body\n\n\nclass Response:\n    def __init__(self, body: Any = None, status_code: int = 200):\n        self.body = body\n        self.status_code = status_code\n        \n    def to_json(self) -> str:\n        return json.dumps(self.body)\n\n\n# --- Router Class ---\nclass Router:\n    def __init__(self):\n        self.routes: List[Dict[str, Any]] = []\n\n    def add_route(self, method: str, path: str, handler: Callable) -> None:\n        self.routes.append({\"method\": method, \"path\": path, \"handler\": handler})\n\n    def _decorator(self, method: str, path: str) -> Callable:\n        def wrapper(handler: Callable) -> Callable:\n            self.add_route(method, path, handler)\n            return handler\n        return wrapper\n\n    def get(self, path: str) -> Callable:\n        return self._decorator(\"GET\", path)\n\n    def post(self, path: str) -> Callable:\n        return self._decorator(\"POST\", path)\n\n    def put(self, path: str) -> Callable:\n        return self._decorator(\"PUT\", path)\n\n    def delete(self, path: str) -> Callable:\n        return self._decorator(\"DELETE\", path)\n\n    def match_route(self, method: str, path: str) -> Tuple[Optional[Callable], Dict[str, str]]:\n        for route in self.routes:\n            if route[\"method\"] != method:\n                continue\n\n            route_segments = route[\"path\"].split(\"/\")\n            path_segments = path.split(\"/\")\n\n            if len(route_segments) != len(path_segments):\n                continue\n\n            params: Dict[str, str] = {}\n            match = True\n\n            for r_seg, p_seg in zip(route_segments, path_segments):\n                if r_seg.startswith(\"{\") and r_seg.endswith(\"}\"):\n                    param_name = r_seg[1:-1]\n                    params[param_name] = p_seg\n                elif r_seg != p_seg:\n                    match = False\n                    break\n\n            if match:\n                return route[\"handler\"], params\n\n        return None, {}\n\n    def handle(self, request: Request) -> Response:\n        handler, params = self.match_route(request.method, request.path)\n        if handler:\n            try:\n                return handler(request, **params)\n            except TypeError:\n                # Fallback if the handler signature doesn't match expected kwargs\n                pass\n        return Response({\"error\": \"Not Found\"}, 404)\n\n\n# --- Todo Service / Application Logic ---\nrouter = Router()\n_db: Dict[int, Todo] = {}\n_next_id = 1\n\n\n@router.get(\"/todos\")\ndef list_todos(request: Request) -> Response:\n    \"\"\"List all todos. Supports ?completed=true query param.\"\"\"\n    todos = list(_db.values())\n\n    completed_filter = request.query_params.get(\"completed\")\n    if completed_filter is not None:\n        is_completed = completed_filter.lower() == \"true\"\n        todos = [t for t in todos if t.completed == is_completed]\n\n    return Response([t.to_dict() for t in todos])\n\n\n@router.post(\"/todos\")\ndef create_todo(request: Request) -> Response:\n    \"\"\"Create a new todo.\"\"\"\n    global _next_id\n\n    body = request.json\n    if not body or \"title\" not in body:\n        return Response({\"error\": \"Title is required\"}, 400)\n\n    new_todo = Todo(\n        id=_next_id,\n        title=body[\"title\"],\n        completed=bool(body.get(\"completed\", False)),\n    )\n    _db[_next_id] = new_todo\n    _next_id += 1\n\n    return Response(new_todo.to_dict(), 201)\n\n\n@router.put(\"/todos/{id}\")\ndef update_todo(request: Request, id: str) -> Response:\n    \"\"\"Update an existing todo.\"\"\"\n    try:\n        todo_id = int(id)\n    except ValueError:\n        return Response({\"error\": \"Invalid ID\"}, 400)\n\n    if todo_id not in _db:\n        return Response({\"error\": \"Todo not found\"}, 404)\n\n    body = request.json\n    if not body:\n        return Response({\"error\": \"Body required\"}, 400)\n\n    todo = _db[todo_id]\n\n    if \"title\" in body:\n        todo.title = body[\"title\"]\n    if \"completed\" in body:\n        todo.completed = bool(body[\"completed\"])\n\n    return Response(todo.to_dict())\n\n\n@router.delete(\"/todos/{id}\")\ndef delete_todo(request: Request, id: str) -> Response:\n    \"\"\"Delete a todo.\"\"\"\n    try:\n        todo_id = int(id)\n    except ValueError:\n        return Response({\"error\": \"Invalid ID\"}, 400)\n\n    if todo_id not in _db:\n        return Response({\"error\": \"Todo not found\"}, 404)\n\n    del _db[todo_id]\n    return Response(None, 204)\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "composite",
+          "grader_id": null,
+          "score": 0.4,
+          "passed": false,
+          "details": {
+            "mode": "weighted",
+            "threshold": 0.7,
+            "grader_results": [
+              {
+                "grader_type": "test_runner",
+                "grader_id": null,
+                "score": 0.0,
+                "passed": false,
+                "details": {
+                  "command": "pytest /Users/parkersligting/develop/pt/bolt-merlin/evals/fixtures/tests/test_todo_api.py -v --tb=short",
+                  "return_code": 2,
+                  "total_tests": 0,
+                  "passed_tests": 0,
+                  "failed_tests": 0,
+                  "skipped_tests": 0,
+                  "pass_ratio": 0.0,
+                  "execution_time_seconds": 0.29521608352661133,
+                  "timed_out": false
+                },
+                "error_message": null,
+                "execution_time_seconds": 0.29549193382263184,
+                "confidence": null,
+                "needs_review": false,
+                "review_reason": null
+              },
+              {
+                "grader_type": "static_analysis",
+                "grader_id": null,
+                "score": 1.0,
+                "passed": true,
+                "details": {
+                  "tools_run": [
+                    "ruff"
+                  ],
+                  "tool_results": {
+                    "ruff": {
+                      "command": "ruff check /Users/parkersligting/develop/pt/bolt-merlin/evals/suites/todo_api.py ",
+                      "return_code": 1,
+                      "issue_count": 0,
+                      "error_count": 0,
+                      "issues": [],
+                      "execution_time_seconds": 0.03761696815490723
+                    }
+                  },
+                  "total_issues": 0,
+                  "total_errors": 0,
+                  "max_issues": 5
+                },
+                "error_message": null,
+                "execution_time_seconds": 0.03777194023132324,
+                "confidence": null,
+                "needs_review": false,
+                "review_reason": null
+              }
+            ],
+            "weights": [
+              0.6,
+              0.4
+            ]
+          },
+          "error_message": null,
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.4,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-794cbc64",
+      "run_id": "run-76c3087e",
+      "task_id": "api-endpoint-001",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-16T22:32:41.860954+00:00",
+      "started_at": "2026-03-16T22:32:41.860695+00:00",
+      "completed_at": "2026-03-16T22:34:08.785684+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-794cbc64",
+    "run_id": "run-76c3087e",
+    "task_id": "api-endpoint-001",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-16T22:32:41.860954+00:00",
+    "started_at": "2026-03-16T22:32:41.860695+00:00",
+    "completed_at": "2026-03-16T22:34:08.785684+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

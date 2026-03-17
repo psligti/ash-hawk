@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from ash_hawk.contracts import (
@@ -13,7 +15,9 @@ from ash_hawk.contracts import (
 from ash_hawk.pipeline.types import PipelineContext, PipelineRole, PipelineStepResult
 
 if TYPE_CHECKING:
-    pass
+    from ash_hawk.integration.post_run_hook import PostRunReviewHook
+
+logger = logging.getLogger(__name__)
 
 
 class PipelineOrchestrator:
@@ -27,28 +31,22 @@ class PipelineOrchestrator:
     5. CURATOR: Approves/rejects proposals into lessons
     """
 
-    def __init__(self) -> None:
+    def __init__(self, hook: "PostRunReviewHook | None" = None) -> None:
+        self._hook = hook
         self._context: PipelineContext | None = None
         self._steps: dict[PipelineRole, PipelineStepResult] = {}
         self._proposals: list[ImprovementProposal] = []
         self._lessons: list[CuratedLesson] = []
+        self._comparison_result: dict[str, Any] | None = None
 
     def run(self, request: ReviewRequest, artifact: RunArtifact) -> list[CuratedLesson]:
-        """Execute the full improvement pipeline.
-
-        Args:
-            request: The review request to process.
-            artifact: The run artifact to analyze.
-
-        Returns:
-            List of curated lessons from approved proposals.
-        """
         review_id = f"review-{uuid4().hex[:8]}"
         self._context = PipelineContext(
             run_artifact_id=artifact.run_id,
             review_request_id=review_id,
             role=PipelineRole.COMPETITOR,
             target_agent=request.target_agent,
+            experiment_id=request.experiment_id,
             inputs={"artifact": artifact.model_dump()},
         )
 
@@ -59,6 +57,94 @@ class PipelineOrchestrator:
         self._run_coach_role()
         self._run_architect_role()
         lessons = self._run_curator_role()
+
+        self._run_comparison_step(request, artifact, lessons)
+        self._notify_hook(artifact)
+
+        return lessons
+
+    def _run_comparison_step(
+        self,
+        request: ReviewRequest,
+        artifact: RunArtifact,
+        lessons: list[CuratedLesson],
+    ) -> None:
+        """Run before/after comparison if baseline is provided."""
+        if not request.baseline_run_id:
+            return
+
+        try:
+            from ash_hawk.services.comparison_service import ComparisonService
+            from ash_hawk.storage import FileStorage
+
+            storage_path = Path(".ash-hawk")
+            storage = FileStorage(str(storage_path))
+
+            baseline_artifact = storage.load_run_artifact(request.baseline_run_id)
+            if not baseline_artifact:
+                logger.warning(f"Baseline run {request.baseline_run_id} not found")
+                return
+
+            lesson_ids = [lesson.lesson_id for lesson in lessons]
+            comparison = ComparisonService().compare(
+                baseline=baseline_artifact,
+                treatment=artifact,
+                lessons_applied=lesson_ids,
+            )
+
+            self._comparison_result = comparison.model_dump()
+            if self._context:
+                self._context.outputs["comparison"] = self._comparison_result
+
+            curator_step = self._steps.get(PipelineRole.CURATOR)
+            if curator_step:
+                curator_step.outputs["comparison"] = self._comparison_result
+
+            logger.info(f"Comparison complete: score_delta={comparison.metrics.score_delta:.3f}")
+        except Exception as e:
+            logger.error(f"Comparison step failed: {e}")
+
+    def _notify_hook(self, artifact: RunArtifact) -> None:
+        """Notify post-run hook if configured."""
+        if not self._hook:
+            return
+
+        try:
+            review_id = self._context.review_request_id if self._context else "unknown"
+            self._hook.on_review_complete(artifact, review_id)
+            logger.info(f"Hook notified for review {review_id}")
+        except Exception as e:
+            logger.warning(f"Hook notification failed (non-blocking): {e}")
+
+    def run_with_experiment(
+        self,
+        request: ReviewRequest,
+        artifact: RunArtifact,
+        experiment_config: dict[str, Any],
+    ) -> list[CuratedLesson]:
+        """Run pipeline with experiment tracking.
+
+        Creates experiment in registry, runs pipeline, stores lessons
+        in experiment-scoped storage, and updates experiment status.
+        """
+        from ash_hawk.curation.experiment_store import ExperimentStore
+        from ash_hawk.experiments.registry import ExperimentRegistry
+
+        registry = ExperimentRegistry()
+        experiment = registry.get_or_create(request.experiment_id or "default", experiment_config)
+
+        registry.increment_trial_count(experiment.experiment_id)
+
+        lessons = self.run(request, artifact)
+
+        if lessons:
+            exp_store = ExperimentStore()
+            for lesson in lessons:
+                exp_store.store(lesson, experiment.experiment_id)
+
+            registry.increment_lesson_count(experiment.experiment_id, len(lessons))
+
+        registry.update_status(experiment.experiment_id, "completed")
 
         return lessons
 
@@ -88,9 +174,11 @@ class PipelineOrchestrator:
                 step.completed_at = datetime.now(UTC)
                 return
 
+            experiment_id = self._context.experiment_id if self._context else None
             lesson_service = LessonService()
             available_lessons = lesson_service.get_lessons_for_agent(
-                getattr(artifact, "agent_name", "unknown")
+                getattr(artifact, "agent_name", "unknown"),
+                experiment_id=experiment_id,
             )
 
             competitor = CompetitorRole()
@@ -114,6 +202,7 @@ class PipelineOrchestrator:
                 if available_lessons
                 else [],
                 "findings_count": len(output.findings),
+                "experiment_id": experiment_id,
             }
 
             if self._context:

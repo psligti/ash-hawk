@@ -68,6 +68,16 @@ class PostRunReviewHook(ABC):
         """
         ...
 
+    @abstractmethod
+    def on_review_complete(self, run_artifact: RunArtifact, review_id: str) -> None:
+        """Called when review completes.
+
+        Args:
+            run_artifact: The run artifact that was reviewed.
+            review_id: ID of the completed review.
+        """
+        ...
+
 
 class DefaultPostRunReviewHook(PostRunReviewHook):
     """Default implementation of post-run review hook.
