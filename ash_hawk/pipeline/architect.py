@@ -1,52 +1,70 @@
-"""Architect role for harness, tool, and extension suggestions."""
-
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
+
+import pydantic as pd
 
 from ash_hawk.contracts import ImprovementProposal
-from ash_hawk.pipeline.types import PipelineContext
+from ash_hawk.strategies.registry import Strategy, SubStrategy
+from ash_hawk.types import EvalTranscript, EvalTrial
 
 
-class ArchitectRole:
-    def generate_proposals(
-        self, context: PipelineContext, findings: list[str]
+class Architect(pd.BaseModel):
+    """Architect for generating improvement proposals from trial analysis."""
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+    async def generate_proposals(
+        self,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
     ) -> list[ImprovementProposal]:
+        """Generate improvement proposals from trial analysis."""
+        findings = self._analyze_transcript(transcript)
+        
         proposals = []
-
         for finding in findings:
-            if "tool" in finding.lower():
-                proposals.append(
-                    ImprovementProposal(
-                        proposal_id=f"prop-{uuid4().hex[:8]}",
-                        origin_run_id=context.run_artifact_id,
-                        origin_review_id=context.review_request_id,
-                        target_agent=context.target_agent,
-                        proposal_type="tool",
-                        title="Improve tool usage",
-                        rationale=f"Based on finding: {finding}",
-                        expected_benefit="Better tool efficiency",
-                        risk_level="medium",
-                        created_at=datetime.now(UTC),
-                    )
-                )
-
-            if "redundant" in finding.lower():
-                proposals.append(
-                    ImprovementProposal(
-                        proposal_id=f"prop-{uuid4().hex[:8]}",
-                        origin_run_id=context.run_artifact_id,
-                        origin_review_id=context.review_request_id,
-                        target_agent=context.target_agent,
-                        proposal_type="harness",
-                        title="Reduce redundant operations",
-                        rationale=f"Based on finding: {finding}",
-                        expected_benefit="Improved efficiency",
-                        risk_level="medium",
-                        created_at=datetime.now(UTC),
-                    )
-                )
-
+            strategy, sub_strategies = self._infer_strategy_from_finding(finding)
+            
+            proposal = ImprovementProposal(
+                id=f"architect-{trial.id}-{len(proposals)}",
+                trial_id=trial.id,
+                finding=finding,
+                strategy=strategy,
+                sub_strategies=sub_strategies,
+                confidence=0.8,  # Default confidence
+                source="architect",
+            )
+            proposals.append(proposal)
+        
         return proposals
+
+    def _analyze_transcript(self, transcript: EvalTranscript) -> list[str]:
+        """Extract findings from transcript."""
+        findings = []
+        
+        # Simple pattern matching for demo - in real impl would use LLM
+        text = " ".join([msg.content for msg in transcript.messages])
+        
+        if "tool" in text.lower() or "efficiency" in text.lower():
+            findings.append("Agent used inefficient tools or tool selection")
+        if "harness" in text.lower() or "grader" in text.lower():
+            findings.append("Harness or grader calibration issues detected")
+        if "redundant" in text.lower():
+            findings.append("Agent performed redundant actions")
+        
+        return findings
+
+    def _infer_strategy_from_finding(self, finding: str) -> tuple[Strategy, list[SubStrategy]]:
+        """Infer strategy and sub-strategies from finding."""
+        finding_lower = finding.lower()
+        
+        if "tool" in finding_lower or "efficiency" in finding_lower:
+            return Strategy.TOOL_QUALITY, [SubStrategy.TOOL_EFFICIENCY]
+        elif "harness" in finding_lower or "grader" in finding_lower:
+            return Strategy.HARNESS_QUALITY, [SubStrategy.GRADER_CALIBRATION]
+        elif "redundant" in finding_lower:
+            return Strategy.TOOL_QUALITY, [SubStrategy.TOOL_SELECTION]
+        else:
+            # Default fallback
+            return Strategy.TOOL_QUALITY, [SubStrategy.TOOL_EFFICIENCY]
