@@ -29,7 +29,7 @@ class TestPipelineOrchestratorRun:
         orchestrator.run(review_request, mock_run_artifact)
 
         steps = orchestrator.get_all_steps()
-        assert len(steps) == 5
+        assert len(steps) == 6
         for role in PipelineRole:
             assert role in steps
 

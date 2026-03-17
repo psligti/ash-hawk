@@ -20,13 +20,15 @@ class PipelineRole(StrEnum):
 
     Roles run in sequence to transform run artifacts into curated lessons:
     1. COMPETITOR: Re-attempts or replays the run (optional)
-    2. ANALYST: Analyzes failures, generates findings
-    3. COACH: Generates policy/playbook proposals
-    4. ARCHITECT: Generates harness/tool proposals
-    5. CURATOR: Approves/rejects proposals into lessons
+    2. TRANSLATOR: Converts raw competitor output into validated strategy
+    3. ANALYST: Analyzes failures, generates findings
+    4. COACH: Generates policy/playbook proposals
+    5. ARCHITECT: Generates harness/tool proposals
+    6. CURATOR: Approves/rejects proposals into lessons
     """
 
     COMPETITOR = "competitor"
+    TRANSLATOR = "translator"
     ANALYST = "analyst"
     COACH = "coach"
     ARCHITECT = "architect"

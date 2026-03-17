@@ -25,13 +25,14 @@ class PipelineOrchestrator:
 
     Roles run in sequence:
     1. COMPETITOR: Re-attempts or replays (optional)
-    2. ANALYST: Analyzes failures, generates findings
-    3. COACH: Generates policy/playbook proposals
-    4. ARCHITECT: Generates harness/tool proposals
-    5. CURATOR: Approves/rejects proposals into lessons
+    2. TRANSLATOR: Converts raw competitor output into validated strategy
+    3. ANALYST: Analyzes failures, generates findings
+    4. COACH: Generates policy/playbook proposals
+    5. ARCHITECT: Generates harness/tool proposals
+    6. CURATOR: Approves/rejects proposals into lessons
     """
 
-    def __init__(self, hook: "PostRunReviewHook | None" = None) -> None:
+    def __init__(self, hook: PostRunReviewHook | None = None) -> None:
         self._hook = hook
         self._context: PipelineContext | None = None
         self._steps: dict[PipelineRole, PipelineStepResult] = {}
@@ -53,6 +54,7 @@ class PipelineOrchestrator:
         self._initialize_steps()
 
         self._run_competitor_role(artifact)
+        self._run_translator_role()
         self._run_analyst_role(artifact)
         self._run_coach_role()
         self._run_architect_role()
@@ -69,30 +71,40 @@ class PipelineOrchestrator:
         artifact: RunArtifact,
         lessons: list[CuratedLesson],
     ) -> None:
-        """Run before/after comparison if baseline is provided."""
         if not request.baseline_run_id:
             return
 
         try:
+            import asyncio
+
             from ash_hawk.services.comparison_service import ComparisonService
             from ash_hawk.storage import FileStorage
 
             storage_path = Path(".ash-hawk")
             storage = FileStorage(str(storage_path))
 
-            baseline_artifact = storage.load_run_artifact(request.baseline_run_id)
-            if not baseline_artifact:
-                logger.warning(f"Baseline run {request.baseline_run_id} not found")
+            async def _load_and_compare() -> dict[str, Any] | None:
+                baseline_id = request.baseline_run_id
+                if baseline_id is None:
+                    return None
+                baseline_artifact = await storage.load_run_artifact(baseline_id)
+                if not baseline_artifact:
+                    logger.warning(f"Baseline run {request.baseline_run_id} not found")
+                    return None
+
+                lesson_ids = [lesson.lesson_id for lesson in lessons]
+                comparison = ComparisonService().compare(
+                    baseline=baseline_artifact,
+                    treatment=artifact,
+                    lessons_applied=lesson_ids,
+                )
+                return comparison.model_dump()
+
+            comparison_result = asyncio.run(_load_and_compare())
+            if comparison_result is None:
                 return
 
-            lesson_ids = [lesson.lesson_id for lesson in lessons]
-            comparison = ComparisonService().compare(
-                baseline=baseline_artifact,
-                treatment=artifact,
-                lessons_applied=lesson_ids,
-            )
-
-            self._comparison_result = comparison.model_dump()
+            self._comparison_result = comparison_result
             if self._context:
                 self._context.outputs["comparison"] = self._comparison_result
 
@@ -100,7 +112,8 @@ class PipelineOrchestrator:
             if curator_step:
                 curator_step.outputs["comparison"] = self._comparison_result
 
-            logger.info(f"Comparison complete: score_delta={comparison.metrics.score_delta:.3f}")
+            score_delta = comparison_result.get("metrics", {}).get("score_delta", 0)
+            logger.info(f"Comparison complete: score_delta={score_delta:.3f}")
         except Exception as e:
             logger.error(f"Comparison step failed: {e}")
 
@@ -211,6 +224,72 @@ class PipelineOrchestrator:
                     self._context.outputs["replay_artifact"] = output.replay_artifact.model_dump()
                 if output.comparison:
                     self._context.outputs["comparison"] = output.comparison.model_dump()
+
+            step.status = "completed"
+            step.completed_at = datetime.now(UTC)
+        except Exception as e:
+            step.status = "completed"
+            step.error = str(e)
+            step.outputs = {"error": str(e), "skipped": True}
+
+    def _run_translator_role(self) -> None:
+        from ash_hawk.pipeline.translator import TranslatorInput, TranslatorRole
+
+        step = self._steps[PipelineRole.TRANSLATOR]
+        step.status = "running"
+        step.started_at = datetime.now(UTC)
+
+        try:
+            competitor_output: dict[str, Any] = {}
+            if self._context:
+                competitor_output = self._context.outputs.get("competitor", {}) or {}
+
+            competitor_findings: list[Any] = competitor_output.get("findings", []) or []
+
+            if not competitor_findings and not competitor_output:
+                step.status = "completed"
+                step.outputs = {"reason": "No competitor output to translate"}
+                step.completed_at = datetime.now(UTC)
+                return
+
+            translator = TranslatorRole()
+
+            from ash_hawk.pipeline.competitor import CompetitorOutput
+
+            competitor_obj = None
+            if self._context and "competitor_artifact" in self._context.outputs:
+                improvement_val = competitor_output.get("improvement_achieved", False)
+                competitor_obj = CompetitorOutput(
+                    replay_artifact=None,
+                    comparison=None,
+                    findings=[],
+                    improvement_achieved=bool(improvement_val)
+                    if improvement_val is not None
+                    else False,
+                )
+
+            input_data = TranslatorInput(
+                competitor_output=competitor_obj,
+                additional_context=dict(competitor_output),
+                target_agent=self._context.target_agent if self._context else "",
+            )
+
+            output = translator.translate(input_data)
+
+            step.outputs = {
+                "translator_id": output.translator_id,
+                "structured_findings_count": len(output.structured_findings),
+                "strategy_summary": {s.value: c for s, c in output.strategy_summary.items()},
+                "dominant_strategy": output.dominant_strategy.value
+                if output.dominant_strategy
+                else None,
+                "improvement_achieved": output.improvement_achieved,
+                "score_delta": output.score_delta,
+                "lessons_applicable": output.lessons_applicable,
+            }
+
+            if self._context:
+                self._context.outputs["translator"] = output.model_dump()
 
             step.status = "completed"
             step.completed_at = datetime.now(UTC)
