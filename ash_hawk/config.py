@@ -43,6 +43,27 @@ class EvalConfig(pydantic_settings.BaseSettings):
         description="Default timeout for evaluation runs in seconds",
     )
 
+    # Queue-based throttling configuration
+    llm_max_workers: int = Field(
+        default=4,
+        ge=1,
+        le=64,
+        description="Maximum concurrent LLM requests across all trials",
+    )
+
+    llm_timeout_seconds: float = Field(
+        default=300.0,
+        ge=1.0,
+        description="Timeout for queued LLM requests in seconds",
+    )
+
+    trial_max_workers: int = Field(
+        default=4,
+        ge=1,
+        le=256,
+        description="Maximum concurrent trials via execution queue (replaces semaphore)",
+    )
+
     storage_backend: StorageBackend = Field(
         default="file",
         description="Storage backend: file, sqlite, postgres, or s3",

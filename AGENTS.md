@@ -277,10 +277,72 @@ note_lark_notes_create(payload={
 
 ```bash
 ASH_HAWK_PARALLELISM=4
+ASH_HAWK_LLM_MAX_WORKERS=4
+ASH_HAWK_LLM_TIMEOUT_SECONDS=300
+ASH_HAWK_TRIAL_MAX_WORKERS=4
 ASH_HAWK_DEFAULT_TIMEOUT_SECONDS=300
 ASH_HAWK_STORAGE_BACKEND=file
-ASH_HAWK_STORAGE_PATH=.ash-hawk-results
+ASH_HAWK_STORAGE_PATH=.ash-hawk
 ASH_HAWK_LOG_LEVEL=INFO
+```
+
+---
+
+## Request Queue Integration
+
+Ash Hawk uses a two-level request queue from throttling from Dawn Kestrel to avoid agent timeouts.
+
+### Queue Architecture
+
+1. **LLM Request Queue** (`LLMRequestQueue`): Throttles concurrent LLM API calls across all trials
+   - Uses semaphore-based concurrency control
+   - Tracks wait times and token usage
+   - Configured via `ASH_HAWK_LLM_MAX_WORKERS` (default: 4)
+
+2. **Trial Execution Queue** (`TrialExecutionQueue`): Throttles concurrent trial execution
+   - Uses Dawn Kestrel's `InMemoryAgentExecutionQueue` internally
+   - Configured via `ASH_HAWK_TRIAL_MAX_WORKERS` (default: 4)
+
+### Configuration
+
+```bash
+ASH_HAWK_LLM_MAX_WORKERS=4        # Max concurrent LLM requests
+ASH_HAWK_LLM_TIMEOUT_SECONDS=300  # LLM request timeout in seconds
+ASH_HAWK_TRIAL_MAX_WORKERS=4       # Max concurrent trials
+```
+
+### Usage
+
+```python
+from ash_hawk.execution import EvalRunner, TrialExecutor, LLMRequestQueue
+
+async def run_with_throttling():
+    config = get_config()
+    storage = FileStorage(base_path="./results")
+    policy = ToolSurfacePolicy()
+    
+    trial_executor = TrialExecutor(storage, policy, agent_runner)
+    runner = EvalRunner(config, storage, trial_executor)
+    
+    summary = await runner.run_suite(suite, agent_config, run_envelope)
+    
+    queue_stats = await runner.llm_queue.get_stats()
+    print(f"LLM queue: {queue_stats}")
+```
+
+### Key Integration Points
+
+- **DawnKestrelAgentRunner**: Automatically uses the global LLM queue when registered by EvalRunner
+- **EvalRunner**: Creates and registers both queues during initialization
+- **ResourceTracker**: Tracks queue wait times and peak depth
+
+### Monitoring
+
+```python
+queue_stats = await runner.llm_queue.get_stats()
+print(f"Total requests: {queue_stats['total_requests']}")
+print(f"Avg wait time: {queue_stats['total_wait_time'] / max(1, queue_stats['total_requests']):.2f}s")
+print(f"Active requests: {queue_stats['active_requests']}")
 ```
 
 ---

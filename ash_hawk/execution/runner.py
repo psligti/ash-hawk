@@ -14,6 +14,12 @@ from typing import TYPE_CHECKING, Any
 
 from ash_hawk.config import EvalConfig
 from ash_hawk.events import AHEvents, get_bus
+from ash_hawk.execution.queue import (
+    LLMRequestQueue,
+    TrialExecutionQueue,
+    TrialJob,
+    register_llm_queue,
+)
 from ash_hawk.execution.trial import TrialExecutor
 from ash_hawk.types import (
     EvalOutcome,
@@ -21,6 +27,7 @@ from ash_hawk.types import (
     EvalStatus,
     EvalSuite,
     EvalTask,
+    EvalTranscript,
     EvalTrial,
     FailureMode,
     RunEnvelope,
@@ -42,12 +49,15 @@ class ResourceTracker:
         self.total_tokens = TokenUsage()
         self.total_cost_usd = 0.0
         self.total_duration_seconds = 0.0
+        self.total_queue_wait_seconds = 0.0
+        self.peak_queue_depth = 0
 
     async def add_trial_usage(
         self,
         tokens: TokenUsage,
         cost_usd: float,
         duration_seconds: float,
+        queue_wait_seconds: float = 0.0,
     ) -> None:
         """Add trial resource usage to totals."""
         async with self._lock:
@@ -60,6 +70,13 @@ class ResourceTracker:
             )
             self.total_cost_usd += cost_usd
             self.total_duration_seconds += duration_seconds
+            self.total_queue_wait_seconds += queue_wait_seconds
+
+    async def update_queue_depth(self, depth: int) -> None:
+        """Update peak queue depth if new depth is higher."""
+        async with self._lock:
+            if depth > self.peak_queue_depth:
+                self.peak_queue_depth = depth
 
 
 class EvalRunner:
@@ -106,10 +123,24 @@ class EvalRunner:
         self._storage = storage
         self._trial_executor = trial_executor
         self._semaphore = asyncio.Semaphore(config.parallelism)
+        self._llm_queue = LLMRequestQueue(
+            max_workers=config.llm_max_workers,
+            timeout_seconds=config.llm_timeout_seconds,
+        )
+        register_llm_queue(self._llm_queue)
+        self._trial_queue = TrialExecutionQueue(
+            max_workers=config.trial_max_workers,
+            timeout_seconds=config.default_timeout_seconds,
+        )
         self._cancelled = False
         self._resource_tracker = ResourceTracker()
         self._trials: list[EvalTrial] = []
         self._trial_durations: list[float] = []
+
+    @property
+    def llm_queue(self) -> LLMRequestQueue:
+        """Get the shared LLM request queue."""
+        return self._llm_queue
 
     @property
     def is_cancelled(self) -> bool:
@@ -128,7 +159,7 @@ class EvalRunner:
     ) -> EvalRunSummary:
         """Execute all tasks in an evaluation suite.
 
-        Runs tasks in parallel with semaphore-controlled concurrency,
+        Runs tasks in parallel with queue-based throttling,
         tracks resource usage, handles cancellation, and aggregates
         results into a suite-level summary.
 
@@ -157,19 +188,32 @@ class EvalRunner:
         start_time = time.time()
 
         try:
-            tasks = [
-                self._run_with_semaphore(
-                    task=task,
-                    agent_config=agent_config,
-                    run_envelope=run_envelope,
+            jobs = [
+                TrialJob(
+                    job_id=f"job_{task.id}_{uuid.uuid4().hex[:8]}",
+                    task_id=task.id,
+                    task_input=task.input,
                 )
                 for task in suite.tasks
             ]
 
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            async def execute_trial(job: TrialJob) -> tuple[EvalTranscript, EvalOutcome]:
+                task = next((t for t in suite.tasks if t.id == job.task_id), None)
+                if task is None:
+                    raise ValueError(f"Task not found: {job.task_id}")
+
+                result = await self._trial_executor.execute(
+                    task=task,
+                    agent_config=agent_config,
+                    run_envelope=run_envelope,
+                )
+                return result.transcript, result.outcome
+
+            results = await self._trial_queue.run_trials(jobs, execute_trial)
 
             for i, result in enumerate(results):
                 task = suite.tasks[i]
+
                 if isinstance(result, Exception):
                     trial = self._create_failed_trial(
                         task=task,
@@ -177,8 +221,30 @@ class EvalRunner:
                         error=str(result),
                     )
                     self._trials.append(trial)
-                elif isinstance(result, EvalTrial):
-                    self._trials.append(result)
+                else:
+                    await self._resource_tracker.add_trial_usage(
+                        tokens=result.transcript.token_usage,
+                        cost_usd=result.transcript.cost_usd,
+                        duration_seconds=result.transcript.duration_seconds,
+                        queue_wait_seconds=result.wait_time_seconds,
+                    )
+                    self._trial_durations.append(result.wait_time_seconds)
+
+                    trial_id = str(agent_config.get("trial_id") or f"trial-{uuid.uuid4().hex[:8]}")
+                    trial = EvalTrial(
+                        id=trial_id,
+                        task_id=task.id,
+                        status=self._outcome_to_status(result.outcome),
+                        attempt_number=1,
+                        input_snapshot=task.input,
+                        result=TrialResult(
+                            trial_id=trial_id,
+                            transcript=result.transcript,
+                            outcome=result.outcome,
+                        ),
+                        envelope=await self._get_trial_envelope(run_envelope, trial_id),
+                    )
+                    self._trials.append(trial)
 
         except asyncio.CancelledError:
             self._cancelled = True

@@ -18,6 +18,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
 
+from ash_hawk.execution.queue import LLMRequest, get_llm_queue_sync
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.types import (
     EvalOutcome,
@@ -269,6 +270,7 @@ class DawnKestrelAgentRunner:
         self._kwargs = kwargs
         self._client: Any | None = None
         self._lesson_injector: Any | None = None
+        self._llm_queue: Any | None = None
 
     def set_lesson_injector(self, injector: Any) -> None:
         """Set the lesson injector for augmenting prompts with learned lessons."""
@@ -756,12 +758,32 @@ class DawnKestrelAgentRunner:
             max_iterations = int(config.get("max_tool_iterations", 3) or 3)
             response = None
 
-            for _ in range(max_iterations):
-                response = await client.complete(
-                    messages=conversation,
-                    tools=tool_definitions if tool_definitions else None,
-                    options=options,
-                )
+            for iteration in range(max_iterations):
+                llm_queue = get_llm_queue_sync()
+                if llm_queue is not None:
+                    request_id = f"{trial_id}_llm_{iteration}"
+                    request = LLMRequest(
+                        request_id=request_id,
+                        messages=conversation,
+                        tools=tool_definitions if tool_definitions else None,
+                        options=options,
+                    )
+
+                    async def execute_llm(req: LLMRequest) -> Any:
+                        return await client.complete(
+                            messages=req.messages,
+                            tools=req.tools,
+                            options=req.options,
+                        )
+
+                    llm_response = await llm_queue.execute(request, execute_llm)
+                    response = llm_response.response
+                else:
+                    response = await client.complete(
+                        messages=conversation,
+                        tools=tool_definitions if tool_definitions else None,
+                        options=options,
+                    )
 
                 model_text = self._extract_agent_response(response)
                 if isinstance(model_text, str) and model_text.strip():
