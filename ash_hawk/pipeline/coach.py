@@ -1,70 +1,77 @@
 from __future__ import annotations
 
-from typing import Any
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Literal
+from uuid import uuid4
 
 import pydantic as pd
 
 from ash_hawk.contracts import ImprovementProposal
 from ash_hawk.strategies.registry import Strategy, SubStrategy
-from ash_hawk.types import EvalTranscript, EvalTrial
+
+if TYPE_CHECKING:
+    from ash_hawk.pipeline.types import PipelineContext
 
 
-class Coach(pd.BaseModel):
-    """Coach for generating improvement proposals from trial transcripts."""
+class CoachRole(pd.BaseModel):
+    """Coach role for generating improvement proposals from failure patterns."""
 
-    model_config = pd.ConfigDict(extra="forbid")
-
-    async def generate_proposals(
+    def generate_proposals(
         self,
-        trial: EvalTrial,
-        transcript: EvalTranscript,
+        context: PipelineContext,
+        failure_patterns: list[str],
     ) -> list[ImprovementProposal]:
-        """Generate improvement proposals from trial analysis."""
-        findings = self._analyze_transcript(transcript)
-        
-        proposals = []
-        for finding in findings:
-            strategy, sub_strategies = self._infer_strategy_from_finding(finding)
+        """Generate improvement proposals from failure patterns."""
+        proposals: list[ImprovementProposal] = []
+        for pattern in failure_patterns:
+            strategy, sub_strategies = self._infer_strategy_from_pattern(pattern)
+            proposal_type = self._strategy_to_proposal_type(strategy)
             
             proposal = ImprovementProposal(
-                id=f"coach-{trial.id}-{len(proposals)}",
-                trial_id=trial.id,
-                finding=finding,
+                proposal_id=f"coach-{context.run_artifact_id}-{len(proposals)}",
+                origin_run_id=context.run_artifact_id,
+                target_agent=context.target_agent,
+                proposal_type=proposal_type,
+                title=f"Coach proposal: {pattern[:50]}...",
+                rationale=pattern,
+                expected_benefit="Improve agent performance",
+                risk_level="medium",
+                status="pending",
+                created_at=datetime.now(UTC),
                 strategy=strategy,
                 sub_strategies=sub_strategies,
-                confidence=0.8,  # Default confidence
-                source="coach",
+                confidence=1.0,
             )
             proposals.append(proposal)
         
         return proposals
 
-    def _analyze_transcript(self, transcript: EvalTranscript) -> list[str]:
-        """Extract findings from transcript."""
-        findings = []
-        
-        # Simple pattern matching for demo - in real impl would use LLM
-        text = " ".join([msg.content for msg in transcript.messages])
-        
-        if "timeout" in text.lower() or "error" in text.lower():
-            findings.append("Agent encountered timeout or error during execution")
-        if "policy" in text.lower() or "rule" in text.lower():
-            findings.append("Agent violated policy or rule constraints")
-        if "instruction" in text.lower() or "clarity" in text.lower():
-            findings.append("Agent misunderstood instructions or lacked clarity")
-        
-        return findings
+    def _strategy_to_proposal_type(self, strategy: Strategy) -> Literal["policy", "skill", "tool", "harness", "eval"]:
+        """Map strategy to proposal type."""
+        if strategy == Strategy.TOOL_QUALITY:
+            return "tool"
+        elif strategy == Strategy.SKILL_QUALITY:
+            return "skill"
+        elif strategy == Strategy.POLICY_QUALITY:
+            return "policy"
+        elif strategy == Strategy.HARNESS_QUALITY:
+            return "harness"
+        else:
+            return "tool"
 
-    def _infer_strategy_from_finding(self, finding: str) -> tuple[Strategy, list[SubStrategy]]:
-        """Infer strategy and sub-strategies from finding."""
-        finding_lower = finding.lower()
+    def _infer_strategy_from_pattern(self, pattern: str) -> tuple[Strategy, list[SubStrategy]]:
+        """Infer strategy and sub-strategies from failure pattern."""
+        pattern_lower = pattern.lower()
         
-        if "timeout" in finding_lower or "error" in finding_lower:
+        if "timeout" in pattern_lower or "error" in pattern_lower:
             return Strategy.TOOL_QUALITY, [SubStrategy.ERROR_RECOVERY]
-        elif "policy" in finding_lower or "rule" in finding_lower:
+        elif "policy" in pattern_lower or "rule" in pattern_lower:
             return Strategy.POLICY_QUALITY, [SubStrategy.ENGAGEMENT_POLICY]
-        elif "instruction" in finding_lower or "clarity" in finding_lower:
+        elif "instruction" in pattern_lower or "clarity" in pattern_lower:
             return Strategy.SKILL_QUALITY, [SubStrategy.INSTRUCTION_CLARITY]
         else:
             # Default fallback
             return Strategy.TOOL_QUALITY, [SubStrategy.ERROR_RECOVERY]
+
+
+__all__ = ["CoachRole"]

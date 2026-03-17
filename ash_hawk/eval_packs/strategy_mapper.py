@@ -22,13 +22,17 @@ class StrategyMapper(pd.BaseModel):
         # Map lesson types to eval pack names
         # This would be expanded based on actual eval packs
         pack_mapping = {
-            "tool_quality": ["tool_selection", "tool_efficiency"],
-            "skill_quality": ["instruction_following", "reasoning"],
-            "policy_quality": ["safety", "alignment"],
-            "harness_quality": ["grader_calibration", "fixture_quality"],
+            "tool": ["tool_selection", "tool_efficiency"],
+            "skill": ["instruction_following", "reasoning"],
+            "policy": ["safety", "alignment"],
+            "harness": ["grader_calibration", "fixture_quality"],
+            "eval": ["rubric_precision", "test_coverage"],
         }
         
-        return pack_mapping.get(lesson_type, [])
+        packs = []
+        for lesson in lesson_type or []:
+            packs.extend(pack_mapping.get(lesson, []))
+        return packs
 
     def get_grader_specs(
         self, 
@@ -40,8 +44,7 @@ class StrategyMapper(pd.BaseModel):
         
         # Base spec for strategy
         base_spec = GraderSpec(
-            name=f"{strategy.value}_grader",
-            type="deterministic",  # or "llm_judge"
+            grader_type=f"{strategy.value}_grader",  # or "llm_judge"
             config={"strategy": strategy.value},
         )
         specs.append(base_spec)
@@ -49,8 +52,7 @@ class StrategyMapper(pd.BaseModel):
         # Additional specs for sub-strategies
         for sub_strategy in sub_strategies:
             spec = GraderSpec(
-                name=f"{sub_strategy.value}_grader",
-                type="deterministic",
+                grader_type=f"{sub_strategy.value}_grader",
                 config={"sub_strategy": sub_strategy.value},
             )
             specs.append(spec)
@@ -60,7 +62,7 @@ class StrategyMapper(pd.BaseModel):
     def infer_strategy_from_findings(self, findings: list[str]) -> Strategy:
         """Infer primary strategy from list of findings."""
         # Simple heuristic - count strategy mentions
-        strategy_counts = {}
+        strategy_counts: dict[Strategy, int] = {}
         
         for finding in findings:
             finding_lower = finding.lower()
@@ -78,4 +80,7 @@ class StrategyMapper(pd.BaseModel):
         if not strategy_counts:
             return Strategy.TOOL_QUALITY
         
-        return max(strategy_counts, key=strategy_counts.get)
+        return max(strategy_counts, key=lambda k: strategy_counts[k])
+
+
+__all__ = ["StrategyMapper"]

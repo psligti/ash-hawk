@@ -38,4 +38,4 @@ class ExperimentConfig(pd.BaseModel):
         data["sub_strategies"] = [s.value for s in self.sub_strategies]
         data["created_at"] = self.created_at.isoformat()
         
-        return yaml.dump(data, default_flow_style=False)
+        return str(yaml.dump(data, default_flow_style=False))
