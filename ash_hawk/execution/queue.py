@@ -1,12 +1,11 @@
 """Queue-based throttling for LLM requests and trial execution.
 
-This module provides wrappers around Dawn Kestrel's execution queue
+This module provides thin wrappers around Dawn Kestrel's InMemoryAgentExecutionQueue
 to throttle both LLM API calls and trial execution.
 """
 
 from __future__ import annotations
 
-import asyncio
 import importlib
 import time
 from collections.abc import Awaitable, Callable
@@ -62,10 +61,9 @@ class TrialJobResult:
 
 
 class LLMRequestQueue:
-    """Persistent queue for throttling LLM API requests across all trials.
+    """Queue for throttling LLM API requests using Dawn Kestrel's execution queue.
 
-    Maintains a persistent worker pool to control concurrent LLM API calls.
-    Thread-safe for use across multiple concurrent trials.
+    Uses InMemoryAgentExecutionQueue directly for consistent throttling behavior.
 
     Example:
         queue = LLMRequestQueue(max_workers=4, timeout_seconds=300)
@@ -76,16 +74,23 @@ class LLMRequestQueue:
         self,
         max_workers: int = 4,
         timeout_seconds: float = 300.0,
+        poll_interval: float = 0.05,
     ) -> None:
         self.max_workers = max_workers
         self.timeout_seconds = timeout_seconds
-        self._semaphore = asyncio.Semaphore(max_workers)
-        self._lock = asyncio.Lock()
+        self.poll_interval = poll_interval
         self._stats = {
             "total_requests": 0,
             "total_wait_time": 0.0,
-            "active_requests": 0,
         }
+
+    def _get_queue_type(self) -> Any:
+        execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
+        return getattr(execution_queue_module, "InMemoryAgentExecutionQueue")
+
+    def _get_job_type(self) -> Any:
+        execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
+        return getattr(execution_queue_module, "AgentExecutionJob")
 
     async def execute(
         self,
@@ -102,46 +107,57 @@ class LLMRequestQueue:
             LLMResponse with the result and timing info.
 
         Raises:
-            asyncio.TimeoutError: If request times out.
             Exception: Re-raised from execute function.
         """
-        wait_start = time.time()
+        queue_type = self._get_queue_type()
+        job_type = self._get_job_type()
 
-        async with self._semaphore:
-            wait_time = time.time() - wait_start
+        queue = queue_type(
+            max_workers=self.max_workers,
+            poll_interval=self.poll_interval,
+            timeout_seconds=self.timeout_seconds,
+        )
 
-            async with self._lock:
-                self._stats["total_requests"] += 1
-                self._stats["total_wait_time"] += wait_time
-                self._stats["active_requests"] += 1
+        queue_job = job_type(index=0, task_id=request.request_id)
+        start_time = time.time()
+        response: Any = None
+        error: Exception | None = None
 
+        async def execute_job(_: Any) -> str:
+            nonlocal response, error
             try:
-                if self.timeout_seconds > 0:
-                    response = await asyncio.wait_for(
-                        execute(request),
-                        timeout=self.timeout_seconds,
-                    )
-                else:
-                    response = await execute(request)
+                response = await execute(request)
+                return request.request_id
+            except Exception as e:
+                error = e
+                raise
 
-                token_usage = self._extract_token_usage(response)
-                cost_usd = self._extract_cost(response)
+        batch_result = await queue.run_jobs([queue_job], execute_job)
 
-                return LLMResponse(
-                    request_id=request.request_id,
-                    response=response,
-                    wait_time_seconds=wait_time,
-                    token_usage=token_usage,
-                    cost_usd=cost_usd,
-                )
-            finally:
-                async with self._lock:
-                    self._stats["active_requests"] -= 1
+        wait_time = time.time() - start_time
+        self._stats["total_requests"] += 1
+        self._stats["total_wait_time"] += wait_time
+
+        if 0 in batch_result.errors_by_index:
+            raise Exception(batch_result.errors_by_index[0])
+
+        if error:
+            raise error
+
+        token_usage = self._extract_token_usage(response)
+        cost_usd = self._extract_cost(response)
+
+        return LLMResponse(
+            request_id=request.request_id,
+            response=response,
+            wait_time_seconds=wait_time,
+            token_usage=token_usage,
+            cost_usd=cost_usd,
+        )
 
     async def get_stats(self) -> dict[str, Any]:
         """Get queue statistics."""
-        async with self._lock:
-            return self._stats.copy()
+        return self._stats.copy()
 
     def _extract_token_usage(self, response: Any) -> TokenUsage:
         usage = TokenUsage()
@@ -166,7 +182,7 @@ class LLMRequestQueue:
 class TrialExecutionQueue:
     """Queue for throttling trial executions.
 
-    Uses Dawn Kestrel's InMemoryAgentExecutionQueue to control
+    Uses Dawn Kestrel's InMemoryAgentExecutionQueue directly to control
     how many trials run concurrently.
 
     Example:
@@ -258,7 +274,6 @@ class TrialExecutionQueue:
 
 
 _llm_queue: LLMRequestQueue | None = None
-_llm_queue_lock = asyncio.Lock()
 
 
 def register_llm_queue(queue: LLMRequestQueue) -> None:
@@ -267,19 +282,18 @@ def register_llm_queue(queue: LLMRequestQueue) -> None:
     _llm_queue = queue
 
 
-async def get_llm_queue(
+def get_llm_queue(
     max_workers: int = 4,
     timeout_seconds: float = 300.0,
 ) -> LLMRequestQueue:
     """Get or create the global LLM request queue singleton."""
     global _llm_queue
-    async with _llm_queue_lock:
-        if _llm_queue is None:
-            _llm_queue = LLMRequestQueue(
-                max_workers=max_workers,
-                timeout_seconds=timeout_seconds,
-            )
-        return _llm_queue
+    if _llm_queue is None:
+        _llm_queue = LLMRequestQueue(
+            max_workers=max_workers,
+            timeout_seconds=timeout_seconds,
+        )
+    return _llm_queue
 
 
 def get_llm_queue_sync() -> LLMRequestQueue | None:
@@ -287,11 +301,10 @@ def get_llm_queue_sync() -> LLMRequestQueue | None:
     return _llm_queue
 
 
-async def reset_llm_queue() -> None:
+def reset_llm_queue() -> None:
     """Reset the global LLM request queue (for testing)."""
     global _llm_queue
-    async with _llm_queue_lock:
-        _llm_queue = None
+    _llm_queue = None
 
 
 __all__ = [

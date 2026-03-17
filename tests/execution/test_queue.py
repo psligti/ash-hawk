@@ -18,7 +18,7 @@ from ash_hawk.execution.queue import (
     register_llm_queue,
     reset_llm_queue,
 )
-from ash_hawk.types import EvalOutcome, EvalTranscript, EvalStatus
+from ash_hawk.types import EvalOutcome, EvalStatus, EvalTranscript
 
 
 class TestLLMRequestQueue:
@@ -90,7 +90,7 @@ class TestLLMRequestQueue:
 
         stats = await queue.get_stats()
         assert stats["total_requests"] == 0
-        assert stats["active_requests"] == 0
+        assert stats["total_wait_time"] == 0.0
 
 
 class TestTrialExecutionQueue:
@@ -149,10 +149,9 @@ class TestTrialExecutionQueue:
 class TestGlobalQueue:
     """Tests for global queue management."""
 
-    @pytest.mark.asyncio
-    async def test_register_and_get_queue(self) -> None:
+    def test_register_and_get_queue(self) -> None:
         """Register and retrieve global queue."""
-        await reset_llm_queue()
+        reset_llm_queue()
 
         custom_queue = LLMRequestQueue(max_workers=16, timeout_seconds=120.0)
         register_llm_queue(custom_queue)
@@ -161,26 +160,24 @@ class TestGlobalQueue:
         assert retrieved is not None
         assert retrieved.max_workers == 16
 
-        await reset_llm_queue()
+        reset_llm_queue()
 
-    @pytest.mark.asyncio
-    async def test_get_llm_queue_creates_default(self) -> None:
+    def test_get_llm_queue_creates_default(self) -> None:
         """Get queue creates default if not registered."""
-        await reset_llm_queue()
+        reset_llm_queue()
 
-        queue = await get_llm_queue(max_workers=8, timeout_seconds=60.0)
+        queue = get_llm_queue(max_workers=8, timeout_seconds=60.0)
         assert queue.max_workers == 8
 
-        await reset_llm_queue()
+        reset_llm_queue()
 
-    @pytest.mark.asyncio
-    async def test_reset_llm_queue(self) -> None:
+    def test_reset_llm_queue(self) -> None:
         """Reset clears global queue."""
         custom_queue = LLMRequestQueue(max_workers=16, timeout_seconds=120.0)
         register_llm_queue(custom_queue)
 
         assert get_llm_queue_sync() is not None
 
-        await reset_llm_queue()
+        reset_llm_queue()
 
         assert get_llm_queue_sync() is None
