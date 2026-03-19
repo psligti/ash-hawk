@@ -257,13 +257,6 @@ class DawnKestrelAgentRunner:
     """
 
     def __init__(self, provider: str, model: str, **kwargs: Any) -> None:
-        """Initialize the dawn-kestrel agent runner.
-
-        Args:
-            provider: The LLM provider (e.g., 'anthropic', 'openai', 'zai').
-            model: The model identifier (e.g., 'claude-3-5-sonnet-20241022').
-            **kwargs: Additional configuration options passed to the client.
-        """
         self._provider = provider
         self._model = model
         self._mcp_servers = self._parse_mcp_servers(kwargs.pop("mcp_servers", None))
@@ -271,14 +264,19 @@ class DawnKestrelAgentRunner:
         self._client: Any | None = None
         self._lesson_injector: Any | None = None
         self._llm_queue: Any | None = None
+        self._post_run_hook: Any | None = None
 
     def set_lesson_injector(self, injector: Any) -> None:
-        """Set the lesson injector for augmenting prompts with learned lessons."""
         self._lesson_injector = injector
 
     def get_lesson_injector(self) -> Any | None:
-        """Get the current lesson injector."""
         return self._lesson_injector
+
+    def set_post_run_hook(self, hook: Any) -> None:
+        self._post_run_hook = hook
+
+    def get_post_run_hook(self) -> Any | None:
+        return self._post_run_hook
 
     def _parse_mcp_servers(self, raw_servers: Any) -> list[_McpServerConfig]:
         if raw_servers is None:
@@ -836,6 +834,16 @@ class DawnKestrelAgentRunner:
             )
 
             outcome = EvalOutcome.success()
+
+            if self._post_run_hook is not None:
+                try:
+                    suite_id = str(config.get("suite_id", ""))
+                    run_id = str(config.get("run_id", ""))
+                    self._post_run_hook.on_transcript_complete(
+                        transcript, run_id=run_id, suite_id=suite_id
+                    )
+                except Exception:
+                    pass
 
             return transcript, outcome
 

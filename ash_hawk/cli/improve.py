@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Literal, cast
 from uuid import uuid4
 
@@ -12,12 +13,12 @@ from rich.table import Table
 
 from ash_hawk.adapters.artifact_adapter import ArtifactAdapter
 from ash_hawk.contracts import (
-    CuratedLesson,
     ImprovementProposal,
     ReviewMetrics,
     ReviewRequest,
     ReviewResult,
 )
+from ash_hawk.cycle.types import IterationResult
 from ash_hawk.services.review_service import ReviewService
 from ash_hawk.storage import FileStorage
 
@@ -428,3 +429,211 @@ def _list_lessons(
         )
 
     console.print(table)
+
+
+@improve.command(name="cycle")
+@click.option(
+    "--agent",
+    "-a",
+    required=True,
+    help="Target agent to improve (e.g., bolt-merlin)",
+)
+@click.option(
+    "--iterations",
+    "-i",
+    default=100,
+    type=int,
+    help="Maximum number of iterations (default: 100)",
+)
+@click.option(
+    "--experiment",
+    "-e",
+    default=None,
+    help="Experiment ID for lesson isolation (auto-generated if not provided)",
+)
+@click.option(
+    "--convergence-threshold",
+    "-c",
+    default=0.01,
+    type=float,
+    help="Variance threshold for convergence detection",
+)
+@click.option(
+    "--stop-on-convergence/--run-all-iterations",
+    default=False,
+    help="Stop early on convergence (default runs full iteration count)",
+)
+@click.option(
+    "--promotion-threshold",
+    "-p",
+    default=3,
+    type=int,
+    help="Consecutive improvements needed to promote lessons",
+)
+@click.option(
+    "--eval-pack",
+    default=None,
+    help="Specific eval pack to use (default: auto-detect by agent)",
+)
+@click.option(
+    "--checkpoint-interval",
+    default=10,
+    type=int,
+    help="Save checkpoint every N iterations",
+)
+@click.option(
+    "--scenario-path",
+    multiple=True,
+    help="Scenario file path(s) to run for per-iteration scoring",
+)
+def run_cycle(
+    agent: str,
+    iterations: int,
+    experiment: str | None,
+    convergence_threshold: float,
+    stop_on_convergence: bool,
+    promotion_threshold: int,
+    eval_pack: str | None,
+    checkpoint_interval: int,
+    scenario_path: tuple[str, ...],
+) -> None:
+    """Run an N-iteration improvement cycle on a target agent.
+
+    Each iteration runs evaluation, generates lessons, and applies them
+    to subsequent iterations. The cycle stops when converged or max
+    iterations reached.
+
+    \b
+    Example:
+        ash-hawk improve cycle --agent bolt-merlin --iterations 100
+    """
+    from ash_hawk.cycle import CycleConfig, CycleRunner, create_cycle_id
+
+    cycle_id = create_cycle_id()
+    experiment_id = experiment or f"exp-{agent}-{cycle_id}"
+    scenario_paths = list(scenario_path) or _default_scenarios_for_agent(agent)
+
+    console.print(f"[cyan]Starting improvement cycle:[/cyan] {cycle_id}")
+    console.print(f"[cyan]Target agent:[/cyan] {agent}")
+    console.print(f"[cyan]Experiment ID:[/cyan] {experiment_id}")
+    console.print(f"[cyan]Max iterations:[/cyan] {iterations}")
+    console.print(
+        "[cyan]Convergence behavior:[/cyan]",
+        "stop early" if stop_on_convergence else "run full iterations",
+    )
+    if scenario_paths:
+        console.print(f"[cyan]Scenario paths:[/cyan] {', '.join(scenario_paths)}")
+
+    config = CycleConfig(
+        cycle_id=cycle_id,
+        experiment_id=experiment_id,
+        target_agent=agent,
+        max_iterations=iterations,
+        convergence_threshold=convergence_threshold,
+        stop_on_convergence=stop_on_convergence,
+        promotion_success_threshold=promotion_threshold,
+        eval_pack=eval_pack,
+        checkpoint_interval=checkpoint_interval,
+        scenario_paths=scenario_paths,
+    )
+
+    runner = CycleRunner(config)
+
+    async def _run() -> None:
+        result = await runner.run_cycle()
+
+        console.print()
+        console.print("[bold green]Cycle Complete:[/bold green]", result.status.value)
+        console.print("[bold]Total iterations:[/bold]", result.total_iterations)
+        console.print("[bold]Best score:[/bold]", f"{result.best_score:.3f}")
+        console.print("[bold]Final score:[/bold]", f"{result.final_score:.3f}")
+        console.print("[bold]Improvement:[/bold]", f"{result.improvement_delta:+.3f}")
+        console.print("[bold]Lessons generated:[/bold]", result.total_lessons_generated)
+        _display_generated_lessons(result.iterations)
+        console.print("[bold]Lessons promoted:[/bold]", len(result.lessons_promoted))
+        console.print("[bold]Convergence:[/bold]", result.convergence_status.value)
+
+        if result.iterations:
+            _display_iteration_summary(result.iterations, result.total_iterations)
+            _display_changes_under_test(result.iterations)
+
+    asyncio.run(_run())
+
+
+def _display_iteration_summary(
+    iterations: list[IterationResult],
+    total: int,
+) -> None:
+    table = Table(title=f"Iteration Summary (showing {len(iterations)}/{total})")
+    table.add_column("#", style="cyan", width=4)
+    table.add_column("Score", style="green")
+    table.add_column("Delta", style="yellow")
+    table.add_column("Lessons", style="magenta")
+    table.add_column("Status", style="blue")
+
+    for it in iterations:
+        delta_str = f"{it.score_delta:+.3f}" if it.score_delta is not None else "-"
+        table.add_row(
+            str(it.iteration_num),
+            f"{it.score:.3f}",
+            delta_str,
+            str(it.lessons_generated),
+            it.status.value,
+        )
+
+    console.print(table)
+
+
+_MAX_TITLE_LEN = 60
+
+
+def _display_generated_lessons(iterations: list[IterationResult]) -> None:
+    lesson_entries: list[str] = []
+    for iteration in iterations:
+        raw_titles = iteration.metadata.get("lesson_titles", [])
+        titles = [t for t in raw_titles if isinstance(t, str) and t.strip()]
+        for title in titles:
+            truncated = title[:_MAX_TITLE_LEN] + "..." if len(title) > _MAX_TITLE_LEN else title
+            lesson_entries.append(f"{iteration.iteration_num}. {truncated}")
+
+    if not lesson_entries:
+        return
+
+    console.print("[bold]Lesson names:[/bold]")
+    for entry in lesson_entries:
+        console.print(f"  - {entry}")
+
+
+def _display_changes_under_test(iterations: list[IterationResult]) -> None:
+    console.print("[bold]Changes tested:[/bold]")
+    for iteration in iterations:
+        raw_titles = iteration.metadata.get("tested_change_titles", [])
+        titles = [t for t in raw_titles if isinstance(t, str) and t.strip()]
+
+        if not titles:
+            console.print(f"  - {iteration.iteration_num}. Baseline (no prior lesson applied)")
+            continue
+
+        primary = titles[0]
+        truncated = primary[:_MAX_TITLE_LEN] + "..." if len(primary) > _MAX_TITLE_LEN else primary
+        if len(titles) > 1:
+            console.print(f"  - {iteration.iteration_num}. {truncated} (+{len(titles) - 1} more)")
+        else:
+            console.print(f"  - {iteration.iteration_num}. {truncated}")
+
+
+def _default_scenarios_for_agent(agent: str) -> list[str]:
+    project_root = Path(__file__).resolve().parents[2]
+
+    if agent == "bolt-merlin":
+        candidate = (
+            project_root
+            / "examples"
+            / "scenarios"
+            / "bolt-merlin"
+            / "policy_management.scenario.yaml"
+        )
+        if candidate.exists():
+            return [str(candidate)]
+
+    return []

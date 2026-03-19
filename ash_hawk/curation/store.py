@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -48,7 +49,6 @@ class LessonStore:
         self._loaded = True
 
     def _persist(self) -> None:
-        """Persist lessons to disk."""
         if not self._storage_path:
             return
 
@@ -63,7 +63,9 @@ class LessonStore:
             data["lessons"].append(lesson_dict)
 
         with open(lessons_file, "w") as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
             json.dump(data, f, indent=2, default=str)
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def store(self, lesson: CuratedLesson) -> str:
         self._ensure_loaded()

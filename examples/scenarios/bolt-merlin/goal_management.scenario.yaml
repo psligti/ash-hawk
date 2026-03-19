@@ -1,0 +1,80 @@
+schema_version: "v1"
+id: "bolt_merlin_goal_management"
+description: "Tests bolt-merlin's ability to track and work toward long-running goals"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "bolt_merlin"
+  config:
+    agent: "execution"
+
+inputs:
+  prompt: |
+    You need to implement a feature that requires multiple steps:
+    1. Create a new API endpoint for user notifications
+    2. Add database migrations for notification tables
+    3. Write unit tests for the notification service
+    4. Update the API documentation
+    
+    Track your progress toward completing all four components.
+    The goal is complete only when all four are done.
+
+tools:
+  allowed_tools:
+    - "bash"
+    - "read"
+    - "write"
+    - "edit"
+  mocks:
+    bash:
+      input: {}
+      result:
+        stdout: "ok"
+        stderr: ""
+        exit_code: 0
+    read:
+      input: {}
+      result:
+        content: "# project file\n"
+    write:
+      input: {}
+      result:
+        success: true
+    edit:
+      input: {}
+      result:
+        success: true
+  fault_injection: {}
+
+budgets:
+  max_steps: 50
+  max_tool_calls: 100
+  max_tokens: 8000
+  max_time_seconds: 300.0
+
+expectations:
+  must_events:
+    - "ModelMessageEvent"
+    - "ToolCallEvent"
+  must_not_events: []
+  ordering_rules:
+    - before: "ModelMessageEvent"
+      after: "ToolCallEvent"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    config: {}
+  - grader_type: "trace_content"
+    config:
+      required_event_types:
+        - "ModelMessageEvent"
+  - grader_type: "trace_quality"
+    weight: 1.5
+    config:
+      target_tool_calls: 8
+      tool_call_penalty: 0.08
+      rejection_penalty: 0.12
+      max_penalty: 0.6
+      pass_threshold: 0.7

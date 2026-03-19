@@ -76,16 +76,14 @@ class _FunctionRunner:
         return result
 
 
-def _wrap_runner(
-    runner: AgentRunner
-    | Callable[[EvalTask, PolicyEnforcer, dict[str, object]], tuple[EvalTranscript, EvalOutcome]],
-) -> AgentRunner:
-    """Wrap a callable or runner into an AgentRunner."""
-    if isinstance(runner, AgentRunner):
-        return runner
-    if callable(runner):
-        return _FunctionRunner(runner)
-    raise TypeError("agent_runner must implement AgentRunner protocol or be callable")
+def _wire_lesson_injector(runner: AgentRunner, injector: Any) -> None:
+    if hasattr(runner, "set_lesson_injector"):
+        cast(Any, runner).set_lesson_injector(injector)
+
+
+def _wire_post_run_hook(runner: AgentRunner, hook: Any) -> None:
+    if hasattr(runner, "set_post_run_hook"):
+        cast(Any, runner).set_post_run_hook(hook)
 
 
 class TrialExecutor:
@@ -121,11 +119,16 @@ class TrialExecutor:
             [EvalTask, PolicyEnforcer, dict[str, object]], tuple[EvalTranscript, EvalOutcome]
         ],
         fixture_resolver: FixtureResolver | None = None,
+        post_run_hook: Any | None = None,
     ) -> None:
         self._storage = storage
         self._policy = policy
         self._agent_runner: AgentRunner = _wrap_runner(agent_runner)
         self._fixture_resolver = fixture_resolver
+        self._post_run_hook = post_run_hook
+
+        if self._post_run_hook is not None:
+            _wire_post_run_hook(self._agent_runner, self._post_run_hook)
 
     @property
     def policy(self) -> ToolSurfacePolicy:
@@ -134,8 +137,15 @@ class TrialExecutor:
 
     @property
     def fixture_resolver(self) -> FixtureResolver | None:
-        """Get the fixture resolver."""
         return self._fixture_resolver
+
+    @property
+    def post_run_hook(self) -> Any | None:
+        return self._post_run_hook
+
+    def set_post_run_hook(self, hook: Any) -> None:
+        self._post_run_hook = hook
+        _wire_post_run_hook(self._agent_runner, hook)
 
     async def execute(
         self,

@@ -1,0 +1,3 @@
+{"tool_name": "bash", "tool_input": {"command": "ls -la", "description": "List current directory contents"}, "normalized_input": "{\"command\":\"ls -la\",\"description\":\"List current directory contents\"}", "result": {"stdout": "ok", "stderr": "", "exit_code": 0}}
+{"tool_name": "read", "tool_input": {"filePath": "hello.py"}, "normalized_input": "{\"filePath\":\"hello.py\"}", "result": {"content": "def hello():\n    return 'hello'\n"}}
+{"tool_name": "bash", "tool_input": {"command": "python -m ruff check hello.py", "description": "Run ruff linter on hello.py"}, "normalized_input": "{\"command\":\"python -m ruff check hello.py\",\"description\":\"Run ruff linter on hello.py\"}", "result": {"stdout": "ok", "stderr": "", "exit_code": 0}}

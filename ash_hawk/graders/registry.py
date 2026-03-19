@@ -97,9 +97,9 @@ class GraderRegistry:
             eps = eps_raw.get(ENTRY_POINT_GROUP, [])
 
         for ep in eps:
+            entry_point: Any = ep
             try:
                 # Entry point can be a Grader class or instance
-                entry_point: Any = ep
                 loaded = cast(object, entry_point.load())
 
                 # If it's a class, instantiate it
@@ -165,6 +165,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
         EvidenceRequiredGrader,
         OrderingGrader,
         TraceContentGrader,
+        TraceQualityGrader,
         TraceSchemaGrader,
         VerifyBeforeDoneGrader,
     )
@@ -181,6 +182,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(ToolUsageGrader())
     registry.register(TraceSchemaGrader())
     registry.register(TraceContentGrader())
+    registry.register(TraceQualityGrader())
     registry.register(BudgetComplianceGrader())
     registry.register(VerifyBeforeDoneGrader())
     registry.register(EvidenceRequiredGrader())

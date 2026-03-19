@@ -149,6 +149,13 @@ class TestGraderRegistry:
         registry = get_default_registry()
         assert "trace_content" in registry.list_graders()
 
+    def test_default_registry_includes_trace_quality(self):
+        import ash_hawk.graders.registry as reg_module
+
+        reg_module._default_registry = None
+        registry = get_default_registry()
+        assert "trace_quality" in registry.list_graders()
+
     def test_register_overwrites(self):
         """Registering with same name overwrites previous grader."""
         registry = GraderRegistry()

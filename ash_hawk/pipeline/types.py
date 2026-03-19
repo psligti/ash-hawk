@@ -139,3 +139,56 @@ class PipelineStepResult(pd.BaseModel):
     )
 
     model_config = pd.ConfigDict(extra="forbid")
+
+
+class PipelineResult(pd.BaseModel):
+    """Result of running the complete improvement pipeline.
+
+    Captures all outputs from the pipeline execution for thread-safe
+    access without relying on orchestrator instance state.
+
+    Attributes:
+        review_request_id: ID of the review request.
+        run_artifact_id: ID of the run artifact analyzed.
+        target_agent: Agent that was evaluated.
+        experiment_id: Optional experiment ID for isolation.
+        steps: Results from each pipeline role.
+        proposals: Generated improvement proposals.
+        lessons: Curated lessons from the pipeline.
+        comparison: Optional comparison result if baseline was provided.
+    """
+
+    review_request_id: str = pd.Field(
+        description="ID of the review request",
+    )
+    run_artifact_id: str = pd.Field(
+        description="ID of the run artifact analyzed",
+    )
+    target_agent: str = pd.Field(
+        description="Agent that was evaluated",
+    )
+    experiment_id: str | None = pd.Field(
+        default=None,
+        description="Optional experiment ID for isolation",
+    )
+    steps: dict[str, PipelineStepResult] = pd.Field(
+        default_factory=dict,
+        description="Results from each pipeline role keyed by role value",
+    )
+    proposals: list[Any] = pd.Field(
+        default_factory=list,
+        description="Generated improvement proposals",
+    )
+    lessons: list[Any] = pd.Field(
+        default_factory=list,
+        description="Curated lessons from the pipeline",
+    )
+    comparison: dict[str, Any] | None = pd.Field(
+        default=None,
+        description="Optional comparison result if baseline was provided",
+    )
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+    def get_step(self, role: PipelineRole) -> PipelineStepResult | None:
+        return self.steps.get(role.value)

@@ -155,8 +155,9 @@ class VerifyBeforeDoneGrader(Grader):
             if event_map.get("event_type") != "VerificationEvent":
                 continue
             data = event_map.get("data", {})
+            data_map: dict[str, Any]
             if isinstance(data, dict):
-                data_map = data
+                data_map = cast(dict[str, Any], data)
             else:
                 data_map = {}
             if data_map.get("pass") is True:
@@ -568,6 +569,66 @@ class TraceContentGrader(Grader):
         )
 
 
+class TraceQualityGrader(Grader):
+    @property
+    def name(self) -> str:
+        return "trace_quality"
+
+    async def grade(
+        self,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> GraderResult:
+        effective_transcript = transcript
+        if trial.result is not None:
+            effective_transcript = trial.result.transcript
+
+        trace_events = list(effective_transcript.trace_events or [])
+        tool_call_count = sum(
+            1 for event in trace_events if event.get("event_type") == "ToolCallEvent"
+        )
+        rejection_count = sum(
+            1 for event in trace_events if event.get("event_type") == "RejectionEvent"
+        )
+
+        target_tool_calls_raw = spec.config.get("target_tool_calls")
+        target_tool_calls: int | None = None
+        if isinstance(target_tool_calls_raw, int) and target_tool_calls_raw > 0:
+            target_tool_calls = target_tool_calls_raw
+
+        tool_call_penalty = float(spec.config.get("tool_call_penalty", 0.08))
+        rejection_penalty = float(spec.config.get("rejection_penalty", 0.12))
+        max_penalty = float(spec.config.get("max_penalty", 0.6))
+        pass_threshold = float(spec.config.get("pass_threshold", 0.7))
+
+        penalty = 0.0
+        tool_call_distance = 0
+        if target_tool_calls is not None:
+            tool_call_distance = abs(tool_call_count - target_tool_calls)
+            penalty += tool_call_distance * tool_call_penalty
+
+        penalty += rejection_count * rejection_penalty
+        penalty = min(max_penalty, penalty)
+
+        score = max(0.0, min(1.0, 1.0 - penalty))
+        passed = score >= pass_threshold
+
+        return GraderResult(
+            grader_type=self.name,
+            score=score,
+            passed=passed,
+            details={
+                "tool_call_count": tool_call_count,
+                "rejection_count": rejection_count,
+                "target_tool_calls": target_tool_calls,
+                "tool_call_distance": tool_call_distance,
+                "penalty": penalty,
+                "pass_threshold": pass_threshold,
+            },
+        )
+
+
 __all__ = [
     "TraceSchemaGrader",
     "VerifyBeforeDoneGrader",
@@ -575,4 +636,5 @@ __all__ = [
     "BudgetComplianceGrader",
     "OrderingGrader",
     "TraceContentGrader",
+    "TraceQualityGrader",
 ]

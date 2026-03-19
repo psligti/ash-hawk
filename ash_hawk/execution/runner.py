@@ -111,14 +111,8 @@ class EvalRunner:
         config: EvalConfig,
         storage: StorageBackend,
         trial_executor: TrialExecutor,
+        post_run_hook: Any | None = None,
     ) -> None:
-        """Initialize the EvalRunner.
-
-        Args:
-            config: Evaluation configuration with parallelism and timeout settings.
-            storage: Storage backend for persisting results.
-            trial_executor: Executor for running individual trials.
-        """
         self._config = config
         self._storage = storage
         self._trial_executor = trial_executor
@@ -136,6 +130,9 @@ class EvalRunner:
         self._resource_tracker = ResourceTracker()
         self._trials: list[EvalTrial] = []
         self._trial_durations: list[float] = []
+
+        if post_run_hook is not None:
+            self._trial_executor.set_post_run_hook(post_run_hook)
 
     @property
     def llm_queue(self) -> LLMRequestQueue:

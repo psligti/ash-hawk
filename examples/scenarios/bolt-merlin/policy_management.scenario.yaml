@@ -1,0 +1,86 @@
+schema_version: "v1"
+id: "bolt_merlin_policy_management"
+description: "Tests bolt-merlin's efficient policy loading and application"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "bolt_merlin"
+  config:
+    agent: "execution"
+
+inputs:
+  prompt: |
+    Apply the following policies while making changes:
+    - Always run linting before committing
+    - Never modify files in node_modules
+    - Use relative imports where possible
+    
+    Create a simple Python module with a hello() function.
+  mock_tool_calls:
+    - tool: "bash"
+      input:
+        command: "ruff check"
+
+tools:
+  allowed_tools:
+    - "bash"
+    - "read"
+    - "write"
+    - "edit"
+  mocks:
+    bash:
+      input: {}
+      result:
+        stdout: "ok"
+        stderr: ""
+        exit_code: 0
+    read:
+      input: {}
+      result:
+        content: "def hello():\n    return 'hello'\n"
+    write:
+      input: {}
+      result:
+        success: true
+    edit:
+      input: {}
+      result:
+        success: true
+  fault_injection: {}
+
+budgets:
+  max_steps: 30
+  max_tool_calls: 50
+  max_tokens: 5000
+  max_time_seconds: 120.0
+
+expectations:
+  must_events:
+    - "ToolCallEvent"
+    - "ToolResultEvent"
+  must_not_events: []
+  ordering_rules:
+    - first: "ToolCallEvent"
+      then: "ToolResultEvent"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "ordering"
+    required: true
+    config:
+      ordering_rules:
+        - before: "ToolCallEvent"
+          after: "ToolResultEvent"
+  - grader_type: "trace_quality"
+    required: false
+    weight: 1.5
+    config:
+      target_tool_calls: 4
+      tool_call_penalty: 0.1
+      rejection_penalty: 0.15
+      max_penalty: 0.6
+      pass_threshold: 0.7
