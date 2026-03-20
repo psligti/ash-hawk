@@ -9,4 +9,5 @@ class ExperimentHistoryService:
         self._storage = storage
 
     def save_history(self, history: ExperimentHistorySummary) -> ExperimentHistorySummary:
+        self._storage.histories.upsert(history, ExperimentHistorySummary)
         return history

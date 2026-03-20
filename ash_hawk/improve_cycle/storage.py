@@ -11,6 +11,7 @@ from ash_hawk.improve_cycle.models import (
     AdversarialScenario,
     ChangeSet,
     CuratedLesson,
+    ExperimentHistorySummary,
     ExperimentPlan,
     ImproveCycleCheckpoint,
     ImprovementProposal,
@@ -86,6 +87,7 @@ class ImproveCycleStorage:
     adversarial_scenarios: JsonEntityStore[AdversarialScenario]
     role_events: JsonEntityStore[RoleLifecycleEvent]
     checkpoints: JsonEntityStore[ImproveCycleCheckpoint]
+    histories: JsonEntityStore[ExperimentHistorySummary]
 
     def __init__(self, root: str | Path = ".ash-hawk/improve-cycle") -> None:
         base = Path(root)
@@ -114,4 +116,7 @@ class ImproveCycleStorage:
         )
         self.checkpoints = JsonEntityStore[ImproveCycleCheckpoint](
             base / "checkpoints.json", "checkpoint_id"
+        )
+        self.histories = JsonEntityStore[ExperimentHistorySummary](
+            base / "histories.json", "history_id"
         )

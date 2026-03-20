@@ -516,6 +516,7 @@ class ImproveCycleOrchestrator:
             ),
             callback=self.historian.run,
         )
+        self.storage.histories.upsert(history, ExperimentHistorySummary)
 
         adversarial_scenarios = (
             self._run_role(

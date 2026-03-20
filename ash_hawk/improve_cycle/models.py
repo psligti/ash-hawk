@@ -287,6 +287,7 @@ class KnowledgeEntry(BaseModel):
 
 
 class ExperimentHistorySummary(BaseModel):
+    history_id: str
     agent_id: str
     experiment_count: int
     promoted_lessons: int

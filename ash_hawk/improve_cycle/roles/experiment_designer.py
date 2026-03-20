@@ -1,0 +1,48 @@
+from __future__ import annotations
+
+from uuid import uuid4
+
+from ash_hawk.improve_cycle.models import CuratedLesson, ExperimentPlan, RunArtifactBundle
+from ash_hawk.improve_cycle.roles.base import BaseRoleAgent
+
+
+class ExperimentDesignerRole(
+    BaseRoleAgent[tuple[list[CuratedLesson], RunArtifactBundle], list[ExperimentPlan]]
+):
+    def __init__(
+        self,
+        *,
+        min_verification_runs: int = 3,
+        max_latency_delta_pct: float = 15.0,
+        max_token_delta_pct: float = 10.0,
+        cross_pack_eval_pack_ids: list[str] | None = None,
+    ) -> None:
+        super().__init__(
+            "experiment_designer", "Produce explicit experiment plans", "deterministic", 0.0
+        )
+        self._min_verification_runs = max(1, min_verification_runs)
+        self._max_latency_delta_pct = max_latency_delta_pct
+        self._max_token_delta_pct = max_token_delta_pct
+        self._cross_pack_eval_pack_ids = cross_pack_eval_pack_ids or []
+
+    def run(self, payload: tuple[list[CuratedLesson], RunArtifactBundle]) -> list[ExperimentPlan]:
+        lessons, run_bundle = payload
+        plans: list[ExperimentPlan] = []
+        for lesson in lessons:
+            plans.append(
+                ExperimentPlan(
+                    experiment_plan_id=f"plan-{uuid4().hex[:8]}",
+                    lesson_ids=[lesson.lesson_id],
+                    mode="isolated",
+                    scenario_ids=run_bundle.scenario_ids,
+                    eval_pack_ids=[run_bundle.eval_pack_id] + self._cross_pack_eval_pack_ids,
+                    repeat_count=self._min_verification_runs,
+                    acceptance_criteria=["score_delta>0", "regression_count==0"],
+                    rejection_criteria=["regression_count>0", "variance>0.02"],
+                    rollback_criteria=["latency_delta_pct>15", "token_delta_pct>10"],
+                    max_latency_delta_pct=self._max_latency_delta_pct,
+                    max_token_delta_pct=self._max_token_delta_pct,
+                    notes="Spec-aligned isolated validation",
+                )
+            )
+        return plans

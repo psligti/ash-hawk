@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from ash_hawk.improve_cycle.models import (
+    ExperimentHistorySummary,
     ImproveCycleCheckpoint,
     MetricValue,
     RoleLifecycleEvent,
@@ -34,6 +35,9 @@ def test_improve_cycle_orchestrator_runs_end_to_end() -> None:
     checkpoints = orchestrator.storage.checkpoints.list_all(ImproveCycleCheckpoint)
     assert checkpoints
     assert checkpoints[0].status == "completed"
+    histories = orchestrator.storage.histories.list_all(ExperimentHistorySummary)
+    assert histories
+    assert histories[0].history_id == "history-run-1"
     role_events = orchestrator.storage.role_events.list_all(RoleLifecycleEvent)
     assert any(event.event_type == "role_started" for event in role_events)
     assert any(event.event_type == "role_completed" for event in role_events)
