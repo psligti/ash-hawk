@@ -13,6 +13,7 @@ import aiofiles
 import aiofiles.os
 from pydantic import BaseModel
 
+from ash_hawk.contracts import RunArtifact
 from ash_hawk.scenario.trace import TraceEvent, write_trace_jsonl
 from ash_hawk.storage import StoredTrial
 from ash_hawk.types import (
@@ -23,7 +24,6 @@ from ash_hawk.types import (
     ToolSurfacePolicy,
     TrialEnvelope,
 )
-from ash_hawk.contracts import RunArtifact
 
 
 def _artifact_path(base_path: Path, run_id: str) -> Path:

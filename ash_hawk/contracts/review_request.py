@@ -6,6 +6,8 @@ from typing import Literal
 
 import pydantic as pd
 
+from ash_hawk.strategies import SubStrategy
+
 
 class ReviewRequest(pd.BaseModel):
     """Request to evaluate a completed agent run.
@@ -21,6 +23,9 @@ class ReviewRequest(pd.BaseModel):
         persistence_mode: What to persist (none, propose, curate).
         focus_areas: Specific areas to focus evaluation on.
         baseline_run_id: Optional baseline run ID for comparison.
+        experiment_id: ID of the experiment for parallel trial isolation.
+        variant: A/B test variant identifier (e.g., 'control', 'treatment-a').
+        sub_strategy_focus: Specific sub-strategies to target for improvement.
     """
 
     run_artifact_id: str = pd.Field(
@@ -56,6 +61,10 @@ class ReviewRequest(pd.BaseModel):
     variant: str | None = pd.Field(
         default=None,
         description="A/B test variant identifier (e.g., 'control', 'treatment-a')",
+    )
+    sub_strategy_focus: list[SubStrategy] = pd.Field(
+        default_factory=list,
+        description="Specific sub-strategies to target for improvement (e.g., [SubStrategy.TOOL_EFFICIENCY])",
     )
 
     model_config = pd.ConfigDict(extra="forbid")

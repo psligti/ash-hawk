@@ -116,7 +116,8 @@ def _register_default_packs(registry: PackRegistry) -> None:
     Args:
         registry: The registry to populate.
     """
-    # Import here to avoid circular imports
+    from ash_hawk.eval_packs.bolt_merlin_pack import BoltMerlinEvalPack
+    from ash_hawk.eval_packs.iron_rook_pack import IronRookEvalPack
     from ash_hawk.eval_packs.packs import (
         ComprehensiveEvalPack,
         HarnessEvalPack,
@@ -124,9 +125,13 @@ def _register_default_packs(registry: PackRegistry) -> None:
         SkillEvalPack,
         ToolEvalPack,
     )
+    from ash_hawk.eval_packs.vox_jay_pack import VoxJayEvalPack
 
     registry.register(PolicyEvalPack)
     registry.register(SkillEvalPack)
     registry.register(ToolEvalPack)
     registry.register(HarnessEvalPack)
     registry.register(ComprehensiveEvalPack)
+    registry.register(IronRookEvalPack)
+    registry.register(BoltMerlinEvalPack)
+    registry.register(VoxJayEvalPack)

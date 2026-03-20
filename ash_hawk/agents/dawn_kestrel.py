@@ -10,6 +10,7 @@ import asyncio
 import importlib
 import inspect
 import json
+import logging
 import os
 import re
 import time
@@ -27,6 +28,8 @@ from ash_hawk.types import (
     FailureMode,
     TokenUsage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -842,8 +845,11 @@ class DawnKestrelAgentRunner:
                     self._post_run_hook.on_transcript_complete(
                         transcript, run_id=run_id, suite_id=suite_id
                     )
-                except Exception:
-                    pass
+                except Exception as hook_error:
+                    logger.warning(
+                        f"Post-run hook failed (non-blocking): {hook_error}",
+                        exc_info=True,
+                    )
 
             return transcript, outcome
 

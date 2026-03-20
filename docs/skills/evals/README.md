@@ -31,6 +31,7 @@ This is a graph (not a single linear doc) of skills for authoring evals in this 
 - [C4. Expectations: event ordering/diff/output assertions](10_expectations_and_assertions.md)
 - [C5. Deterministic trace graders: schema, verify-before-done, evidence-required](12_trace_graders.md)
 - [C6. Scenario packs as skill/protocol compliance tests](13_scenario_packs_for_skills_tools_mcp.md)
+- [C7. Scenario authoring skill: write high-signal scenarios](17_scenario_authoring_skill.md)
 
 ### D. Quality & coverage
 

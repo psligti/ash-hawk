@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
 import pytest
 
@@ -92,6 +93,42 @@ class TestLLMRequestQueue:
         assert stats["total_requests"] == 0
         assert stats["total_wait_time"] == 0.0
 
+    @pytest.mark.asyncio
+    async def test_execute_falls_back_when_queue_backend_fails(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class FailingQueue:
+            def __init__(self, **kwargs: object) -> None:
+                del kwargs
+
+            async def run_jobs(self, jobs: list[object], execute_job: object) -> object:
+                del jobs, execute_job
+                raise RuntimeError("queue backend unavailable")
+
+        class QueueJob:
+            def __init__(self, index: int, task_id: str) -> None:
+                del index, task_id
+
+        queue = LLMRequestQueue(max_workers=1, timeout_seconds=5.0)
+        monkeypatch.setattr(queue, "_get_queue_type", lambda: FailingQueue)
+        monkeypatch.setattr(queue, "_get_job_type", lambda: QueueJob)
+
+        request = LLMRequest(
+            request_id="fallback-1",
+            messages=[{"role": "user", "content": "Hello"}],
+            tools=None,
+            options=None,
+        )
+
+        async def mock_execute(req: LLMRequest) -> dict[str, str]:
+            return {"response": f"processed {req.request_id}"}
+
+        response = await queue.execute(request, mock_execute)
+        assert response.response == {"response": "processed fallback-1"}
+
+        stats = await queue.get_stats()
+        assert stats["total_requests"] == 1
+
 
 class TestTrialExecutionQueue:
     """Tests for TrialExecutionQueue."""
@@ -144,6 +181,85 @@ class TestTrialExecutionQueue:
 
         assert len(results) == 1
         assert isinstance(results[0], Exception)
+
+    @pytest.mark.asyncio
+    async def test_run_trials_falls_back_when_queue_backend_fails(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        class FailingQueue:
+            def __init__(self, **kwargs: object) -> None:
+                del kwargs
+
+            async def run_jobs(self, jobs: list[object], execute_job: object) -> object:
+                del jobs, execute_job
+                raise RuntimeError("queue backend unavailable")
+
+        class QueueJob:
+            def __init__(self, index: int, task_id: str) -> None:
+                self.index = index
+                self.task_id = task_id
+
+        queue = TrialExecutionQueue(max_workers=2, timeout_seconds=5.0)
+        monkeypatch.setattr(queue, "_get_queue_type", lambda: FailingQueue)
+        monkeypatch.setattr(queue, "_get_job_type", lambda: QueueJob)
+
+        jobs = [
+            TrialJob(job_id="job-1", task_id="task-1", task_input={}),
+            TrialJob(job_id="job-2", task_id="task-2", task_input={}),
+        ]
+
+        async def mock_execute(j: TrialJob) -> tuple[EvalTranscript, EvalOutcome]:
+            return EvalTranscript(duration_seconds=0.1), EvalOutcome.success()
+
+        results = await queue.run_trials(jobs, mock_execute)
+
+        assert len(results) == 2
+        assert all(isinstance(result, TrialJobResult) for result in results)
+        typed_results = [result for result in results if isinstance(result, TrialJobResult)]
+        assert len(typed_results) == 2
+        assert {result.job_id for result in typed_results} == {"job-1", "job-2"}
+        assert all(result.outcome.status == EvalStatus.COMPLETED for result in typed_results)
+
+    @pytest.mark.asyncio
+    async def test_run_trials_retries_unresolved_not_executed_jobs_locally(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        class QueueJob:
+            def __init__(self, index: int, task_id: str) -> None:
+                self.index = index
+                self.task_id = task_id
+
+        class QueueReturnsUnresolved:
+            def __init__(self, **kwargs: object) -> None:
+                del kwargs
+
+            async def run_jobs(self, jobs: list[QueueJob], execute_job: object) -> object:
+                del execute_job
+                return SimpleNamespace(
+                    errors_by_index={idx: "not executed" for idx, _job in enumerate(jobs)}
+                )
+
+        queue = TrialExecutionQueue(max_workers=2, timeout_seconds=5.0)
+        monkeypatch.setattr(queue, "_get_queue_type", lambda: QueueReturnsUnresolved)
+        monkeypatch.setattr(queue, "_get_job_type", lambda: QueueJob)
+
+        jobs = [
+            TrialJob(job_id="job-1", task_id="task-1", task_input={}),
+            TrialJob(job_id="job-2", task_id="task-2", task_input={}),
+        ]
+
+        async def mock_execute(j: TrialJob) -> tuple[EvalTranscript, EvalOutcome]:
+            return EvalTranscript(duration_seconds=0.1), EvalOutcome.success()
+
+        results = await queue.run_trials(jobs, mock_execute)
+
+        assert len(results) == 2
+        assert all(isinstance(result, TrialJobResult) for result in results)
+        typed_results = [result for result in results if isinstance(result, TrialJobResult)]
+        assert len(typed_results) == 2
+        assert all(result.outcome.status == EvalStatus.COMPLETED for result in typed_results)
 
 
 class TestGlobalQueue:

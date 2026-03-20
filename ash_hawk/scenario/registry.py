@@ -174,12 +174,14 @@ def _register_builtin_adapters(registry: ScenarioAdapterRegistry) -> None:
     Args:
         registry: The registry to register adapters with.
     """
+    from ash_hawk.scenario.adapters.bolt_merlin import BoltMerlinScenarioAdapter
     from ash_hawk.scenario.adapters.coding_agent_subprocess import CodingAgentSubprocessAdapter
     from ash_hawk.scenario.adapters.mock_adapter import MockAdapter
     from ash_hawk.scenario.adapters.sdk_dawn_kestrel import SdkDawnKestrelAdapter
     from ash_hawk.scenario.adapters.vox_jay_command import VoxJayCommandAdapter
     from ash_hawk.scenario.adapters.vox_jay_policy import VoxJayPolicyAdapter
 
+    registry.register(BoltMerlinScenarioAdapter())
     registry.register(CodingAgentSubprocessAdapter())
     registry.register(MockAdapter())
     registry.register(SdkDawnKestrelAdapter())

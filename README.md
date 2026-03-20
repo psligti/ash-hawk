@@ -49,6 +49,20 @@ See `examples/complete-eval/` for a full example demonstrating:
 - Fixture creation and resolution
 - Test file structure
 
+## Auto Research (Policy)
+
+Run policy-focused iterative improvement for an agent:
+
+```bash
+./scripts/auto_research_policy.sh bolt-merlin 100 3 bolt-merlin-eval
+```
+
+Arguments:
+- `agent` (default: `bolt-merlin`)
+- `iterations` (default: `100`)
+- `promotion-threshold` (default: `3`)
+- `eval-pack` (default: `bolt-merlin-eval`)
+
 ## Related
 
 - **dawn-kestrel** - Agent runtime SDK (dependency)

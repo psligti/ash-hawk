@@ -78,9 +78,21 @@ class CycleConfig(pd.BaseModel):
         le=50,
         description="Save checkpoint every N iterations",
     )
+    max_lessons_per_iteration: int = pd.Field(
+        default=4,
+        ge=1,
+        le=50,
+        description="Maximum approved lessons applied in each iteration",
+    )
     scenario_paths: list[str] = pd.Field(
         default_factory=list,
         description="Scenario paths used to produce real evaluation scores per iteration",
+    )
+    scenario_parallelism: int | None = pd.Field(
+        default=None,
+        ge=1,
+        le=256,
+        description="Optional parallelism override for per-iteration scenario execution",
     )
     fail_on_scenario_error: bool = pd.Field(
         default=True,
@@ -124,7 +136,7 @@ class CycleResult(pd.BaseModel):
     cycle_id: str = pd.Field(description="Cycle identifier")
     config: CycleConfig = pd.Field(description="Original configuration")
     total_iterations: int = pd.Field(ge=0, description="Iterations completed")
-    iterations: list[IterationResult] = pd.Field(
+    iterations: list[Any] = pd.Field(
         default_factory=list,
         description="All iteration results",
     )
@@ -160,7 +172,14 @@ class CycleResult(pd.BaseModel):
     def avg_iteration_time(self) -> float:
         if not self.iterations:
             return 0.0
-        times = [d for i in self.iterations if (d := i.duration_seconds()) is not None]
+        times: list[float] = []
+        for iteration_obj in self.iterations:
+            if not isinstance(iteration_obj, IterationResult):
+                continue
+            iteration = iteration_obj
+            duration = iteration.duration_seconds()
+            if duration is not None:
+                times.append(duration)
         return sum(times) / len(times) if times else 0.0
 
 

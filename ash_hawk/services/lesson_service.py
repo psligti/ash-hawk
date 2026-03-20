@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -11,7 +12,7 @@ from ash_hawk.curation.rollback import RollbackManager
 from ash_hawk.curation.store import LessonStore
 
 if TYPE_CHECKING:
-    from ash_hawk.curation.persistent_store import PersistentLessonStore
+    from ash_hawk.curation.persistent_provenance import PersistentProvenanceTracker
 
 
 class LessonServiceError(Exception):
@@ -36,10 +37,22 @@ class LessonService:
     Enforces experiment_id by default for parallel trial isolation.
     """
 
-    def __init__(self, storage_path: Path | None = None) -> None:
+    def __init__(
+        self,
+        storage_path: Path | None = None,
+        use_persistent_provenance: bool = False,
+    ) -> None:
         self._store = LessonStore(storage_path)
-        self._provenance = ProvenanceTracker()
+        self._provenance: ProvenanceTracker | PersistentProvenanceTracker
+        if use_persistent_provenance:
+            from ash_hawk.curation.persistent_provenance import PersistentProvenanceTracker
+
+            prov_path = storage_path.parent if storage_path else Path(".ash-hawk")
+            self._provenance = PersistentProvenanceTracker(prov_path / "provenance.db")
+        else:
+            self._provenance = ProvenanceTracker()
         self._rollback = RollbackManager()
+        self._use_persistent = use_persistent_provenance
 
     def approve_proposal(
         self,
@@ -92,6 +105,8 @@ class LessonService:
             version=1,
             created_at=proposal.created_at,
             experiment_id=experiment_id,
+            strategy=proposal.strategy,
+            sub_strategies=proposal.sub_strategies,
         )
 
         self._store.store(lesson)

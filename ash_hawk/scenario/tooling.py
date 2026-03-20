@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import pydantic as pd
 
@@ -32,13 +32,14 @@ def _normalize_input(value: Any) -> str:
             return str(item)
         if isinstance(item, dict):
             normalized: dict[str, Any] = {}
-            for key, val in item.items():
+            for key, val in cast(dict[object, object], item).items():
                 normalized[str(key)] = _to_jsonable(val)
             return normalized
         if isinstance(item, (list, tuple)):
-            return [_to_jsonable(val) for val in item]
+            sequence = cast(list[object] | tuple[object, ...], item)
+            return [_to_jsonable(val) for val in sequence]
         if isinstance(item, set):
-            return sorted(_to_jsonable(val) for val in item)
+            return sorted(_to_jsonable(val) for val in cast(set[object], item))
         if isinstance(item, (str, int, float, bool)) or item is None:
             return item
         return repr(item)
@@ -90,8 +91,6 @@ class ToolingHarness:
         self._timeout_injections[tool_name] = self._timeout_injections.get(tool_name, 0) + 1
 
     def inject_exception(self, tool_name: str, exc: Exception) -> None:
-        if not isinstance(exc, Exception):
-            raise TypeError("Injected exception must be an Exception instance")
         self._exception_injections.setdefault(tool_name, []).append(exc)
 
     def inject_malformed(self, tool_name: str) -> None:
@@ -119,7 +118,13 @@ class ToolingHarness:
 
         key = (tool_name, normalized_input)
         if key not in self._mocks:
-            raise KeyError(f"No mock registered for tool {tool_name} and input {normalized_input}")
+            default_key = (tool_name, _normalize_input({}))
+            if default_key in self._mocks:
+                key = default_key
+            else:
+                raise KeyError(
+                    f"No mock registered for tool {tool_name} and input {normalized_input}"
+                )
 
         result = deepcopy(self._mocks[key])
         if self.mode == "record":

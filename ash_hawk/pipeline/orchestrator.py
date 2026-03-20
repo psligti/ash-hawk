@@ -41,6 +41,7 @@ class PipelineOrchestrator:
         self._comparison_result: dict[str, Any] | None = None
 
     def run(self, request: ReviewRequest, artifact: RunArtifact) -> list[CuratedLesson]:
+        logger.info("Pipeline progress: starting improvement analysis for %s", request.target_agent)
         review_id = f"review-{uuid4().hex[:8]}"
         self._context = PipelineContext(
             run_artifact_id=artifact.run_id,
@@ -63,7 +64,37 @@ class PipelineOrchestrator:
         self._run_comparison_step(request, artifact, lessons)
         self._notify_hook(artifact)
 
+        logger.info(
+            "Pipeline progress: completed (proposals=%d, lessons=%d)",
+            len(self._proposals),
+            len(self._lessons),
+        )
+
         return lessons
+
+    @staticmethod
+    def _preview_titles(titles: list[str], max_items: int = 2) -> str:
+        if not titles:
+            return "none"
+        shown = titles[:max_items]
+        if len(titles) > max_items:
+            return f"{'; '.join(shown)} (+{len(titles) - max_items} more)"
+        return "; ".join(shown)
+
+    @staticmethod
+    def _preview_texts(items: list[str], max_items: int = 2, max_len: int = 90) -> str:
+        if not items:
+            return "none"
+
+        def _clip(text: str) -> str:
+            if len(text) <= max_len:
+                return text
+            return text[: max_len - 3] + "..."
+
+        shown = [_clip(item) for item in items[:max_items]]
+        if len(items) > max_items:
+            return f"{' | '.join(shown)} (+{len(items) - max_items} more)"
+        return " | ".join(shown)
 
     def _run_comparison_step(
         self,
@@ -179,6 +210,7 @@ class PipelineOrchestrator:
         step = self._steps[PipelineRole.COMPETITOR]
         step.status = "running"
         step.started_at = datetime.now(UTC)
+        logger.info("Pipeline progress: competitor replay/evidence step")
 
         try:
             if not hasattr(artifact, "is_successful") or artifact.is_successful():
@@ -227,6 +259,7 @@ class PipelineOrchestrator:
 
             step.status = "completed"
             step.completed_at = datetime.now(UTC)
+            logger.info("Pipeline progress: competitor step complete")
         except Exception as e:
             step.status = "completed"
             step.error = str(e)
@@ -238,6 +271,7 @@ class PipelineOrchestrator:
         step = self._steps[PipelineRole.TRANSLATOR]
         step.status = "running"
         step.started_at = datetime.now(UTC)
+        logger.info("Pipeline progress: translator structuring findings")
 
         try:
             competitor_output: dict[str, Any] = {}
@@ -293,6 +327,20 @@ class PipelineOrchestrator:
 
             step.status = "completed"
             step.completed_at = datetime.now(UTC)
+            logger.info("Pipeline progress: translator step complete")
+            logger.info(
+                "Pipeline insight: translator dominant_strategy=%s, mapped_findings=%d, "
+                "rationales=%s",
+                output.dominant_strategy.value if output.dominant_strategy else "none",
+                len(output.structured_findings),
+                self._preview_texts(
+                    [
+                        finding.strategy_mapping.rationale
+                        for finding in output.structured_findings
+                        if finding.strategy_mapping and finding.strategy_mapping.rationale
+                    ]
+                ),
+            )
         except Exception as e:
             step.status = "completed"
             step.error = str(e)
@@ -305,6 +353,7 @@ class PipelineOrchestrator:
         step = self._steps[PipelineRole.ANALYST]
         step.status = "running"
         step.started_at = datetime.now(UTC)
+        logger.info("Pipeline progress: analyst reviewing run evidence")
 
         try:
             analyst = AnalystRole()
@@ -319,6 +368,11 @@ class PipelineOrchestrator:
                 "tool_efficiency": output.tool_efficiency,
                 "failure_patterns": output.failure_patterns,
                 "risk_areas": output.risk_areas,
+                "root_causes": output.root_causes,
+                "strategy_insights": {
+                    strategy.value: insights
+                    for strategy, insights in output.strategy_insights.items()
+                },
             }
 
             if self._context:
@@ -326,6 +380,21 @@ class PipelineOrchestrator:
 
             step.status = "completed"
             step.completed_at = datetime.now(UTC)
+            logger.info(
+                "Pipeline progress: analyst complete (findings=%d)",
+                len(output.findings),
+            )
+            logger.info(
+                "Pipeline insight: analyst root_causes=%s, recommendations=%s",
+                self._preview_texts(output.root_causes),
+                self._preview_texts(
+                    [
+                        finding.recommendation
+                        for finding in output.findings
+                        if finding.recommendation
+                    ]
+                ),
+            )
         except Exception as e:
             step.status = "failed"
             step.error = str(e)
@@ -337,6 +406,7 @@ class PipelineOrchestrator:
         step = self._steps[PipelineRole.COACH]
         step.status = "running"
         step.started_at = datetime.now(UTC)
+        logger.info("Pipeline progress: coach drafting policy/behavior proposals")
 
         try:
             if not self._context:
@@ -347,7 +417,7 @@ class PipelineOrchestrator:
             failure_patterns = analyst_output.get("failure_patterns", [])
 
             coach = CoachRole()
-            proposals = coach.generate_proposals(self._context, failure_patterns)
+            proposals = coach.generate_proposals(self._context, failure_patterns, analyst_output)
 
             self._proposals.extend(proposals)
             step.outputs = {
@@ -357,6 +427,15 @@ class PipelineOrchestrator:
             self._context.outputs["coach"] = step.outputs
             step.status = "completed"
             step.completed_at = datetime.now(UTC)
+            logger.info(
+                "Pipeline progress: coach complete (proposals=%d, titles=%s)",
+                len(proposals),
+                self._preview_titles([proposal.title for proposal in proposals]),
+            )
+            logger.info(
+                "Pipeline insight: coach rationale=%s",
+                self._preview_texts([proposal.rationale for proposal in proposals]),
+            )
         except Exception as e:
             step.status = "failed"
             step.error = str(e)
@@ -367,6 +446,7 @@ class PipelineOrchestrator:
         step = self._steps[PipelineRole.ARCHITECT]
         step.status = "running"
         step.started_at = datetime.now(UTC)
+        logger.info("Pipeline progress: architect designing system/tooling proposals")
 
         try:
             if not self._context:
@@ -376,7 +456,14 @@ class PipelineOrchestrator:
             analyst_output = self._context.outputs.get("analyst", {})
             failure_patterns = analyst_output.get("failure_patterns", [])
             risk_areas = analyst_output.get("risk_areas", [])
-            findings = failure_patterns + risk_areas
+
+            efficiency_findings = [
+                f.get("description", "")
+                for f in analyst_output.get("findings", [])
+                if f.get("category") == "efficiency"
+            ]
+
+            findings = failure_patterns + risk_areas + efficiency_findings
 
             architect = ArchitectRole()
             proposals = architect.generate_proposals(self._context, findings)
@@ -389,6 +476,15 @@ class PipelineOrchestrator:
             self._context.outputs["architect"] = step.outputs
             step.status = "completed"
             step.completed_at = datetime.now(UTC)
+            logger.info(
+                "Pipeline progress: architect complete (proposals=%d, titles=%s)",
+                len(proposals),
+                self._preview_titles([proposal.title for proposal in proposals]),
+            )
+            logger.info(
+                "Pipeline insight: architect rationale=%s",
+                self._preview_texts([proposal.rationale for proposal in proposals]),
+            )
         except Exception as e:
             step.status = "failed"
             step.error = str(e)
@@ -400,6 +496,7 @@ class PipelineOrchestrator:
         step = self._steps[PipelineRole.CURATOR]
         step.status = "running"
         step.started_at = datetime.now(UTC)
+        logger.info("Pipeline progress: curator validating and applying proposals")
 
         try:
             curator = CuratorRole()
@@ -417,6 +514,17 @@ class PipelineOrchestrator:
 
             step.status = "completed"
             step.completed_at = datetime.now(UTC)
+            logger.info(
+                "Pipeline progress: curator complete (approved=%d, titles=%s)",
+                len(lessons),
+                self._preview_titles([lesson.title for lesson in lessons]),
+            )
+            logger.info(
+                "Pipeline insight: curator evidence_summary=%s",
+                self._preview_texts(
+                    [lesson.evidence_summary for lesson in lessons if lesson.evidence_summary]
+                ),
+            )
         except Exception as e:
             step.status = "failed"
             step.error = str(e)

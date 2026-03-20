@@ -86,6 +86,17 @@ def _wire_post_run_hook(runner: AgentRunner, hook: Any) -> None:
         cast(Any, runner).set_post_run_hook(hook)
 
 
+def _wrap_runner(
+    runner: AgentRunner
+    | Callable[[EvalTask, PolicyEnforcer, dict[str, object]], tuple[EvalTranscript, EvalOutcome]],
+) -> AgentRunner:
+    if runner is None:
+        raise TypeError("agent_runner is required and cannot be None")
+    if isinstance(runner, AgentRunner):
+        return runner
+    return _FunctionRunner(runner)
+
+
 class TrialExecutor:
     """Executes a single evaluation trial.
 

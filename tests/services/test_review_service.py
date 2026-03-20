@@ -8,7 +8,6 @@ import pytest
 
 from ash_hawk.contracts import ReviewFinding, ReviewMetrics, ReviewRequest, ReviewResult
 from ash_hawk.services.review_service import ReviewService
-
 from tests.pipeline.conftest import MockRunArtifact
 
 

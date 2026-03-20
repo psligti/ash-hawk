@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from ash_hawk.contracts import ReviewFinding, ReviewMetrics, RunArtifact
-from ash_hawk.strategies import Strategy, SubStrategy, get_sub_strategies
+from ash_hawk.strategies import Strategy
 
 if TYPE_CHECKING:
     from ash_hawk.pipeline.translator import TranslatorOutput
@@ -41,6 +41,7 @@ class AnalystRole:
         tool_efficiency = self._calculate_tool_efficiency(artifact)
         failure_patterns = self._identify_failure_patterns(artifact)
         risk_areas = self._identify_risk_areas(artifact)
+        efficiency_opportunities = self._identify_efficiency_opportunities(artifact)
 
         root_causes = self._identify_root_causes(artifact, failure_patterns)
         strategy_insights = self._derive_strategy_insights(artifact, input_data.translator_output)
@@ -52,6 +53,7 @@ class AnalystRole:
                 risk_areas,
                 root_causes,
                 strategy_insights,
+                efficiency_opportunities,
             )
         )
 
@@ -213,6 +215,32 @@ class AnalystRole:
 
         return list(areas)
 
+    def _identify_efficiency_opportunities(self, artifact: RunArtifact) -> list[str]:
+        opportunities: list[str] = []
+
+        tool_counts: dict[str, int] = {}
+        for tc in artifact.tool_calls:
+            tool_counts[tc.tool_name] = tool_counts.get(tc.tool_name, 0) + 1
+
+        for tool_name, count in tool_counts.items():
+            if count > 2:
+                opportunities.append(
+                    f"Tool {tool_name} called {count} times - consider batching or caching"
+                )
+
+        metrics = getattr(artifact, "metrics", None)
+        if metrics and isinstance(metrics, dict):
+            scenario_score = metrics.get("scenario_mean_score")
+            if scenario_score is not None and scenario_score < 1.0:
+                opportunities.append(
+                    f"Scenario score {scenario_score:.2f} indicates room for improvement"
+                )
+
+        if artifact.outcome == "success" and not opportunities:
+            opportunities.append("Run succeeded - consider stress testing with harder scenarios")
+
+        return opportunities
+
     def _generate_findings(
         self,
         artifact: RunArtifact,
@@ -220,6 +248,7 @@ class AnalystRole:
         risk_areas: list[str],
         root_causes: list[str],
         strategy_insights: dict[Strategy, list[str]],
+        efficiency_opportunities: list[str],
     ) -> list[ReviewFinding]:
         findings: list[ReviewFinding] = []
 
@@ -285,6 +314,18 @@ class AnalystRole:
                         evidence_refs=["strategy_analysis"],
                     )
                 )
+
+        for opportunity in efficiency_opportunities:
+            findings.append(
+                ReviewFinding(
+                    finding_id=f"finding-{uuid4().hex[:8]}",
+                    category="efficiency",
+                    severity="info",
+                    title="Efficiency opportunity identified",
+                    description=opportunity,
+                    evidence_refs=["tool_efficiency_analysis"],
+                )
+            )
 
         return findings
 

@@ -194,7 +194,7 @@ class EvalRunner:
                 for task in suite.tasks
             ]
 
-            async def execute_trial(job: TrialJob) -> tuple[EvalTranscript, EvalOutcome]:
+            async def execute_trial(job: TrialJob) -> TrialResult:
                 task = next((t for t in suite.tasks if t.id == job.task_id), None)
                 if task is None:
                     raise ValueError(f"Task not found: {job.task_id}")
@@ -204,7 +204,7 @@ class EvalRunner:
                     agent_config=agent_config,
                     run_envelope=run_envelope,
                 )
-                return result.transcript, result.outcome
+                return result
 
             results = await self._trial_queue.run_trials(jobs, execute_trial)
 
@@ -238,6 +238,9 @@ class EvalRunner:
                             trial_id=trial_id,
                             transcript=result.transcript,
                             outcome=result.outcome,
+                            grader_results=result.grader_results or [],
+                            aggregate_score=result.aggregate_score,
+                            aggregate_passed=result.aggregate_passed,
                         ),
                         envelope=await self._get_trial_envelope(run_envelope, trial_id),
                     )

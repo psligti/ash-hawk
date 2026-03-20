@@ -119,10 +119,14 @@ class RunArtifact(pd.BaseModel):
     It captures all relevant information from a run for analysis, including
     tool calls, reasoning steps, messages, and outcomes.
 
+    Compatible with dawn-kestrel RunArtifact via from_dawn_kestrel() method.
+
     Attributes:
         run_id: Unique identifier for this run.
         suite_id: ID of the evaluation suite this run belongs to.
-        agent_name: Name of the agent that was evaluated.
+        agent_id: Identifier of the agent (dawn-kestrel compatible).
+        agent_name: Name of the agent that was evaluated (alias for agent_id).
+        task_type: Type of task performed (e.g., 'pr_review', 'code_change').
         outcome: Overall outcome of the run (success, failure, error).
         tool_calls: List of tool calls made during the run.
         steps: List of reasoning steps recorded during the run.
@@ -143,9 +147,17 @@ class RunArtifact(pd.BaseModel):
         default=None,
         description="ID of the evaluation suite this run belongs to",
     )
+    agent_id: str = pd.Field(
+        default="unknown",
+        description="Identifier of the agent that was evaluated",
+    )
     agent_name: str = pd.Field(
         default="unknown",
-        description="Name of the agent that was evaluated",
+        description="Name of the agent that was evaluated (alias for agent_id)",
+    )
+    task_type: str | None = pd.Field(
+        default=None,
+        description="Type of task performed (e.g., 'pr_review', 'code_change', 'content_gen')",
     )
     outcome: str = pd.Field(
         default="success",
@@ -222,3 +234,63 @@ class RunArtifact(pd.BaseModel):
     def get_total_tokens(self) -> int:
         """Get total tokens used."""
         return self.token_usage.get("total", 0)
+
+    @classmethod
+    def from_dawn_kestrel(cls, dk_artifact: Any) -> RunArtifact:
+        """Convert a dawn-kestrel RunArtifact to ash-hawk RunArtifact.
+
+        Args:
+            dk_artifact: RunArtifact from dawn_kestrel.contracts.
+
+        Returns:
+            Ash Hawk RunArtifact with field mappings applied.
+        """
+        tool_calls = []
+        for tc in getattr(dk_artifact, "tool_calls", []):
+            tool_calls.append(
+                ToolCallRecord(
+                    tool_name=getattr(tc, "tool_name", "unknown"),
+                    outcome=getattr(tc, "outcome", "success"),
+                    duration_ms=getattr(tc, "duration_ms"),
+                    error_message=getattr(tc, "error_message"),
+                    input_args=getattr(tc, "arguments", {}),
+                    output=getattr(tc, "result_preview"),
+                )
+            )
+
+        steps = []
+        for step in getattr(dk_artifact, "steps", []):
+            steps.append(
+                StepRecord(
+                    step_id=getattr(step, "step_id", ""),
+                    step_type=getattr(step, "title", "action"),
+                    content=getattr(step, "summary"),
+                    outcome=getattr(step, "status", "pending"),
+                    started_at=getattr(step, "started_at"),
+                    completed_at=getattr(step, "finished_at"),
+                )
+            )
+
+        telemetry = getattr(dk_artifact, "telemetry", {})
+        token_usage = {
+            "input": telemetry.get("input_tokens", 0),
+            "output": telemetry.get("output_tokens", 0),
+            "total": telemetry.get("total_tokens", 0),
+        }
+
+        return cls(
+            run_id=getattr(dk_artifact, "run_id", ""),
+            agent_id=getattr(dk_artifact, "agent_id", "unknown"),
+            agent_name=getattr(dk_artifact, "agent_id", "unknown"),
+            task_type=getattr(dk_artifact, "task_type"),
+            outcome=getattr(dk_artifact, "outcome", "success"),
+            tool_calls=tool_calls,
+            steps=steps,
+            messages=[],
+            total_duration_ms=telemetry.get("duration_ms"),
+            token_usage=token_usage,
+            cost_usd=telemetry.get("cost_usd"),
+            error_message=getattr(dk_artifact, "outcome_details"),
+            metadata=getattr(dk_artifact, "metadata", {}),
+            created_at=getattr(dk_artifact, "created_at"),
+        )

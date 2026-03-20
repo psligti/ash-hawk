@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import Any, Literal, cast
 from uuid import uuid4
 
-from ash_hawk.contracts import CuratedLesson, ReviewRequest, RunArtifact, ToolCallRecord
+from ash_hawk.contracts import CuratedLesson, RunArtifact, ToolCallRecord
 from ash_hawk.curation.experiment_store import ExperimentStore
 from ash_hawk.cycle.convergence import ConvergenceChecker
 from ash_hawk.cycle.types import (
@@ -21,12 +22,15 @@ from ash_hawk.cycle.types import (
     IterationResult,
 )
 from ash_hawk.experiments.registry import ExperimentRegistry
-from ash_hawk.pipeline.orchestrator import PipelineOrchestrator
-from ash_hawk.services.review_service import ReviewService
+from ash_hawk.improve_cycle.models import CuratedLesson as ImproveCuratedLesson
+from ash_hawk.improve_cycle.models import MetricValue as ImproveMetricValue
+from ash_hawk.improve_cycle.models import ProposalType
+from ash_hawk.improve_cycle.models import ReviewFinding as ImproveReviewFinding
+from ash_hawk.improve_cycle.models import RunArtifactBundle as ImproveRunArtifactBundle
+from ash_hawk.improve_cycle.orchestrator import ImproveCycleOrchestrator, ImproveCycleResult
+from ash_hawk.improve_cycle.storage import ImproveCycleStorage
 from ash_hawk.storage import FileStorage
-
-if TYPE_CHECKING:
-    pass
+from ash_hawk.strategies import Strategy
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +83,20 @@ class IterationCoordinator:
         self._config = config
         self._storage = storage
         self._experiment_store = experiment_store
-        self._review_service = ReviewService()
+        improve_root = Path(".ash-hawk") / "improve-cycle" / config.experiment_id
+        self._improve_storage = ImproveCycleStorage(improve_root)
+        self._improve_orchestrator = ImproveCycleOrchestrator(
+            storage=self._improve_storage,
+            enable_competitor=bool(config.metadata.get("enable_competitor", True)),
+            enable_triage=bool(config.metadata.get("enable_triage", True)),
+            enable_verifier=bool(config.metadata.get("enable_verifier", True)),
+            enable_adversary=bool(config.metadata.get("enable_adversary", True)),
+            min_verification_runs=_to_int(config.metadata.get("min_verification_runs"), 3),
+            max_latency_delta_pct=_to_float(config.metadata.get("max_latency_delta_pct"), 15.0),
+            max_token_delta_pct=_to_float(config.metadata.get("max_token_delta_pct"), 10.0),
+            cross_pack_eval_pack_ids=_to_str_list(config.metadata.get("cross_pack_eval_pack")),
+            promotion_scope=str(config.metadata.get("promotion_scope", "agent-specific")),
+        )
         self._artifact_adapter = _CycleArtifactAdapter(storage)
 
     async def run_iteration(
@@ -95,25 +112,24 @@ class IterationCoordinator:
             scenario_eval = await self._evaluate_scenarios()
             artifact = await self._generate_run_artifact(run_id, lessons_to_apply, scenario_eval)
 
-            review_request = ReviewRequest(
-                run_artifact_id=artifact.run_id,
-                target_agent=self._config.target_agent,
-                eval_suite=[self._config.eval_pack] if self._config.eval_pack else [],
-                review_mode="standard",
-                persistence_mode="curate",
-                experiment_id=self._config.experiment_id,
-                baseline_run_id=self._config.baseline_run_id,
+            run_bundle = self._to_improve_run_bundle(artifact, scenario_eval, lessons_to_apply)
+            improve_result = await asyncio.to_thread(
+                self._improve_orchestrator.run_cycle, run_bundle
             )
-
-            orchestrator = PipelineOrchestrator()
-            lessons = orchestrator.run(review_request, artifact)
+            lessons = [
+                self._to_legacy_curated_lesson(lesson) for lesson in improve_result.curated_lessons
+            ]
+            if any(report.regression_count > 0 for report in improve_result.verification_reports):
+                lessons = [
+                    lesson.model_copy(update={"validation_status": "rolled_back"})
+                    for lesson in lessons
+                ]
+            role_summaries = self._summarize_improve_cycle(improve_result)
 
             for lesson in lessons:
                 self._experiment_store.store(lesson, self._config.experiment_id)
 
-            score = self._extract_score(orchestrator)
-            if scenario_eval is not None:
-                score = _to_float(scenario_eval.get("mean_score"), 0.0)
+            score = self._derive_iteration_score(scenario_eval, improve_result.verification_reports)
 
             result = IterationResult(
                 iteration_num=iteration_num,
@@ -127,12 +143,26 @@ class IterationCoordinator:
                 metadata={
                     "scenario_eval": scenario_eval,
                     "lesson_titles": [lesson.title for lesson in lessons],
+                    "lesson_ids": [lesson.lesson_id for lesson in lessons],
                     "tested_change_titles": [lesson.title for lesson in lessons_to_apply],
+                    "tested_change_ids": [lesson.lesson_id for lesson in lessons_to_apply],
+                    "tested_change_rationales": [
+                        lesson.description or str(lesson.lesson_payload.get("hypothesis", ""))
+                        for lesson in lessons_to_apply
+                    ],
+                    "role_summaries": role_summaries,
                 }
                 if scenario_eval is not None
                 else {
                     "lesson_titles": [lesson.title for lesson in lessons],
+                    "lesson_ids": [lesson.lesson_id for lesson in lessons],
                     "tested_change_titles": [lesson.title for lesson in lessons_to_apply],
+                    "tested_change_ids": [lesson.lesson_id for lesson in lessons_to_apply],
+                    "tested_change_rationales": [
+                        lesson.description or str(lesson.lesson_payload.get("hypothesis", ""))
+                        for lesson in lessons_to_apply
+                    ],
+                    "role_summaries": role_summaries,
                 },
             )
 
@@ -168,15 +198,19 @@ class IterationCoordinator:
             ),
             ToolCallRecord(
                 tool_name="policy_apply",
-                outcome="success" if lessons else "failure",
+                outcome="success",
                 duration_ms=30,
-                error_message=None if lessons else "No approved policy lessons available",
+                error_message=None,
                 input_args={"lesson_count": len(lessons)},
+                output={
+                    "applied": bool(lessons),
+                    "reason": "No lessons selected for this iteration" if not lessons else None,
+                },
             ),
         ]
 
         metrics: dict[str, float] = {"lessons_applied": float(len(lessons))}
-        outcome = "success" if lessons else "failure"
+        outcome = "success"
 
         if scenario_eval is not None:
             mean_score = _to_float(scenario_eval.get("mean_score"), 0.0)
@@ -217,14 +251,136 @@ class IterationCoordinator:
             completed_at=datetime.now(UTC),
         )
 
-    def _extract_score(self, orchestrator: PipelineOrchestrator) -> float:
-        from ash_hawk.pipeline.types import PipelineRole
+    def _derive_iteration_score(
+        self,
+        scenario_eval: dict[str, object] | None,
+        verification_reports: list[Any],
+    ) -> float:
+        if scenario_eval is not None:
+            return _to_float(scenario_eval.get("mean_score"), 0.0)
+        if not verification_reports:
+            return 0.0
+        deltas = [
+            float(report.score_delta)
+            for report in verification_reports
+            if getattr(report, "score_delta", None) is not None
+        ]
+        if deltas:
+            avg_delta = sum(deltas) / len(deltas)
+            return max(0.0, min(1.0, 0.5 + avg_delta))
+        passed_count = sum(1 for report in verification_reports if getattr(report, "passed", False))
+        return passed_count / len(verification_reports)
 
-        analyst_step = orchestrator.get_step_result(PipelineRole.ANALYST)
-        if analyst_step and analyst_step.outputs:
-            metrics = analyst_step.outputs.get("metrics", {})
-            return float(metrics.get("score", 0.0))
-        return 0.0
+    def _summarize_improve_cycle(self, improve_result: ImproveCycleResult) -> dict[str, str]:
+        finding_count = len(
+            self._improve_storage.findings.list_all(model_type=ImproveReviewFinding)
+        )
+        coach_count = sum(
+            1 for proposal in improve_result.proposals if proposal.source_role == "coach"
+        )
+        architect_count = sum(
+            1 for proposal in improve_result.proposals if proposal.source_role == "architect"
+        )
+        competitor_enabled = bool(self._config.metadata.get("enable_competitor", True))
+        summaries = {
+            "competitor": "Replay comparison complete"
+            if competitor_enabled
+            else "Competitor disabled",
+            "translator": f"Normalized findings={finding_count}",
+            "analyst": improve_result.history.trend_notes[0]
+            if improve_result.history.trend_notes
+            else "Analysis complete",
+            "coach": f"Behavior proposals={coach_count}",
+            "architect": f"Infra proposals={architect_count}",
+            "curator": f"Curated lessons={len(improve_result.curated_lessons)}",
+            "verifier": f"Verification reports={len(improve_result.verification_reports)}",
+            "promotion_manager": f"Decisions={len(improve_result.promotion_decisions)}",
+        }
+        return summaries
+
+    def _to_improve_run_bundle(
+        self,
+        artifact: RunArtifact,
+        scenario_eval: dict[str, object] | None,
+        lessons_to_apply: list[CuratedLesson],
+    ) -> ImproveRunArtifactBundle:
+        score_value = _to_float(artifact.metrics.get("scenario_mean_score", 0.0), 0.0)
+        if scenario_eval is not None:
+            score_value = _to_float(scenario_eval.get("mean_score"), score_value)
+        tool_traces = [
+            {
+                "tool_name": call.tool_name,
+                "outcome": call.outcome,
+                "duration_ms": call.duration_ms,
+                "error_message": call.error_message,
+            }
+            for call in artifact.tool_calls
+        ]
+        return ImproveRunArtifactBundle(
+            run_id=artifact.run_id,
+            experiment_id=self._config.experiment_id,
+            agent_id=self._config.target_agent,
+            eval_pack_id=self._config.eval_pack or "default",
+            scenario_ids=list(self._config.scenario_paths) or ["default"],
+            timestamp=datetime.now(UTC).isoformat(),
+            transcripts=[message.get("content", "") for message in artifact.messages],
+            tool_traces=tool_traces,
+            outputs=[{"outcome": artifact.outcome, "error_message": artifact.error_message}],
+            metrics=[ImproveMetricValue(name="score", value=score_value)],
+            active_lessons=[lesson.lesson_id for lesson in lessons_to_apply],
+        )
+
+    def _to_legacy_curated_lesson(self, lesson: ImproveCuratedLesson) -> CuratedLesson:
+        lesson_type: Literal["policy", "skill", "tool", "harness", "eval"] = "policy"
+        if lesson.proposal_type in {
+            ProposalType.POLICY_PATCH,
+            ProposalType.POLICY_REORDER,
+            ProposalType.PLAYBOOK_UPDATE,
+            ProposalType.PROMPT_GUARDRAIL,
+            ProposalType.BEHAVIORAL_CHECKLIST,
+        }:
+            lesson_type = "policy"
+        elif lesson.proposal_type in {ProposalType.SKILL_CREATE, ProposalType.SKILL_REVISE}:
+            lesson_type = "skill"
+        elif lesson.proposal_type in {
+            ProposalType.TOOL_CREATE,
+            ProposalType.TOOL_REVISE,
+            ProposalType.TOOL_WRAPPER_UPDATE,
+            ProposalType.OBSERVABILITY_IMPROVEMENT,
+            ProposalType.CONFIG_ADJUSTMENT,
+        }:
+            lesson_type = "tool"
+        elif lesson.proposal_type == ProposalType.HARNESS_PATCH:
+            lesson_type = "harness"
+        elif lesson.proposal_type in {ProposalType.EVAL_PATCH, ProposalType.EVAL_EXPANSION}:
+            lesson_type = "eval"
+
+        if lesson_type == "harness":
+            strategy = Strategy.HARNESS_QUALITY
+        elif lesson_type == "eval":
+            strategy = Strategy.EVAL_QUALITY
+        elif lesson_type in {"policy", "skill"}:
+            strategy = Strategy.AGENT_BEHAVIOR
+        else:
+            strategy = Strategy.TOOL_QUALITY
+        return CuratedLesson(
+            lesson_id=lesson.lesson_id,
+            source_proposal_id=lesson.proposal_id,
+            applies_to_agents=[self._config.target_agent],
+            lesson_type=lesson_type,
+            title=lesson.title,
+            description=lesson.summary,
+            lesson_payload={
+                "target_surface": lesson.target_surface,
+                "curation_notes": lesson.curation_notes,
+                "lineage": lesson.lineage,
+            },
+            validation_status="approved",
+            version=1,
+            created_at=datetime.now(UTC),
+            experiment_id=self._config.experiment_id,
+            strategy=strategy,
+        )
 
     async def _evaluate_scenarios(self) -> dict[str, object] | None:
         if not self._config.scenario_paths:
@@ -233,9 +389,34 @@ class IterationCoordinator:
         try:
             from ash_hawk.scenario.runner import run_scenarios_async
 
-            summary = await run_scenarios_async(
-                paths=self._config.scenario_paths,
-                tooling_mode="record",
+            logger.info(
+                "Running %d scenario(s) with parallelism=%s",
+                len(self._config.scenario_paths),
+                self._config.scenario_parallelism,
+            )
+
+            scenario_task = asyncio.create_task(
+                run_scenarios_async(
+                    paths=self._config.scenario_paths,
+                    tooling_mode="record",
+                    parallelism=self._config.scenario_parallelism,
+                )
+            )
+            heartbeat_task = asyncio.create_task(self._log_scenario_heartbeat(scenario_task))
+            try:
+                summary = await scenario_task
+            finally:
+                heartbeat_task.cancel()
+                try:
+                    await heartbeat_task
+                except asyncio.CancelledError:
+                    pass
+            logger.info(
+                "Scenario run complete: passed=%d failed=%d total=%d mean_score=%.3f",
+                int(summary.metrics.passed_tasks),
+                int(summary.metrics.failed_tasks),
+                int(summary.metrics.total_tasks),
+                float(summary.metrics.mean_score),
             )
             has_errors = any(str(trial.status) in {"error", "timeout"} for trial in summary.trials)
             collected_errors: list[str] = []
@@ -269,6 +450,19 @@ class IterationCoordinator:
             if self._config.fail_on_scenario_error:
                 raise RuntimeError(f"Scenario scoring failed: {exc}") from exc
             return None
+
+    async def _log_scenario_heartbeat(self, scenario_task: asyncio.Task[object]) -> None:
+        elapsed = 0
+        while not scenario_task.done():
+            await asyncio.sleep(30)
+            elapsed += 30
+            if scenario_task.done():
+                break
+            logger.info(
+                "Scenario run still in progress (%ds elapsed, parallelism=%s)",
+                elapsed,
+                self._config.scenario_parallelism,
+            )
 
 
 class CycleRunner:
@@ -314,7 +508,7 @@ class CycleRunner:
             logger.info(f"Resuming from iteration {start_iteration}")
 
         for iteration_num in range(start_iteration + 1, self._config.max_iterations + 1):
-            lessons = self._get_lessons_for_iteration()
+            lessons = self._get_lessons_for_iteration(iteration_num)
 
             iteration_result = await self._coordinator.run_iteration(
                 iteration_num,
@@ -363,11 +557,102 @@ class CycleRunner:
 
         return result
 
-    def _get_lessons_for_iteration(self) -> list[CuratedLesson]:
-        return self._experiment_store.get_for_agent(
+    def _get_lessons_for_iteration(self, iteration_num: int) -> list[CuratedLesson]:
+        available_lessons = self._experiment_store.get_for_agent(
             self._config.target_agent,
             self._config.experiment_id,
         )
+        return self.select_lessons_for_iteration(
+            available_lessons,
+            iteration_num,
+            self._config.max_lessons_per_iteration,
+        )
+
+    @staticmethod
+    def select_lessons_for_iteration(
+        lessons: list[CuratedLesson],
+        iteration_num: int,
+        max_lessons: int,
+    ) -> list[CuratedLesson]:
+        if max_lessons <= 0 or not lessons:
+            return []
+
+        if len(lessons) <= max_lessons:
+            return sorted(
+                lessons,
+                key=lambda lesson: (
+                    lesson.created_at.isoformat(),
+                    lesson.lesson_id,
+                ),
+            )
+
+        by_bucket: dict[str, list[CuratedLesson]] = {}
+        for lesson in lessons:
+            strategy_value = (
+                lesson.strategy.value if lesson.strategy is not None else lesson.lesson_type
+            )
+            by_bucket.setdefault(strategy_value, []).append(lesson)
+
+        for bucket_lessons in by_bucket.values():
+            bucket_lessons.sort(
+                key=lambda lesson: (
+                    lesson.created_at.isoformat(),
+                    lesson.lesson_id,
+                )
+            )
+
+        selected: list[CuratedLesson] = []
+        selected_ids: set[str] = set()
+
+        newest_lessons = sorted(
+            lessons,
+            key=lambda lesson: (
+                lesson.created_at.isoformat(),
+                lesson.lesson_id,
+            ),
+            reverse=True,
+        )
+
+        newest = newest_lessons[0]
+        selected.append(newest)
+        selected_ids.add(newest.lesson_id)
+
+        bucket_keys = sorted(by_bucket)
+        if bucket_keys:
+            start_bucket = (iteration_num - 1) % len(bucket_keys)
+            bucket_positions: dict[str, int] = {}
+            for key in bucket_keys:
+                bucket = by_bucket[key]
+                bucket_positions[key] = (iteration_num - 1) % len(bucket)
+
+            loop_budget = len(lessons) * 3
+            while len(selected) < max_lessons and loop_budget > 0:
+                for offset in range(len(bucket_keys)):
+                    key = bucket_keys[(start_bucket + offset) % len(bucket_keys)]
+                    bucket = by_bucket[key]
+                    if not bucket:
+                        continue
+                    position = bucket_positions[key] % len(bucket)
+                    candidate = bucket[position]
+                    bucket_positions[key] = (position + 1) % len(bucket)
+                    if candidate.lesson_id in selected_ids:
+                        continue
+                    selected.append(candidate)
+                    selected_ids.add(candidate.lesson_id)
+                    if len(selected) >= max_lessons:
+                        break
+                loop_budget -= 1
+
+        if len(selected) < max_lessons:
+            for candidate in newest_lessons:
+                if candidate.lesson_id in selected_ids:
+                    continue
+                selected.append(candidate)
+                selected_ids.add(candidate.lesson_id)
+                if len(selected) >= max_lessons:
+                    break
+
+        return selected
 
     async def _promote_lessons(self, lessons: list[CuratedLesson]) -> list[str]:
         if not lessons:

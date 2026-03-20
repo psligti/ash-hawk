@@ -6,7 +6,9 @@ to throttle both LLM API calls and trial execution.
 
 from __future__ import annotations
 
+import asyncio
 import importlib
+import logging
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -15,8 +17,11 @@ from typing import Any, cast
 from ash_hawk.types import (
     EvalOutcome,
     EvalTranscript,
+    GraderResult,
     TokenUsage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -58,6 +63,9 @@ class TrialJobResult:
     transcript: EvalTranscript
     outcome: EvalOutcome
     wait_time_seconds: float
+    grader_results: list[GraderResult] | None = None
+    aggregate_score: float = 0.0
+    aggregate_passed: bool = False
 
 
 class LLMRequestQueue:
@@ -86,7 +94,11 @@ class LLMRequestQueue:
 
     def _get_queue_type(self) -> Any:
         execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
-        return getattr(execution_queue_module, "InMemoryAgentExecutionQueue")
+        return getattr(
+            execution_queue_module,
+            "InMemoryAgentExecutionQueue",
+            getattr(execution_queue_module, "AgentExecutionQueue"),
+        )
 
     def _get_job_type(self) -> Any:
         execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
@@ -109,40 +121,51 @@ class LLMRequestQueue:
         Raises:
             Exception: Re-raised from execute function.
         """
-        queue_type = self._get_queue_type()
-        job_type = self._get_job_type()
-
-        queue = queue_type(
-            max_workers=self.max_workers,
-            poll_interval=self.poll_interval,
-            timeout_seconds=self.timeout_seconds,
-        )
-
-        queue_job = job_type(index=0, task_id=request.request_id)
         start_time = time.time()
-        response: Any = None
-        error: Exception | None = None
+        response: Any
 
-        async def execute_job(_: Any) -> str:
-            nonlocal response, error
-            try:
-                response = await execute(request)
-                return request.request_id
-            except Exception as e:
-                error = e
-                raise
+        try:
+            queue_type = self._get_queue_type()
+            job_type = self._get_job_type()
 
-        batch_result = await queue.run_jobs([queue_job], execute_job)
+            queue = queue_type(
+                max_workers=self.max_workers,
+                poll_interval=self.poll_interval,
+                timeout_seconds=self.timeout_seconds,
+            )
+
+            queue_job = job_type(index=0, task_id=request.request_id)
+            error: Exception | None = None
+            queued_response: Any = None
+
+            async def execute_job(_: Any) -> str:
+                nonlocal queued_response, error
+                try:
+                    queued_response = await execute(request)
+                    return request.request_id
+                except Exception as e:
+                    error = e
+                    raise
+
+            batch_result = await queue.run_jobs([queue_job], execute_job)
+
+            if 0 in batch_result.errors_by_index:
+                raise RuntimeError(batch_result.errors_by_index[0])
+
+            if error is not None:
+                raise error
+
+            response = queued_response
+        except Exception as queue_exc:
+            logger.warning(
+                "LLMRequestQueue backend failed; falling back to direct execution: %s",
+                queue_exc,
+            )
+            response = await execute(request)
 
         wait_time = time.time() - start_time
         self._stats["total_requests"] += 1
         self._stats["total_wait_time"] += wait_time
-
-        if 0 in batch_result.errors_by_index:
-            raise Exception(batch_result.errors_by_index[0])
-
-        if error:
-            raise error
 
         token_usage = self._extract_token_usage(response)
         cost_usd = self._extract_cost(response)
@@ -205,7 +228,11 @@ class TrialExecutionQueue:
 
     def _get_queue_type(self) -> Any:
         execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
-        return getattr(execution_queue_module, "InMemoryAgentExecutionQueue")
+        return getattr(
+            execution_queue_module,
+            "InMemoryAgentExecutionQueue",
+            getattr(execution_queue_module, "AgentExecutionQueue"),
+        )
 
     def _get_job_type(self) -> Any:
         execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
@@ -214,13 +241,15 @@ class TrialExecutionQueue:
     async def run_trials(
         self,
         jobs: list[TrialJob],
-        execute: Callable[[TrialJob], Awaitable[tuple[EvalTranscript, EvalOutcome]]],
+        execute: Callable[[TrialJob], Awaitable[Any]],
     ) -> list[TrialJobResult | Exception]:
         """Execute trial jobs with throttling.
 
         Args:
             jobs: List of trial jobs to execute.
-            execute: Async function to execute each trial.
+            execute: Async function to execute each trial. Can return either
+                (transcript, outcome) tuple or a TrialResult-like object with
+                additional fields.
 
         Returns:
             List of results or exceptions in job order.
@@ -239,7 +268,7 @@ class TrialExecutionQueue:
 
         queue_jobs = [job_type(index=i, task_id=job.task_id) for i, job in enumerate(jobs)]
 
-        results: list[TrialJobResult | Exception] = [Exception("not executed")] * len(jobs)
+        results: list[TrialJobResult | Exception] = [Exception("not executed") for _ in jobs]
         start_times: dict[str, float] = {}
 
         async def execute_job(queue_job: Any) -> str:
@@ -249,28 +278,158 @@ class TrialExecutionQueue:
             start_times[job_id] = time.time()
 
             try:
-                transcript, outcome = await execute(job)
+                result = await execute(job)
                 elapsed = time.time() - start_times[job_id]
-
-                results[idx] = TrialJobResult(
-                    job_id=job_id,
-                    task_id=job.task_id,
-                    transcript=transcript,
-                    outcome=outcome,
-                    wait_time_seconds=elapsed,
-                )
+                results[idx] = self._to_trial_job_result(job, result, elapsed)
                 return job_id
             except Exception as e:
                 results[idx] = e
                 raise
 
-        batch_result = await queue.run_jobs(queue_jobs, execute_job)
+        try:
+            batch_result = await queue.run_jobs(queue_jobs, execute_job)
+        except Exception as queue_exc:
+            logger.warning(
+                "TrialExecutionQueue backend failed; falling back to local execution: %s",
+                queue_exc,
+            )
+            return await self._run_trials_fallback(jobs, execute)
 
         for idx, error_msg in batch_result.errors_by_index.items():
             if not isinstance(results[idx], TrialJobResult):
                 results[idx] = Exception(error_msg)
 
+        unresolved_indices = [
+            idx for idx, result in enumerate(results) if self._is_not_executed_result(result)
+        ]
+        if unresolved_indices:
+            unresolved_job_ids = [jobs[idx].job_id for idx in unresolved_indices]
+            logger.warning(
+                "TrialExecutionQueue returned unresolved jobs (%d/%d): %s; "
+                "retrying unresolved jobs locally",
+                len(unresolved_indices),
+                len(jobs),
+                ", ".join(unresolved_job_ids[:10]),
+            )
+            fallback_results = await self._run_trials_subset_fallback(
+                jobs, unresolved_indices, execute
+            )
+            for idx, fallback_result in fallback_results.items():
+                results[idx] = fallback_result
+
+        final_unresolved = [
+            idx for idx, result in enumerate(results) if self._is_not_executed_result(result)
+        ]
+        if final_unresolved:
+            unresolved_job_ids = [jobs[idx].job_id for idx in final_unresolved]
+            logger.error(
+                "TrialExecutionQueue still unresolved after local retry (%d/%d): %s",
+                len(final_unresolved),
+                len(jobs),
+                ", ".join(unresolved_job_ids[:10]),
+            )
+
         return results
+
+    @staticmethod
+    def _is_not_executed_result(result: TrialJobResult | Exception) -> bool:
+        if not isinstance(result, Exception):
+            return False
+        return str(result).strip().lower() == "not executed"
+
+    @staticmethod
+    def _to_trial_job_result(job: TrialJob, result: Any, elapsed: float) -> TrialJobResult:
+        if isinstance(result, tuple):
+            result_tuple = cast(tuple[object, ...], result)
+            if len(result_tuple) != 2:
+                raise TypeError("Trial execute() returned invalid tuple result")
+            transcript_raw = result_tuple[0]
+            outcome_raw = result_tuple[1]
+            if not isinstance(transcript_raw, EvalTranscript) or not isinstance(
+                outcome_raw, EvalOutcome
+            ):
+                raise TypeError("Trial execute() tuple must be (EvalTranscript, EvalOutcome)")
+            return TrialJobResult(
+                job_id=job.job_id,
+                task_id=job.task_id,
+                transcript=transcript_raw,
+                outcome=outcome_raw,
+                wait_time_seconds=elapsed,
+            )
+
+        transcript_value = getattr(result, "transcript", None)
+        outcome_value = getattr(result, "outcome", None)
+        if not isinstance(transcript_value, EvalTranscript) or not isinstance(
+            outcome_value, EvalOutcome
+        ):
+            raise TypeError(
+                "Trial execute() returned unsupported result type; expected tuple or object with "
+                "EvalTranscript/EvalOutcome"
+            )
+
+        return TrialJobResult(
+            job_id=job.job_id,
+            task_id=job.task_id,
+            transcript=transcript_value,
+            outcome=outcome_value,
+            wait_time_seconds=elapsed,
+            grader_results=getattr(result, "grader_results", None),
+            aggregate_score=getattr(result, "aggregate_score", 0.0),
+            aggregate_passed=getattr(result, "aggregate_passed", False),
+        )
+
+    async def _run_trials_fallback(
+        self,
+        jobs: list[TrialJob],
+        execute: Callable[[TrialJob], Awaitable[Any]],
+    ) -> list[TrialJobResult | Exception]:
+        results: list[TrialJobResult | Exception] = [Exception("not executed") for _ in jobs]
+        semaphore = asyncio.Semaphore(self.max_workers)
+
+        async def run_one(idx: int, job: TrialJob) -> None:
+            async with semaphore:
+                started = time.time()
+                try:
+                    raw_result = await asyncio.wait_for(
+                        execute(job),
+                        timeout=self.timeout_seconds,
+                    )
+                    elapsed = time.time() - started
+                    results[idx] = self._to_trial_job_result(job, raw_result, elapsed)
+                except Exception as exc:
+                    results[idx] = exc
+
+        await asyncio.gather(
+            *(run_one(idx, job) for idx, job in enumerate(jobs)),
+            return_exceptions=False,
+        )
+        return results
+
+    async def _run_trials_subset_fallback(
+        self,
+        jobs: list[TrialJob],
+        indices: list[int],
+        execute: Callable[[TrialJob], Awaitable[Any]],
+    ) -> dict[int, TrialJobResult | Exception]:
+        fallback_results: dict[int, TrialJobResult | Exception] = {}
+        semaphore = asyncio.Semaphore(self.max_workers)
+
+        async def run_one(idx: int) -> None:
+            async with semaphore:
+                job = jobs[idx]
+                started = time.time()
+                try:
+                    raw_result = await asyncio.wait_for(
+                        execute(job),
+                        timeout=self.timeout_seconds,
+                    )
+                    elapsed = time.time() - started
+                    fallback_results[idx] = self._to_trial_job_result(job, raw_result, elapsed)
+                except Exception as exc:
+                    fallback_results[idx] = exc
+
+        await asyncio.gather(*(run_one(idx) for idx in indices), return_exceptions=False)
+        return fallback_results
 
 
 _llm_queue: LLMRequestQueue | None = None

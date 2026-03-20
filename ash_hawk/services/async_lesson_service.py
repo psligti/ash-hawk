@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ash_hawk.contracts import CuratedLesson, ImprovementProposal
+from ash_hawk.curation.persistent_provenance import PersistentProvenanceTracker
 from ash_hawk.curation.persistent_store import PersistentLessonStore
-from ash_hawk.curation.provenance import ProvenanceRecord, ProvenanceTracker
+from ash_hawk.curation.provenance import ProvenanceRecord
 from ash_hawk.services.lesson_service import (
     ExperimentIdRequiredError,
     LessonServiceError,
 )
+
+if TYPE_CHECKING:
+    pass
 
 
 class AsyncLessonService:
@@ -25,7 +30,8 @@ class AsyncLessonService:
 
     def __init__(self, storage_path: Path | str | None = None) -> None:
         self._store = PersistentLessonStore(storage_path)
-        self._provenance = ProvenanceTracker()
+        prov_path = Path(storage_path).parent if storage_path else Path(".ash-hawk")
+        self._provenance = PersistentProvenanceTracker(prov_path / "provenance.db")
 
     async def approve_proposal(
         self,
@@ -65,7 +71,7 @@ class AsyncLessonService:
         )
 
         await self._store.store(lesson)
-        self._provenance.track(lesson, proposal)
+        await self._provenance.track(lesson, proposal)
 
         return lesson
 
@@ -106,11 +112,11 @@ class AsyncLessonService:
     async def deprecate_lesson(self, lesson_id: str) -> CuratedLesson | None:
         return await self._store.update_status(lesson_id, "deprecated")
 
-    def get_provenance(self, lesson_id: str) -> ProvenanceRecord | None:
-        return self._provenance.get_lesson_provenance(lesson_id)
+    async def get_provenance(self, lesson_id: str) -> ProvenanceRecord | None:
+        return await self._provenance.get_lesson_provenance(lesson_id)
 
-    def get_lessons_from_run(self, run_id: str) -> list[str]:
-        return self._provenance.get_lessons_from_run(run_id)
+    async def get_lessons_from_run(self, run_id: str) -> list[str]:
+        return await self._provenance.get_lessons_from_run(run_id)
 
     async def delete_lesson(self, lesson_id: str) -> bool:
         return await self._store.delete(lesson_id)
@@ -120,3 +126,4 @@ class AsyncLessonService:
 
     async def close(self) -> None:
         await self._store.close()
+        await self._provenance.close()

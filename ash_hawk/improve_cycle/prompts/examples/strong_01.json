@@ -1,0 +1,4 @@
+{
+  "quality": "strong",
+  "traits": ["schema_valid", "evidence_grounded", "role_bounded"]
+}

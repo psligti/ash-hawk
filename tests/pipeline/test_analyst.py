@@ -6,7 +6,6 @@ import pytest
 
 from ash_hawk.contracts import ReviewFinding, ReviewMetrics
 from ash_hawk.pipeline.analyst import AnalystInput, AnalystOutput, AnalystRole
-
 from tests.pipeline.conftest import MockRunArtifact, MockToolCall
 
 

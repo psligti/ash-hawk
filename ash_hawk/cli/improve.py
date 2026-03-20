@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,6 +20,7 @@ from ash_hawk.contracts import (
     ReviewResult,
 )
 from ash_hawk.cycle.types import IterationResult
+from ash_hawk.scenario.loader import discover_scenarios
 from ash_hawk.services.review_service import ReviewService
 from ash_hawk.storage import FileStorage
 
@@ -280,8 +282,14 @@ def rollback_lesson(lesson_id: str, reason: str) -> None:
     """
     console.print(f"[red]Rolling back lesson:[/red] {lesson_id}")
     console.print(f"[red]Reason:[/red] {reason}")
+    from ash_hawk.services.lesson_service import LessonService
 
-    console.print("[yellow]Lesson marked for rollback[/yellow]")
+    service = LessonService()
+    updated = service.deactivate_lesson(lesson_id)
+    if updated is None:
+        raise click.ClickException(f"Lesson not found: {lesson_id}")
+
+    console.print(f"[green]Lesson rolled back:[/green] {updated.lesson_id}")
 
 
 def _run_review(request: ReviewRequest) -> ReviewResult:
@@ -482,9 +490,70 @@ def _list_lessons(
     help="Save checkpoint every N iterations",
 )
 @click.option(
+    "--lessons-per-iteration",
+    default=4,
+    type=int,
+    help="Maximum approved lessons to apply per iteration",
+)
+@click.option(
     "--scenario-path",
     multiple=True,
     help="Scenario file path(s) to run for per-iteration scoring",
+)
+@click.option(
+    "--scenario-parallelism",
+    type=int,
+    default=None,
+    help="Override parallel scenario workers for per-iteration scoring",
+)
+@click.option(
+    "--queue-timeout-seconds",
+    type=int,
+    default=None,
+    help="Override ASH_HAWK_DEFAULT_TIMEOUT_SECONDS for this run",
+)
+@click.option(
+    "--llm-timeout-seconds",
+    type=int,
+    default=None,
+    help="Override ASH_HAWK_LLM_TIMEOUT_SECONDS for this run",
+)
+@click.option(
+    "--llm-max-workers",
+    type=int,
+    default=None,
+    help="Override ASH_HAWK_LLM_MAX_WORKERS for this run",
+)
+@click.option(
+    "--trial-max-workers",
+    type=int,
+    default=None,
+    help="Override ASH_HAWK_TRIAL_MAX_WORKERS for this run",
+)
+@click.option(
+    "--progress-logs/--no-progress-logs",
+    default=True,
+    help="Show iteration progress logs during cycle execution",
+)
+@click.option(
+    "--disable-redis/--allow-redis",
+    default=False,
+    help="Use Redis queue/rate limiting by default; pass --disable-redis to force local backends",
+)
+@click.option("--enable-competitor/--disable-competitor", default=True)
+@click.option("--enable-triage/--disable-triage", default=True)
+@click.option("--enable-verifier/--disable-verifier", default=True)
+@click.option("--enable-adversary/--disable-adversary", default=True)
+@click.option("--cross-pack-eval-pack", multiple=True)
+@click.option("--max-token-delta-pct", type=float, default=10.0)
+@click.option("--max-latency-delta-pct", type=float, default=15.0)
+@click.option("--min-verification-runs", type=int, default=3)
+@click.option(
+    "--promotion-scope",
+    type=click.Choice(
+        ["global", "agent-specific", "eval-pack-specific", "scenario-family-specific", "temporary"]
+    ),
+    default="agent-specific",
 )
 def run_cycle(
     agent: str,
@@ -495,7 +564,24 @@ def run_cycle(
     promotion_threshold: int,
     eval_pack: str | None,
     checkpoint_interval: int,
+    lessons_per_iteration: int,
     scenario_path: tuple[str, ...],
+    scenario_parallelism: int | None,
+    queue_timeout_seconds: int | None,
+    llm_timeout_seconds: int | None,
+    llm_max_workers: int | None,
+    trial_max_workers: int | None,
+    progress_logs: bool,
+    disable_redis: bool,
+    enable_competitor: bool,
+    enable_triage: bool,
+    enable_verifier: bool,
+    enable_adversary: bool,
+    cross_pack_eval_pack: tuple[str, ...],
+    max_token_delta_pct: float,
+    max_latency_delta_pct: float,
+    min_verification_runs: int,
+    promotion_scope: str,
 ) -> None:
     """Run an N-iteration improvement cycle on a target agent.
 
@@ -507,11 +593,77 @@ def run_cycle(
     Example:
         ash-hawk improve cycle --agent bolt-merlin --iterations 100
     """
+    import os
+
+    from ash_hawk.config import reload_config
     from ash_hawk.cycle import CycleConfig, CycleRunner, create_cycle_id
+
+    effective_queue_timeout_seconds = queue_timeout_seconds
+    effective_scenario_parallelism = scenario_parallelism
+    effective_llm_timeout_seconds = llm_timeout_seconds
+    effective_llm_max_workers = llm_max_workers
+    effective_trial_max_workers = trial_max_workers
 
     cycle_id = create_cycle_id()
     experiment_id = experiment or f"exp-{agent}-{cycle_id}"
-    scenario_paths = list(scenario_path) or _default_scenarios_for_agent(agent)
+    scenario_inputs = list(scenario_path) or _default_scenarios_for_agent(agent)
+    scenario_paths = resolve_cycle_scenario_paths(scenario_inputs)
+
+    if effective_scenario_parallelism is None and scenario_paths:
+        if len(scenario_paths) >= 100:
+            effective_scenario_parallelism = 1
+        elif len(scenario_paths) >= 40:
+            effective_scenario_parallelism = 2
+
+    if effective_queue_timeout_seconds is None and scenario_paths:
+        if len(scenario_paths) >= 100:
+            effective_queue_timeout_seconds = 14400
+        elif len(scenario_paths) >= 40:
+            effective_queue_timeout_seconds = 5400
+
+    if effective_llm_timeout_seconds is None and scenario_paths:
+        if len(scenario_paths) >= 100:
+            effective_llm_timeout_seconds = 420
+        elif len(scenario_paths) >= 40:
+            effective_llm_timeout_seconds = 240
+
+    if scenario_paths and llm_max_workers is None and trial_max_workers is None:
+        if len(scenario_paths) >= 100:
+            effective_llm_max_workers = 1
+            effective_trial_max_workers = 1
+        elif len(scenario_paths) >= 40:
+            effective_llm_max_workers = 2
+            effective_trial_max_workers = 2
+
+    if effective_queue_timeout_seconds is not None:
+        os.environ["ASH_HAWK_DEFAULT_TIMEOUT_SECONDS"] = str(effective_queue_timeout_seconds)
+    if effective_llm_timeout_seconds is not None:
+        os.environ["ASH_HAWK_LLM_TIMEOUT_SECONDS"] = str(effective_llm_timeout_seconds)
+    if effective_llm_max_workers is not None:
+        os.environ["ASH_HAWK_LLM_MAX_WORKERS"] = str(effective_llm_max_workers)
+    if effective_trial_max_workers is not None:
+        os.environ["ASH_HAWK_TRIAL_MAX_WORKERS"] = str(effective_trial_max_workers)
+    if disable_redis:
+        os.environ["DAWN_KESTREL_REDIS_URL"] = ""
+        os.environ["DAWN_KESTREL_QUEUE_BACKEND"] = "local"
+        os.environ["DAWN_KESTREL_RATE_LIMIT_BACKEND"] = "local"
+
+    if progress_logs:
+        root_logger = logging.getLogger()
+        if not root_logger.handlers:
+            logging.basicConfig(
+                level=logging.INFO,
+                format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+            )
+        else:
+            root_logger.setLevel(logging.INFO)
+            for handler in root_logger.handlers:
+                handler.setLevel(logging.INFO)
+        logging.getLogger("ash_hawk").setLevel(logging.INFO)
+        logging.getLogger("dawn_kestrel").setLevel(logging.ERROR)
+        logging.getLogger("httpx").setLevel(logging.ERROR)
+
+    reload_config()
 
     console.print(f"[cyan]Starting improvement cycle:[/cyan] {cycle_id}")
     console.print(f"[cyan]Target agent:[/cyan] {agent}")
@@ -522,7 +674,20 @@ def run_cycle(
         "stop early" if stop_on_convergence else "run full iterations",
     )
     if scenario_paths:
-        console.print(f"[cyan]Scenario paths:[/cyan] {', '.join(scenario_paths)}")
+        console.print(f"[cyan]Scenario paths:[/cyan] {len(scenario_paths)} resolved")
+    if effective_scenario_parallelism is not None:
+        console.print(f"[cyan]Scenario parallelism:[/cyan] {effective_scenario_parallelism}")
+    if effective_queue_timeout_seconds is not None:
+        console.print(f"[cyan]Queue timeout:[/cyan] {effective_queue_timeout_seconds}s")
+    if effective_llm_timeout_seconds is not None:
+        console.print(f"[cyan]LLM timeout:[/cyan] {effective_llm_timeout_seconds}s")
+    if effective_llm_max_workers is not None:
+        console.print(f"[cyan]LLM workers:[/cyan] {effective_llm_max_workers}")
+    if effective_trial_max_workers is not None:
+        console.print(f"[cyan]Trial workers:[/cyan] {effective_trial_max_workers}")
+    if disable_redis:
+        console.print("[cyan]Redis mode:[/cyan] disabled (local backends)")
+    console.print(f"[cyan]Progress logs:[/cyan] {'enabled' if progress_logs else 'disabled'}")
 
     config = CycleConfig(
         cycle_id=cycle_id,
@@ -534,7 +699,20 @@ def run_cycle(
         promotion_success_threshold=promotion_threshold,
         eval_pack=eval_pack,
         checkpoint_interval=checkpoint_interval,
+        max_lessons_per_iteration=lessons_per_iteration,
         scenario_paths=scenario_paths,
+        scenario_parallelism=effective_scenario_parallelism,
+        metadata={
+            "enable_competitor": enable_competitor,
+            "enable_triage": enable_triage,
+            "enable_verifier": enable_verifier,
+            "enable_adversary": enable_adversary,
+            "cross_pack_eval_pack": list(cross_pack_eval_pack),
+            "max_token_delta_pct": max_token_delta_pct,
+            "max_latency_delta_pct": max_latency_delta_pct,
+            "min_verification_runs": min_verification_runs,
+            "promotion_scope": promotion_scope,
+        },
     )
 
     runner = CycleRunner(config)
@@ -556,6 +734,10 @@ def run_cycle(
         if result.iterations:
             _display_iteration_summary(result.iterations, result.total_iterations)
             _display_changes_under_test(result.iterations)
+            _display_experiment_cards(result.iterations)
+            _display_llm_agent_summaries(result.iterations)
+            _display_change_set_outcomes(result.iterations)
+            _display_best_experiment(result.iterations)
 
     asyncio.run(_run())
 
@@ -584,17 +766,13 @@ def _display_iteration_summary(
     console.print(table)
 
 
-_MAX_TITLE_LEN = 60
-
-
 def _display_generated_lessons(iterations: list[IterationResult]) -> None:
     lesson_entries: list[str] = []
     for iteration in iterations:
         raw_titles = iteration.metadata.get("lesson_titles", [])
         titles = [t for t in raw_titles if isinstance(t, str) and t.strip()]
         for title in titles:
-            truncated = title[:_MAX_TITLE_LEN] + "..." if len(title) > _MAX_TITLE_LEN else title
-            lesson_entries.append(f"{iteration.iteration_num}. {truncated}")
+            lesson_entries.append(f"{iteration.iteration_num}. {title}")
 
     if not lesson_entries:
         return
@@ -607,33 +785,175 @@ def _display_generated_lessons(iterations: list[IterationResult]) -> None:
 def _display_changes_under_test(iterations: list[IterationResult]) -> None:
     console.print("[bold]Changes tested:[/bold]")
     for iteration in iterations:
+        delta_str = f"{iteration.score_delta:+.3f}" if iteration.score_delta is not None else "-"
         raw_titles = iteration.metadata.get("tested_change_titles", [])
+        raw_ids = iteration.metadata.get("tested_change_ids", [])
         titles = [t for t in raw_titles if isinstance(t, str) and t.strip()]
+        lesson_ids = [
+            lesson_id for lesson_id in raw_ids if isinstance(lesson_id, str) and lesson_id
+        ]
 
         if not titles:
-            console.print(f"  - {iteration.iteration_num}. Baseline (no prior lesson applied)")
+            console.print(
+                f"  - {iteration.iteration_num}. Baseline (no prior lesson applied), "
+                f"score={iteration.score:.3f}, delta={delta_str}"
+            )
             continue
 
-        primary = titles[0]
-        truncated = primary[:_MAX_TITLE_LEN] + "..." if len(primary) > _MAX_TITLE_LEN else primary
-        if len(titles) > 1:
-            console.print(f"  - {iteration.iteration_num}. {truncated} (+{len(titles) - 1} more)")
-        else:
-            console.print(f"  - {iteration.iteration_num}. {truncated}")
+        console.print(
+            f"  - {iteration.iteration_num}. score={iteration.score:.3f}, delta={delta_str}"
+        )
+        for idx, title in enumerate(titles):
+            lesson_id = lesson_ids[idx] if idx < len(lesson_ids) else "unknown_lesson_id"
+            console.print(f"    - ({lesson_id}) {title}")
+
+
+def _display_experiment_cards(iterations: list[IterationResult]) -> None:
+    console.print("[bold]Experiments:[/bold]")
+    for iteration in iterations:
+        delta_str = f"{iteration.score_delta:+.3f}" if iteration.score_delta is not None else "-"
+        tested_titles_raw = iteration.metadata.get("tested_change_titles", [])
+        tested_ids_raw = iteration.metadata.get("tested_change_ids", [])
+        tested_rationales_raw = iteration.metadata.get("tested_change_rationales", [])
+
+        tested_titles = [t for t in tested_titles_raw if isinstance(t, str) and t.strip()]
+        tested_ids = [t for t in tested_ids_raw if isinstance(t, str) and t.strip()]
+        tested_rationales = [r for r in tested_rationales_raw if isinstance(r, str) and r.strip()]
+
+        console.print(
+            f"  - Iteration {iteration.iteration_num}: score={iteration.score:.3f}, "
+            f"delta={delta_str}, status={iteration.status.value}"
+        )
+
+        if not tested_titles:
+            console.print("    - Applied changes: baseline (no prior lesson applied)")
+            continue
+
+        console.print("    - Applied changes:")
+        for idx, title in enumerate(tested_titles):
+            lesson_id = tested_ids[idx] if idx < len(tested_ids) else "(unknown lesson id)"
+            console.print(f"      - ({lesson_id}) {title}")
+            if idx < len(tested_rationales):
+                console.print(f"        rationale: {tested_rationales[idx]}")
+
+
+def _display_best_experiment(iterations: list[IterationResult]) -> None:
+    if not iterations:
+        return
+
+    best = max(iterations, key=lambda it: it.score)
+    delta_str = f"{best.score_delta:+.3f}" if best.score_delta is not None else "-"
+    tested_titles_raw = best.metadata.get("tested_change_titles", [])
+    tested_ids_raw = best.metadata.get("tested_change_ids", [])
+    tested_rationales_raw = best.metadata.get("tested_change_rationales", [])
+
+    tested_titles = [t for t in tested_titles_raw if isinstance(t, str) and t.strip()]
+    tested_ids = [t for t in tested_ids_raw if isinstance(t, str) and t.strip()]
+    tested_rationales = [r for r in tested_rationales_raw if isinstance(r, str) and r.strip()]
+
+    console.print("[bold]Best experiment:[/bold]")
+    console.print(
+        f"  - Iteration {best.iteration_num} with score={best.score:.3f}, "
+        f"delta={delta_str}, status={best.status.value}"
+    )
+
+    if not tested_titles:
+        console.print("  - Applied changes: baseline (no prior lesson applied)")
+        return
+
+    console.print("  - Applied changes:")
+    for idx, title in enumerate(tested_titles):
+        lesson_id = tested_ids[idx] if idx < len(tested_ids) else "(unknown lesson id)"
+        console.print(f"    - ({lesson_id}) {title}")
+        if idx < len(tested_rationales):
+            console.print(f"      rationale: {tested_rationales[idx]}")
+
+
+def _display_change_set_outcomes(iterations: list[IterationResult]) -> None:
+    if not iterations:
+        return
+
+    grouped: dict[tuple[str, ...], list[IterationResult]] = {}
+    for iteration in iterations:
+        raw_ids = iteration.metadata.get("tested_change_ids", [])
+        ids = tuple(sorted([item for item in raw_ids if isinstance(item, str) and item]))
+        grouped.setdefault(ids, []).append(iteration)
+
+    console.print("[bold]Change-set outcomes:[/bold]")
+    for ids, runs in sorted(
+        grouped.items(), key=lambda item: max(r.score for r in item[1]), reverse=True
+    ):
+        scores = [run.score for run in runs]
+        avg_score = sum(scores) / len(scores)
+        max_score = max(scores)
+        min_score = min(scores)
+        id_label = ", ".join(ids) if ids else "baseline"
+        console.print(
+            f"  - {id_label}: runs={len(runs)}, avg={avg_score:.3f}, "
+            f"best={max_score:.3f}, worst={min_score:.3f}"
+        )
+
+
+def _coerce_str_map(value: object) -> dict[str, str]:
+    if not isinstance(value, dict):
+        return {}
+    raw = cast(dict[object, object], value)
+    out: dict[str, str] = {}
+    for key, item in raw.items():
+        if isinstance(key, str) and isinstance(item, str):
+            out[key] = item
+    return out
+
+
+def _display_llm_agent_summaries(iterations: list[IterationResult]) -> None:
+    console.print("[bold]LLM agent summaries:[/bold]")
+    for iteration in iterations:
+        role_summaries = _coerce_str_map(iteration.metadata.get("role_summaries", {}))
+        console.print(f"  - Iteration {iteration.iteration_num}:")
+        if not role_summaries:
+            console.print("    - no role summaries available")
+            continue
+
+        ordered_roles = ["competitor", "translator", "analyst", "coach", "architect", "curator"]
+        for role in ordered_roles:
+            summary = role_summaries.get(role)
+            if isinstance(summary, str) and summary.strip():
+                console.print(f"    - {role}: {summary}")
 
 
 def _default_scenarios_for_agent(agent: str) -> list[str]:
     project_root = Path(__file__).resolve().parents[2]
 
     if agent == "bolt-merlin":
-        candidate = (
-            project_root
-            / "examples"
-            / "scenarios"
-            / "bolt-merlin"
-            / "policy_management.scenario.yaml"
-        )
+        candidate = project_root / "examples" / "scenarios" / "bolt-merlin"
         if candidate.exists():
             return [str(candidate)]
 
     return []
+
+
+def resolve_cycle_scenario_paths(paths: list[str]) -> list[str]:
+    resolved: list[str] = []
+    seen: set[str] = set()
+
+    for path in paths:
+        candidate = Path(path)
+        discovered: list[Path]
+        if candidate.is_dir():
+            discovered = discover_scenarios(candidate)
+        elif candidate.is_file():
+            discovered = [candidate.resolve()]
+        else:
+            raise click.ClickException(f"Scenario path not found: {path}")
+
+        for scenario_path in discovered:
+            normalized = str(scenario_path.resolve())
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            resolved.append(normalized)
+
+    if not resolved:
+        raise click.ClickException("No scenario files found in provided scenario paths")
+
+    return resolved

@@ -90,9 +90,14 @@ def init(path: str, name: str, force: bool) -> None:
     console.print("[dim]Edit the file to customize your evaluation suite.[/dim]")
 
 
+from ash_hawk.cli.adversary import adversary
 from ash_hawk.cli.calibrate import calibrate
+from ash_hawk.cli.compare import compare_cmd
+from ash_hawk.cli.history import history
 from ash_hawk.cli.improve import improve
+from ash_hawk.cli.lessons import lessons
 from ash_hawk.cli.list import list_cmd
+from ash_hawk.cli.promotions import promotions
 from ash_hawk.cli.report import report
 from ash_hawk.cli.run import run
 from ash_hawk.cli.scenario import scenario
@@ -103,3 +108,8 @@ cli.add_command(report)
 cli.add_command(calibrate)
 cli.add_command(scenario)
 cli.add_command(improve)
+cli.add_command(compare_cmd, name="compare")
+cli.add_command(lessons)
+cli.add_command(promotions)
+cli.add_command(history)
+cli.add_command(adversary)
