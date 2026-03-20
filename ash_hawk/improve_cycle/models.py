@@ -341,3 +341,32 @@ class RoleContract(BaseModel):
     runtime_config: RoleRuntimeConfig
 
     model_config = ConfigDict(extra="forbid")
+
+
+class RoleLifecycleEvent(BaseModel):
+    event_id: str
+    event_type: Literal["role_started", "role_completed", "role_failed"]
+    role: str
+    run_id: str
+    experiment_id: str
+    duration_ms: int | None = None
+    status: Literal["success", "failed", "started"]
+    input_refs: list[str] = []
+    output_refs: list[str] = []
+    metrics: dict[str, float | int] = cast(dict[str, float | int], {})
+    error_info: str | None = None
+    timestamp: str
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ImproveCycleCheckpoint(BaseModel):
+    checkpoint_id: str
+    run_id: str
+    experiment_id: str
+    last_completed_role: Literal["analyst", "curator", "verifier", "promotion_manager", "complete"]
+    status: Literal["in_progress", "completed"]
+    state: dict[str, Any] = cast(dict[str, Any], {})
+    saved_at: str
+
+    model_config = ConfigDict(extra="forbid")

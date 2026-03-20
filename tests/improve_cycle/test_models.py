@@ -15,7 +15,7 @@ from ash_hawk.improve_cycle.models import (
     Severity,
     TriageOutput,
 )
-from ash_hawk.improve_cycle.prompt_packs import default_prompt_pack
+from ash_hawk.improve_cycle.prompt_packs import ROLE_NAMES, default_prompt_pack
 
 
 def test_models_forbid_extra_fields() -> None:
@@ -57,8 +57,7 @@ def test_role_runtime_config_and_prompt_pack() -> None:
 
 
 def test_required_role_prompt_packs_exist() -> None:
-    required_roles = ["triage", "coach", "architect", "curator", "verifier", "adversary"]
-    for role in required_roles:
+    for role in ROLE_NAMES:
         pack = default_prompt_pack(role)
         assert Path(pack.system_prompt_path).exists()
         assert Path(pack.task_template_path).exists()

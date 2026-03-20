@@ -12,10 +12,12 @@ from ash_hawk.improve_cycle.models import (
     ChangeSet,
     CuratedLesson,
     ExperimentPlan,
+    ImproveCycleCheckpoint,
     ImprovementProposal,
     KnowledgeEntry,
     PromotionDecision,
     ReviewFinding,
+    RoleLifecycleEvent,
     RunArtifactBundle,
     VerificationReport,
 )
@@ -82,6 +84,8 @@ class ImproveCycleStorage:
     promotions: JsonEntityStore[PromotionDecision]
     knowledge: JsonEntityStore[KnowledgeEntry]
     adversarial_scenarios: JsonEntityStore[AdversarialScenario]
+    role_events: JsonEntityStore[RoleLifecycleEvent]
+    checkpoints: JsonEntityStore[ImproveCycleCheckpoint]
 
     def __init__(self, root: str | Path = ".ash-hawk/improve-cycle") -> None:
         base = Path(root)
@@ -104,4 +108,10 @@ class ImproveCycleStorage:
         self.knowledge = JsonEntityStore[KnowledgeEntry](base / "knowledge.json", "knowledge_id")
         self.adversarial_scenarios = JsonEntityStore[AdversarialScenario](
             base / "adversarial_scenarios.json", "scenario_id"
+        )
+        self.role_events = JsonEntityStore[RoleLifecycleEvent](
+            base / "role_events.json", "event_id"
+        )
+        self.checkpoints = JsonEntityStore[ImproveCycleCheckpoint](
+            base / "checkpoints.json", "checkpoint_id"
         )

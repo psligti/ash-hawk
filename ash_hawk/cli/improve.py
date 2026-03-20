@@ -5,7 +5,7 @@ import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, cast
+from typing import Any, Literal, cast
 from uuid import uuid4
 
 import click
@@ -439,12 +439,31 @@ def _list_lessons(
     console.print(table)
 
 
+def _resolve_runtime_value(
+    *,
+    ctx: click.Context,
+    option_name: str,
+    cli_value: Any,
+    config_value: Any,
+) -> Any:
+    source = ctx.get_parameter_source(option_name)
+    if source == click.core.ParameterSource.COMMANDLINE:
+        return cli_value
+    return config_value
+
+
 @improve.command(name="cycle")
 @click.option(
     "--agent",
     "-a",
     required=True,
     help="Target agent to improve (e.g., bolt-merlin)",
+)
+@click.option(
+    "--config",
+    "config_path",
+    default=None,
+    help="Path to improve-cycle YAML config (defaults to improve_cycle.yaml or config/improve_cycle.yaml)",
 )
 @click.option(
     "--iterations",
@@ -557,6 +576,7 @@ def _list_lessons(
 )
 def run_cycle(
     agent: str,
+    config_path: str | None,
     iterations: int,
     experiment: str | None,
     convergence_threshold: float,
@@ -597,6 +617,83 @@ def run_cycle(
 
     from ash_hawk.config import reload_config
     from ash_hawk.cycle import CycleConfig, CycleRunner, create_cycle_id
+    from ash_hawk.improve_cycle.configuration import load_improve_cycle_config
+
+    ctx = click.get_current_context()
+    improve_cycle_config = load_improve_cycle_config(config_path)
+
+    enable_competitor = cast(
+        bool,
+        _resolve_runtime_value(
+            ctx=ctx,
+            option_name="enable_competitor",
+            cli_value=enable_competitor,
+            config_value=improve_cycle_config.competitor.enabled,
+        ),
+    )
+    enable_triage = cast(
+        bool,
+        _resolve_runtime_value(
+            ctx=ctx,
+            option_name="enable_triage",
+            cli_value=enable_triage,
+            config_value=improve_cycle_config.triage.enabled,
+        ),
+    )
+    enable_verifier = cast(
+        bool,
+        _resolve_runtime_value(
+            ctx=ctx,
+            option_name="enable_verifier",
+            cli_value=enable_verifier,
+            config_value=improve_cycle_config.verifier.enabled,
+        ),
+    )
+    enable_adversary = cast(
+        bool,
+        _resolve_runtime_value(
+            ctx=ctx,
+            option_name="enable_adversary",
+            cli_value=enable_adversary,
+            config_value=improve_cycle_config.adversary.enabled,
+        ),
+    )
+    min_verification_runs = cast(
+        int,
+        _resolve_runtime_value(
+            ctx=ctx,
+            option_name="min_verification_runs",
+            cli_value=min_verification_runs,
+            config_value=improve_cycle_config.verifier.min_repeats,
+        ),
+    )
+    max_token_delta_pct = cast(
+        float,
+        _resolve_runtime_value(
+            ctx=ctx,
+            option_name="max_token_delta_pct",
+            cli_value=max_token_delta_pct,
+            config_value=improve_cycle_config.verifier.max_token_delta_pct,
+        ),
+    )
+    max_latency_delta_pct = cast(
+        float,
+        _resolve_runtime_value(
+            ctx=ctx,
+            option_name="max_latency_delta_pct",
+            cli_value=max_latency_delta_pct,
+            config_value=improve_cycle_config.verifier.max_latency_delta_pct,
+        ),
+    )
+    promotion_scope = cast(
+        str,
+        _resolve_runtime_value(
+            ctx=ctx,
+            option_name="promotion_scope",
+            cli_value=promotion_scope,
+            config_value=improve_cycle_config.promotion.default_scope,
+        ),
+    )
 
     effective_queue_timeout_seconds = queue_timeout_seconds
     effective_scenario_parallelism = scenario_parallelism

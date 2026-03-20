@@ -1,0 +1,27 @@
+improve_cycle:
+  competitor:
+    enabled: true
+  triage:
+    enabled: true
+    allow_multi_causal: true
+  curator:
+    min_confidence: 0.7
+    require_evidence: true
+  verifier:
+    enabled: true
+    min_repeats: 3
+    max_variance: 0.01
+    max_latency_delta_pct: 15
+    max_token_delta_pct: 10
+    require_regression_pass: true
+  promotion:
+    default_scope: agent-specific
+    low_risk_success_threshold: 3
+    medium_risk_success_threshold: 5
+  adversary:
+    enabled: true
+    auto_expand_eval_packs: false
+  historian:
+    enabled: true
+  librarian:
+    enabled: true

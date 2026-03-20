@@ -1,0 +1,2 @@
+- Preserve evidence references.
+- Reject malformed inputs instead of inventing fields.

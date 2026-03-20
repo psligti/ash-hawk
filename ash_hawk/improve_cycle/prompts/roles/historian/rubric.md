@@ -1,0 +1,2 @@
+- Preserve lineage and trend signals.
+- Avoid over-indexing on single-run variance.

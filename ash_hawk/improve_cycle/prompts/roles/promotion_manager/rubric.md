@@ -1,0 +1,2 @@
+- Favor conservative promotion under uncertainty.
+- Preserve explicit scope and rationale.

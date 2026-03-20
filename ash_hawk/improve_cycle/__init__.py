@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ash_hawk.improve_cycle.configuration import ImproveCycleConfig, load_improve_cycle_config
 from ash_hawk.improve_cycle.models import (
     AdversarialScenario,
     AnalystOutput,
@@ -12,6 +13,7 @@ from ash_hawk.improve_cycle.models import (
     ExperimentPlan,
     FailureCategory,
     FailureClassification,
+    ImproveCycleCheckpoint,
     ImprovementProposal,
     KnowledgeEntry,
     MetricValue,
@@ -20,6 +22,7 @@ from ash_hawk.improve_cycle.models import (
     ProposalType,
     RiskLevel,
     RoleContract,
+    RoleLifecycleEvent,
     RolePromptPack,
     RoleRuntimeConfig,
     RunArtifactBundle,
@@ -42,9 +45,11 @@ __all__ = [
     "CuratedLesson",
     "EvidenceRef",
     "ExperimentHistorySummary",
+    "ImproveCycleCheckpoint",
     "ExperimentPlan",
     "FailureCategory",
     "FailureClassification",
+    "ImproveCycleConfig",
     "ImproveCycleOrchestrator",
     "ImproveCycleResult",
     "ImproveCycleStorage",
@@ -57,6 +62,7 @@ __all__ = [
     "RiskLevel",
     "RoleRegistry",
     "RoleContract",
+    "RoleLifecycleEvent",
     "RolePromptPack",
     "RoleRuntimeConfig",
     "RunArtifactBundle",
@@ -65,4 +71,5 @@ __all__ = [
     "TranslatorOutput",
     "VerificationCheck",
     "VerificationReport",
+    "load_improve_cycle_config",
 ]
