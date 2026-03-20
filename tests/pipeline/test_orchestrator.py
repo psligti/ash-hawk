@@ -9,7 +9,6 @@ import pytest
 from ash_hawk.contracts import CuratedLesson, ImprovementProposal, ReviewRequest
 from ash_hawk.pipeline.orchestrator import PipelineOrchestrator
 from ash_hawk.pipeline.types import PipelineRole
-
 from tests.pipeline.conftest import MockRunArtifact
 
 

@@ -326,4 +326,4 @@ class TestLessonServiceIntegration:
 
         for agent in custom_agents:
             agent_lessons = lesson_service.get_lessons_for_agent(agent)
-            assert any(l.lesson_id == lesson.lesson_id for l in agent_lessons)
+            assert any(stored.lesson_id == lesson.lesson_id for stored in agent_lessons)

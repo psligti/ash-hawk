@@ -144,8 +144,9 @@ class HarnessLessonPayload(pd.BaseModel):
         parallelism_override: Custom parallelism setting.
     """
 
-    suite_id: str = pd.Field(
-        description="Target evaluation suite identifier",
+    suite_id: str | None = pd.Field(
+        default=None,
+        description="Target evaluation suite identifier (None applies globally)",
     )
     grader_adjustments: dict[str, dict[str, float | int | str]] = pd.Field(
         default_factory=dict,

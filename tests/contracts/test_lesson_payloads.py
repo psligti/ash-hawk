@@ -155,6 +155,14 @@ class TestParseLessonPayload:
         )
         assert isinstance(result, HarnessLessonPayload)
 
+    def test_parse_harness_payload_without_suite_id(self) -> None:
+        result = parse_lesson_payload(
+            "harness",
+            {"timeout_adjustments": {"security": 120}},
+        )
+        assert isinstance(result, HarnessLessonPayload)
+        assert result.suite_id is None
+
     def test_parse_eval_payload(self) -> None:
         result = parse_lesson_payload(
             "eval",

@@ -248,7 +248,7 @@ class TestImprovementLoopIntegration:
         assert deactivated.validation_status == "rolled_back"
 
         lessons = lesson_service.get_lessons_for_agent("iron-rook")
-        active_lessons = [l for l in lessons if l.is_active()]
+        active_lessons = [lesson_item for lesson_item in lessons if lesson_item.is_active()]
         assert len(active_lessons) == 0
 
     def test_experiment_isolation(

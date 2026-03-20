@@ -78,7 +78,7 @@ class TestLessonStoreStore:
         store.store(lesson)
         for agent in lesson.applies_to_agents:
             agent_lessons = store.get_for_agent(agent)
-            assert any(l.lesson_id == lesson.lesson_id for l in agent_lessons)
+            assert any(stored.lesson_id == lesson.lesson_id for stored in agent_lessons)
 
     def test_store_multiple_lessons(
         self, store: LessonStore, lesson: CuratedLesson, lesson2: CuratedLesson
@@ -221,7 +221,7 @@ class TestLessonStoreDelete:
         store.delete(lesson.lesson_id)
         for agent in lesson.applies_to_agents:
             agent_lessons = store.get_for_agent(agent)
-            assert not any(l.lesson_id == lesson.lesson_id for l in agent_lessons)
+            assert not any(stored.lesson_id == lesson.lesson_id for stored in agent_lessons)
 
     def test_delete_returns_false_for_unknown(self, store: LessonStore):
         result = store.delete("nonexistent-lesson")
