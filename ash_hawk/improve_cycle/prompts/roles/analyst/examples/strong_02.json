@@ -1,0 +1,10 @@
+{
+  "quality": "strong",
+  "note": "Multi-domain analysis with weighted severity scoring",
+  "input": {
+    "findings": [
+    {"category": "tool_interface_poor", "severity": "high", "count": 5},
+    {"category": "policy_ordering", "severity": "medium", "count": 3},
+    {"category": "skill_weak", "severity": "low", "count": 2}
+  ]
+}

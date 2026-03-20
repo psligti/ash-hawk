@@ -1,0 +1,9 @@
+{
+  "quality": "strong",
+  "note": "Policy Reorder with Scope-Limited Surface and Clear Rollback",
+  "input": {
+    "primary_category": "policy_ordering",
+    "risk_areas": ["behavior"],
+    "confidence": 0.9
+  }
+}

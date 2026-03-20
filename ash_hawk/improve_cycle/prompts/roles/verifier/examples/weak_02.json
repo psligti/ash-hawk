@@ -1,0 +1,9 @@
+{
+  "quality": "weak",
+  "note": "Insufficient Evidence: verifier ignores regressions in protected packs",
+  "input": {
+    "change_set_id": "cs-abc123",
+    "mode": "isolated",
+    "applied_changes_count": 0
+  }
+}

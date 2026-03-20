@@ -76,3 +76,11 @@ class BaseRoleAgent(ABC, Generic[TInput, TOutput]):
     @abstractmethod
     def run(self, payload: TInput) -> TOutput:
         raise NotImplementedError
+
+    def validate_scope(self, payload: TInput) -> bool:
+        """Return True if payload is within role scope."""
+        return payload is not None
+
+    def validate_output(self, output: TOutput) -> bool:
+        """Return True if output meets role quality bar."""
+        return output is not None

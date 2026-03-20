@@ -1,0 +1,8 @@
+{
+  "quality": "weak",
+  "note": "Ambiguous classification without sufficient signal",
+  "input": {
+    "findings": [
+    {"category": "unknown", "severity": "low", "count": 1}
+  ]
+}

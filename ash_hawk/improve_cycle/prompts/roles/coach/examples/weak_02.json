@@ -1,0 +1,9 @@
+{
+  "quality": "weak",
+  "note": "Insufficient Evidence: proposal lacks target surface and rollback plan",
+  "input": {
+    "primary_category": "policy_ordering",
+    "risk_areas": ["behavior"],
+    "confidence": 0.6
+  }
+}

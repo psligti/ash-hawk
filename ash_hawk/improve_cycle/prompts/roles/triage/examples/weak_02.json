@@ -1,0 +1,8 @@
+{
+  "quality": "weak",
+  "note": "Insufficient Evidence: single ambiguous finding leads to premature conclusion",
+  "input": {
+    "categories": ["unknown"],
+    "severity_weights": {"unknown": 0.5}
+  }
+}

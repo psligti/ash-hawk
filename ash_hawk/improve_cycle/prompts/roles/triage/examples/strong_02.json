@@ -1,0 +1,8 @@
+{
+  "quality": "strong",
+  "note": "Clear multi-causal classification with explicit routing",
+  "input": {
+    "categories": ["tool_missing", "policy_ordering"],
+    "severity_weights": {"tool_missing": 3, "policy_ordering": 2.5}
+  }
+}
