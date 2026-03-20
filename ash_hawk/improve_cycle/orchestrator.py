@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from typing import Any, Callable, Literal, TypeVar, cast
 from uuid import uuid4
 
+from ash_hawk.improve_cycle.configuration import ImproveCyclePromotionConfig
 from ash_hawk.improve_cycle.models import (
     AdversarialScenario,
     AnalystOutput,
@@ -25,6 +26,7 @@ from ash_hawk.improve_cycle.models import (
     TriageOutput,
     VerificationReport,
 )
+from ash_hawk.improve_cycle.promotion import PROMOTED_STATUSES, PromotionContext
 from ash_hawk.improve_cycle.roles import (
     AdversaryRole,
     AnalystRole,
@@ -75,12 +77,14 @@ class ImproveCycleOrchestrator:
         max_token_delta_pct: float = 10.0,
         cross_pack_eval_pack_ids: list[str] | None = None,
         promotion_scope: str = "agent-specific",
+        promotion_config: ImproveCyclePromotionConfig | None = None,
     ) -> None:
         self.storage = storage or ImproveCycleStorage()
         self.enable_competitor = enable_competitor
         self.enable_triage = enable_triage
         self.enable_verifier = enable_verifier
         self.enable_adversary = enable_adversary
+        self._promotion_config = promotion_config or ImproveCyclePromotionConfig()
         self.competitor = CompetitorRole()
         self.translator = TranslatorRole()
         self.analyst = AnalystRole()
@@ -96,7 +100,10 @@ class ImproveCycleOrchestrator:
         )
         self.applier = ApplierRole()
         self.verifier = VerifierRole()
-        self.promotion_manager = PromotionManagerRole(default_scope=promotion_scope)
+        self.promotion_manager = PromotionManagerRole(
+            config=self._promotion_config,
+            default_scope=promotion_scope,
+        )
         self.librarian = LibrarianRole()
         self.historian = HistorianRole()
         self.adversary = AdversaryRole()
@@ -253,6 +260,33 @@ class ImproveCycleOrchestrator:
             saved_at=datetime.now(UTC).isoformat(),
         )
         self.storage.checkpoints.upsert(checkpoint, ImproveCycleCheckpoint)
+
+    def _change_set_lessons(self, change_sets: list[ChangeSet]) -> dict[str, list[str]]:
+        return {change_set.change_set_id: list(change_set.lesson_ids) for change_set in change_sets}
+
+    def _cross_pack_validated_lessons(
+        self,
+        *,
+        reports: list[VerificationReport],
+        plans: list[ExperimentPlan],
+        change_sets: list[ChangeSet],
+    ) -> set[str]:
+        plan_by_change_set = {
+            change_set.change_set_id: plan
+            for change_set, plan in zip(change_sets, plans, strict=False)
+        }
+        lessons_by_change_set = self._change_set_lessons(change_sets)
+        cross_pack: set[str] = set()
+        for report in reports:
+            plan = plan_by_change_set.get(report.change_set_id)
+            if plan is None:
+                continue
+            if len(plan.eval_pack_ids) <= 1:
+                continue
+            if not report.passed or report.regression_count > 0:
+                continue
+            cross_pack.update(lessons_by_change_set.get(report.change_set_id, []))
+        return cross_pack
 
     def run_cycle(self, run_bundle: RunArtifactBundle) -> ImproveCycleResult:
         self.storage.runs.upsert(run_bundle, RunArtifactBundle)
@@ -462,11 +496,63 @@ class ImproveCycleOrchestrator:
             ]
         else:
             promotion_decisions = []
+            lesson_success_counts = cast(
+                dict[str, int], resumed_state.get("promotion_success_counts", {})
+            )
+            lesson_failure_counts = cast(
+                dict[str, int], resumed_state.get("promotion_failure_counts", {})
+            )
+            lessons_by_change_set = self._change_set_lessons(change_sets)
+            cross_pack_lesson_ids = self._cross_pack_validated_lessons(
+                reports=verification_reports,
+                plans=experiment_plans,
+                change_sets=change_sets,
+            )
+            promoted_lessons_by_surface: dict[str, set[str]] = {}
+            for existing in self.storage.promotions.list_all(PromotionDecision):
+                if existing.status not in PROMOTED_STATUSES:
+                    continue
+                existing_lesson = self.storage.lessons.get(existing.lesson_id, CuratedLesson)
+                if existing_lesson is None:
+                    continue
+                promoted_lessons_by_surface.setdefault(existing_lesson.target_surface, set()).add(
+                    existing.lesson_id
+                )
             for report in verification_reports:
+                report_lesson_ids = lessons_by_change_set.get(report.change_set_id, [])
+                for lesson_id in report_lesson_ids:
+                    if report.passed and report.regression_count == 0:
+                        lesson_success_counts[lesson_id] = (
+                            lesson_success_counts.get(lesson_id, 0) + 1
+                        )
+                        lesson_failure_counts[lesson_id] = 0
+                    else:
+                        lesson_failure_counts[lesson_id] = (
+                            lesson_failure_counts.get(lesson_id, 0) + 1
+                        )
+                        lesson_success_counts[lesson_id] = 0
+                scoped_lessons = [
+                    lesson for lesson in curated_lessons if lesson.lesson_id in report_lesson_ids
+                ]
+                if not scoped_lessons:
+                    scoped_lessons = curated_lessons
+                conflicting_lesson_ids: set[str] = set()
+                for lesson in scoped_lessons:
+                    prior_promoted = promoted_lessons_by_surface.get(lesson.target_surface, set())
+                    if any(
+                        other_lesson_id != lesson.lesson_id for other_lesson_id in prior_promoted
+                    ):
+                        conflicting_lesson_ids.add(lesson.lesson_id)
+                context = PromotionContext(
+                    consecutive_successes=dict(lesson_success_counts),
+                    consecutive_failures=dict(lesson_failure_counts),
+                    cross_pack_validated_lesson_ids=cross_pack_lesson_ids,
+                    conflicting_lesson_ids=conflicting_lesson_ids,
+                )
                 decisions = self._run_role(
                     role_name="promotion_manager",
                     run_bundle=run_bundle,
-                    payload=(report, curated_lessons),
+                    payload=(report, scoped_lessons, context),
                     callback=self.promotion_manager.run,
                 )
                 promotion_decisions.extend(decisions)
@@ -492,6 +578,8 @@ class ImproveCycleOrchestrator:
                     "promotion_decisions": [
                         decision.model_dump(mode="json") for decision in promotion_decisions
                     ],
+                    "promotion_success_counts": lesson_success_counts,
+                    "promotion_failure_counts": lesson_failure_counts,
                 },
             )
 

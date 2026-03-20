@@ -3,8 +3,14 @@ from __future__ import annotations
 from ash_hawk.improve_cycle.models import (
     CuratedLesson,
     ImprovementProposal,
+    PromotionStatus,
     RiskLevel,
     VerificationReport,
+)
+from ash_hawk.improve_cycle.promotion import (
+    PromotionContext,
+    PromotionPolicy,
+    decide_promotion_status,
 )
 
 
@@ -36,7 +42,27 @@ def verifier_passes(report: VerificationReport) -> bool:
     return True
 
 
-def promotion_eligible(lesson: CuratedLesson, report: VerificationReport) -> bool:
+def promotion_eligible(
+    lesson: CuratedLesson,
+    report: VerificationReport,
+    *,
+    policy: PromotionPolicy | None = None,
+    context: PromotionContext | None = None,
+) -> bool:
     if not lesson.approved:
         return False
-    return verifier_passes(report)
+    if not verifier_passes(report):
+        return False
+    effective_policy = policy or PromotionPolicy()
+    effective_context = context or PromotionContext()
+    status = decide_promotion_status(
+        report,
+        lesson,
+        policy=effective_policy,
+        context=effective_context,
+    )
+    return status in {
+        PromotionStatus.PROMOTE_GLOBAL,
+        PromotionStatus.PROMOTE_AGENT_SPECIFIC,
+        PromotionStatus.PROMOTE_PACK_SPECIFIC,
+    }

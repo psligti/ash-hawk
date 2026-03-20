@@ -25,6 +25,8 @@ improve_cycle:
     default_scope: global
     low_risk_success_threshold: 2
     medium_risk_success_threshold: 4
+    min_score_delta_for_global: 0.08
+    retire_after_failures: 2
 """.strip(),
         encoding="utf-8",
     )
@@ -33,6 +35,8 @@ improve_cycle:
     assert config.competitor.enabled is False
     assert config.verifier.min_repeats == 7
     assert config.promotion.default_scope == "global"
+    assert config.promotion.min_score_delta_for_global == 0.08
+    assert config.promotion.retire_after_failures == 2
 
 
 def test_load_improve_cycle_config_uses_packaged_defaults() -> None:

@@ -18,6 +18,8 @@ improve_cycle:
     default_scope: agent-specific
     low_risk_success_threshold: 3
     medium_risk_success_threshold: 5
+    min_score_delta_for_global: 0.05
+    retire_after_failures: 3
   adversary:
     enabled: true
     auto_expand_eval_packs: false

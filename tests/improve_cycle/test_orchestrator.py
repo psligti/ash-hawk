@@ -6,6 +6,7 @@ from ash_hawk.improve_cycle.models import (
     ExperimentHistorySummary,
     ImproveCycleCheckpoint,
     MetricValue,
+    PromotionStatus,
     RoleLifecycleEvent,
     RunArtifactBundle,
 )
@@ -41,3 +42,13 @@ def test_improve_cycle_orchestrator_runs_end_to_end() -> None:
     role_events = orchestrator.storage.role_events.list_all(RoleLifecycleEvent)
     assert any(event.event_type == "role_started" for event in role_events)
     assert any(event.event_type == "role_completed" for event in role_events)
+    assert result.promotion_decisions
+    assert result.promotion_decisions[0].status in {
+        PromotionStatus.PROMOTE_GLOBAL,
+        PromotionStatus.PROMOTE_AGENT_SPECIFIC,
+        PromotionStatus.PROMOTE_PACK_SPECIFIC,
+        PromotionStatus.HOLD_FOR_MORE_DATA,
+        PromotionStatus.DEMOTE,
+        PromotionStatus.RETIRE,
+        PromotionStatus.ROLLBACK,
+    }

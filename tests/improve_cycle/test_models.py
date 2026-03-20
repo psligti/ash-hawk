@@ -9,6 +9,7 @@ from ash_hawk.improve_cycle.models import (
     EvidenceRef,
     FailureCategory,
     FailureClassification,
+    LessonLifecycleState,
     ReviewFinding,
     RolePromptPack,
     RoleRuntimeConfig,
@@ -73,3 +74,8 @@ def test_shared_prompt_assets_exist() -> None:
     assert (base / "proposal_rubric.md").exists()
     assert (base / "risk_rubric.md").exists()
     assert (base / "verification_standards.md").exists()
+
+
+def test_lesson_lifecycle_state_enum_has_expected_members() -> None:
+    assert LessonLifecycleState.CURATED == "curated"
+    assert LessonLifecycleState.ROLLED_BACK == "rolled_back"

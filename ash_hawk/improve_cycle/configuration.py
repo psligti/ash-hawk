@@ -42,6 +42,8 @@ class ImproveCyclePromotionConfig(pd.BaseModel):
     default_scope: str = pd.Field(default="agent-specific")
     low_risk_success_threshold: int = pd.Field(default=3, ge=1)
     medium_risk_success_threshold: int = pd.Field(default=5, ge=1)
+    min_score_delta_for_global: float = pd.Field(default=0.05, ge=0.0)
+    retire_after_failures: int = pd.Field(default=3, ge=1)
 
     model_config = pd.ConfigDict(extra="forbid")
 

@@ -66,6 +66,19 @@ class PromotionStatus(StrEnum):
     ROLLBACK = "rollback"
 
 
+class LessonLifecycleState(StrEnum):
+    PROPOSED = "proposed"
+    CURATED = "curated"
+    PLANNED = "planned"
+    APPLIED = "applied"
+    VERIFIED = "verified"
+    PROMOTED = "promoted"
+    HELD = "held"
+    DEMOTED = "demoted"
+    RETIRED = "retired"
+    ROLLED_BACK = "rolled_back"
+
+
 class EvidenceRef(BaseModel):
     artifact_id: str
     kind: str
@@ -196,6 +209,7 @@ class CuratedLesson(BaseModel):
     curation_notes: str
     confidence: float
     risk_level: RiskLevel
+    lifecycle_state: LessonLifecycleState = LessonLifecycleState.CURATED
     lineage: list[str] = []
 
     model_config = ConfigDict(extra="forbid")
