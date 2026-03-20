@@ -19,13 +19,21 @@ class AdversaryRole(
         payload: tuple[AnalystOutput, list[VerificationReport]],
     ) -> list[AdversarialScenario]:
         analyst_output, reports = payload
+        if not reports and not analyst_output.findings:
+            return []
+        scenarios: list[AdversarialScenario] = []
         target = analyst_output.risk_areas[0] if analyst_output.risk_areas else "unknown_weakness"
-        suspicious = any(
+
+        high_variance = any(
             report.variance is not None and report.variance > 0.015 for report in reports
         )
-        if not suspicious and not analyst_output.findings:
-            return []
-        return [
+        has_regressions = any(report.regression_count > 0 for report in reports)
+        has_multicausal = any(
+            finding.category is not None and finding.category.value == "multi_causal"
+            for finding in analyst_output.findings
+        )
+
+        scenarios.append(
             AdversarialScenario(
                 scenario_id=f"adv-{uuid4().hex[:8]}",
                 title="Contradictory evidence stress test",
@@ -34,4 +42,27 @@ class AdversaryRole(
                 expected_failure_mode="premature confident action",
                 evaluation_hooks=["evidence_consistency", "rollback_guardrails"],
             )
-        ]
+        )
+        if high_variance:
+            scenarios.append(
+                AdversarialScenario(
+                    scenario_id=f"adv-{uuid4().hex[:8]}",
+                    title="Repeatability pressure test",
+                    target_weakness="stability",
+                    description="Repeat near-identical tasks under jittered timing and tool response order",
+                    expected_failure_mode="non-deterministic decision drift",
+                    evaluation_hooks=["variance_guard", "decision_consistency"],
+                )
+            )
+        if has_regressions or has_multicausal:
+            scenarios.append(
+                AdversarialScenario(
+                    scenario_id=f"adv-{uuid4().hex[:8]}",
+                    title="Cross-surface conflict scenario",
+                    target_weakness="change interaction",
+                    description="Combine policy and tool perturbations to expose hidden coupling",
+                    expected_failure_mode="regression masked by narrow gains",
+                    evaluation_hooks=["cross_pack_regression", "rollback_trigger_alignment"],
+                )
+            )
+        return scenarios

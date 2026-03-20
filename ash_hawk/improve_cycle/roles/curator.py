@@ -12,14 +12,21 @@ class CuratorRole(BaseRoleAgent[list[ImprovementProposal], list[CuratedLesson]])
         self._min_confidence = min_confidence
 
     def run(self, payload: list[ImprovementProposal]) -> list[CuratedLesson]:
-        lessons: list[CuratedLesson] = []
+        best_by_surface: dict[tuple[str, str], ImprovementProposal] = {}
         for proposal in payload:
+            key = (proposal.target_surface.strip().lower(), proposal.proposal_type.value)
+            current = best_by_surface.get(key)
+            if current is None or proposal.confidence > current.confidence:
+                best_by_surface[key] = proposal
+
+        lessons: list[CuratedLesson] = []
+        for proposal in best_by_surface.values():
             if proposal.confidence < self._min_confidence:
                 continue
             if not proposal.evidence:
                 continue
             if (
-                proposal.risk_level in {RiskLevel.HIGH, RiskLevel.BLOCKED}
+                proposal.risk_level in {RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.BLOCKED}
                 and not proposal.rollback_notes
             ):
                 continue
@@ -32,7 +39,10 @@ class CuratorRole(BaseRoleAgent[list[ImprovementProposal], list[CuratedLesson]])
                     summary=proposal.summary,
                     target_surface=proposal.target_surface,
                     approved=True,
-                    curation_notes="Passed confidence and evidence gates",
+                    curation_notes=(
+                        "Passed confidence/evidence gates and selected as best proposal "
+                        "for target surface"
+                    ),
                     confidence=proposal.confidence,
                     risk_level=proposal.risk_level,
                     lineage=[proposal.proposal_id],

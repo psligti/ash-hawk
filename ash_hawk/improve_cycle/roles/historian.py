@@ -37,7 +37,7 @@ class HistorianRole(
             list[PromotionDecision],
         ],
     ) -> ExperimentHistorySummary:
-        run_bundle, analyst_output, _lessons, reports, decisions = payload
+        run_bundle, analyst_output, lessons, reports, decisions = payload
         promoted = sum(
             1
             for decision in decisions
@@ -56,15 +56,24 @@ class HistorianRole(
                 if finding.category is not None
             }
         )
+        success_reports = [report for report in reports if report.passed]
+        avg_score_delta = sum(report.score_delta or 0.0 for report in success_reports) / max(
+            1, len(success_reports)
+        )
+        promoted_ratio = promoted / max(1, len(lessons))
         return ExperimentHistorySummary(
             history_id=f"history-{run_bundle.run_id}",
             agent_id=run_bundle.agent_id,
-            experiment_count=1,
+            experiment_count=max(1, len(reports)),
             promoted_lessons=promoted,
             retired_lessons=retired,
             common_failure_categories=common,
             recurring_regressions=[
                 report.overall_summary for report in reports if report.regression_count > 0
             ],
-            trend_notes=["Lineage captured for improve cycle"],
+            trend_notes=[
+                "Lineage captured for improve cycle",
+                f"promoted_ratio={promoted_ratio:.2f}",
+                f"avg_success_score_delta={avg_score_delta:.3f}",
+            ],
         )
