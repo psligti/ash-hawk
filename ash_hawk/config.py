@@ -61,7 +61,7 @@ class EvalConfig(pydantic_settings.BaseSettings):
         default=4,
         ge=1,
         le=256,
-        description="Maximum concurrent trials via execution queue (replaces semaphore)",
+        description="Maximum concurrent trials via execution queue",
     )
 
     storage_backend: StorageBackend = Field(

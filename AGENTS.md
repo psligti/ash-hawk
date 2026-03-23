@@ -290,17 +290,17 @@ ASH_HAWK_LOG_LEVEL=INFO
 
 ## Request Queue Integration
 
-Ash Hawk uses a two-level request queue from throttling from Dawn Kestrel to avoid agent timeouts.
+Ash Hawk uses a two-level request queue for throttling to avoid agent timeouts.
 
 ### Queue Architecture
 
 1. **LLM Request Queue** (`LLMRequestQueue`): Throttles concurrent LLM API calls across all trials
-   - Uses semaphore-based concurrency control
+   - Uses local asyncio.Semaphore for concurrency control
    - Tracks wait times and token usage
    - Configured via `ASH_HAWK_LLM_MAX_WORKERS` (default: 4)
 
 2. **Trial Execution Queue** (`TrialExecutionQueue`): Throttles concurrent trial execution
-   - Uses Dawn Kestrel's `InMemoryAgentExecutionQueue` internally
+   - Uses local asyncio.Semaphore for concurrency control
    - Configured via `ASH_HAWK_TRIAL_MAX_WORKERS` (default: 4)
 
 ### Configuration
@@ -342,7 +342,6 @@ async def run_with_throttling():
 queue_stats = await runner.llm_queue.get_stats()
 print(f"Total requests: {queue_stats['total_requests']}")
 print(f"Avg wait time: {queue_stats['total_wait_time'] / max(1, queue_stats['total_requests']):.2f}s")
-print(f"Active requests: {queue_stats['active_requests']}")
 ```
 
 ---

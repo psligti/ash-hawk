@@ -45,12 +45,26 @@ class ResourceTracker:
     """Tracks resource usage during suite execution."""
 
     def __init__(self) -> None:
-        self._lock = asyncio.Lock()
+        self._lock: asyncio.Lock | None = None
+        self._lock_loop: asyncio.AbstractEventLoop | None = None
         self.total_tokens = TokenUsage()
         self.total_cost_usd = 0.0
         self.total_duration_seconds = 0.0
         self.total_queue_wait_seconds = 0.0
         self.peak_queue_depth = 0
+
+    def _get_lock(self) -> asyncio.Lock:
+        """Get lock, recreating if event loop changed."""
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if self._lock is None or self._lock_loop != current_loop:
+            self._lock = asyncio.Lock()
+            self._lock_loop = current_loop
+        assert self._lock is not None
+        return self._lock
 
     async def add_trial_usage(
         self,
@@ -60,7 +74,7 @@ class ResourceTracker:
         queue_wait_seconds: float = 0.0,
     ) -> None:
         """Add trial resource usage to totals."""
-        async with self._lock:
+        async with self._get_lock():
             self.total_tokens = TokenUsage(
                 input=self.total_tokens.input + tokens.input,
                 output=self.total_tokens.output + tokens.output,
@@ -74,7 +88,7 @@ class ResourceTracker:
 
     async def update_queue_depth(self, depth: int) -> None:
         """Update peak queue depth if new depth is higher."""
-        async with self._lock:
+        async with self._get_lock():
             if depth > self.peak_queue_depth:
                 self.peak_queue_depth = depth
 
@@ -116,7 +130,6 @@ class EvalRunner:
         self._config = config
         self._storage = storage
         self._trial_executor = trial_executor
-        self._semaphore = asyncio.Semaphore(config.parallelism)
         self._llm_queue = LLMRequestQueue(
             max_workers=config.llm_max_workers,
             timeout_seconds=config.llm_timeout_seconds,
@@ -287,72 +300,6 @@ class EvalRunner:
         )
 
         return summary
-
-    async def _run_with_semaphore(
-        self,
-        task: EvalTask,
-        agent_config: dict[str, Any],
-        run_envelope: RunEnvelope,
-    ) -> EvalTrial:
-        """Run a single task with semaphore-controlled concurrency.
-
-        Args:
-            task: The task to execute.
-            agent_config: Agent configuration.
-            run_envelope: Run envelope for trial metadata.
-
-        Returns:
-            EvalTrial containing the result.
-
-        Raises:
-            asyncio.CancelledError: Re-raised if cancellation was requested.
-        """
-        if self._cancelled:
-            trial = self._create_cancelled_trial(task, run_envelope)
-            self._trials.append(trial)
-            return trial
-
-        async with self._semaphore:
-            if self._cancelled:
-                trial = self._create_cancelled_trial(task, run_envelope)
-                self._trials.append(trial)
-                return trial
-
-            trial_start = time.time()
-
-            try:
-                result = await self._trial_executor.execute(
-                    task=task,
-                    agent_config=agent_config,
-                    run_envelope=run_envelope,
-                )
-
-                trial_end = time.time()
-                trial_duration = trial_end - trial_start
-                self._trial_durations.append(trial_duration)
-
-                await self._resource_tracker.add_trial_usage(
-                    tokens=result.transcript.token_usage,
-                    cost_usd=result.transcript.cost_usd,
-                    duration_seconds=result.transcript.duration_seconds,
-                )
-
-                trial = EvalTrial(
-                    id=result.trial_id,
-                    task_id=task.id,
-                    status=self._outcome_to_status(result.outcome),
-                    attempt_number=1,
-                    input_snapshot=task.input,
-                    result=result,
-                    envelope=await self._get_trial_envelope(run_envelope, result.trial_id),
-                )
-
-                return trial
-
-            except asyncio.CancelledError:
-                trial = self._create_cancelled_trial(task, run_envelope)
-                self._trials.append(trial)
-                raise
 
     async def _get_trial_envelope(
         self,

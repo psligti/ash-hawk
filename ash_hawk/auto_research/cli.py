@@ -11,6 +11,8 @@ from rich.console import Console
 from ash_hawk.auto_research.cycle_runner import CycleRunner
 from ash_hawk.auto_research.discovery import discover_repo_config, filter_targets_by_type
 from ash_hawk.auto_research.types import ImprovementType
+from ash_hawk.config import get_config
+from ash_hawk.execution.queue import LLMRequestQueue, register_llm_queue
 
 console = Console()
 
@@ -80,7 +82,14 @@ def run(
         ash-hawk auto-research run --target-type skills
         ash-hawk auto-research run --target-type skills --target-type tools
     """
+    config = get_config()
     repo_config = discover_repo_config()
+
+    queue = LLMRequestQueue(
+        max_workers=config.llm_max_workers,
+        timeout_seconds=config.llm_timeout_seconds,
+    )
+    register_llm_queue(queue)
 
     console.print("\n[cyan]Auto-Research Improvement Cycle[/cyan]\n")
     console.print("[dim]Experiment:[/dim] (auto-generated)")

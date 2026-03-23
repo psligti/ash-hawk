@@ -1,13 +1,12 @@
 """Queue-based throttling for LLM requests and trial execution.
 
-This module provides thin wrappers around Dawn Kestrel's InMemoryAgentExecutionQueue
-to throttle both LLM API calls and trial execution.
+This module provides semaphore-based throttling for both LLM API calls
+and trial execution to control concurrency.
 """
 
 from __future__ import annotations
 
 import asyncio
-import importlib
 import logging
 import time
 from collections.abc import Awaitable, Callable
@@ -69,9 +68,7 @@ class TrialJobResult:
 
 
 class LLMRequestQueue:
-    """Queue for throttling LLM API requests using Dawn Kestrel's execution queue.
-
-    Uses InMemoryAgentExecutionQueue directly for consistent throttling behavior.
+    """Queue for throttling LLM API requests using semaphore-based concurrency.
 
     Example:
         queue = LLMRequestQueue(max_workers=4, timeout_seconds=300)
@@ -87,22 +84,11 @@ class LLMRequestQueue:
         self.max_workers = max_workers
         self.timeout_seconds = timeout_seconds
         self.poll_interval = poll_interval
+        self._semaphore = asyncio.Semaphore(max_workers)
         self._stats = {
             "total_requests": 0,
             "total_wait_time": 0.0,
         }
-
-    def _get_queue_type(self) -> Any:
-        execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
-        return getattr(
-            execution_queue_module,
-            "InMemoryAgentExecutionQueue",
-            getattr(execution_queue_module, "AgentExecutionQueue"),
-        )
-
-    def _get_job_type(self) -> Any:
-        execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
-        return getattr(execution_queue_module, "AgentExecutionJob")
 
     async def execute(
         self,
@@ -122,45 +108,8 @@ class LLMRequestQueue:
             Exception: Re-raised from execute function.
         """
         start_time = time.time()
-        response: Any
 
-        try:
-            queue_type = self._get_queue_type()
-            job_type = self._get_job_type()
-
-            queue = queue_type(
-                max_workers=self.max_workers,
-                poll_interval=self.poll_interval,
-                timeout_seconds=self.timeout_seconds,
-            )
-
-            queue_job = job_type(index=0, task_id=request.request_id)
-            error: Exception | None = None
-            queued_response: Any = None
-
-            async def execute_job(_: Any) -> str:
-                nonlocal queued_response, error
-                try:
-                    queued_response = await execute(request)
-                    return request.request_id
-                except Exception as e:
-                    error = e
-                    raise
-
-            batch_result = await queue.run_jobs([queue_job], execute_job)
-
-            if 0 in batch_result.errors_by_index:
-                raise RuntimeError(batch_result.errors_by_index[0])
-
-            if error is not None:
-                raise error
-
-            response = queued_response
-        except Exception as queue_exc:
-            logger.warning(
-                "LLMRequestQueue backend failed; falling back to direct execution: %s",
-                queue_exc,
-            )
+        async with self._semaphore:
             response = await execute(request)
 
         wait_time = time.time() - start_time
@@ -203,10 +152,7 @@ class LLMRequestQueue:
 
 
 class TrialExecutionQueue:
-    """Queue for throttling trial executions.
-
-    Uses Dawn Kestrel's InMemoryAgentExecutionQueue directly to control
-    how many trials run concurrently.
+    """Queue for throttling trial executions using semaphore-based concurrency.
 
     Example:
         queue = TrialExecutionQueue(max_workers=4, timeout_seconds=600)
@@ -225,18 +171,6 @@ class TrialExecutionQueue:
         self.max_workers = max_workers
         self.timeout_seconds = timeout_seconds
         self.poll_interval = poll_interval
-
-    def _get_queue_type(self) -> Any:
-        execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
-        return getattr(
-            execution_queue_module,
-            "InMemoryAgentExecutionQueue",
-            getattr(execution_queue_module, "AgentExecutionQueue"),
-        )
-
-    def _get_job_type(self) -> Any:
-        execution_queue_module = importlib.import_module("dawn_kestrel.agents.execution_queue")
-        return getattr(execution_queue_module, "AgentExecutionJob")
 
     async def run_trials(
         self,
@@ -257,85 +191,27 @@ class TrialExecutionQueue:
         if not jobs:
             return []
 
-        queue_type = self._get_queue_type()
-        job_type = self._get_job_type()
-
-        queue = queue_type(
-            max_workers=self.max_workers,
-            poll_interval=self.poll_interval,
-            timeout_seconds=self.timeout_seconds,
-        )
-
-        queue_jobs = [job_type(index=i, task_id=job.task_id) for i, job in enumerate(jobs)]
-
         results: list[TrialJobResult | Exception] = [Exception("not executed") for _ in jobs]
-        start_times: dict[str, float] = {}
+        semaphore = asyncio.Semaphore(self.max_workers)
 
-        async def execute_job(queue_job: Any) -> str:
-            idx = cast(int, queue_job.index)
-            job: TrialJob = jobs[idx]
-            job_id: str = job.job_id
-            start_times[job_id] = time.time()
+        async def run_one(idx: int, job: TrialJob) -> None:
+            async with semaphore:
+                started = time.time()
+                try:
+                    raw_result = await asyncio.wait_for(
+                        execute(job),
+                        timeout=self.timeout_seconds,
+                    )
+                    elapsed = time.time() - started
+                    results[idx] = self._to_trial_job_result(job, raw_result, elapsed)
+                except Exception as exc:
+                    results[idx] = exc
 
-            try:
-                result = await execute(job)
-                elapsed = time.time() - start_times[job_id]
-                results[idx] = self._to_trial_job_result(job, result, elapsed)
-                return job_id
-            except Exception as e:
-                results[idx] = e
-                raise
-
-        try:
-            batch_result = await queue.run_jobs(queue_jobs, execute_job)
-        except Exception as queue_exc:
-            logger.warning(
-                "TrialExecutionQueue backend failed; falling back to local execution: %s",
-                queue_exc,
-            )
-            return await self._run_trials_fallback(jobs, execute)
-
-        for idx, error_msg in batch_result.errors_by_index.items():
-            if not isinstance(results[idx], TrialJobResult):
-                results[idx] = Exception(error_msg)
-
-        unresolved_indices = [
-            idx for idx, result in enumerate(results) if self._is_not_executed_result(result)
-        ]
-        if unresolved_indices:
-            unresolved_job_ids = [jobs[idx].job_id for idx in unresolved_indices]
-            logger.warning(
-                "TrialExecutionQueue returned unresolved jobs (%d/%d): %s; "
-                "retrying unresolved jobs locally",
-                len(unresolved_indices),
-                len(jobs),
-                ", ".join(unresolved_job_ids[:10]),
-            )
-            fallback_results = await self._run_trials_subset_fallback(
-                jobs, unresolved_indices, execute
-            )
-            for idx, fallback_result in fallback_results.items():
-                results[idx] = fallback_result
-
-        final_unresolved = [
-            idx for idx, result in enumerate(results) if self._is_not_executed_result(result)
-        ]
-        if final_unresolved:
-            unresolved_job_ids = [jobs[idx].job_id for idx in final_unresolved]
-            logger.error(
-                "TrialExecutionQueue still unresolved after local retry (%d/%d): %s",
-                len(final_unresolved),
-                len(jobs),
-                ", ".join(unresolved_job_ids[:10]),
-            )
-
+        await asyncio.gather(
+            *(run_one(idx, job) for idx, job in enumerate(jobs)),
+            return_exceptions=False,
+        )
         return results
-
-    @staticmethod
-    def _is_not_executed_result(result: TrialJobResult | Exception) -> bool:
-        if not isinstance(result, Exception):
-            return False
-        return str(result).strip().lower() == "not executed"
 
     @staticmethod
     def _to_trial_job_result(job: TrialJob, result: Any, elapsed: float) -> TrialJobResult:
@@ -377,59 +253,6 @@ class TrialExecutionQueue:
             aggregate_score=getattr(result, "aggregate_score", 0.0),
             aggregate_passed=getattr(result, "aggregate_passed", False),
         )
-
-    async def _run_trials_fallback(
-        self,
-        jobs: list[TrialJob],
-        execute: Callable[[TrialJob], Awaitable[Any]],
-    ) -> list[TrialJobResult | Exception]:
-        results: list[TrialJobResult | Exception] = [Exception("not executed") for _ in jobs]
-        semaphore = asyncio.Semaphore(self.max_workers)
-
-        async def run_one(idx: int, job: TrialJob) -> None:
-            async with semaphore:
-                started = time.time()
-                try:
-                    raw_result = await asyncio.wait_for(
-                        execute(job),
-                        timeout=self.timeout_seconds,
-                    )
-                    elapsed = time.time() - started
-                    results[idx] = self._to_trial_job_result(job, raw_result, elapsed)
-                except Exception as exc:
-                    results[idx] = exc
-
-        await asyncio.gather(
-            *(run_one(idx, job) for idx, job in enumerate(jobs)),
-            return_exceptions=False,
-        )
-        return results
-
-    async def _run_trials_subset_fallback(
-        self,
-        jobs: list[TrialJob],
-        indices: list[int],
-        execute: Callable[[TrialJob], Awaitable[Any]],
-    ) -> dict[int, TrialJobResult | Exception]:
-        fallback_results: dict[int, TrialJobResult | Exception] = {}
-        semaphore = asyncio.Semaphore(self.max_workers)
-
-        async def run_one(idx: int) -> None:
-            async with semaphore:
-                job = jobs[idx]
-                started = time.time()
-                try:
-                    raw_result = await asyncio.wait_for(
-                        execute(job),
-                        timeout=self.timeout_seconds,
-                    )
-                    elapsed = time.time() - started
-                    fallback_results[idx] = self._to_trial_job_result(job, raw_result, elapsed)
-                except Exception as exc:
-                    fallback_results[idx] = exc
-
-        await asyncio.gather(*(run_one(idx) for idx in indices), return_exceptions=False)
-        return fallback_results
 
 
 _llm_queue: LLMRequestQueue | None = None

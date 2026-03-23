@@ -155,13 +155,6 @@ class TestEvalRunnerInit:
         assert runner._storage == mock_storage
         assert runner._trial_executor == trial_executor
 
-    def test_semaphore_created_from_config(
-        self, sample_config, mock_storage, sample_policy, mock_agent_runner
-    ):
-        trial_executor = TrialExecutor(mock_storage, sample_policy, agent_runner=mock_agent_runner)
-        runner = EvalRunner(sample_config, mock_storage, trial_executor)
-        assert runner._semaphore._value == sample_config.parallelism
-
     def test_initial_state_not_cancelled(self, runner):
         assert not runner.is_cancelled
 
@@ -238,45 +231,6 @@ class TestEvalRunnerRunSuite:
             sample_run_envelope.run_id,
         )
         assert stored is not None
-
-
-class TestEvalRunnerParallelism:
-    @pytest.mark.asyncio
-    async def test_parallelism_respects_semaphore(
-        self, mock_storage, sample_policy, sample_suite, sample_run_envelope, mock_agent_runner
-    ):
-        config = EvalConfig(parallelism=1)
-        trial_executor = TrialExecutor(mock_storage, sample_policy, agent_runner=mock_agent_runner)
-        runner = EvalRunner(config, mock_storage, trial_executor)
-
-        max_concurrent = 0
-        current_concurrent = 0
-        lock = asyncio.Lock()
-
-        original_execute = trial_executor.execute
-
-        async def tracked_execute(*args, **kwargs):
-            nonlocal max_concurrent, current_concurrent
-            async with lock:
-                current_concurrent += 1
-                max_concurrent = max(max_concurrent, current_concurrent)
-
-            result = await original_execute(*args, **kwargs)
-
-            async with lock:
-                current_concurrent -= 1
-
-            return result
-
-        trial_executor.execute = tracked_execute
-
-        await runner.run_suite(
-            suite=sample_suite,
-            agent_config={},
-            run_envelope=sample_run_envelope,
-        )
-
-        assert max_concurrent <= config.parallelism
 
 
 class TestEvalRunnerCancellation:
