@@ -29,12 +29,13 @@ class MockScenarioAdapter:
         workdir: Path,
         tooling_harness: dict[str, Any],
         budgets: dict[str, Any],
-    ) -> tuple[Any, list[Any], dict[str, Any]]:
+    ) -> tuple[Any, list[Any], dict[str, Any], Any]:
         """Mock implementation of run_scenario."""
         final_output = f"output for {scenario.get('id', 'unknown')}"
         trace_events = [{"event": "start"}, {"event": "end"}]
         artifacts = {"result": "success"}
-        return final_output, trace_events, artifacts
+        outcome = None
+        return final_output, trace_events, artifacts, outcome
 
 
 class TestScenarioAdapterProtocol:
@@ -50,7 +51,7 @@ class TestScenarioAdapterProtocol:
 
         class IncompleteAdapter:
             def run_scenario(self, scenario, workdir, tooling_harness, budgets):
-                return None, [], {}
+                return None, [], {}, None
 
         adapter = IncompleteAdapter()
         # Should not be recognized as ScenarioAdapter
@@ -196,7 +197,7 @@ class TestScenarioAdapterExecution:
         tooling_harness = {"allowed_tools": ["read", "write"]}
         budgets = {"max_tokens": 1000, "timeout_seconds": 60}
 
-        final_output, trace_events, artifacts = adapter.run_scenario(
+        final_output, trace_events, artifacts, _ = adapter.run_scenario(
             scenario, workdir, tooling_harness, budgets
         )
 
@@ -216,7 +217,7 @@ class TestScenarioAdapterExecution:
         assert isinstance(retrieved, ScenarioAdapter)
 
         # Execute the retrieved adapter
-        final_output, trace_events, artifacts = retrieved.run_scenario(
+        final_output, trace_events, artifacts, _ = retrieved.run_scenario(
             {"id": "test"}, Path("/tmp"), {}, {}
         )
 

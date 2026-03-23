@@ -29,7 +29,7 @@ def test_coding_agent_subprocess_adapter_diff_and_verify() -> None:
         "budgets": {},
     }
 
-    final_output, trace_events, artifacts = adapter.run_scenario(
+    final_output, trace_events, artifacts, _ = adapter.run_scenario(
         scenario=scenario,
         workdir=repo_root,
         tooling_harness={},

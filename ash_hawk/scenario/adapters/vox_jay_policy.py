@@ -70,7 +70,7 @@ class VoxJayPolicyAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
+    ) -> tuple[str, list[dict[str, Any]], dict[str, Any], Any]:
         """Execute vox-jay policy evaluation and return results.
 
         Args:
@@ -80,7 +80,7 @@ class VoxJayPolicyAdapter:
             budgets: Budget configuration (passed to policy)
 
         Returns:
-            Tuple of (final_output, trace_events, artifacts)
+            Tuple of (final_output, trace_events, artifacts, outcome)
         """
         import json
 
@@ -210,7 +210,7 @@ class VoxJayPolicyAdapter:
             # Budget exhausted - return empty output gracefully
             output = PolicyOutput(
                 actions=[],
-                rationale=f"Budget exhausted: {e}", 
+                rationale=f"Budget exhausted: {e}",
                 confidence=0.0,
                 strategy_alignment_score=0.0,
                 constraints_checked=["budget"],
@@ -296,4 +296,4 @@ class VoxJayPolicyAdapter:
             "actions_proposed": len(output.actions),
         }
 
-        return final_output, trace_events, artifacts
+        return final_output, trace_events, artifacts, None

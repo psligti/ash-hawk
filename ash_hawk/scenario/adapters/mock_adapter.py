@@ -41,7 +41,7 @@ class MockAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
+    ) -> tuple[str, list[dict[str, Any]], dict[str, Any], Any]:
         """Execute mock scenario and return deterministic results.
 
         Args:
@@ -51,7 +51,7 @@ class MockAdapter:
             budgets: Budget configuration (unused in mock)
 
         Returns:
-            Tuple of (final_output, trace_events, artifacts)
+            Tuple of (final_output, trace_events, artifacts, outcome)
         """
         trace_events: list[dict[str, Any]] = []
 
@@ -162,5 +162,5 @@ class MockAdapter:
         )
         trace_events.append(final_msg.model_dump())
 
-        # Return final output, trace events, and empty artifacts
-        return final_content, trace_events, {}
+        # Return final output, trace events, empty artifacts, and None outcome
+        return final_content, trace_events, {}, None

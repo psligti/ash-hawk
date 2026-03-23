@@ -24,7 +24,7 @@ def test_mock_adapter_basic():
     tooling_harness = ToolingHarness(mode="mock", root=workdir)
     budgets = {}
 
-    final_output, trace_events, artifacts = adapter.run_scenario(
+    final_output, trace_events, artifacts, _ = adapter.run_scenario(
         scenario, workdir, tooling_harness, budgets
     )
 
@@ -77,7 +77,7 @@ def test_mock_adapter_with_expectations():
     tooling_harness = ToolingHarness(mode="mock", root=workdir)
     budgets = {}
 
-    final_output, trace_events, artifacts = adapter.run_scenario(
+    final_output, trace_events, artifacts, _ = adapter.run_scenario(
         scenario, workdir, tooling_harness, budgets
     )
 
@@ -107,7 +107,7 @@ def test_mock_adapter_without_bash():
     tooling_harness = ToolingHarness(mode="mock", root=workdir)
     budgets = {}
 
-    final_output, trace_events, artifacts = adapter.run_scenario(
+    final_output, trace_events, artifacts, _ = adapter.run_scenario(
         scenario, workdir, tooling_harness, budgets
     )
 
@@ -161,7 +161,7 @@ def test_mock_adapter_with_extra_mock_tool_calls():
         {"items": []},
     )
 
-    final_output, trace_events, artifacts = adapter.run_scenario(
+    final_output, trace_events, artifacts, _ = adapter.run_scenario(
         scenario, workdir, tooling_harness, {}
     )
 

@@ -3,12 +3,15 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import platform
 import sys
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Literal
+
+from rich.console import Console
 
 from ash_hawk import __version__
 from ash_hawk.config import EvalConfig, get_config
@@ -30,6 +33,9 @@ from ash_hawk.types import (
 
 if TYPE_CHECKING:
     from ash_hawk.storage import FileStorage
+
+logger = logging.getLogger(__name__)
+console = Console()
 
 
 PATH_KEYS = {
@@ -54,6 +60,7 @@ class ScenarioRunner:
         adapter_registry: ScenarioAdapterRegistry | None = None,
     ) -> None:
         from ash_hawk.storage import FileStorage
+
         config = get_config()
         resolved_storage = (
             Path(storage_path) if storage_path is not None else config.storage_path_resolved()
@@ -110,11 +117,138 @@ class ScenarioRunner:
             agent_runner=scenario_agent_runner,
         )
         runner = EvalRunner(self._config, self._storage, trial_executor)
-        return await runner.run_suite(
+        summary = await runner.run_suite(
             suite=suite,
             agent_config=agent_config,
             run_envelope=run_envelope,
         )
+
+        # Detect systematic failures and surface them
+        self._detect_and_surface_failures(summary)
+
+        return summary
+
+    def _detect_and_surface_failures(self, summary: EvalRunSummary) -> dict[str, Any]:
+        """Detect systematic failures and surface actionable insights.
+
+        Checks for:
+        1. All trials with same low score (e.g., 0.25)
+        2. All transcripts with error_trace
+        3. All transcripts with empty tool_calls and messages
+        """
+
+        # Collect failure patterns
+        failure_patterns: list[dict[str, Any]] = []
+        low_score_trials = []
+        error_trace_trials = []
+        empty_transcript_trials = []
+
+        for trial in summary.trials:
+            if trial.result is None:
+                continue
+
+            transcript = trial.result.transcript
+            if transcript is None:
+                continue
+
+            # Check for low score
+            if trial.result.aggregate_score is not None and trial.result.aggregate_score <= 0.3:
+                low_score_trials.append(
+                    {
+                        "trial_id": trial.id,
+                        "task_id": trial.task_id,
+                        "score": trial.result.aggregate_score,
+                        "error_trace": transcript.error_trace,
+                        "has_empty_tool_calls": len(transcript.tool_calls) == 0,
+                        "has_empty_messages": len(transcript.messages) == 0,
+                    }
+                )
+
+            # Check for error trace
+            if transcript.error_trace:
+                error_trace_trials.append(
+                    {
+                        "trial_id": trial.id,
+                        "task_id": trial.task_id,
+                        "error_trace": transcript.error_trace[:500]
+                        if len(transcript.error_trace) > 500
+                        else transcript.error_trace,
+                    }
+                )
+
+            # Check for empty tool calls/messages (no work done)
+            if len(transcript.tool_calls) == 0 and len(transcript.messages) == 0:
+                empty_transcript_trials.append(
+                    {
+                        "trial_id": trial.id,
+                        "task_id": trial.task_id,
+                    }
+                )
+
+        # Detect patterns
+        if low_score_trials:
+            failure_patterns.append(
+                {
+                    "pattern": "low_score",
+                    "count": len(low_score_trials),
+                    "trials": low_score_trials,
+                }
+            )
+
+        if error_trace_trials:
+            failure_patterns.append(
+                {
+                    "pattern": "error_trace",
+                    "count": len(error_trace_trials),
+                    "trials": error_trace_trials,
+                }
+            )
+
+        if empty_transcript_trials:
+            failure_patterns.append(
+                {
+                    "pattern": "empty_transcript",
+                    "count": len(empty_transcript_trials),
+                    "trials": empty_transcript_trials,
+                }
+            )
+
+        # Surface actionable insights
+        if failure_patterns:
+            console.print()
+            console.rule("[yellow]Systematic Failures Detected[/yellow]")
+            for pattern_info in failure_patterns:
+                console.print(f"  [red]Pattern: {pattern_info['pattern']}[/red]")
+                console.print(f"  [dim]Affected {pattern_info['count']} trials[/dim]")
+
+                # Show sample errors
+                if pattern_info["pattern"] == "error_trace":
+                    for trial_info in pattern_info["trials"][:3]:
+                        console.print(f"    [dim]Error in {trial_info['trial_id']}:[/dim]")
+                        console.print(f"    [dim]{trial_info['error_trace'][:200]}[/dim]")
+
+                # Recommendations
+                if pattern_info["pattern"] == "low_score":
+                    console.print()
+                    console.print("  [yellow]Recommendations:[/yellow]")
+                    console.print("  [dim]• Check agent configuration and adapter setup[/dim]")
+                    console.print(
+                        "  [dim]• Verify tool registry and permission filter compatibility[/dim]"
+                    )
+                    console.print("  [dim]• Review scenario mock configuration[/dim]")
+                elif pattern_info["pattern"] == "empty_transcript":
+                    console.print()
+                    console.print("  [yellow]Recommendations:[/yellow]")
+                    console.print("  [dim]• Agent may be crashing before completing any work[/dim]")
+                    console.print("  [dim]• Check for runtime errors in agent initialization[/dim]")
+                    console.print("  [dim]• Verify allowed_tools configuration[/dim]")
+
+        return {
+            "failure_patterns": failure_patterns,
+            "low_score_trials": low_score_trials,
+            "error_trace_trials": error_trace_trials,
+            "empty_transcript_trials": empty_transcript_trials,
+        }
 
     def _load_scenario_sources(self, paths: list[str]) -> list[tuple[ScenarioV1, Path]]:
         if not paths:

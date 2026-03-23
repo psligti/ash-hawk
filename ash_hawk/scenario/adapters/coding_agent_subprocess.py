@@ -102,7 +102,7 @@ class CodingAgentSubprocessAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
+    ) -> tuple[str, list[dict[str, Any]], dict[str, Any], Any]:
         del tooling_harness, budgets
 
         trace_events: list[dict[str, Any]] = []
@@ -211,4 +211,4 @@ class CodingAgentSubprocessAdapter:
                     ).model_dump()
                 )
 
-            return command_result.get("stdout", ""), trace_events, artifacts
+            return command_result.get("stdout", ""), trace_events, artifacts, None

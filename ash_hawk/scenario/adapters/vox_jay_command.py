@@ -73,7 +73,7 @@ class VoxJayCommandAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
+    ) -> tuple[str, list[dict[str, Any]], dict[str, Any], Any]:
         """Execute vox-jay command evaluation and return results.
 
         Args:
@@ -83,7 +83,7 @@ class VoxJayCommandAdapter:
             budgets: Budget configuration
 
         Returns:
-            Tuple of (final_output, trace_events, artifacts)
+            Tuple of (final_output, trace_events, artifacts, outcome)
         """
         trace_events: list[dict[str, Any]] = []
         inputs = scenario.get("inputs", {})
@@ -123,7 +123,7 @@ class VoxJayCommandAdapter:
             "verification_passed": verification_passed,
         }
 
-        return final_output, trace_events, artifacts
+        return final_output, trace_events, artifacts, None
 
     def _execute_command(
         self, command: str, inputs: dict[str, Any], trace_events: list[dict[str, Any]]

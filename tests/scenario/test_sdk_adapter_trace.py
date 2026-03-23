@@ -68,7 +68,7 @@ def test_sdk_adapter_produces_policy_decision_events():
         mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
         MockRunner.return_value = mock_runner_instance
 
-        final_output, trace_events, artifacts = adapter.run_scenario(
+        final_output, trace_events, artifacts, _ = adapter.run_scenario(
             scenario, workdir, tooling_harness, budgets
         )
 
@@ -156,7 +156,7 @@ def test_sdk_adapter_produces_rejection_events_for_denied_tools():
         mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
         MockRunner.return_value = mock_runner_instance
 
-        final_output, trace_events, artifacts = adapter.run_scenario(
+        final_output, trace_events, artifacts, _ = adapter.run_scenario(
             scenario, workdir, tooling_harness, budgets
         )
 
@@ -235,7 +235,7 @@ def test_sdk_adapter_no_tool_calls_no_policy_events():
         mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
         MockRunner.return_value = mock_runner_instance
 
-        final_output, trace_events, artifacts = adapter.run_scenario(
+        final_output, trace_events, artifacts, _ = adapter.run_scenario(
             scenario, workdir, tooling_harness, budgets
         )
 

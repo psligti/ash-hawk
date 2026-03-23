@@ -115,9 +115,7 @@ class SdkDawnKestrelAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str | dict[str, Any] | None, list[dict[str, Any]], dict[str, Any]]:
-        del workdir
-
+    ) -> tuple[str | dict[str, Any] | None, list[dict[str, Any]], dict[str, Any], Any]:
         trace_events: list[dict[str, Any]] = []
         artifacts: dict[str, Any] = {}
 
@@ -159,6 +157,8 @@ class SdkDawnKestrelAdapter:
         if isinstance(policy_mode, str) and policy_mode.strip() and "policy_mode" not in run_config:
             run_config["policy_mode"] = policy_mode.strip()
 
+        run_config["workdir"] = str(workdir.resolve())
+
         policy_payload: dict[str, Any] = {}
         tooling_call: Callable[[str, Any], dict[str, Any]] | None = None
         if isinstance(tooling_harness, dict):
@@ -169,6 +169,12 @@ class SdkDawnKestrelAdapter:
             if callable(tooling_call_value):
                 tooling_call = tooling_call_value
 
+        workdir_str = str(workdir.resolve())
+        if "allowed_roots" not in policy_payload:
+            policy_payload["allowed_roots"] = []
+        if workdir_str not in policy_payload["allowed_roots"]:
+            policy_payload["allowed_roots"].append(workdir_str)
+
         tool_policy = ToolSurfacePolicy.model_validate(policy_payload)
         policy_enforcer = PolicyEnforcer(tool_policy)
 
@@ -178,7 +184,6 @@ class SdkDawnKestrelAdapter:
             policy_enforcer=policy_enforcer,
             config=run_config,
         )
-        del outcome
 
         normalized_events = normalize_eval_transcript(transcript)
         for event in normalized_events:
@@ -252,7 +257,7 @@ class SdkDawnKestrelAdapter:
         if final_output is None:
             final_output = transcript.error_trace
 
-        return final_output, trace_events, artifacts
+        return final_output, trace_events, artifacts, outcome
 
 
 __all__ = ["SdkDawnKestrelAdapter"]

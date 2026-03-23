@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from pathlib import Path
@@ -101,18 +102,37 @@ class ScenarioAgentRunner:
         }
 
         try:
-            final_output, trace_events, artifacts = adapter.run_scenario(
-                scenario=scenario.model_dump(),
-                workdir=tooling_root,
-                tooling_harness=tooling_context,
-                budgets=scenario.budgets.model_dump(),
+            adapter_result = await asyncio.to_thread(
+                adapter.run_scenario,
+                scenario.model_dump(),
+                tooling_root,
+                tooling_context,
+                scenario.budgets.model_dump(),
             )
+            # Adapter returns 4 values: (output, events, artifacts, outcome)
+            if len(adapter_result) == 4:
+                final_output, trace_events, artifacts, adapter_outcome = adapter_result
+            else:
+                # Backward compat for adapters returning 3 values
+                final_output, trace_events, artifacts = adapter_result
+                adapter_outcome = None
         except Exception as exc:
             return self._failure_transcript(
                 FailureMode.AGENT_ERROR,
                 f"Scenario execution failed: {exc}",
                 start_time,
             )
+
+        # If adapter returned a failure outcome, propagate it
+        if adapter_outcome is not None and adapter_outcome.failure_mode is not None:
+            duration = time.time() - start_time
+            error_msg = adapter_outcome.error_message or "Agent returned failure"
+            transcript = EvalTranscript(
+                error_trace=error_msg,
+                duration_seconds=duration,
+                trace_events=self._normalize_trace_events(trace_events),
+            )
+            return transcript, adapter_outcome
 
         artifact_events = self._persist_artifacts(artifacts, config)
         combined_trace_events = (
@@ -125,7 +145,9 @@ class ScenarioAgentRunner:
             duration_seconds=duration,
             trace_events=combined_trace_events,
         )
-        outcome = EvalOutcome.success()
+
+        # Use adapter outcome if available, otherwise success
+        outcome = adapter_outcome if adapter_outcome is not None else EvalOutcome.success()
         return transcript, outcome
 
     def _parse_scenario(self, task: EvalTask) -> ScenarioV1:
