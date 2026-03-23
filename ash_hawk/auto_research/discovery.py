@@ -82,6 +82,7 @@ def discover_repo_config(start_dir: Path | None = None) -> RepoConfig:
                 ".opencode/policies/**/*.md",
                 ".opencode/tools/**/*.md",
                 ".claude/SKILL.md",
+                "../dawn-kestrel/dawn_kestrel/tools/prompts/*.txt",
             ],
         ),
     )
@@ -165,19 +166,27 @@ def _load_ash_hawk_config(pyproject_path: Path | None) -> dict[str, Any]:
 def _discover_by_patterns(start_dir: Path, patterns: list[str]) -> list[Path]:
     """Discover files matching glob patterns.
 
-    Args:
-        start_dir: Base directory for patterns.
-        patterns: List of glob patterns.
-
-    Returns:
-        Sorted list of unique matching paths.
+    Supports relative (skills/), parent-relative (../), and absolute (/) patterns.
     """
     discovered: set[Path] = set()
 
     for pattern in patterns:
-        for match in start_dir.glob(pattern):
-            if match.is_file():
-                discovered.add(match)
+        if pattern.startswith("/"):
+            base = Path("/")
+            glob_pattern = pattern[1:]
+        elif pattern.startswith("../"):
+            base = start_dir.parent
+            glob_pattern = pattern[3:]
+        else:
+            base = start_dir
+            glob_pattern = pattern
+
+        try:
+            for match in base.glob(glob_pattern):
+                if match.is_file():
+                    discovered.add(match)
+        except Exception as e:
+            logger.debug(f"Pattern {pattern} failed: {e}")
 
     return sorted(discovered)
 
@@ -236,7 +245,12 @@ def generate_experiment_id(
 _TYPE_PREFIXES: dict[ImprovementType, list[str]] = {
     ImprovementType.SKILL: ["skills/", ".opencode/skills/", ".claude/SKILL.md"],
     ImprovementType.POLICY: ["policies/", ".opencode/policies/"],
-    ImprovementType.TOOL: ["tools/", ".opencode/tools/"],
+    ImprovementType.TOOL: [
+        "tools/",
+        ".opencode/tools/",
+        "tools/prompts/",
+        "dawn_kestrel/tools/prompts/",
+    ],
     ImprovementType.AGENT: ["agents/", ".opencode/agents/"],
 }
 
