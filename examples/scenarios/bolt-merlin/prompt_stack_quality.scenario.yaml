@@ -1,0 +1,97 @@
+schema_version: "v1"
+id: "bolt_merlin_prompt_stack_quality"
+description: "Evaluates bolt-merlin's prompt stack quality across 6 categories using LLM judge"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "bolt_merlin"
+  config:
+    agent: "execution"
+
+inputs:
+  prompt: |
+    Implement a robust configuration management system with the following requirements:
+    
+    1. Create src/config/manager.py with ConfigManager class that:
+       - Loads config from YAML files
+       - Supports environment variable overrides
+       - Validates config against a schema
+       - Provides type-safe access methods
+    
+    2. Create src/config/schema.py with Pydantic models for:
+       - AppConfig (main config)
+       - DatabaseConfig (db settings)
+       - CacheConfig (cache settings)
+    
+    3. Create tests/test_config_manager.py with:
+       - Test for YAML loading
+       - Test for env override
+       - Test for validation errors
+    
+    4. Verify all tests pass before completing
+    
+    Requirements:
+    - Use dependency injection for testability
+    - Handle missing config files gracefully
+    - Log all config changes
+    - Include type hints everywhere
+
+tools:
+  allowed_tools:
+    - "bash"
+    - "read"
+    - "write"
+    - "edit"
+  mocks:
+    bash:
+      input: {}
+      result:
+        stdout: "ok"
+        stderr: ""
+        exit_code: 0
+    read:
+      input: {}
+      result:
+        content: "# project file\n"
+    write:
+      input: {}
+      result:
+        success: true
+    edit:
+      input: {}
+      result:
+        success: true
+  fault_injection: {}
+
+budgets:
+  max_steps: 80
+  max_tool_calls: 150
+  max_tokens: 15000
+  max_time_seconds: 400.0
+
+expectations:
+  must_events:
+    - "ModelMessageEvent"
+    - "ToolCallEvent"
+  must_not_events: []
+  ordering_rules:
+    - before: "ModelMessageEvent"
+      after: "ToolCallEvent"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 80
+      max_tool_calls: 150
+  - grader_type: "prompt_stack_optimizer"
+    weight: 1.0
+    config:
+      pass_threshold: 0.6
+      max_growth_opportunities: 5
+      max_mutation_targets: 3
