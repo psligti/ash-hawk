@@ -92,7 +92,7 @@ def run(
 
     queue = LLMRequestQueue(
         max_workers=config.llm_max_workers,
-        timeout_seconds=config.llm_timeout_seconds,
+        timeout_seconds=config.auto_research_llm_timeout_seconds,
     )
     register_llm_queue(queue)
 
