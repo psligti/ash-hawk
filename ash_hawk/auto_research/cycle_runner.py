@@ -19,10 +19,8 @@ from ash_hawk.auto_research.types import (
 )
 from ash_hawk.scenario import load_scenario, run_scenarios_async
 from ash_hawk.services.dawn_kestrel_injector import (
-    DawnKestrelInjector,
     DAWN_KESTREL_DIR,
-    SKILL_SEARCH_DIRS,
-    TOOL_SEARCH_DIRS,
+    DawnKestrelInjector,
 )
 
 logger = logging.getLogger(__name__)
