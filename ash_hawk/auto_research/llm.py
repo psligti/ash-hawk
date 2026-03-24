@@ -30,7 +30,7 @@ Output the improved skill as a complete markdown file with YAML frontmatter:
 
 ```markdown
 ---
-name: "{skill_name}"
+name: "<infer-a-descriptive-name>"
 description: "<1-2 sentence description of what this skill does>"
 ---
 

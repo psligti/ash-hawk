@@ -57,6 +57,12 @@ class EvalConfig(pydantic_settings.BaseSettings):
         description="Timeout for queued LLM requests in seconds",
     )
 
+    auto_research_llm_timeout_seconds: float = Field(
+        default=600.0,
+        ge=1.0,
+        description="Timeout for LLM requests in auto-research improvement cycle",
+    )
+
     trial_max_workers: int = Field(
         default=4,
         ge=1,
