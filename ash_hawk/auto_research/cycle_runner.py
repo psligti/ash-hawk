@@ -1,381 +1,396 @@
-"""Auto-research improvement cycle runner."""
+"""Auto-research improvement cycle - stripped down core loop."""
 
 from __future__ import annotations
 
 import logging
-import shutil
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 from rich.console import Console
 
-from ash_hawk.auto_research.agentic_analyst import AgenticAnalyst
-from ash_hawk.auto_research.agentic_improver import AgenticImprover
-from ash_hawk.auto_research.discovery import (
-    discover_repo_config,
-    generate_experiment_id,
-)
-from ash_hawk.auto_research.tool_lifecycle import ToolLifecycleManager
+from ash_hawk.auto_research.llm import generate_improvement
 from ash_hawk.auto_research.types import (
-    AnalysisResult,
     CycleResult,
     CycleStatus,
-    ImprovementResult,
-    ImprovementType,
     IterationResult,
-    RepoConfig,
 )
-from ash_hawk.scenario import run_scenarios_async
-from ash_hawk.types import EvalTranscript
+from ash_hawk.scenario import load_scenario, run_scenarios_async
+from ash_hawk.services.dawn_kestrel_injector import DawnKestrelInjector
 
 logger = logging.getLogger(__name__)
 console = Console()
 
 
-def _create_default_llm_client() -> Any:
+class TargetType(StrEnum):
+    AGENT = "agent"
+    SKILL = "skill"
+    TOOL = "tool"
+
+
+@dataclass
+class ImprovementTarget:
+    target_type: TargetType
+    name: str
+    discovered_path: Path
+    injector: DawnKestrelInjector
+
+    @property
+    def structured_path(self) -> Path:
+        if self.target_type == TargetType.AGENT:
+            return self.injector.get_agent_path(self.name)
+        elif self.target_type == TargetType.SKILL:
+            return self.injector.get_skill_path(self.name)
+        return self.injector.get_tool_path(self.name)
+
+    def read_content(self) -> str:
+        if self.structured_path.exists():
+            return self.structured_path.read_text(encoding="utf-8")
+        if self.discovered_path.exists():
+            return self.discovered_path.read_text(encoding="utf-8")
+        return ""
+
+    def save_content(self, content: str) -> Path:
+        if self.target_type == TargetType.AGENT:
+            return self.injector.save_agent_content(self.name, content)
+        elif self.target_type == TargetType.SKILL:
+            return self.injector.save_skill_content(self.name, content)
+        return self.injector.save_tool_content(self.name, content)
+
+
+SKILL_SEARCH_PATHS = [
+    ".dawn-kestrel/skills/skill.txt",
+    ".dawn-kestrel/skills/skill.md",
+    ".opencode/skills/skill.md",
+    ".claude/skills/skill.md",
+]
+
+TOOL_SEARCH_PATHS = [
+    ".dawn-kestrel/tools",
+    ".opencode/tools",
+    ".claude/tools",
+]
+
+
+def _create_llm_client() -> Any:
     try:
         from dawn_kestrel.core.settings import get_settings
         from dawn_kestrel.llm.client import LLMClient
 
+        from ash_hawk.config import get_config
+
         settings = get_settings()
         account = settings.get_default_account()
 
-        if not account:
-            logger.warning("No default account configured in dawn-kestrel")
+        if not account or not account.api_key:
+            logger.warning("No default account or API key configured")
             return None
 
-        if not account.api_key:
-            logger.warning(f"No API key for account {account.account_name}")
-            return None
-
+        config = get_config()
         return LLMClient(
             provider_id=account.provider_id,
             model=account.model,
             api_key=account.api_key.get_secret_value(),
+            timeout_seconds=config.llm_timeout_seconds,
         )
     except ImportError as e:
         logger.warning(f"dawn_kestrel not available: {e}")
         return None
 
 
-class CycleRunner:
-    """Runs N-iteration improvement loop with agentic analysis and improvement."""
+def _discover_improvement_target(
+    scenarios: list[Path],
+    project_root: Path | None = None,
+) -> ImprovementTarget | None:
+    if not scenarios:
+        return None
 
-    def __init__(
-        self,
-        repo_config: RepoConfig | None = None,
-        targets: list[Path] | None = None,
-        scenarios: list[Path] | None = None,
-        max_iterations: int = 100,
-        improvement_threshold: float = 0.02,
-        promotion_threshold: int = 3,
-        convergence_variance: float = 0.001,
-        convergence_window: int = 5,
-        llm_client: Any = None,
-        storage_path: Path | None = None,
-    ):
-        self.repo_config = repo_config or discover_repo_config()
-        self.targets = targets or self.repo_config.improvement_targets
-        self.scenarios = scenarios or self.repo_config.scenarios
-        self.max_iterations = max_iterations
-        self.improvement_threshold = improvement_threshold
-        self.promotion_threshold = promotion_threshold
-        self.convergence_variance = convergence_variance
-        self.convergence_window = convergence_window
-        self.llm_client = llm_client or _create_default_llm_client()
-        self.storage_path = storage_path or Path(".ash-hawk/auto-research")
+    first_scenario = load_scenario(scenarios[0])
+    scenario_root = scenarios[0].parent
 
-        self._experiment_id: str = ""
-        self._consecutive_improvements: dict[str, int] = {}
-        self._backup_dir: Path | None = None
-        self._tool_lifecycle: ToolLifecycleManager | None = None
+    resolved_root = project_root or _find_project_root(scenario_root)
+    if resolved_root is None:
+        return None
 
-    def _initialize(self) -> None:
-        self._experiment_id = generate_experiment_id(
-            self.repo_config.agent_name,
-            self.targets,
-        )
-        self._backup_dir = self.storage_path / self._experiment_id / "backups"
-        self._backup_dir.mkdir(parents=True, exist_ok=True)
+    injector = DawnKestrelInjector(project_root=resolved_root)
 
-        self._tool_lifecycle = ToolLifecycleManager(
-            repo_root=self.repo_config.pyproject_path.parent
-            if self.repo_config.pyproject_path
-            else None
-        )
-        for target in self.targets:
-            target_type = self._infer_target_type(target)
-            self._tool_lifecycle.create_working_copy(target, target_type)
-            lifecycle = self._tool_lifecycle.get_all_lifecycles()[-1]
-            console.print(f"  [dim]Working copy: {lifecycle.copy_path}[/dim]")
-
-    async def run(self) -> CycleResult:
-        if not self.scenarios:
-            return CycleResult(
-                experiment_id="unknown",
-                agent_name=self.repo_config.agent_name or "unknown",
-                status=CycleStatus.ERROR,
-                error_message="No scenarios discovered",
-            )
-
-        if not self.targets:
-            return CycleResult(
-                experiment_id="unknown",
-                agent_name=self.repo_config.agent_name or "unknown",
-                status=CycleStatus.ERROR,
-                error_message="No improvement targets discovered",
-            )
-
-        self._initialize()
-
-        result = CycleResult(
-            experiment_id=self._experiment_id,
-            agent_name=self.repo_config.agent_name or "unknown",
-            status=CycleStatus.RUNNING,
-            started_at=datetime.now(UTC),
+    skill_target = _find_skill_file(resolved_root)
+    if skill_target:
+        skill_name = _infer_name_from_path(skill_target)
+        return ImprovementTarget(
+            target_type=TargetType.SKILL,
+            name=skill_name,
+            discovered_path=skill_target,
+            injector=injector,
         )
 
-        console.rule("[bold]Auto-Research Cycle[/bold]")
-        console.print(f"[dim]Experiment: {self._experiment_id}[/dim]")
-        console.print(f"[dim]Agent: {self.repo_config.agent_name}[/dim]")
-        console.print(f"[dim]Scenarios: {len(self.scenarios)}[/dim]")
-        console.print(f"[dim]Targets: {len(self.targets)}[/dim]")
-
-        try:
-            console.print("\n[cyan]Step 1: Running baseline evaluation...[/cyan]")
-            baseline_score, baseline_transcripts = await self._run_evaluation()
-            result.initial_score = baseline_score
-            console.print(f"  [dim]Baseline score: {baseline_score:.3f}[/dim]")
-
-            current_score = baseline_score
-
-            for iteration in range(self.max_iterations):
-                console.print(f"\n[cyan]Iteration {iteration + 1}/{self.max_iterations}[/cyan]")
-
-                iter_result = await self._run_iteration(
-                    iteration,
-                    current_score,
-                    baseline_transcripts if iteration == 0 else None,
-                )
-
-                if iter_result:
-                    result.iterations.append(iter_result)
-                    current_score = iter_result.score_after
-
-                    if iter_result.improvements and iter_result.applied:
-                        result.total_lessons_created += 1
-
-                if self._check_convergence(result.iterations):
-                    console.print("  [green]✓ Converged![/green]")
-                    result.converged = True
-                    break
-
-            result.status = CycleStatus.COMPLETED
-            result.completed_at = datetime.now(UTC)
-            result.final_score = current_score
-            result.best_score = max(
-                (i.score_after for i in result.iterations), default=current_score
-            )
-            result.improvement_delta = result.final_score - result.initial_score
-
-            console.print()
-            console.rule("[bold]Cycle Complete[/bold]")
-            console.print(f"[dim]Status: {result.status.value}[/dim]")
-            console.print(f"[dim]Iterations: {result.total_iterations}[/dim]")
-            console.print(f"[dim]Baseline: {result.initial_score:.3f}[/dim]")
-            console.print(f"[dim]Final: {result.final_score:.3f}[/dim]")
-            console.print(f"[dim]Improvement: {result.improvement_delta:+.3f}[/dim]")
-            console.print(f"[dim]Lessons created: {result.total_lessons_created}[/dim]")
-
-        except Exception as e:
-            logger.error(f"Cycle failed with error: {e}")
-            result.status = CycleStatus.ERROR
-            result.error_message = str(e)
-            result.completed_at = datetime.now(UTC)
-            if self._tool_lifecycle:
-                self._tool_lifecycle.cleanup_all_failed()
-                console.print("  [yellow]Cleaned up working copies due to error[/yellow]")
-            raise
-
-        return result
-
-    async def _run_evaluation(self) -> tuple[float, list[EvalTranscript]]:
-        """Run all scenarios and return (mean_score, transcripts)."""
-        try:
-            summary = await run_scenarios_async(
-                paths=[str(p) for p in self.scenarios],
-                storage_path=self.storage_path / self._experiment_id,
-            )
-
-            transcripts: list[EvalTranscript] = []
-            for trial in summary.trials:
-                if trial.result and trial.result.transcript:
-                    transcripts.append(trial.result.transcript)
-
-            return summary.metrics.mean_score, transcripts
-        except Exception as e:
-            logger.error(f"Evaluation failed: {e}")
-            return 0.0, []
-
-    async def _run_iteration(
-        self,
-        iteration: int,
-        score_before: float,
-        cached_transcripts: list[EvalTranscript] | None = None,
-    ) -> IterationResult | None:
-        if not self.targets:
-            return None
-
-        target = self.targets[0]
-        target_type = self._infer_target_type(target)
-        current_content = target.read_text() if target.exists() else ""
-
-        console.print("  [dim]Analyzing failures...[/dim]")
-
-        analyst = AgenticAnalyst(self.llm_client)
-        analyses: list[AnalysisResult] = []
-
-        transcripts = cached_transcripts or []
-        if not transcripts:
-            _, transcripts = await self._run_evaluation()
-
-        for i, transcript in enumerate(transcripts[:5]):
-            scenario_name = (
-                transcript.messages[0].get("content", "")[:50]
-                if transcript.messages
-                else f"scenario-{i}"
-            )
-            analysis = await analyst.analyze_failure(
-                transcript=transcript,
-                scenario_name=scenario_name,
-                scenario_goal="Complete the evaluation task successfully",
-                current_content=current_content,
-            )
-            if analysis:
-                analyses.append(analysis)
-                console.print(f"    [dim]Analyzed: {scenario_name[:30]}...[/dim]")
-
-        if not analyses:
-            console.print("  [yellow]No analyses generated, skipping iteration[/yellow]")
-            return IterationResult(
-                iteration_num=iteration,
-                score_before=score_before,
-                score_after=score_before,
-            )
-
-        console.print("  [dim]Generating improvement...[/dim]")
-        improver = AgenticImprover(self.llm_client)
-        improvement = await improver.generate_improvement(
-            analysis=analyses[0],
-            target_type=target_type,
-            target_path=target,
+    tool_target = _find_primary_tool(resolved_root, first_scenario.tools.allowed_tools)
+    if tool_target:
+        tool_name = _infer_name_from_path(tool_target)
+        return ImprovementTarget(
+            target_type=TargetType.TOOL,
+            name=tool_name,
+            discovered_path=tool_target,
+            injector=injector,
         )
 
-        if not improvement:
-            console.print("  [yellow]No improvement generated, skipping iteration[/yellow]")
-            return IterationResult(
-                iteration_num=iteration,
-                score_before=score_before,
-                score_after=score_before,
-                analyses=analyses,
-            )
+    return None
 
-        console.print(f"  [green]Change: {improvement.change_name}[/green]")
 
-        console.print("  [dim]Injecting improvement...[/dim]")
-        self._inject_improvement(target, improvement)
+def _find_project_root(scenario_dir: Path) -> Path | None:
+    current = scenario_dir.resolve()
+    for _ in range(10):
+        if (current / "pyproject.toml").exists():
+            return current
+        if (current / ".git").exists():
+            return current
+        if current.parent == current:
+            break
+        current = current.parent
+    return None
 
-        console.print("  [dim]Measuring improvement...[/dim]")
-        score_after, _ = await self._run_evaluation()
-        improvement_delta = score_after - score_before
 
-        console.print(
-            f"  [dim]Score: {score_before:.3f} → {score_after:.3f} ({improvement_delta:+.3f})[/dim]"
+def _find_skill_file(project_root: Path) -> Path | None:
+    for search_path in SKILL_SEARCH_PATHS:
+        candidate = project_root / search_path
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _find_primary_tool(project_root: Path, allowed_tools: list[str]) -> Path | None:
+    if not allowed_tools:
+        return None
+
+    primary_tool = allowed_tools[0]
+    for tool_dir in TOOL_SEARCH_PATHS:
+        tools_path = project_root / tool_dir
+        if tools_path.exists():
+            for ext in (".txt", ".md"):
+                candidate = tools_path / f"{primary_tool}{ext}"
+                if candidate.exists():
+                    return candidate
+    return None
+
+
+def _infer_name_from_path(path: Path) -> str:
+    stem = path.stem
+    if stem.lower() in ("skill", "tool", "agent"):
+        return "default"
+    return stem
+
+
+def _infer_agent_name(target: Path | ImprovementTarget) -> str:
+    if isinstance(target, ImprovementTarget):
+        return target.name
+    parts = target.parts
+    for p in parts:
+        if p in ("skills", "policies", "tools"):
+            idx = parts.index(p)
+            if idx + 1 < len(parts):
+                return parts[idx + 1].replace(".md", "").replace(".txt", "")
+    return "unknown"
+
+
+async def run_cycle(
+    scenarios: list[Path],
+    iterations: int = 100,
+    threshold: float = 0.02,
+    storage_path: Path | None = None,
+    llm_client: Any = None,
+    project_root: Path | None = None,
+) -> CycleResult:
+    if llm_client is None:
+        llm_client = _create_llm_client()
+
+    storage = storage_path or Path(".ash-hawk/auto-research")
+
+    target = _discover_improvement_target(scenarios, project_root)
+    if target is None:
+        return CycleResult(
+            agent_name="unknown",
+            target_path="",
+            scenario_paths=[str(s) for s in scenarios],
+            status=CycleStatus.ERROR,
+            error_message="Could not discover improvement target from scenarios",
         )
 
-        applied = False
-        if improvement_delta >= self.improvement_threshold:
-            applied = True
+    result = CycleResult(
+        agent_name=_infer_agent_name(target),
+        target_path=str(target.structured_path),
+        scenario_paths=[str(s) for s in scenarios],
+        status=CycleStatus.RUNNING,
+    )
+
+    console.rule("[bold]Auto-Research Cycle[/bold]")
+    console.print(f"[dim]Target: {target.structured_path} ({target.target_type.value})[/dim]")
+    console.print(f"[dim]Name: {target.name}[/dim]")
+    console.print(f"[dim]Scenarios: {len(scenarios)}[/dim]")
+    console.print(f"[dim]Iterations: {iterations}[/dim]")
+    console.print(f"[dim]Threshold: {threshold}[/dim]")
+
+    try:
+        console.print("\n[cyan]Baseline evaluation...[/cyan]")
+        score, transcripts_raw = await _run_evaluation(scenarios, storage)
+        result.initial_score = score
+        console.print(f"  [dim]Baseline: {score:.3f}[/dim]")
+
+        transcripts: list[Any] | None = transcripts_raw
+        current_score = score
+
+        for i in range(iterations):
+            console.print(f"\n[cyan]Iteration {i + 1}/{iterations}[/cyan]")
+
+            iter_result = await _run_iteration(
+                iteration_num=i,
+                target=target,
+                scenarios=scenarios,
+                storage=storage,
+                llm_client=llm_client,
+                score_before=current_score,
+                cached_transcripts=transcripts if i == 0 else None,
+                threshold=threshold,
+            )
+
+            result.iterations.append(iter_result)
+            current_score = iter_result.score_after
+
+            if iter_result.applied:
+                transcripts = None
+
             console.print(
-                f"  [green]✓ Improvement kept (delta >= {self.improvement_threshold})[/green]"
+                f"  [dim]Score: {iter_result.score_before:.3f} → {iter_result.score_after:.3f} "
+                f"({iter_result.delta:+.3f})[/dim]"
             )
-            self._consecutive_improvements[str(target)] = (
-                self._consecutive_improvements.get(str(target), 0) + 1
-            )
-            if self._tool_lifecycle:
-                self._tool_lifecycle.cleanup_success(target)
-        else:
-            console.print(
-                f"  [yellow]✗ Improvement reverted (delta < {self.improvement_threshold})[/yellow]"
-            )
-            self._revert_improvement(target, improvement)
-            self._consecutive_improvements[str(target)] = 0
-            score_after = score_before
-            if self._tool_lifecycle:
-                self._tool_lifecycle.cleanup_failed(target)
 
+            if iter_result.applied:
+                console.print(f"  [green]✓ Kept: {iter_result.improvement_text[:50]}...[/green]")
+            else:
+                console.print("  [yellow]✗ Reverted[/yellow]")
+
+            if _check_convergence(result.iterations):
+                console.print("  [green]✓ Converged[/green]")
+                break
+
+        result.status = CycleStatus.COMPLETED
+        result.final_score = current_score
+        result.completed_at = datetime.now(UTC)
+
+        console.print()
+        console.rule("[bold]Cycle Complete[/bold]")
+        console.print(f"[dim]Iterations: {result.total_iterations}[/dim]")
+        console.print(f"[dim]Baseline: {result.initial_score:.3f}[/dim]")
+        console.print(f"[dim]Final: {result.final_score:.3f}[/dim]")
+        console.print(f"[dim]Improvement: {result.improvement_delta:+.3f}[/dim]")
+        console.print(f"[dim]Saved to: {target.structured_path}[/dim]")
+
+    except Exception as e:
+        logger.error(f"Cycle failed: {e}")
+        result.status = CycleStatus.ERROR
+        result.error_message = str(e)
+        result.completed_at = datetime.now(UTC)
+        raise
+
+    return result
+
+
+async def _run_iteration(
+    iteration_num: int,
+    target: ImprovementTarget,
+    scenarios: list[Path],
+    storage: Path,
+    llm_client: Any,
+    score_before: float,
+    cached_transcripts: list[Any] | None,
+    threshold: float,
+) -> IterationResult:
+    current_content = target.read_content()
+
+    transcripts = cached_transcripts
+    if transcripts is None:
+        _, transcripts = await _run_evaluation(scenarios, storage, show_failure_patterns=False)
+
+    console.print("  [dim]Generating improvement...[/dim]")
+    improved = await generate_improvement(llm_client, current_content, transcripts)
+
+    if not improved:
+        console.print("  [yellow]No improvement generated[/yellow]")
         return IterationResult(
-            iteration_num=iteration,
+            iteration_num=iteration_num,
             score_before=score_before,
-            score_after=score_after,
-            score_delta=improvement_delta if applied else 0.0,
-            analyses=analyses,
-            improvements=[improvement],
-            applied=applied,
+            score_after=score_before,
         )
 
-    def _infer_target_type(self, target: Path) -> ImprovementType:
-        """Infer improvement type from path."""
-        path_str = str(target).lower()
-        if "skill" in path_str:
-            return ImprovementType.SKILL
-        elif "policy" in path_str:
-            return ImprovementType.POLICY
-        elif "tool" in path_str:
-            return ImprovementType.TOOL
-        return ImprovementType.SKILL
+    saved_path = target.save_content(improved)
 
-    def _inject_improvement(self, target: Path, improvement: ImprovementResult) -> None:
-        write_path = target
-        if self._tool_lifecycle:
-            working_copy = self._tool_lifecycle.get_working_copy(target)
-            if working_copy:
-                write_path = working_copy
+    score_after, _ = await _run_evaluation(scenarios, storage, show_failure_patterns=False)
+    delta = score_after - score_before
 
-        if self._backup_dir:
-            backup_path = (
-                self._backup_dir / f"{write_path.name}.{datetime.now(UTC).strftime('%H%M%S')}.bak"
-            )
-            if write_path.exists():
-                shutil.copy2(write_path, backup_path)
+    applied = delta >= threshold
+    improvement_text = improved.split("\n")[0][:80] if improved else ""
 
-        write_path.parent.mkdir(parents=True, exist_ok=True)
-        write_path.write_text(improvement.updated_content)
-        console.print(f"    [dim]Wrote to: {write_path}[/dim]")
+    artifacts_dir = storage / "iterations"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    artifact_path = (
+        artifacts_dir / f"iter_{iteration_num:03d}_{'kept' if applied else 'reverted'}.md"
+    )
+    artifact_path.write_text(improved)
 
-    def _revert_improvement(self, target: Path, improvement: ImprovementResult) -> None:
-        write_path = target
-        if self._tool_lifecycle:
-            working_copy = self._tool_lifecycle.get_working_copy(target)
-            if working_copy:
-                write_path = working_copy
+    console.print(f"  [cyan]Proposal:[/cyan] {improvement_text}")
+    console.print(f"  [dim]Saved to: {saved_path}[/dim]")
+    console.print(f"  [dim]Artifact: {artifact_path}[/dim]")
 
-        write_path.write_text(improvement.original_content)
-        console.print(f"    [dim]Reverted: {write_path}[/dim]")
+    if not applied:
+        target.save_content(current_content)
+        score_after = score_before
 
-    def _check_convergence(self, iterations: list[IterationResult]) -> bool:
-        if len(iterations) < self.convergence_window:
-            return False
-
-        recent_scores = [i.score_after for i in iterations[-self.convergence_window :]]
-        if len(recent_scores) < 2:
-            return False
-
-        mean_score = sum(recent_scores) / len(recent_scores)
-        variance = sum((s - mean_score) ** 2 for s in recent_scores) / len(recent_scores)
-
-        return variance < self.convergence_variance
+    return IterationResult(
+        iteration_num=iteration_num,
+        score_before=score_before,
+        score_after=score_after,
+        improvement_text=improvement_text,
+        applied=applied,
+    )
 
 
-__all__ = ["CycleRunner"]
+async def _run_evaluation(
+    scenarios: list[Path],
+    storage: Path,
+    show_failure_patterns: bool = True,
+) -> tuple[float, list[Any]]:
+    try:
+        summary = await run_scenarios_async(
+            paths=[str(p) for p in scenarios],
+            storage_path=storage,
+            show_failure_patterns=show_failure_patterns,
+        )
+
+        transcripts = []
+        for trial in summary.trials:
+            if trial.result and trial.result.transcript:
+                transcripts.append(trial.result.transcript)
+
+        return summary.metrics.mean_score, transcripts
+    except Exception as e:
+        logger.error(f"Evaluation failed: {e}")
+        return 0.0, []
+
+
+def _check_convergence(
+    iterations: list[IterationResult],
+    window: int = 5,
+    variance_threshold: float = 0.001,
+) -> bool:
+    if len(iterations) < window:
+        return False
+
+    recent = [i.score_after for i in iterations[-window:]]
+    mean = sum(recent) / len(recent)
+    variance = sum((s - mean) ** 2 for s in recent) / len(recent)
+
+    return variance < variance_threshold
+
+
+__all__ = ["run_cycle", "ImprovementTarget", "TargetType"]

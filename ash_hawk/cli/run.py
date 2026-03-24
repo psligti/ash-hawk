@@ -296,19 +296,25 @@ async def _run_suite_async(
 
     agent_runner = _build_agent_runner(agent_config, suite_file)
 
-    if lessons and hasattr(agent_runner, "set_lesson_injector"):
-        from ash_hawk.services import LessonInjector
+    if hasattr(agent_runner, "set_lesson_injector"):
+        from ash_hawk.services import DawnKestrelInjector, LessonInjector
 
-        injector = LessonInjector(
-            strategy_filter=strategy,
-            sub_strategy_filter=sub_strategy,
-        )
-        agent_runner.set_lesson_injector(injector)
-        console.print("[dim]Lesson injection enabled[/dim]")
-        if strategy:
-            console.print(f"[dim]Strategy filter: {strategy}[/dim]")
-        if sub_strategy:
-            console.print(f"[dim]Sub-strategy filter: {sub_strategy}[/dim]")
+        dk_injector = DawnKestrelInjector()
+        agent_runner.set_lesson_injector(dk_injector)
+
+        if lessons:
+            db_injector = LessonInjector(
+                strategy_filter=strategy,
+                sub_strategy_filter=sub_strategy,
+            )
+            agent_runner.set_lesson_injector(db_injector)
+            console.print("[dim]Lesson injection enabled (database)[/dim]")
+            if strategy:
+                console.print(f"[dim]Strategy filter: {strategy}[/dim]")
+            if sub_strategy:
+                console.print(f"[dim]Sub-strategy filter: {sub_strategy}[/dim]")
+        else:
+            console.print("[dim]Dawn-Kestrel file injection enabled[/dim]")
 
     trial_executor = TrialExecutor(
         storage_backend, policy, agent_runner=agent_runner, fixture_resolver=fixture_resolver

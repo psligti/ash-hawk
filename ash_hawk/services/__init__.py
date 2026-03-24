@@ -7,20 +7,30 @@ from ash_hawk.services.comparison_service import (
     ComparisonResult,
     ComparisonService,
 )
+from ash_hawk.services.dawn_kestrel_injector import (
+    AGENT_PATH_TEMPLATE,
+    DAWN_KESTREL_DIR,
+    DawnKestrelInjector,
+    SKILL_PATH_TEMPLATE,
+    TOOL_PATH_TEMPLATE,
+)
 from ash_hawk.services.lesson_injector import LessonInjector
 from ash_hawk.services.lesson_service import LessonService
 from ash_hawk.services.replay_service import ReplayConfig, ReplayService
-from ash_hawk.services.review_service import ReviewService
 
 __all__ = [
+    "AGENT_PATH_TEMPLATE",
     "ArtifactStats",
     "AsyncLessonService",
     "ComparisonMetrics",
     "ComparisonResult",
     "ComparisonService",
+    "DAWN_KESTREL_DIR",
+    "DawnKestrelInjector",
     "LessonInjector",
     "LessonService",
     "ReplayConfig",
     "ReplayService",
-    "ReviewService",
+    "SKILL_PATH_TEMPLATE",
+    "TOOL_PATH_TEMPLATE",
 ]
