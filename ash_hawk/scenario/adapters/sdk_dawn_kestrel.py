@@ -148,6 +148,13 @@ class SdkDawnKestrelAdapter:
 
         runner = DawnKestrelAgentRunner(provider=provider, model=model, **runner_kwargs)
 
+        # Extract and set injector from tooling_context if available
+        injector = None
+        if isinstance(tooling_harness, dict):
+            injector = tooling_harness.get("injector")
+        if injector is not None and hasattr(runner, "set_lesson_injector"):
+            runner.set_lesson_injector(injector)
+
         run_config_raw = sut_config.get("run_config", {})
         run_config = dict(run_config_raw) if isinstance(run_config_raw, dict) else {}
 

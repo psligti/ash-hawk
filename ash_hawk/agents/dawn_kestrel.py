@@ -742,7 +742,11 @@ class DawnKestrelAgentRunner:
 
             agent_id = str(config.get("agent_name", "default"))
             if self._lesson_injector is not None:
-                prompt = self._lesson_injector.inject_into_prompt(agent_id, prompt)
+                skill_name = self._lesson_injector.discover_skill_name()
+                skills_to_inject = [skill_name] if skill_name else None
+                prompt = self._lesson_injector.inject_into_prompt(
+                    agent_id, prompt, skills=skills_to_inject
+                )
 
             available_tools = await filtered_registry.get_all()
             tool_definitions = self._build_tool_definitions(available_tools)

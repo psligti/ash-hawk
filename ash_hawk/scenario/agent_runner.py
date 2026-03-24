@@ -51,10 +51,12 @@ class ScenarioAgentRunner:
         adapter_registry: ScenarioAdapterRegistry | None = None,
         tooling_mode: Literal["mock", "record", "replay"] = "mock",
         artifacts_root: Path | None = None,
+        injector: Any | None = None,
     ) -> None:
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._tooling_mode = tooling_mode
         self._artifacts_root = artifacts_root
+        self._injector = injector
 
     async def run(
         self,
@@ -99,6 +101,7 @@ class ScenarioAgentRunner:
             "harness": tooling_harness,
             "mode": tooling_harness.mode,
             "policy": tool_policy.model_dump(),
+            "injector": self._injector,
         }
 
         adapter_messages: list[dict[str, Any]] = []

@@ -59,6 +59,7 @@ class ScenarioRunner:
         tooling_mode: Literal["mock", "record", "replay"] = "mock",
         adapter_registry: ScenarioAdapterRegistry | None = None,
         show_failure_patterns: bool = True,
+        injector: Any | None = None,
     ) -> None:
         from ash_hawk.storage import FileStorage
 
@@ -71,6 +72,7 @@ class ScenarioRunner:
         self._tooling_mode = tooling_mode
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._show_failure_patterns = show_failure_patterns
+        self._injector = injector
         self._config = EvalConfig(
             parallelism=parallelism or config.parallelism,
             default_timeout_seconds=config.default_timeout_seconds,
@@ -112,6 +114,7 @@ class ScenarioRunner:
             adapter_registry=self._adapter_registry,
             tooling_mode=self._tooling_mode,
             artifacts_root=self._storage_root,
+            injector=self._injector,
         )
         trial_executor = TrialExecutor(
             storage=self._storage,
@@ -370,6 +373,7 @@ async def run_scenarios_async(
     tooling_mode: Literal["mock", "record", "replay"] = "mock",
     adapter_registry: ScenarioAdapterRegistry | None = None,
     show_failure_patterns: bool = True,
+    injector: Any | None = None,
 ) -> EvalRunSummary:
     runner = ScenarioRunner(
         storage_path=storage_path,
@@ -377,6 +381,7 @@ async def run_scenarios_async(
         tooling_mode=tooling_mode,
         adapter_registry=adapter_registry,
         show_failure_patterns=show_failure_patterns,
+        injector=injector,
     )
     return await runner.run_paths(paths)
 
