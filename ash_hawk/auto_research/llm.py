@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-ANALYZE_AND_IMPROVE_PROMPT = """You are improving an AI agent configuration file.
+ANALYZE_AND_IMPROVE_PROMPT = """You are improving an AI agent skill file.
 
 ## Current Content
 ```markdown
@@ -23,27 +23,34 @@ ANALYZE_AND_IMPROVE_PROMPT = """You are improving an AI agent configuration file
 
 ## Task
 1. Identify what went wrong (root cause)
-2. What guidance was missing from the configuration
-3. Generate an IMPROVED version that addresses the issue
+2. What behavior was missing or incorrect
+3. Generate an IMPROVED skill that addresses the issue
 
-Output the improved content as a complete markdown file:
+Output the improved skill as a complete markdown file with YAML frontmatter:
 
 ```markdown
 ---
-name: "<5-10 word description of change>"
+name: "{skill_name}"
+description: "<1-2 sentence description of what this skill does>"
 ---
 
-<the improved content - keep existing good patterns, add missing guidance>
-```"""
+## What I do
 
-TRANSCRIPT_FORMAT = """Error: {error_trace}
+<describe the specific behaviors this skill enables>
 
-Recent messages:
-{messages}
+## When to use me
 
-Recent tool calls:
-{tool_calls}
-"""
+<describe scenarios where this skill should be applied>
+
+## Guidelines
+
+<specific instructions for the agent to follow>
+```
+
+The `name` field must be:
+- Lowercase alphanumeric with hyphens only (e.g., "goal-tracking", "delegation")
+- Concise but descriptive of the behavior
+- Match the behavior being tested in the scenarios"""
 
 
 async def generate_improvement(
@@ -109,22 +116,38 @@ def _extract_content(response: str) -> str | None:
     if not match:
         return None
 
-    content = match.group(1)
+    content = match.group(1).strip()
+    return content if content else None
 
-    if content.startswith("---"):
-        lines = content.split("\n")
-        fm_end = 0
-        fm_count = 0
-        for i, line in enumerate(lines):
-            if line.strip() == "---":
-                fm_count += 1
-                if fm_count == 2:
-                    fm_end = i + 1
-                    break
-        if fm_end > 0:
-            return "\n".join(lines[fm_end:])
 
-    return content
+def extract_skill_name(content: str) -> str | None:
+    """Extract skill name from YAML frontmatter.
+
+    Args:
+        content: Skill content with frontmatter.
+
+    Returns:
+        Skill name or None if not found.
+    """
+    if not content.startswith("---"):
+        return None
+
+    lines = content.split("\n")
+    fm_end = 0
+    for i, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            fm_end = i
+            break
+
+    if fm_end == 0:
+        return None
+
+    frontmatter = "\n".join(lines[1:fm_end])
+    name_match = re.search(r'^name:\s*["\']?([^"\'\n]+)["\']?', frontmatter, re.MULTILINE)
+    if name_match:
+        return name_match.group(1).strip().lower().replace(" ", "-").replace("_", "-")
+
+    return None
 
 
 async def _call_llm(client: Any, prompt: str) -> str | None:
@@ -157,4 +180,4 @@ async def _call_llm(client: Any, prompt: str) -> str | None:
         return None
 
 
-__all__ = ["generate_improvement"]
+__all__ = ["generate_improvement", "extract_skill_name"]
