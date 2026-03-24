@@ -105,6 +105,7 @@ def _create_llm_client() -> Any:
 def _discover_improvement_target(
     scenarios: list[Path],
     project_root: Path | None,
+    strategy: Any = None,
 ) -> ImprovementTarget | None:
     if not scenarios:
         return None
@@ -117,11 +118,12 @@ def _discover_improvement_target(
         logger.warning("Could not find project root")
         return None
 
-    injector = DawnKestrelInjector(project_root=resolved_root)
+    injector = DawnKestrelInjector(project_root=resolved_root, strategy=strategy)
 
     skill_target = _find_skill_file(resolved_root)
     if skill_target:
         skill_name = _infer_name_from_path(skill_target)
+        injector.current_skill_name = skill_name
         return ImprovementTarget(
             target_type=TargetType.SKILL,
             name=skill_name,
@@ -209,12 +211,50 @@ async def run_cycle(
     storage_path: Path | None = None,
     llm_client: Any = None,
     project_root: Path | None = None,
+    strategy_name: str | None = None,
+    use_policy_adaptation: bool = False,
 ) -> CycleResult:
     if llm_client is None:
         llm_client = _create_llm_client()
 
     storage = storage_path or Path(".ash-hawk/auto-research")
-    target = _discover_improvement_target(scenarios, project_root)
+
+    strategy = None
+    if strategy_name:
+        try:
+            from dawn_kestrel.agents.context import (
+                CompositeContextStrategy,
+                ContextStrategyRegistry,
+                DynamicContextStrategy,
+                FileBasedContextStrategy,
+                get_registry,
+            )
+
+            registry = get_registry()
+            if registry.has_strategy(strategy_name):
+                strategy_result = registry.get(strategy_name)
+                if strategy_result.is_ok():
+                    strategy = strategy_result.unwrap()
+            else:
+                if strategy_name == "file-based":
+                    strategy = FileBasedContextStrategy(project_root)
+                elif strategy_name == "dynamic":
+                    strategy = DynamicContextStrategy(project_root)
+                elif strategy_name == "composite":
+                    strategy = CompositeContextStrategy(
+                        strategies=[
+                            FileBasedContextStrategy(project_root),
+                            DynamicContextStrategy(project_root),
+                        ],
+                        project_root=project_root,
+                    )
+                else:
+                    logger.warning(f"Unknown strategy: {strategy_name}, using file-based")
+                    strategy = FileBasedContextStrategy(project_root)
+        except ImportError:
+            logger.warning("Context strategy not available, using file-based behavior")
+
+    target = _discover_improvement_target(scenarios, project_root, strategy)
     if target is None:
         return CycleResult(
             agent_name="unknown",
@@ -237,13 +277,19 @@ async def run_cycle(
     console.print(f"[dim]Threshold: {threshold}[/dim]")
     try:
         console.print("\n[cyan]Baseline evaluation...[/cyan]")
-        score, transcripts_raw = await _run_evaluation(scenarios, storage)
+        score, transcripts_raw = await _run_evaluation(scenarios, storage, injector=target.injector)
         result.initial_score = score
         console.print(f"  [dim]Baseline: {score:.3f}[/dim]")
         transcripts: list[Any] | None = transcripts_raw
         current_score = score
+        consecutive_failures = 0
         for i in range(iterations):
             console.print(f"\n[cyan]Iteration {i + 1}/{iterations}[/cyan]")
+            failed_proposals = [
+                iter.improvement_text
+                for iter in result.iterations
+                if not iter.applied and iter.improvement_text
+            ]
             iter_result = await _run_iteration(
                 iteration_num=i,
                 target=target,
@@ -253,11 +299,16 @@ async def run_cycle(
                 score_before=current_score,
                 cached_transcripts=transcripts if i == 0 else None,
                 threshold=threshold,
+                failed_proposals=failed_proposals,
+                consecutive_failures=consecutive_failures,
             )
             result.iterations.append(iter_result)
             current_score = iter_result.score_after
             if iter_result.applied:
                 transcripts = None
+                consecutive_failures = 0  # Reset on success
+            else:
+                consecutive_failures += 1  # Increment on failure
             console.print(
                 f"  [dim]Score: {iter_result.score_before:.3f} → {iter_result.score_after:.3f} "
                 f"({iter_result.delta:+.3f})[/dim]"
@@ -297,6 +348,8 @@ async def _run_iteration(
     score_before: float,
     cached_transcripts: list[Any] | None,
     threshold: float,
+    failed_proposals: list[str] | None = None,
+    consecutive_failures: int = 0,
 ) -> IterationResult:
     current_content = target.read_content()
     if not current_content:
@@ -308,9 +361,13 @@ async def _run_iteration(
         )
     transcripts = cached_transcripts
     if transcripts is None:
-        _, transcripts = await _run_evaluation(scenarios, storage, show_failure_patterns=False)
+        _, transcripts = await _run_evaluation(
+            scenarios, storage, show_failure_patterns=False, injector=target.injector
+        )
     console.print("  [dim]Generating improvement...[/dim]")
-    improved = await generate_improvement(llm_client, current_content, transcripts)
+    improved = await generate_improvement(
+        llm_client, current_content, transcripts, failed_proposals, consecutive_failures
+    )
     if not improved:
         console.print("  [yellow]No improvement generated[/yellow]")
         return IterationResult(
@@ -326,11 +383,14 @@ async def _run_iteration(
             discovered_path=target.discovered_path,
             injector=target.injector,
         )
+        target.injector.current_skill_name = skill_name
     saved_path = target.save_content(improved)
-    score_after, _ = await _run_evaluation(scenarios, storage, show_failure_patterns=False)
+    score_after, _ = await _run_evaluation(
+        scenarios, storage, show_failure_patterns=False, injector=target.injector
+    )
     delta = score_after - score_before
     applied = delta >= threshold
-    improvement_text = improved.split("\n")[0][:80] if improved else ""
+    improvement_text = skill_name or improved.split("\n")[0][:80] if improved else ""
     artifacts_dir = storage / "iterations"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     artifact_path = (
@@ -356,12 +416,14 @@ async def _run_evaluation(
     scenarios: list[Path],
     storage: Path,
     show_failure_patterns: bool = True,
+    injector: Any | None = None,
 ) -> tuple[float, list[Any]]:
     try:
         summary = await run_scenarios_async(
             paths=[str(p) for p in scenarios],
             storage_path=storage,
             show_failure_patterns=show_failure_patterns,
+            injector=injector,
         )
         transcripts = []
         for trial in summary.trials:
@@ -378,9 +440,4 @@ def _check_convergence(
     window: int = 5,
     variance_threshold: float = 0.001,
 ) -> bool:
-    if len(iterations) < window:
-        return False
-    recent = [i.score_after for i in iterations[-window:]]
-    mean = sum(recent) / len(recent)
-    variance = sum((s - mean) ** 2 for s in recent) / len(recent)
-    return variance < variance_threshold
+    return False  # Convergence detection disabled

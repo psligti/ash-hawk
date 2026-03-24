@@ -20,7 +20,7 @@ ANALYZE_AND_IMPROVE_PROMPT = """You are improving an AI agent skill file.
 
 ## Recent Agent Behavior (transcript excerpt)
 {transcript_text}
-
+{history_section}
 ## Task
 1. Identify what went wrong (root cause)
 2. What behavior was missing or incorrect
@@ -50,13 +50,16 @@ description: "<1-2 sentence description of what this skill does>"
 The `name` field must be:
 - Lowercase alphanumeric with hyphens only (e.g., "goal-tracking", "delegation")
 - Concise but descriptive of the behavior
-- Match the behavior being tested in the scenarios"""
+- Match the behavior being tested in the scenarios
+- DIFFERENT from any previously tried names listed above"""
 
 
 async def generate_improvement(
     llm_client: Any,
     current_content: str,
     transcripts: list[EvalTranscript],
+    failed_proposals: list[str] | None = None,
+    consecutive_failures: int = 0,
 ) -> str | None:
     """Analyze failures and generate improved content.
 
@@ -64,6 +67,8 @@ async def generate_improvement(
         llm_client: LLM client with complete() or chat() method
         current_content: Current skill/policy content
         transcripts: Failed run transcripts to analyze
+        failed_proposals: List of previously tried proposal names that failed
+        consecutive_failures: Number of consecutive failures (for temperature scheduling)
 
     Returns:
         Improved content string, or None if generation failed
@@ -77,12 +82,16 @@ async def generate_improvement(
         logger.warning("Empty transcripts, skipping improvement")
         return None
 
+    history_section = _format_history_section(failed_proposals)
+
     prompt = ANALYZE_AND_IMPROVE_PROMPT.format(
         current_content=current_content[:6000],
         transcript_text=transcript_text[:8000],
+        history_section=history_section,
     )
 
-    response = await _call_llm(llm_client, prompt)
+    temperature = min(1.0, 0.3 + (0.1 * consecutive_failures))
+    response = await _call_llm(llm_client, prompt, temperature)
     if response is None:
         return None
 
@@ -108,6 +117,22 @@ def _format_transcripts(transcripts: list[EvalTranscript]) -> str:
             parts.append(f"[TOOL {name}]: {str(args)[:150]}")
 
     return "\n".join(parts)
+
+
+def _format_history_section(failed_proposals: list[str] | None) -> str:
+    if not failed_proposals:
+        return ""
+    names = [name for name in failed_proposals if name][-5:]
+    if not names:
+        return ""
+    lines = [
+        "\n## Previously Tried Approaches (AVOID THESE)",
+        "These approaches did not improve scores. Try something DIFFERENT:",
+    ]
+    for name in names:
+        lines.append(f"- {name}")
+    lines.append("")
+    return "\n".join(lines)
 
 
 def _extract_content(response: str) -> str | None:
@@ -150,12 +175,51 @@ def extract_skill_name(content: str) -> str | None:
     return None
 
 
-async def _call_llm(client: Any, prompt: str) -> str | None:
+def is_name_too_similar(new_name: str, previous_names: list[str], threshold: float = 0.5) -> bool:
+    """Check if a new name is too similar to any previous name.
+
+    Uses word overlap to detect near-duplicates like:
+    - mandatory-task-tracking-workflow vs strict-task-tracking-workflow
+    - enforced-task-initialization vs mandatory-task-initialization
+
+    Args:
+        new_name: The proposed new skill name
+        previous_names: List of previously tried names
+        threshold: Minimum overlap ratio to consider "too similar" (0.5 = 50%)
+
+    Returns:
+        True if the name is too similar to a previous one
+    """
+    if not previous_names:
+        return False
+
+    new_words = set(new_name.lower().split("-"))
+    # Filter out very common words that don't distinguish names
+    stop_words = {"the", "a", "an", "for", "and", "or", "to"}
+    new_words = new_words - stop_words
+
+    for prev in previous_names:
+        prev_words = set(prev.lower().split("-")) - stop_words
+        if not new_words or not prev_words:
+            continue
+
+        overlap = len(new_words & prev_words)
+        union = len(new_words | prev_words)
+        if union > 0 and overlap / union >= threshold:
+            return True
+
+    return False
+
+
+async def _call_llm(client: Any, prompt: str, temperature: float = 0.7) -> str | None:
     try:
         response: Any = None
 
         if hasattr(client, "complete"):
-            response = await client.complete(messages=[{"role": "user", "content": prompt}])
+            response = await client.complete(
+                messages=[{"role": "user", "content": prompt}],
+                options={"temperature": temperature},
+            )
         elif hasattr(client, "chat"):
             response = await client.chat(prompt)
         else:
@@ -180,4 +244,4 @@ async def _call_llm(client: Any, prompt: str) -> str | None:
         return None
 
 
-__all__ = ["generate_improvement", "extract_skill_name"]
+__all__ = ["generate_improvement", "extract_skill_name", "is_name_too_similar"]
