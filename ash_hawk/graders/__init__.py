@@ -34,6 +34,10 @@ from ash_hawk.graders.judge_normalizer import (
     NormalizedJudgeOutput,
     normalize_judge_output,
 )
+from ash_hawk.graders.prompt_stack_optimizer import (
+    PromptStackOptimizerConfig,
+    PromptStackOptimizerGrader,
+)
 from ash_hawk.graders.registry import (
     ENTRY_POINT_GROUP,
     GraderRegistry,
@@ -84,4 +88,7 @@ __all__ = [
     "task_has_rubric_based_evaluation",
     "validate_suite_has_rubric_based_evaluation",
     "validate_task_has_rubric",
+    # Prompt stack optimizer
+    "PromptStackOptimizerGrader",
+    "PromptStackOptimizerConfig",
 ]
