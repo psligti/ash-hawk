@@ -178,7 +178,7 @@ def _find_primary_tool(project_root: Path, allowed_tools: list[str]) -> Path | N
 def _infer_name_from_path(path: Path) -> str:
     stem = path.stem
     if stem.lower() in ("skill", "tool", "agent"):
-        return "default"
+        return path.parent.name
     return stem
 
 
