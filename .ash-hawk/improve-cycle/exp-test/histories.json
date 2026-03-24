@@ -1,0 +1,19 @@
+[
+  {
+    "history_id": "history-cycle-cycle-test-iter-1",
+    "agent_id": "bolt-merlin",
+    "experiment_count": 2,
+    "promoted_lessons": 0,
+    "retired_lessons": 0,
+    "common_failure_categories": [
+      "policy_ordering",
+      "tool_interface_poor"
+    ],
+    "recurring_regressions": [],
+    "trend_notes": [
+      "Lineage captured for improve cycle",
+      "promoted_ratio=0.00",
+      "avg_success_score_delta=0.015"
+    ]
+  }
+]

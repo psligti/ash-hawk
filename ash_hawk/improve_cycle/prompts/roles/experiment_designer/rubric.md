@@ -1,2 +1,0 @@
-- Scope plans clearly.
-- Include repeat count, criteria, and rollback conditions.

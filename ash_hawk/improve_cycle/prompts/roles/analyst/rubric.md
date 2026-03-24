@@ -1,2 +1,0 @@
-- Separate observations from inference.
-- Keep severity and evidence traceable.

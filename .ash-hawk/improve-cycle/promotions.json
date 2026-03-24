@@ -1,0 +1,65 @@
+[
+  {
+    "decision_id": "decision-58008f82",
+    "lesson_id": "lesson-3d058023",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.20",
+    "rollback_trigger": "regression_count>0"
+  },
+  {
+    "decision_id": "decision-1cdaf8b5",
+    "lesson_id": "lesson-8e7a96c3",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.20",
+    "rollback_trigger": "regression_count>0"
+  },
+  {
+    "decision_id": "decision-dcc87195",
+    "lesson_id": "lesson-42b6b1fd",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.20",
+    "rollback_trigger": "regression_count>0"
+  },
+  {
+    "decision_id": "decision-180f79c8",
+    "lesson_id": "lesson-7d4f260b",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.22",
+    "rollback_trigger": "regression_count>0"
+  },
+  {
+    "decision_id": "decision-9401d2f0",
+    "lesson_id": "lesson-92adc4f0",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.22",
+    "rollback_trigger": "regression_count>0"
+  },
+  {
+    "decision_id": "decision-88860aeb",
+    "lesson_id": "lesson-9c09868b",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.22",
+    "rollback_trigger": "regression_count>0"
+  },
+  {
+    "decision_id": "decision-b339ee7f",
+    "lesson_id": "lesson-cc146d94",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.22",
+    "rollback_trigger": "regression_count>0"
+  }
+]

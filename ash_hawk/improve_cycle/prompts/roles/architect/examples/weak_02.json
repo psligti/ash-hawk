@@ -1,9 +1,0 @@
-{
-  "quality": "weak",
-  "note": "Insufficient Evidence: infra proposal lacks rollback documentation and affects critical path",
-  "input": {
-    "primary_category": "tool_interface_poor",
-    "risk_areas": ["tooling"],
-    "confidence": 0.4
-  }
-}

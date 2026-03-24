@@ -1,0 +1,518 @@
+{
+  "trial": {
+    "id": "trial-13e1ff5c",
+    "task_id": "bolt_merlin_policy_management",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "bolt_merlin_policy_management",
+        "description": "Tests bolt-merlin's efficient policy loading and application",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "bolt_merlin",
+          "config": {
+            "agent": "execution"
+          }
+        },
+        "inputs": {
+          "prompt": "Apply the following policies while making changes:\n- Always run linting before committing\n- Never modify files in node_modules\n- Use relative imports where possible\n\nCreate a simple Python module with a hello() function.\n",
+          "mock_tool_calls": [
+            {
+              "tool": "bash",
+              "input": {
+                "command": "ruff check"
+              }
+            }
+          ]
+        },
+        "tools": {
+          "allowed_tools": [
+            "bash",
+            "read",
+            "write",
+            "edit"
+          ],
+          "mocks": {
+            "bash": {
+              "input": {},
+              "result": {
+                "stdout": "ok",
+                "stderr": "",
+                "exit_code": 0
+              }
+            },
+            "read": {
+              "input": {},
+              "result": {
+                "content": "def hello():\n    return 'hello'\n"
+              }
+            },
+            "write": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            },
+            "edit": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            }
+          },
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 30,
+          "max_tool_calls": 50,
+          "max_tokens": 5000,
+          "max_time_seconds": 120.0
+        },
+        "expectations": {
+          "must_events": [
+            "ToolCallEvent",
+            "ToolResultEvent"
+          ],
+          "must_not_events": [],
+          "ordering_rules": [
+            {
+              "first": "ToolCallEvent",
+              "then": "ToolResultEvent"
+            }
+          ],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "ordering",
+            "config": {
+              "ordering_rules": [
+                {
+                  "before": "ToolCallEvent",
+                  "after": "ToolResultEvent"
+                }
+              ]
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "trace_quality",
+            "config": {
+              "target_tool_calls": 4,
+              "tool_call_penalty": 0.1,
+              "rejection_penalty": 0.15,
+              "max_penalty": 0.6,
+              "pass_threshold": 0.7
+            },
+            "weight": 1.5,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/policy_management.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-13e1ff5c",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-21T01:54:23.599535+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Apply the following policies while making changes:\n- Always run linting before committing\n- Never modify files in node_modules\n- Use relative imports where possible\n\nCreate a simple Python module with a hello() function.\n"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "I'll help you create a simple Python module with a hello() function. Let me first explore the repository structure to determine the best location."
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"ls -la\", \"description\": \"List files in current directory\"}, \"output\": \"total 44856\\ndrwxr-xr-x 34 parkersligting staff     1088 Mar 20 19:54 .\\ndrwxr-xr-x 23 parkersligting staff      736 Mar 19 10:49 ..\\ndrwxr-xr-x 86 parkersligting staff     2752 Mar 20 19:54 .ash-hawk\\ndrwxr-xr-x  4 parkersligting staff      128 Mar  6 15:22 .claude\\n-rw-r--r--  1 parkersligting staff 44769280 Mar 20 19:54 .cobalt-finch.db\\n-rw-r--r--  1 parkersligting staff   102400 Mar 20 17:28 .coverage\\n-rw-r--r--  1 parkersligting staff     6148 Feb 20 09:12 .DS_Store\\ndrwxr-xr-x 16 parkersligting staff      512 Mar 20 17:28 .git\\ndrwxr-xr-x  3 parkersligting staff       96 Feb 20 09:57 .github\\n-rw-r--r--  1 parkersligting staff      218 Feb 20 09:58 .gitignore\\ndrwxr-xr-x  5 parkersligting staff      160 Mar 20 00:09 .mypy_cache\\ndrwxr-xr-x  8 parkersligting staff      256 Mar 17 13:56 .opencode\\ndrwxr-xr-x  6 parkersligting staff      192 Mar  3 16:52 .pytest_cache\\ndrwxr-xr-x  6 parkersligting staff      192 Feb 20 09:59 .ruff_cache\\ndrwxr-xr-x  8 parkersligting staff      256 Feb 23 12:15 .sisyphus\\ndrwxr-xr-x  9 parkersligting staff      288 Feb 20 10:48 .venv\\n-rw-r--r--  1 parkersligting staff    12789 Mar 17 11:28 AGENTS.md\\ndrwxr-xr-x 35 parkersligting staff     1120 Mar 20 17:06 ash_hawk\\n-rw-r--r--  1 parkersligting staff    16662 Mar 13 09:52 ASH_HAWK_INTERVIEW.md\\ndrwxr-xr-x  5 parkersligting staff      160 Mar 20 15:42 dist\\ndrwxr-xr-x  6 parkersligting staff      192 Mar 19 22:04 docs\\ndrwxr-xr-x  4 parkersligting staff      128 Mar 14 20:25 evals\\ndrwxr-xr-x 10 parkersligting staff      320 Mar 12 21:44 examples\\n-rw-r--r--  1 parkersligting staff    11183 Mar 13 09:26 LATEST_RUN_INTERVIEW.md\\n-rw-r--r--  1 parkersligting staff     2165 Mar  5 21:13 pyproject.toml\\n-rw-r--r--  1 parkersligting staff      166 Mar  6 07:06 pyrightconfig.json\\n-rw-r--r--  1 parkersligting staff     1414 Mar 18 12:13 README.md\\n-rw-r--r--  1 parkersligting staff      252 Feb 20 09:58 ruff.toml\\ndrwxr-xr-x  3 parkersligting staff       96 Mar 18 12:13 scripts\\n-rw-r--r--  1 parkersligting staff     6802 Feb 21 14:46 SKILL.md\\ndrwxr-xr-x  2 parkersligting staff       64 Mar 19 09:21 src\\n-rw-r--r--  1 parkersligting staff      511 Feb 20 11:59 test-suite.yaml\\ndrwxr-xr-x 28 parkersligting staff      896 Mar 20 15:37 tests\\n-rw-r--r--  1 parkersligting staff   583362 Mar 19 09:58 uv.lock\\n\", \"title\": \"List files in current directory\", \"metadata\": {\"exit_code\": 0, \"description\": \"List files in current directory\"}}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"ls -la src/\", \"description\": \"Check contents of src directory\"}, \"output\": \"total 0\\ndrwxr-xr-x  2 parkersligting staff   64 Mar 19 09:21 .\\ndrwxr-xr-x 34 parkersligting staff 1088 Mar 20 19:54 ..\\n\", \"title\": \"Check contents of src directory\", \"metadata\": {\"exit_code\": 0, \"description\": \"Check contents of src directory\"}}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"filePath\": \"/Users/parkersligting/projects/ash-hawk/ruff.toml\"}, \"output\": \"Path rejected by security policy: Absolute path not allowed: /Users/parkersligting/projects/ash-hawk/ruff.toml\", \"title\": \"Security Error: /Users/parkersligting/projects/ash-hawk/ruff.toml\", \"metadata\": {\"error\": \"Absolute path not allowed: /Users/parkersligting/projects/ash-hawk/ruff.toml\", \"security_error\": true}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"/Users/parkersligting/projects/ash-hawk/pyproject.toml\"}, \"output\": \"Path rejected by security policy: Absolute path not allowed: /Users/parkersligting/projects/ash-hawk/pyproject.toml\", \"title\": \"Security Error: /Users/parkersligting/projects/ash-hawk/pyproject.toml\", \"metadata\": {\"error\": \"Absolute path not allowed: /Users/parkersligting/projects/ash-hawk/pyproject.toml\", \"security_error\": true}}, {\"tool\": \"bash\", \"input\": {\"command\": \"ls -la ash_hawk/\", \"description\": \"List ash_hawk directory contents\"}, \"output\": \"total 64\\n-rw-r--r--  1 parkersligting staff   108 Feb 20 09:58 __init__.py\\ndrwxr-xr-x  7 parkersligting staff   224 Mar 17 11:25 __pycache__\\ndrwxr-xr-x 35 parkersligting staff  1120 Mar 20 17:06 .\\ndrwxr-xr-x 34 parkersligting staff  1088 Mar 20 19:54 ..\\ndrwxr-xr-x  5 parkersligting staff   160 Mar 14 20:11 adapters\\ndrwxr-xr-x  8 parkersligting staff   256 Mar 17 17:57 agents\\ndrwxr-xr-x  8 parkersligting staff   256 Mar  6 15:31 calibration\\ndrwxr-xr-x 17 parkersligting staff   544 Mar 19 22:16 cli\\n-rw-r--r--  1 parkersligting staff  6022 Mar 17 11:03 config.py\\ndrwxr-xr-x  6 parkersligting staff   192 Mar  6 07:06 configs\\n-rw-r--r--  1 parkersligting staff  6944 Feb 20 10:21 context.py\\ndrwxr-xr-x 10 parkersligting staff   320 Mar 15 13:43 contracts\\ndrwxr-xr-x 11 parkersligting staff   352 Mar 17 17:57 curation\\ndrwxr-xr-x  7 parkersligting staff   224 Mar 18 10:37 cycle\\ndrwxr-xr-x 11 parkersligting staff   352 Mar 18 09:36 eval_packs\\n-rw-r--r--  1 parkersligting staff  1108 Mar  5 14:35 events.py\\ndrwxr-xr-x  9 parkersligting staff   288 Mar 17 17:57 execution\\ndrwxr-xr-x  7 parkersligting staff   224 Mar 17 15:10 experiments\\ndrwxr-xr-x 21 parkersligting staff   672 Mar 12 21:10 graders\\ndrwxr-xr-x 19 parkersligting staff   608 Mar 20 07:38 improve_cycle\\ndrwxr-xr-x  7 parkersligting staff   224 Mar 17 17:57 integration\\ndrwxr-xr-x  9 parkersligting staff   288 Mar 20 15:39 materialization\\ndrwxr-xr-x  5 parkersligting staff   160 Mar  5 17:13 metrics\\ndrwxr-xr-x 10 parkersligting staff   320 Mar 20 17:17 mvp\\ndrwxr-xr-x 12 parkersligting staff   384 Mar 17 17:57 pipeline\\ndrwxr-xr-x  5 parkersligting staff   160 Mar  3 16:53 policy\\ndrwxr-xr-x  5 parkersligting staff   160 Mar  3 16:59 prompts\\ndrwxr-xr-x 10 parkersligting staff   320 Mar 12 21:43 reporting\\ndrwxr-xr-x  4 parkersligting staff   128 Mar  5 18:47 review\\ndrwxr-xr-x 14 parkersligting staff   448 Mar  6 07:08 scenario\\ndrwxr-xr-x 11 parkersligting staff   352 Mar 20 15:16 services\\ndrwxr-xr-x  8 parkersligting staff   256 Mar  5 14:35 storage\\ndrwxr-xr-x  5 parkersligting staff   160 Mar 15 14:31 strategies\\ndrwxr-xr-x  9 parkersligting staff   288 Mar  5 19:31 templates\\n-rw-r--r--  1 parkersligting staff 38607 Mar 17 07:37 types.py\\n\", \"title\": \"List ash_hawk directory contents\", \"metadata\": {\"exit_code\": 0, \"description\": \"List ash_hawk directory contents\"}}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "ls -la",
+                "description": "List files in current directory"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "ls -la src/",
+                "description": "Check contents of src directory"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "tool_input": {
+                "filePath": "/Users/parkersligting/projects/ash-hawk/ruff.toml"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "tool_input": {
+                "filePath": "/Users/parkersligting/projects/ash-hawk/pyproject.toml"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "ls -la ash_hawk/",
+                "description": "List ash_hawk directory contents"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "ls -la",
+                "description": "List files in current directory"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {
+                "stdout": "ok",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "ls -la src/",
+                "description": "Check contents of src directory"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {
+                "stdout": "ok",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "read",
+              "arguments": {
+                "filePath": "/Users/parkersligting/projects/ash-hawk/ruff.toml"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "result": {
+                "content": "def hello():\n    return 'hello'\n"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "read",
+              "arguments": {
+                "filePath": "/Users/parkersligting/projects/ash-hawk/pyproject.toml"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "result": {
+                "content": "def hello():\n    return 'hello'\n"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "ls -la ash_hawk/",
+                "description": "List ash_hawk directory contents"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {
+                "stdout": "ok",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-bolt-merlin/runs/run-d870048c/artifacts/trial-13e1ff5c/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 14.501864910125732,
+        "agent_response": null,
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 21,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 5.984306335449219e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "ordering",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_rules": 1,
+            "violations": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.2874603271484375e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "grader_id": null,
+          "score": 0.9,
+          "passed": true,
+          "details": {
+            "tool_call_count": 5,
+            "rejection_count": 0,
+            "target_tool_calls": 4,
+            "tool_call_distance": 1,
+            "penalty": 0.1,
+            "pass_threshold": 0.7
+          },
+          "error_message": null,
+          "execution_time_seconds": 8.821487426757812e-06,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.9571428571428572,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-13e1ff5c",
+      "run_id": "run-d870048c",
+      "task_id": "bolt_merlin_policy_management",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-21T01:54:09.097607+00:00",
+      "started_at": "2026-03-21T01:54:09.097576+00:00",
+      "completed_at": "2026-03-21T01:54:23.599564+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-13e1ff5c",
+    "run_id": "run-d870048c",
+    "task_id": "bolt_merlin_policy_management",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-21T01:54:09.097607+00:00",
+    "started_at": "2026-03-21T01:54:09.097576+00:00",
+    "completed_at": "2026-03-21T01:54:23.599564+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

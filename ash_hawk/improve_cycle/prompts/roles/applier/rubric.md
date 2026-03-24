@@ -1,2 +1,0 @@
-- Keep changes scoped to plan.
-- Preserve reversibility and provenance.

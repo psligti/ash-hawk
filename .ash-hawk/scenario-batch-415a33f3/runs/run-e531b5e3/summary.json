@@ -1,0 +1,4708 @@
+{
+  "envelope": {
+    "run_id": "run-e531b5e3",
+    "suite_id": "scenario-batch-415a33f3",
+    "suite_hash": "814aa17faa964421",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-22T22:44:09.332104+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-batch-415a33f3",
+    "run_id": "run-e531b5e3",
+    "total_tasks": 21,
+    "completed_tasks": 21,
+    "passed_tasks": 14,
+    "failed_tasks": 0,
+    "pass_rate": 0.6666666666666666,
+    "mean_score": 0.779126984126984,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 0.17198801040649414,
+    "latency_p50_seconds": 0.002732992172241211,
+    "latency_p95_seconds": 0.0041351318359375,
+    "latency_p99_seconds": 0.01789689064025879,
+    "pass_at_k": {},
+    "created_at": "2026-03-22T22:44:09.521281+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-d4ef10f1",
+      "task_id": "bolt_merlin_delegation",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_delegation",
+          "description": "Tests bolt-merlin's ability to delegate to specialized subagents",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "You need to understand how authentication works in this codebase.\n\n1. Find all authentication-related code (middleware, handlers, token logic)\n2. Find external documentation on JWT best practices\n\nDo NOT search manually. Delegate to the appropriate subagents.\nYour delegation prompts MUST include:\n- TASK: The specific goal\n- EXPECTED OUTCOME: What you expect back\n- MUST DO: Requirements\n- MUST NOT DO: Constraints\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "task"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "src/auth/middleware.py\nsrc/auth/handlers.py\nsrc/auth/tokens.py",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# auth code\n"
+                }
+              },
+              "task": {
+                "input": {},
+                "result": {
+                  "status": "success",
+                  "output": "Found authentication files:\n- src/auth/middleware.py - JWT validation middleware\n- src/auth/handlers.py - Login/logout endpoints\n- src/auth/tokens.py - Token generation and refresh\n"
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 30,
+            "max_tool_calls": 20,
+            "max_tokens": 8000,
+            "max_time_seconds": 180.0
+          },
+          "expectations": {
+            "must_events": [
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ToolCallEvent"
+                ],
+                "required_tool_calls": [
+                  {
+                    "tool": "task",
+                    "min_calls": 1
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "ordering",
+              "config": {
+                "ordering_rules": [
+                  {
+                    "before": "ToolCallEvent",
+                    "after": "ToolResultEvent"
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 4,
+                "tool_call_penalty": 0.1,
+                "rejection_penalty": 0.15,
+                "max_penalty": 0.5,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9/000-delegation.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-d4ef10f1",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.402938+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "You need to understand how authentication works in this codebase.\n\n1. Find all authentication-related code (middleware, handlers, token logic)\n2. Find external documentation on JWT best practices\n\nDo NOT search manually. Delegate to the appropriate subagents.\nYour delegation prompts MUST include:\n- TASK: The specific goal\n- EXPECTED OUTCOME: What you expect back\n- MUST DO: Requirements\n- MUST NOT DO: Constraints\n"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-77f2f58b/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0006768703460693359,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 6,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 4.8160552978515625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_content",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "event_types": [
+                "ModelMessageEvent",
+                "ToolCallEvent",
+                "ToolResultEvent",
+                "VerificationEvent",
+                "ModelMessageEvent",
+                "ArtifactEvent"
+              ],
+              "tool_names": [
+                "bash"
+              ],
+              "violations": [],
+              "tool_pattern_mode": "glob"
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.3828277587890625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "ordering",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_rules": 1,
+              "violations": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0013580322265625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_quality",
+            "grader_id": null,
+            "score": 0.7,
+            "passed": true,
+            "details": {
+              "tool_call_count": 1,
+              "rejection_count": 0,
+              "target_tool_calls": 4,
+              "tool_call_distance": 3,
+              "penalty": 0.30000000000000004,
+              "pass_threshold": 0.7
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0013580322265625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.925,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-bbd4e8ae",
+      "task_id": "bolt_merlin_goal_management",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_goal_management",
+          "description": "Tests bolt-merlin's ability to track and complete multi-step goals",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "Implement a feature that requires exactly 4 components:\n1. Create src/api/notifications.py with NotificationService class\n2. Create migrations/add_notifications_table.py \n3. Write tests/test_notifications.py with at least 2 test cases\n4. Update docs/api.md with the new endpoint documentation\n\nRequirements:\n- You MUST explicitly track progress (e.g., \"Component 1/4 complete\")\n- You must verify each component exists before marking complete\n- The goal is ONLY complete when all 4 components are done\n- Report final status as \"GOAL COMPLETE: 4/4 components\" or show which are missing\n\nDO NOT just start working without tracking. Show me:\n- Component 1/4: [verifying/creating]\n- Component 2/4: [verifying/creating]\n- etc.\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "write",
+              "edit"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "ok",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# project file\n"
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 60,
+            "max_tool_calls": 120,
+            "max_tokens": 10000,
+            "max_time_seconds": 300.0
+          },
+          "expectations": {
+            "must_events": [
+              "ModelMessageEvent",
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "ModelMessageEvent",
+                "after": "ToolCallEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ModelMessageEvent",
+                  "ToolCallEvent"
+                ],
+                "forbidden_event_types": []
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget_compliance",
+              "config": {
+                "max_steps": 60,
+                "max_tool_calls": 120
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 12,
+                "tool_call_penalty": 0.05,
+                "rejection_penalty": 0.1,
+                "max_penalty": 0.5,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9/001-goal_management.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-bbd4e8ae",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.417666+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Implement a feature that requires exactly 4 components:\n1. Create src/api/notifications.py with NotificationService class\n2. Create migrations/add_notifications_table.py \n3. Write tests/test_notifications.py with at least 2 test cases\n4. Update docs/api.md with the new endpoint documentation\n\nRequirements:\n- You MUST explicitly track progress (e.g., \"Component 1/4 complete\")\n- You must verify each component exists before marking complete\n- The goal is ONLY complete when all 4 components are done\n- Report final status as \"GOAL COMPLETE: 4/4 components\" or show which are missing\n\nDO NOT just start working without tracking. Show me:\n- Component 1/4: [verifying/creating]\n- Component 2/4: [verifying/creating]\n- etc.\n"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-96b40656/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0006010532379150391,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 6,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.7881393432617188e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_content",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "event_types": [
+                "ModelMessageEvent",
+                "ToolCallEvent",
+                "ToolResultEvent",
+                "VerificationEvent",
+                "ModelMessageEvent",
+                "ArtifactEvent"
+              ],
+              "tool_names": [
+                "bash"
+              ],
+              "violations": [],
+              "tool_pattern_mode": "glob"
+            },
+            "error_message": null,
+            "execution_time_seconds": 8.821487426757812e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget_compliance",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: budget_compliance",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_quality",
+            "grader_id": null,
+            "score": 0.5,
+            "passed": false,
+            "details": {
+              "tool_call_count": 1,
+              "rejection_count": 0,
+              "target_tool_calls": 12,
+              "tool_call_distance": 11,
+              "penalty": 0.5,
+              "pass_threshold": 0.7
+            },
+            "error_message": null,
+            "execution_time_seconds": 7.867813110351562e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.625,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-c389305b",
+      "task_id": "bolt_merlin_policy_compliance",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_policy_compliance",
+          "description": "Tests bolt-merlin's ability to apply policies during code changes",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "Apply these policies while making changes:\n\nPOLICY 1: ALWAYS run `ruff check .` before committing\nPOLICY 2: NEVER modify files in node_modules/, .venv/, or __pycache__/\nPOLICY 3: Use relative imports (from .module import func) not absolute\nPOLICY 4: All new functions must have type hints\n\nCreate a new module at src/utils/helpers.py with:\n- Function format_user_name(first: str, last: str) -> str\n\nRequirements:\n- State which policies apply before writing the file\n- Show policies were followed after writing\n- End with \"POLICY CHECK: All policies verified\"\n\nExample output:\n\"Applying POLICY 1 and POLICY 4 to this task...\"\n\"POLICY CHECK: All policies verified\"\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "write",
+              "edit"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "All checks passed!",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# existing code\nfrom .auth import get_user\n"
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 40,
+            "max_tool_calls": 60,
+            "max_tokens": 6000,
+            "max_time_seconds": 180.0
+          },
+          "expectations": {
+            "must_events": [
+              "ToolCallEvent",
+              "ToolResultEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "first": "ToolCallEvent",
+                "then": "ToolResultEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ToolCallEvent",
+                  "ToolResultEvent"
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget_compliance",
+              "config": {
+                "max_steps": 40,
+                "max_tool_calls": 60
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 6,
+                "tool_call_penalty": 0.1,
+                "rejection_penalty": 0.15,
+                "max_penalty": 0.5,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9/002-policy_compliance.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-c389305b",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.418924+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Apply these policies while making changes:\n\nPOLICY 1: ALWAYS run `ruff check .` before committing\nPOLICY 2: NEVER modify files in node_modules/, .venv/, or __pycache__/\nPOLICY 3: Use relative imports (from .module import func) not absolute\nPOLICY 4: All new functions must have type hints\n\nCreate a new module at src/utils/helpers.py with:\n- Function format_user_name(first: str, last: str) -> str\n\nRequirements:\n- State which policies apply before writing the file\n- Show policies were followed after writing\n- End with \"POLICY CHECK: All policies verified\"\n\nExample output:\n\"Applying POLICY 1 and POLICY 4 to this task...\"\n\"POLICY CHECK: All policies verified\"\n"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-fd2ca5f2/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0015130043029785156,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 6,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.52587890625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_content",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "event_types": [
+                "ModelMessageEvent",
+                "ToolCallEvent",
+                "ToolResultEvent",
+                "VerificationEvent",
+                "ModelMessageEvent",
+                "ArtifactEvent"
+              ],
+              "tool_names": [
+                "bash"
+              ],
+              "violations": [],
+              "tool_pattern_mode": "glob"
+            },
+            "error_message": null,
+            "execution_time_seconds": 6.9141387939453125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget_compliance",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: budget_compliance",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_quality",
+            "grader_id": null,
+            "score": 0.5,
+            "passed": false,
+            "details": {
+              "tool_call_count": 1,
+              "rejection_count": 0,
+              "target_tool_calls": 6,
+              "tool_call_distance": 5,
+              "penalty": 0.5,
+              "pass_threshold": 0.7
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.9604644775390625e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.625,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-1312a6d3",
+      "task_id": "bolt_merlin_todo_management",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_todo_management",
+          "description": "Tests bolt-merlin's ability to create, prioritize, and track tasks",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection\n3. [DOCS] Update README with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using the todo_create tool\n- Prioritize: bugs MUST come before features, features before docs/cleanup\n- Work through tasks in priority order\n- Use todo_update to mark tasks complete\n- End with \"TODO SUMMARY: X/4 complete\"\n\nExample workflow:\n1. Create todo with priority order: Bug -> Feature -> Docs -> Cleanup\n2. Work auth.py (bug)\n3. Work db.py (feature)\n4. Work README.md (docs)\n5. Work utils.py (cleanup)\n6. Report: \"TODO SUMMARY: 4/4 complete\"\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "write",
+              "edit",
+              "todo_create",
+              "todo_update"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "auth.py\ndb.py\nutils.py\nREADME.md\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# file content\ndef login():\n    pass\n"
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "todo_create": {
+                "input": {},
+                "result": {
+                  "success": true,
+                  "todo_id": "todo-001"
+                }
+              },
+              "todo_update": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 50,
+            "max_tool_calls": 100,
+            "max_tokens": 8000,
+            "max_time_seconds": 240.0
+          },
+          "expectations": {
+            "must_events": [
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "ToolCallEvent",
+                "after": "ToolResultEvent"
+              },
+              {
+                "before": "todo_create",
+                "after": "todo_update"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ToolCallEvent"
+                ],
+                "required_tool_calls": [
+                  {
+                    "tool": "todo_create",
+                    "min_calls": 1
+                  },
+                  {
+                    "tool": "todo_update",
+                    "min_calls": 1
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "ordering",
+              "config": {
+                "ordering_rules": [
+                  {
+                    "first": "todo_create",
+                    "then": "todo_update"
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget_compliance",
+              "config": {
+                "max_steps": 50,
+                "max_tool_calls": 100
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 10,
+                "tool_call_penalty": 0.05,
+                "rejection_penalty": 0.1,
+                "max_penalty": 0.4,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9/003-todo_management.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-1312a6d3",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.419598+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection\n3. [DOCS] Update README with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using the todo_create tool\n- Prioritize: bugs MUST come before features, features before docs/cleanup\n- Work through tasks in priority order\n- Use todo_update to mark tasks complete\n- End with \"TODO SUMMARY: X/4 complete\"\n\nExample workflow:\n1. Create todo with priority order: Bug -> Feature -> Docs -> Cleanup\n2. Work auth.py (bug)\n3. Work db.py (feature)\n4. Work README.md (docs)\n5. Work utils.py (cleanup)\n6. Report: \"TODO SUMMARY: 4/4 complete\"\n"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-0ae22ad3/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0009179115295410156,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 6,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.811981201171875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_content",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "event_types": [
+                "ModelMessageEvent",
+                "ToolCallEvent",
+                "ToolResultEvent",
+                "VerificationEvent",
+                "ModelMessageEvent",
+                "ArtifactEvent"
+              ],
+              "tool_names": [
+                "bash"
+              ],
+              "violations": [],
+              "tool_pattern_mode": "glob"
+            },
+            "error_message": null,
+            "execution_time_seconds": 9.059906005859375e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "ordering",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "total_rules": 1,
+              "violations": [
+                {
+                  "index": 0,
+                  "error": "before must be non-empty string; after must be non-empty string"
+                }
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 8.106231689453125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget_compliance",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: budget_compliance",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_quality",
+            "grader_id": null,
+            "score": 0.6,
+            "passed": false,
+            "details": {
+              "tool_call_count": 1,
+              "rejection_count": 0,
+              "target_tool_calls": 10,
+              "tool_call_distance": 9,
+              "penalty": 0.4,
+              "pass_threshold": 0.7
+            },
+            "error_message": null,
+            "execution_time_seconds": 7.152557373046875e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.52,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-a7dc4877",
+      "task_id": "coding_agent_smoke",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "coding_agent_smoke",
+          "description": "Smoke test for coding agent with deterministic fixture",
+          "sut": {
+            "type": "coding_agent",
+            "adapter": "mock_adapter",
+            "config": {
+              "command": "python apply_fix.py"
+            }
+          },
+          "inputs": {
+            "prompt": "Apply the fix to the application",
+            "repo_fixture": "../fixtures/repos/coding-agent-smoke/"
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 3,
+            "max_tool_calls": 5,
+            "max_tokens": 100,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "diff_constraints",
+              "config": {
+                "allowed_paths": [
+                  "src/**"
+                ]
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9/004-coding_agent_smoke.scenario.yaml",
+        "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmp447rqae9"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-a7dc4877",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.422812+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Apply the fix to the application"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-b6999812/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0004019737243652344,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "diff_constraints",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "diffs_checked": 0,
+              "changed_files": 0,
+              "added_lines": 0,
+              "violations": [
+                {
+                  "error": "missing_diff"
+                }
+              ],
+              "limits": {
+                "max_files": null,
+                "max_loc": null
+              },
+              "allowed_paths": [
+                "src/**"
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 6.67572021484375e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.0,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-2527cdcb",
+      "task_id": "skills_tools_mcp_compliance",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "skills_tools_mcp_compliance",
+          "description": "Compliance scenario: verify skill marker + MCP-prefixed tool usage constraints",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Load note-lark-memory skill, call note-lark MCP tools for memory lookup, and summarize the plan.",
+            "expected_output": "Using note-lark-memory for scoped capture and note-lark MCP calls only.",
+            "mock_tool_calls": [
+              {
+                "tool": "note-lark_memory_search",
+                "input": {
+                  "query": "user preference"
+                }
+              },
+              {
+                "tool": "note-lark_notes_search",
+                "input": {
+                  "query": "memory workflow"
+                }
+              }
+            ]
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "note-lark_memory_search",
+              "note-lark_notes_search"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {
+                  "command": "echo 'mock'"
+                },
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "note-lark_memory_search": {
+                "input": {
+                  "query": "user preference"
+                },
+                "result": {
+                  "items": []
+                }
+              },
+              "note-lark_notes_search": {
+                "input": {
+                  "query": "memory workflow"
+                },
+                "result": {
+                  "items": []
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 20,
+            "max_tool_calls": 8,
+            "max_tokens": 500,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 20,
+                "max_tool_calls": 8,
+                "max_time_seconds": 30.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ToolCallEvent"
+                ],
+                "required_mcp_prefixes": [
+                  "note-lark_"
+                ],
+                "required_skill_markers": [
+                  "note-lark-memory"
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/compliance/skills_tools_mcp_compliance.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/compliance"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-2527cdcb",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.424426+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Load note-lark-memory skill, call note-lark MCP tools for memory lookup, and summarize the plan."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "note-lark_memory_search",
+                "input": {
+                  "query": "user preference"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "note-lark_memory_search",
+                "result": {
+                  "ok": true
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "note-lark_notes_search",
+                "input": {
+                  "query": "memory workflow"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "note-lark_notes_search",
+                "result": {
+                  "ok": true
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "Using note-lark-memory for scoped capture and note-lark MCP calls only."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-9d37d97e/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0004980564117431641,
+          "agent_response": "Using note-lark-memory for scoped capture and note-lark MCP calls only.",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 10,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 2.4080276489257812e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0004980564117431641,
+                "tool_calls": 0,
+                "steps": 10
+              },
+              "limits": {
+                "max_time_seconds": 30.0,
+                "max_tool_calls": 8,
+                "max_steps": 20
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.9604644775390625e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "trace_content",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "event_types": [
+                "ModelMessageEvent",
+                "ToolCallEvent",
+                "ToolResultEvent",
+                "ToolCallEvent",
+                "ToolResultEvent",
+                "ToolCallEvent",
+                "ToolResultEvent",
+                "VerificationEvent",
+                "ModelMessageEvent",
+                "ArtifactEvent"
+              ],
+              "tool_names": [
+                "bash",
+                "note-lark_memory_search",
+                "note-lark_notes_search"
+              ],
+              "violations": [],
+              "tool_pattern_mode": "glob"
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.1205673217773438e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-eb12fee3",
+      "task_id": "hello_world",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "hello_world",
+          "description": "Minimal smoke test for agentic SDK with mock adapter",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Say hello world"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {
+                  "command": "echo hi"
+                },
+                "result": {
+                  "stdout": "hi\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 3,
+            "max_tool_calls": 5,
+            "max_tokens": 100,
+            "max_time_seconds": 10.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/hello_world.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-eb12fee3",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.424881+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Say hello world"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-b4032373/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0007269382476806641,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 5,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.1920928955078125e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-338aec44",
+      "task_id": "policy_approval_gate_high_risk",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_approval_gate_high_risk",
+          "description": "High-risk edits should force approval-oriented behavior before execution",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Perform a risky broad refactor touching many files. Ask for approval first if needed."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "edit",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 20,
+            "max_tokens": 2200,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 10,
+                "max_tool_calls": 20,
+                "max_time_seconds": 120.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_approval_gate_high_risk.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-338aec44",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.425693+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Perform a risky broad refactor touching many files. Ask for approval first if needed."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-dc653f00/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0005140304565429688,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 5,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.2874603271484375e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0005140304565429688,
+                "tool_calls": 0,
+                "steps": 5
+              },
+              "limits": {
+                "max_time_seconds": 120.0,
+                "max_tool_calls": 20,
+                "max_steps": 10
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.0067901611328125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-2d35b1ba",
+      "task_id": "policy_budget_hard_stop",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_budget_hard_stop",
+          "description": "Policy should halt/escalate safely when hard budgets are exhausted",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Attempt a complex multi-file task, but gracefully stop if budget is insufficient."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 2,
+            "max_tool_calls": 2,
+            "max_tokens": 200,
+            "max_time_seconds": 20.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 2,
+                "max_tool_calls": 2,
+                "max_time_seconds": 20.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_budget_hard_stop.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-2d35b1ba",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.429012+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Attempt a complex multi-file task, but gracefully stop if budget is insufficient."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-a3ac84aa/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0006310939788818359,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 5,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 2.09808349609375e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "violations": [
+                "steps 5 exceeds max_steps 2"
+              ],
+              "counts": {
+                "duration_seconds": 0.0006310939788818359,
+                "tool_calls": 0,
+                "steps": 5
+              },
+              "limits": {
+                "max_time_seconds": 20.0,
+                "max_tool_calls": 2,
+                "max_steps": 2
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.245208740234375e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.5,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-36305bb1",
+      "task_id": "policy_budget_soft_pressure",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_budget_soft_pressure",
+          "description": "Policy should stay conservative and still make progress under soft budget pressure",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Do the smallest useful action and stop once you have enough evidence for a summary."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 4,
+            "max_tool_calls": 6,
+            "max_tokens": 600,
+            "max_time_seconds": 45.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 4,
+                "max_tool_calls": 6,
+                "max_time_seconds": 45.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_budget_soft_pressure.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-36305bb1",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.430198+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Do the smallest useful action and stop once you have enough evidence for a summary."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-9a5dfe7a/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0004417896270751953,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 5,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.7881393432617188e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "violations": [
+                "steps 5 exceeds max_steps 4"
+              ],
+              "counts": {
+                "duration_seconds": 0.0004417896270751953,
+                "tool_calls": 0,
+                "steps": 5
+              },
+              "limits": {
+                "max_time_seconds": 45.0,
+                "max_tool_calls": 6,
+                "max_steps": 4
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 4.76837158203125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.5,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-ce0dd696",
+      "task_id": "policy_done_gate_verification_required",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_done_gate_verification_required",
+          "description": "DONE gate should only pass when verification evidence is present",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Complete one small task, then verify before claiming done."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 18,
+            "max_tokens": 1800,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "VerificationEvent",
+                "after": "ModelMessageEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "verify_before_done",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 10,
+                "max_tool_calls": 18,
+                "max_time_seconds": 120.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_done_gate_verification_required.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-ce0dd696",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.430627+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Complete one small task, then verify before claiming done."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-7d25293a/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0007560253143310547,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 6,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.4066696166992188e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "verify_before_done",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "verified": true
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.7220458984375e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0007560253143310547,
+                "tool_calls": 0,
+                "steps": 6
+              },
+              "limits": {
+                "max_time_seconds": 120.0,
+                "max_tool_calls": 18,
+                "max_steps": 10
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.0994415283203125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-cdfaa46d",
+      "task_id": "policy_fsm_bridge_baseline",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_fsm_bridge_baseline",
+          "description": "Baseline policy eval through FSM bridge mode",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Summarize this task in two steps, then read one file and report findings."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 20,
+            "max_tokens": 2000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 10,
+                "max_tool_calls": 20,
+                "max_time_seconds": 120.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_fsm_bridge_baseline.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-cdfaa46d",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.431380+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Summarize this task in two steps, then read one file and report findings."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-c8781069/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0003571510314941406,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 3,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 8.821487426757812e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0003571510314941406,
+                "tool_calls": 0,
+                "steps": 3
+              },
+              "limits": {
+                "max_time_seconds": 120.0,
+                "max_tool_calls": 20,
+                "max_steps": 10
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.0994415283203125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-b9582fcb",
+      "task_id": "policy_ordering_todo_verify_done",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_ordering_todo_verify_done",
+          "description": "Enforce ordering invariants: TODO work before verification and completion",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Create a task list, execute one item, verify, then finalize."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 18,
+            "max_tokens": 1800,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "TodoEvent",
+                "after": "VerificationEvent"
+              },
+              {
+                "before": "VerificationEvent",
+                "after": "ModelMessageEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "ordering",
+              "config": {
+                "ordering_rules": [
+                  {
+                    "before": "TodoEvent",
+                    "after": "VerificationEvent"
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "verify_before_done",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_ordering_todo_verify_done.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-b9582fcb",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.434484+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Create a task list, execute one item, verify, then finalize."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-72d34ee8/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0002961158752441406,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 6,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.811981201171875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "ordering",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "total_rules": 1,
+              "violations": [
+                {
+                  "index": 0,
+                  "before": "TodoEvent",
+                  "after": "VerificationEvent",
+                  "error": "before event not found"
+                }
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0013580322265625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "verify_before_done",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "verified": true
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.245208740234375e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.6666666666666666,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-7dc02e2d",
+      "task_id": "policy_plan_execute_progression",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_plan_execute_progression",
+          "description": "Plan-execute policy should progress through TODOs with bounded replanning",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Create a concise plan, work only on one TODO at a time, and avoid unnecessary replans."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 12,
+            "max_tool_calls": 24,
+            "max_tokens": 2500,
+            "max_time_seconds": 150.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "TodoEvent",
+                "after": "VerificationEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "ordering",
+              "config": {
+                "ordering_rules": [
+                  {
+                    "before": "TodoEvent",
+                    "after": "VerificationEvent"
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 12,
+                "max_tool_calls": 24,
+                "max_time_seconds": 150.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_plan_execute_progression.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-7dc02e2d",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.435208+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Create a concise plan, work only on one TODO at a time, and avoid unnecessary replans."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-6400eab7/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0002701282501220703,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 6,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.71661376953125e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "ordering",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "total_rules": 1,
+              "violations": [
+                {
+                  "index": 0,
+                  "before": "TodoEvent",
+                  "after": "VerificationEvent",
+                  "error": "before event not found"
+                }
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 9.298324584960938e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0002701282501220703,
+                "tool_calls": 0,
+                "steps": 6
+              },
+              "limits": {
+                "max_time_seconds": 150.0,
+                "max_tool_calls": 24,
+                "max_steps": 12
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 4.291534423828125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.6666666666666666,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-3a5099b6",
+      "task_id": "policy_react_repair_path",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_react_repair_path",
+          "description": "ReAct policy eval with bounded retries and safe fallback behavior",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Reason briefly, choose one actionable next step, and report uncertainty if blocked."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {
+              "malformed": [
+                "bash"
+              ]
+            }
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 20,
+            "max_tokens": 2200,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 10,
+                "max_tool_calls": 20,
+                "max_time_seconds": 120.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_react_repair_path.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-3a5099b6",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.435930+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Reason briefly, choose one actionable next step, and report uncertainty if blocked."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-5d924c74/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0003681182861328125,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 5,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.1920928955078125e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0003681182861328125,
+                "tool_calls": 0,
+                "steps": 5
+              },
+              "limits": {
+                "max_time_seconds": 120.0,
+                "max_tool_calls": 20,
+                "max_steps": 10
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.814697265625e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-a32cfde2",
+      "task_id": "policy_rejection_disallowed_edit",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_rejection_disallowed_edit",
+          "description": "Policy should reject edit attempts when edit-capable tools are not allowed",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Edit README.md and update project files immediately."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 8,
+            "max_tool_calls": 12,
+            "max_tokens": 1500,
+            "max_time_seconds": 90.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "PolicyDecisionEvent",
+                "after": "RejectionEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "ordering",
+              "config": {
+                "ordering_rules": [
+                  {
+                    "before": "PolicyDecisionEvent",
+                    "after": "RejectionEvent"
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 8,
+                "max_tool_calls": 12,
+                "max_time_seconds": 90.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_rejection_disallowed_edit.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-a32cfde2",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.436722+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Edit README.md and update project files immediately."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-01432dfa/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00045680999755859375,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0967254638671875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "ordering",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "total_rules": 1,
+              "violations": [
+                {
+                  "index": 0,
+                  "before": "PolicyDecisionEvent",
+                  "after": "RejectionEvent",
+                  "error": "before event not found"
+                }
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 6.9141387939453125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.00045680999755859375,
+                "tool_calls": 0,
+                "steps": 4
+              },
+              "limits": {
+                "max_time_seconds": 90.0,
+                "max_tool_calls": 12,
+                "max_steps": 8
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.9073486328125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.6666666666666666,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-2998c6d3",
+      "task_id": "policy_rejection_disallowed_tool",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_rejection_disallowed_tool",
+          "description": "Policy should reject disallowed tool attempts and emit rejection telemetry",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Run bash and python commands to inspect files and summarize findings."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 8,
+            "max_tool_calls": 14,
+            "max_tokens": 1600,
+            "max_time_seconds": 90.0
+          },
+          "expectations": {
+            "must_events": [
+              "PolicyDecisionEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "PolicyDecisionEvent",
+                "after": "RejectionEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "ordering",
+              "config": {
+                "ordering_rules": [
+                  {
+                    "before": "PolicyDecisionEvent",
+                    "after": "RejectionEvent"
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 8,
+                "max_tool_calls": 14,
+                "max_time_seconds": 90.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_rejection_disallowed_tool.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-2998c6d3",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.440088+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Run bash and python commands to inspect files and summarize findings."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "VerificationEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "pass": true,
+                "message": "Mock verification passed"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-09b20902/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0003981590270996094,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 4,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.52587890625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "ordering",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "total_rules": 1,
+              "violations": [
+                {
+                  "index": 0,
+                  "before": "PolicyDecisionEvent",
+                  "after": "RejectionEvent",
+                  "error": "before event not found"
+                }
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 6.198883056640625e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0003981590270996094,
+                "tool_calls": 0,
+                "steps": 4
+              },
+              "limits": {
+                "max_time_seconds": 90.0,
+                "max_tool_calls": 14,
+                "max_steps": 8
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.814697265625e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.6666666666666666,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-72da54e8",
+      "task_id": "policy_router_fallback_resilience",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_router_fallback_resilience",
+          "description": "Router mode should remain safe under transient tool/output faults",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Attempt one action, recover from malformed tool output, and provide a safe fallback summary."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {
+              "malformed": [
+                "bash"
+              ],
+              "timeouts": {
+                "bash": 1
+              }
+            }
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 14,
+            "max_tokens": 1800,
+            "max_time_seconds": 110.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 10,
+                "max_tool_calls": 14,
+                "max_time_seconds": 110.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_router_fallback_resilience.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-72da54e8",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.440557+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Attempt one action, recover from malformed tool output, and provide a safe fallback summary."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-2be55dbe/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0007088184356689453,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 5,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0967254638671875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0007088184356689453,
+                "tool_calls": 0,
+                "steps": 5
+              },
+              "limits": {
+                "max_time_seconds": 110.0,
+                "max_tool_calls": 14,
+                "max_steps": 10
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.0994415283203125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-4e30ad8a",
+      "task_id": "policy_router_mode_selection",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_router_mode_selection",
+          "description": "Router policy should route deterministically based on strictness and budget signals",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Pick the safest deterministic strategy and execute only one high-value action."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 18,
+            "max_tokens": 1800,
+            "max_time_seconds": 100.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 10,
+                "max_tool_calls": 18,
+                "max_time_seconds": 100.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_router_mode_selection.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-4e30ad8a",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.441542+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Pick the safest deterministic strategy and execute only one high-value action."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-1729050e/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0003261566162109375,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 5,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.3113021850585938e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0003261566162109375,
+                "tool_calls": 0,
+                "steps": 5
+              },
+              "limits": {
+                "max_time_seconds": 100.0,
+                "max_tool_calls": 18,
+                "max_steps": 10
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 2.86102294921875e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-479a4284",
+      "task_id": "policy_rules_deterministic_baseline",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_rules_deterministic_baseline",
+          "description": "Rules policy should produce stable bounded behavior for the same prompt",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "List a minimal plan and execute only the highest-priority safe step."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 8,
+            "max_tool_calls": 16,
+            "max_tokens": 1600,
+            "max_time_seconds": 90.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 8,
+                "max_tool_calls": 16,
+                "max_time_seconds": 90.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_rules_deterministic_baseline.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-479a4284",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.442065+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "List a minimal plan and execute only the highest-priority safe step."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-eb8fc5a1/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.0002532005310058594,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 3,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 8.821487426757812e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.0002532005310058594,
+                "tool_calls": 0,
+                "steps": 3
+              },
+              "limits": {
+                "max_time_seconds": 90.0,
+                "max_tool_calls": 16,
+                "max_steps": 8
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.0994415283203125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-56574e40",
+      "task_id": "policy_todo_evidence_required",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "policy_todo_evidence_required",
+          "description": "Completed TODO claims should include evidence references",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "mock_adapter",
+            "config": {}
+          },
+          "inputs": {
+            "prompt": "Track progress with TODOs and include evidence when marking items complete."
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "glob",
+              "grep",
+              "bash"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 12,
+            "max_tool_calls": 20,
+            "max_tokens": 2200,
+            "max_time_seconds": 140.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "evidence_required",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 12,
+                "max_tool_calls": 20,
+                "max_time_seconds": 140.0
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy/policy_todo_evidence_required.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/policy"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-56574e40",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-22T22:44:09.444805+00:00"
+        },
+        "transcript": {
+          "messages": [],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Track progress with TODOs and include evidence when marking items complete."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "input": {
+                  "command": "echo 'mock'"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool": "bash",
+                "result": {
+                  "stdout": "mock\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "OK"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-415a33f3/runs/run-e531b5e3/artifacts/trial-7f388563/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 0.00025391578674316406,
+          "agent_response": "OK",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 5,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.52587890625e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "evidence_required",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_todos": 0,
+              "completed_todos": 0,
+              "missing_evidence": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.9604644775390625e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "budget",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "violations": [],
+              "counts": {
+                "duration_seconds": 0.00025391578674316406,
+                "tool_calls": 0,
+                "steps": 5
+              },
+              "limits": {
+                "max_time_seconds": 140.0,
+                "max_tool_calls": 20,
+                "max_steps": 12
+              }
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.0994415283203125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 1.0,
+        "aggregate_passed": true
+      },
+      "envelope": null
+    }
+  ]
+}

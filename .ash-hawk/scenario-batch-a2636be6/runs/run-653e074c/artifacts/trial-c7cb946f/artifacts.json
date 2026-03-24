@@ -1,0 +1,21 @@
+{
+  "command": "weekly",
+  "result": {
+    "command": "weekly",
+    "week": "2026-W15",
+    "patterns": [
+      "Morning posts get more engagement",
+      "Questions drive replies"
+    ],
+    "recommendations": [
+      "Post more about Python",
+      "Reply to Tier 1 contacts faster"
+    ],
+    "metrics_summary": {
+      "total_posts": 15,
+      "total_replies": 42,
+      "avg_engagement": 3.5
+    }
+  },
+  "verification_passed": true
+}

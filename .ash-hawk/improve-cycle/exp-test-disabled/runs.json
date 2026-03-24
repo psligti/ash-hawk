@@ -1,0 +1,43 @@
+[
+  {
+    "run_id": "cycle-cycle-test-disabled-iter-1",
+    "experiment_id": "exp-test-disabled",
+    "agent_id": "bolt-merlin",
+    "eval_pack_id": "default",
+    "scenario_ids": [
+      "default"
+    ],
+    "timestamp": "2026-03-22T04:25:08.401088+00:00",
+    "transcripts": [],
+    "tool_traces": [
+      {
+        "tool_name": "policy_load",
+        "outcome": "success",
+        "duration_ms": 20,
+        "error_message": null
+      },
+      {
+        "tool_name": "policy_apply",
+        "outcome": "success",
+        "duration_ms": 30,
+        "error_message": null
+      }
+    ],
+    "outputs": [
+      {
+        "outcome": "success",
+        "error_message": null
+      }
+    ],
+    "metrics": [
+      {
+        "name": "score",
+        "value": 0.0,
+        "unit": null,
+        "baseline_value": null,
+        "delta": null
+      }
+    ],
+    "active_lessons": []
+  }
+]

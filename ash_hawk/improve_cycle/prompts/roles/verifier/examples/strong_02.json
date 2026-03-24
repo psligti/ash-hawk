@@ -1,9 +1,0 @@
-{
-  "quality": "strong",
-  "note": "Cross-Pack Validation with No Regressions and Low Variance",
-  "input": {
-    "change_set_id": "cs-abc123",
-    "mode": "cross_pack",
-    "applied_changes_count": 2
-  }
-}

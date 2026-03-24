@@ -1,0 +1,5 @@
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "user", "content": "Attempt a complex multi-file task, but gracefully stop if budget is insufficient."}}
+{"schema_version": 1, "event_type": "ToolCallEvent", "ts": "1970-01-01T00:00:00Z", "data": {"tool": "bash", "input": {"command": "echo 'mock'"}}}
+{"schema_version": 1, "event_type": "ToolResultEvent", "ts": "1970-01-01T00:00:00Z", "data": {"tool": "bash", "result": {"stdout": "mock\n", "stderr": "", "exit_code": 0}}}
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "assistant", "content": "OK"}}
+{"schema_version": 1, "event_type": "ArtifactEvent", "ts": "1970-01-01T00:00:00Z", "data": {"path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-72809b2f/runs/run-000893c3/artifacts/trial-ffc0daf6/artifacts.json", "artifact_key": "artifacts"}}

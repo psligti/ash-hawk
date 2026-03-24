@@ -1,0 +1,30 @@
+{
+  "command": "pulse",
+  "result": {
+    "command": "pulse",
+    "targets": [
+      {
+        "id": "tw_003",
+        "author": "alice",
+        "text": "What makes a good rubric for judging replies?",
+        "metrics": {
+          "likes": 9
+        }
+      },
+      {
+        "id": "tw_004",
+        "author": "bob",
+        "text": "We removed flaky LLM graders and replaced them wit",
+        "metrics": {
+          "likes": 44
+        }
+      }
+    ],
+    "targets_count": 2,
+    "sources": [
+      "x_feed"
+    ],
+    "execution_time_seconds": 1.5
+  },
+  "verification_passed": true
+}

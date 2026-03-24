@@ -101,6 +101,12 @@ class ScenarioAgentRunner:
             "policy": tool_policy.model_dump(),
         }
 
+        adapter_messages: list[dict[str, Any]] = []
+        adapter_tool_calls: list[dict[str, Any]] = []
+        final_output = None
+        trace_events: list[dict[str, Any]] = []
+        artifacts: dict[str, Any] = {}
+        adapter_outcome = None
         try:
             adapter_result = await asyncio.to_thread(
                 adapter.run_scenario,
@@ -109,18 +115,28 @@ class ScenarioAgentRunner:
                 tooling_context,
                 scenario.budgets.model_dump(),
             )
-            # Adapter returns 4 values: (output, events, artifacts, outcome)
-            if len(adapter_result) == 4:
-                final_output, trace_events, artifacts, adapter_outcome = adapter_result
+            # Adapter returns 4-6 values: (output, events, artifacts, outcome, messages?, tool_calls?)
+            result_len = len(adapter_result)
+            if result_len >= 4:
+                final_output = adapter_result[0]
+                trace_events = adapter_result[1]
+                artifacts = adapter_result[2]
+                adapter_outcome = adapter_result[3]
             else:
                 # Backward compat for adapters returning 3 values
-                final_output, trace_events, artifacts = adapter_result
+                final_output = adapter_result[0]
+                trace_events = adapter_result[1]
+                artifacts = adapter_result[2]
                 adapter_outcome = None
+            if result_len >= 6:
+                adapter_messages = adapter_result[4]
+                adapter_tool_calls = adapter_result[5]
         except Exception as exc:
             return self._failure_transcript(
                 FailureMode.AGENT_ERROR,
                 f"Scenario execution failed: {exc}",
                 start_time,
+                trace_events=tooling_recorder.events,
             )
 
         # If adapter returned a failure outcome, propagate it
@@ -128,6 +144,8 @@ class ScenarioAgentRunner:
             duration = time.time() - start_time
             error_msg = adapter_outcome.error_message or "Agent returned failure"
             transcript = EvalTranscript(
+                messages=adapter_messages,
+                tool_calls=adapter_tool_calls,
                 error_trace=error_msg,
                 duration_seconds=duration,
                 trace_events=self._normalize_trace_events(trace_events),
@@ -141,6 +159,8 @@ class ScenarioAgentRunner:
 
         duration = time.time() - start_time
         transcript = EvalTranscript(
+            messages=adapter_messages,
+            tool_calls=adapter_tool_calls,
             agent_response=final_output,
             duration_seconds=duration,
             trace_events=combined_trace_events,
@@ -278,11 +298,13 @@ class ScenarioAgentRunner:
         failure_mode: FailureMode,
         message: str,
         start_time: float,
+        trace_events: list[dict[str, Any]] | None = None,
     ) -> tuple[EvalTranscript, EvalOutcome]:
         duration = time.time() - start_time
         transcript = EvalTranscript(
             error_trace=message,
             duration_seconds=duration,
+            trace_events=trace_events or [],
         )
         outcome = EvalOutcome.failure(failure_mode, message)
         return transcript, outcome

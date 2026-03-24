@@ -1,0 +1,30 @@
+[
+  {
+    "run_id": "run-1",
+    "experiment_id": "exp-1",
+    "agent_id": "bolt-merlin",
+    "eval_pack_id": "bolt-merlin-eval",
+    "scenario_ids": [
+      "s1",
+      "s2"
+    ],
+    "timestamp": "2026-03-22T04:17:55.041846+00:00",
+    "transcripts": [],
+    "tool_traces": [
+      {
+        "tool": "read"
+      }
+    ],
+    "outputs": [],
+    "metrics": [
+      {
+        "name": "score",
+        "value": 0.4,
+        "unit": null,
+        "baseline_value": null,
+        "delta": null
+      }
+    ],
+    "active_lessons": []
+  }
+]

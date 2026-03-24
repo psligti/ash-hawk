@@ -1,0 +1,355 @@
+{
+  "trial": {
+    "id": "trial-bf1b93b6",
+    "task_id": "bolt_merlin_policy_compliance",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "bolt_merlin_policy_compliance",
+        "description": "Tests bolt-merlin's ability to apply policies during code changes",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "mock_adapter",
+          "config": {
+            "agent": "execution"
+          }
+        },
+        "inputs": {
+          "prompt": "Apply these policies while making changes:\n\nPOLICY 1: ALWAYS run `ruff check .` before committing\nPOLICY 2: NEVER modify files in node_modules/, .venv/, or __pycache__/\nPOLICY 3: Use relative imports (from .module import func) not absolute\nPOLICY 4: All new functions must have type hints\n\nCreate a new module at src/utils/helpers.py with:\n- Function format_user_name(first: str, last: str) -> str\n\nRequirements:\n- State which policies apply before writing the file\n- Show policies were followed after writing\n- End with \"POLICY CHECK: All policies verified\"\n\nExample output:\n\"Applying POLICY 1 and POLICY 4 to this task...\"\n\"POLICY CHECK: All policies verified\"\n"
+        },
+        "tools": {
+          "allowed_tools": [
+            "bash",
+            "read",
+            "write",
+            "edit"
+          ],
+          "mocks": {
+            "bash": {
+              "input": {},
+              "result": {
+                "stdout": "All checks passed!",
+                "stderr": "",
+                "exit_code": 0
+              }
+            },
+            "read": {
+              "input": {},
+              "result": {
+                "content": "# existing code\nfrom .auth import get_user\n"
+              }
+            },
+            "write": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            },
+            "edit": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            }
+          },
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 40,
+          "max_tool_calls": 60,
+          "max_tokens": 6000,
+          "max_time_seconds": 180.0
+        },
+        "expectations": {
+          "must_events": [
+            "ToolCallEvent",
+            "ToolResultEvent"
+          ],
+          "must_not_events": [],
+          "ordering_rules": [
+            {
+              "first": "ToolCallEvent",
+              "then": "ToolResultEvent"
+            }
+          ],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "trace_content",
+            "config": {
+              "required_event_types": [
+                "ToolCallEvent",
+                "ToolResultEvent"
+              ]
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "budget_compliance",
+            "config": {
+              "max_steps": 40,
+              "max_tool_calls": 60
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "trace_quality",
+            "config": {
+              "target_tool_calls": 6,
+              "tool_call_penalty": 0.1,
+              "rejection_penalty": 0.15,
+              "max_penalty": 0.5,
+              "pass_threshold": 0.7
+            },
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpnv_3io1o/002-policy_compliance.scenario.yaml",
+      "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpnv_3io1o"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-bf1b93b6",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-22T23:15:23.950071+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Apply these policies while making changes:\n\nPOLICY 1: ALWAYS run `ruff check .` before committing\nPOLICY 2: NEVER modify files in node_modules/, .venv/, or __pycache__/\nPOLICY 3: Use relative imports (from .module import func) not absolute\nPOLICY 4: All new functions must have type hints\n\nCreate a new module at src/utils/helpers.py with:\n- Function format_user_name(first: str, last: str) -> str\n\nRequirements:\n- State which policies apply before writing the file\n- Show policies were followed after writing\n- End with \"POLICY CHECK: All policies verified\"\n\nExample output:\n\"Applying POLICY 1 and POLICY 4 to this task...\"\n\"POLICY CHECK: All policies verified\"\n"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "bash",
+              "input": {
+                "command": "echo 'mock'"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "bash",
+              "result": {
+                "stdout": "mock\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "Mock verification passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "OK"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-55910a5a/runs/run-cfbebde1/artifacts/trial-bf1b93b6/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0010480880737304688,
+        "agent_response": "OK",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 6,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.52587890625e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "trace_content",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "event_types": [
+              "ModelMessageEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "VerificationEvent",
+              "ModelMessageEvent",
+              "ArtifactEvent"
+            ],
+            "tool_names": [
+              "bash"
+            ],
+            "violations": [],
+            "tool_pattern_mode": "glob"
+          },
+          "error_message": null,
+          "execution_time_seconds": 6.9141387939453125e-06,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "budget_compliance",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: budget_compliance",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "grader_id": null,
+          "score": 0.5,
+          "passed": false,
+          "details": {
+            "tool_call_count": 1,
+            "rejection_count": 0,
+            "target_tool_calls": 6,
+            "tool_call_distance": 5,
+            "penalty": 0.5,
+            "pass_threshold": 0.7
+          },
+          "error_message": null,
+          "execution_time_seconds": 5.9604644775390625e-06,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.625,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-bf1b93b6",
+      "run_id": "run-cfbebde1",
+      "task_id": "bolt_merlin_policy_compliance",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-22T23:15:23.948997+00:00",
+      "started_at": "2026-03-22T23:15:23.948986+00:00",
+      "completed_at": "2026-03-22T23:15:23.950079+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-bf1b93b6",
+    "run_id": "run-cfbebde1",
+    "task_id": "bolt_merlin_policy_compliance",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-22T23:15:23.948997+00:00",
+    "started_at": "2026-03-22T23:15:23.948986+00:00",
+    "completed_at": "2026-03-22T23:15:23.950079+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

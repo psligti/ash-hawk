@@ -1,0 +1,15 @@
+Switch to plan mode for research and orchestration planning. In plan mode, code-modifying tools remain denied by the PLAN_AGENT permission policy.
+
+Planning control contract (canonical spec: docs/planning-agent-orchestration.md):
+- Budget defaults: max_iterations=5, max_subagent_calls=8, max_wall_time=5 minutes
+- Evidence requirement per iteration: provide at least one of new evidence, uncertainty reduction, confidence increase, or falsified hypothesis
+- Stagnation triggers: repeated failure signature, no new files for two iterations, confidence plateau, or redundant queries
+- Strategy-switch rule: if stagnation is detected, declare the current strategy failed and switch to a fundamentally different approach with reduced budget (max_iterations=2, max_subagent_calls=3)
+- Deterministic stop reasons: recommendation_ready, blocking_question, budget_exhausted, stagnation, or human_required
+
+After entering plan mode:
+- Edit/write-style tools are denied by tool permission filtering; preserve this safety behavior
+- Focus on bounded investigation and synthesis, not implementation
+- End planning output with explicit confidence, evidence summary, remaining uncertainties, and budget consumed
+
+Note: This mode control is separate from subagent type names. Use plan mode to research and decide before build mode implementation.

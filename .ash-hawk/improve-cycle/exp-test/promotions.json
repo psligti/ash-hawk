@@ -1,0 +1,20 @@
+[
+  {
+    "decision_id": "decision-47568a25",
+    "lesson_id": "lesson-15ceb4e1",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.22",
+    "rollback_trigger": "regression_count>0"
+  },
+  {
+    "decision_id": "decision-8188acb1",
+    "lesson_id": "lesson-f01df3e7",
+    "status": "hold_for_more_data",
+    "scope": "agent-specific",
+    "reason": "Verification completed with promotable signal",
+    "effective_version": "2026.03.22",
+    "rollback_trigger": "regression_count>0"
+  }
+]

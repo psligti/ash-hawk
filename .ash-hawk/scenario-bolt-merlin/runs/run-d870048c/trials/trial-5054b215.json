@@ -1,0 +1,591 @@
+{
+  "trial": {
+    "id": "trial-5054b215",
+    "task_id": "bolt_merlin_todo_list",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "bolt_merlin_todo_list",
+        "description": "Tests bolt-merlin's todo list creation and tracking",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "bolt_merlin",
+          "config": {
+            "agent": "execution"
+          }
+        },
+        "inputs": {
+          "prompt": "You have multiple tasks to complete:\n1. Fix the authentication bug in auth.py\n2. Add logging to the database connection\n3. Update the README with new API endpoints\n4. Clean up unused imports in utils.py\n\nCreate a todo list, prioritize the tasks (bugs first), and work through them.\nTrack completion of each task.\n"
+        },
+        "tools": {
+          "allowed_tools": [
+            "bash",
+            "read",
+            "write",
+            "edit",
+            "todo_create",
+            "todo_update"
+          ],
+          "mocks": {
+            "bash": {
+              "input": {},
+              "result": {
+                "stdout": "auth.py\ndb.py\nutils.py\nREADME.md\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            },
+            "read": {
+              "input": {},
+              "result": {
+                "content": "# file content\n"
+              }
+            },
+            "write": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            },
+            "edit": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            },
+            "todo_create": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            },
+            "todo_update": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            }
+          },
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 40,
+          "max_tool_calls": 80,
+          "max_tokens": 6000,
+          "max_time_seconds": 180.0
+        },
+        "expectations": {
+          "must_events": [
+            "ModelMessageEvent",
+            "ToolCallEvent"
+          ],
+          "must_not_events": [],
+          "ordering_rules": [
+            {
+              "before": "ModelMessageEvent",
+              "after": "ToolCallEvent"
+            }
+          ],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "trace_content",
+            "config": {
+              "required_event_types": [
+                "ModelMessageEvent"
+              ]
+            },
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "trace_quality",
+            "config": {
+              "target_tool_calls": 6,
+              "tool_call_penalty": 0.08,
+              "rejection_penalty": 0.12,
+              "max_penalty": 0.6,
+              "pass_threshold": 0.7
+            },
+            "weight": 1.5,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/todo_list.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-5054b215",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-21T01:54:26.881305+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "You have multiple tasks to complete:\n1. Fix the authentication bug in auth.py\n2. Add logging to the database connection\n3. Update the README with new API endpoints\n4. Clean up unused imports in utils.py\n\nCreate a todo list, prioritize the tasks (bugs first), and work through them.\nTrack completion of each task.\n"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "I'll help you complete these tasks systematically. Let me start by exploring the codebase to understand the structure and identify the files that need changes."
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"find . -type f -name \\\"*.py\\\" -o -name \\\"README*\\\" | grep -v __pycache__ | head -20\", \"description\": \"Find Python files and README files\"}, \"output\": \"./.pytest_cache/README.md\\n./.opencode/node_modules/zod/README.md\\n./tests/metrics/test_statistics.py\\n./tests/metrics/__init__.py\\n./tests/pipeline/test_translator.py\\n./tests/pipeline/conftest.py\\n./tests/pipeline/__init__.py\\n./tests/pipeline/test_orchestrator.py\\n./tests/pipeline/test_coach.py\\n./tests/pipeline/test_analyst.py\\n./tests/pipeline/test_curator.py\\n./tests/reporting/__init__.py\\n./tests/reporting/test_html.py\\n./tests/reporting/test_gap_scorecard.py\\n./tests/reporting/test_json.py\\n./tests/improve_cycle/test_quality_gates.py\\n./tests/improve_cycle/test_configuration.py\\n./tests/improve_cycle/test_role_validation.py\\n./tests/improve_cycle/test_roles_promotion_manager.py\\n./tests/improve_cycle/test_orchestrator.py\\n\", \"title\": \"Find Python files and README files\", \"metadata\": {\"exit_code\": 0, \"description\": \"Find Python files and README files\"}}, {\"tool\": \"glob\", \"input\": {\"pattern\": \"**/*.py\"}, \"error\": \"Tool not available: glob\"}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"find . -type f \\\\( -name \\\"auth.py\\\" -o -name \\\"utils.py\\\" -o -name \\\"README*\\\" \\\\) | grep -v __pycache__ | grep -v node_modules\", \"description\": \"Find auth.py, utils.py, and README files\"}, \"output\": \"./.pytest_cache/README.md\\n./docs/skills/evals/README.md\\n./README.md\\n./examples/scenarios/compliance/README.md\\n./examples/scenarios/policy/README.md\\n./examples/complete-eval/README.md\\n./.venv/lib/python3.12/site-packages/py_partiql_parser/_internal/utils.py\\n./.venv/lib/python3.12/site-packages/flask/sansio/README.md\\n./.venv/lib/python3.12/site-packages/openapi_spec_validator/schemas/utils.py\\n./.venv/lib/python3.12/site-packages/packaging/utils.py\\n./.venv/lib/python3.12/site-packages/networkx/algorithms/connectivity/utils.py\\n./.venv/lib/python3.12/site-packages/networkx/algorithms/flow/utils.py\\n./.venv/lib/python3.12/site-packages/docker/auth.py\\n./.venv/lib/python3.12/site-packages/docker/utils/utils.py\\n./.venv/lib/python3.12/site-packages/docker/credentials/utils.py\\n./.venv/lib/python3.12/site-packages/sympy/multipledispatch/utils.py\\n./.venv/lib/python3.12/site-packages/sympy/plotting/utils.py\\n./.venv/lib/python3.12/site-packages/sympy/tensor/array/expressions/utils.py\\n./.venv/lib/python3.12/site-packages/sympy/physics/optics/utils.py\\n./.venv/lib/python3.12/site-packages/sympy/parsing/autolev/test-examples/README.txt\\n./.venv/lib/python3.12/site-packages/s3transfer/utils.py\\n./.venv/lib/python3.12/site-packages/aiofiles/threadpool/utils.py\\n./.venv/lib/python3.12/site-packages/aws_xray_sdk/core/plugins/utils.py\\n./.venv/lib/python3.12/site-packages/aiobotocore/utils.py\\n./.venv/lib/python3.12/site-packages/asyncpg/utils.py\\n./.venv/lib/python3.12/site-packages/redis/utils.py\\n./.venv/lib/python3.12/site-packages/redis/commands/timeseries/utils.py\\n./.venv/lib/python3.12/site-packages/redis/commands/vectorset/utils.py\\n./.venv/lib/python3.12/site-packages/redis/asyncio/utils.py\\n./.venv/lib/python3.12/site-packages/jinja2/utils.py\\n./.venv/lib/python3.12/site-packages/cryptography/hazmat/primitives/asymmetric/utils.py\\n./.venv/lib/python3.12/site-packages/cryptography/utils.py\\n./.venv/lib/python3.12/site-packages/cfnlint/decode/utils.py\\n./.venv/lib/python3.12/site-packages/markdown_it/common/utils.py\\n./.venv/lib/python3.12/site-packages/markdown_it/utils.py\\n./.venv/lib/python3.12/site-packages/werkzeug/sansio/utils.py\\n./.venv/lib/python3.12/site-packages/werkzeug/datastructures/auth.py\\n./.venv/lib/python3.12/site-packages/werkzeug/utils.py\\n./.venv/lib/python3.12/site-packages/moto/emrcontainers/utils.py\\n./.venv/lib/python3.12/site-packages/moto/kinesis/utils.py\\n./.venv/lib/python3.12/site-packages/moto/organizations/utils.py\\n./.venv/lib/python3.12/site-packages/moto/ssm/utils.py\\n./.venv/lib/python3.12/site-packages/moto/timestreaminfluxdb/utils.py\\n./.venv/lib/python3.12/site-packages/moto/secretsmanager/utils.py\\n./.venv/lib/python3.12/site-packages/moto/kms/utils.py\\n./.venv/lib/python3.12/site-packages/moto/quicksight/utils.py\\n./.venv/lib/python3.12/site-packages/moto/cloudwatch/utils.py\\n./.venv/lib/python3.12/site-packages/moto/glue/utils.py\\n./.venv/lib/python3.12/site-packages/moto/s3/utils.py\\n./.venv/lib/python3.12/site-packages/moto/emr/utils.py\\n./.venv/lib/python3.12/site-packages/moto/core/utils.py\\n./.venv/lib/python3.12/site-packages/moto/sns/utils.py\\n./.venv/lib/python3.12/site-packages/moto/ds/utils.py\\n./.venv/lib/python3.12/site-packages/moto/cognitoidentity/utils.py\\n./.venv/lib/python3.12/site-packages/moto/wafv2/utils.py\\n./.venv/lib/python3.12/site-packages/moto/cognitoidp/utils.py\\n./.venv/lib/python3.12/site-packages/moto/glacier/utils.py\\n./.venv/lib/python3.12/site-packages/moto/elasticbeanstalk/utils.py\\n./.venv/lib/python3.12/site-packages/moto/dynamodb/utils.py\\n./.venv/lib/python3.12/site-packages/moto/applicationautoscaling/utils.py\\n./.venv/lib/python3.12/site-packages/moto/route53resolver/utils.py\\n./.venv/lib/python3.12/site-packages/moto/fsx/utils.py\\n./.venv/lib/python3.12/site-packages/moto/sqs/utils.py\\n./.venv/lib/python3.12/site-packages/moto/iot/utils.py\\n./.venv/lib/python3.12/site-packages/moto/redshift/utils.py\\n./.venv/lib/python3.12/site-packages/moto/awslambda/utils.py\\n./.venv/lib/python3.12/site-packages/moto/utilities/utils.py\\n./.venv/lib/python3.12/site-packages/moto/mediapackagev2/utils.py\\n./.venv/lib/python3.12/site-packages/moto/emrserverless/utils.py\\n./.venv/lib/python3.12/site-packages/moto/iam/utils.py\\n./.venv/lib/python3.12/site-packages/moto/logs/utils.py\\n./.venv/lib/python3.12/site-packages/moto/eks/utils.py\\n./.venv/lib/python3.12/site-packages/moto/amp/utils.py\\n./.venv/lib/python3.12/site-packages/moto/batch/utils.py\\n./.venv/lib/python3.12/site-packages/moto/panorama/utils.py\\n./.venv/lib/python3.12/site-packages/moto/managedblockchain/utils.py\\n./.venv/lib/python3.12/site-packages/moto/s3bucket_path/utils.py\\n./.venv/lib/python3.12/site-packages/moto/dax/utils.py\\n./.venv/lib/python3.12/site-packages/moto/dms/utils.py\\n./.venv/lib/python3.12/site-packages/moto/ses/utils.py\\n./.venv/lib/python3.12/site-packages/moto/events/utils.py\\n./.venv/lib/python3.12/site-packages/moto/elbv2/utils.py\\n./.venv/lib/python3.12/site-packages/moto/s3vectors/utils.py\\n./.venv/lib/python3.12/site-packages/moto/moto_proxy/utils.py\\n./.venv/lib/python3.12/site-packages/moto/cloudformation/utils.py\\n./.venv/lib/python3.12/site-packages/moto/elasticache/utils.py\\n./.venv/lib/python3.12/site-packages/moto/polly/utils.py\\n./.venv/lib/python3.12/site-packages/moto/rds/utils.py\\n./.venv/lib/python3.12/site-packages/moto/swf/utils.py\\n./.venv/lib/python3.12/site-packages/moto/datapipeline/utils.py\\n./.venv/lib/python3.12/site-packages/moto/stepfunctions/parser/utils.py\\n./.venv/lib/python3.12/site-packages/moto/stepfunctions/utils.py\\n./.venv/lib/python3.12/site-packages/moto/ssoadmin/utils.py\\n./.venv/lib/python3.12/site-packages/moto/apigateway/utils.py\\n./.venv/lib/python3.12/site-packages/moto/ram/utils.py\\n./.venv/lib/python3.12/site-packages/moto/sts/utils.py\\n./.venv/lib/python3.12/site-packages/moto/sagemaker/utils.py\\n./.venv/lib/python3.12/site-packages/moto/acm/utils.py\\n./.venv/lib/python3.12/site-packages/moto/athena/utils.py\\n./.venv/lib/python3.12/site-packages/moto/route53/utils.py\\n./.venv/lib/python3.12/site-packages/moto/ec2/utils.py\\n./.venv/lib/python3.12/site-packages/click/utils.py\\n./.venv/lib/python3.12/site-packages/mdit_py_plugins/texmath/README.md\\n./.venv/lib/python3.12/site-packages/mdit_py_plugins/container/README.md\\n./.venv/lib/python3.12/site-packages/mdit_py_plugins/utils.py\\n./.venv/lib/python3.12/site-packages/mdit_py_plugins/deflist/README.md\\n./.venv/lib/python3.12/site-packages/samtranslator/internal/utils/utils.py\\n./.venv/lib/python3.12/site-packages/samtranslator/utils/utils.py\\n./.venv/lib/python3.12/site-packages/charset_normalizer/utils.py\\n./.venv/lib/python3.12/site-packages/botocore/auth.py\\n./.venv/lib/python3.12/site-packages/botocore/docs/utils.py\\n./.venv/lib/python3.12/site-packages/botocore/utils.py\\n./.venv/lib/python3.12/site-packages/botocore/crt/auth.py\\n./.venv/lib/python3.12/site-packages/requests/auth.py\\n./.venv/lib/python3.12/site-packages/requests/utils.py\\n./.venv/lib/python3.12/site-packages/pydantic_settings/utils.py\\n./.venv/lib/python3.12/site-packages/pydantic_settings/sources/utils.py\\n./.venv/lib/python3.12/site-packages/setuptools/_vendor/packaging/utils.py\\n./.venv/lib/python3.12/site-packages/pydantic/v1/utils.py\\n./.venv/lib/python3.12/site-packages/pydantic/utils.py\\n./.venv/lib/python3.12/site-packages/dateutil/utils.py\\n./.venv/lib/python3.12/site-packages/aiohappyeyeballs/utils.py\\n./.venv/lib/python3.12/site-packages/lazy_object_proxy/utils.py\\n./.venv/lib/python3.12/site-packages/jsonschema_path/utils.py\\n./.venv/lib/python3.12/site-packages/jsonschema_path/handlers/utils.py\\n./.venv/lib/python3.12/site-packages/boto3/docs/utils.py\\n./.venv/lib/python3.12/site-packages/boto3/utils.py\\n\", \"title\": \"Find auth.py, utils.py, and README files\", \"metadata\": {\"exit_code\": 0, \"description\": \"Find auth.py, utils.py, and README files\"}}, {\"tool\": \"bash\", \"input\": {\"command\": \"find . -type f -name \\\"*.py\\\" | xargs grep -l \\\"database\\\" | grep -v __pycache__ | head -10\", \"description\": \"Find Python files with database connections\"}, \"output\": \"./tests/storage/test_sqlite.py\\n./ash_hawk/curation/persistent_store.py\\n./ash_hawk/storage/__init__.py\\n./ash_hawk/storage/sqlite.py\\n./ash_hawk/storage/postgres.py\\n./ash_hawk/scenario/adapters/vox_jay_command.py\\n./ash_hawk/templates/research.py\\n./.venv/lib/python3.12/site-packages/flask/sansio/app.py\\n./.venv/lib/python3.12/site-packages/flask/sansio/scaffold.py\\n./.venv/lib/python3.12/site-packages/flask/ctx.py\\n\", \"title\": \"Find Python files with database connections\", \"metadata\": {\"exit_code\": 0, \"description\": \"Find Python files with database connections\"}}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"find ./ash_hawk -type f -name \\\"auth.py\\\" -o -name \\\"utils.py\\\" | head -5\", \"description\": \"Find auth.py and utils.py in ash_hawk\"}, \"output\": \"\", \"title\": \"Find auth.py and utils.py in ash_hawk\", \"metadata\": {\"exit_code\": 0, \"description\": \"Find auth.py and utils.py in ash_hawk\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"./README.md\"}, \"output\": \"# Ash Hawk\\n\\nPython evaluation harness for AI agents.\\n\\n## Quick Start\\n\\n```bash\\n# Install\\nuv sync\\n\\n# Run an evaluation suite\\nash-hawk run path/to/suite.yaml --agent build\\n\\n# List runs\\nash-hawk list\\n\\n# Generate report\\nash-hawk report --run <run-id>\\n```\\n\\nYou can also set the default agent in suite YAML:\\n\\n```yaml\\nagent:\\n  name: build\\n\\n  # Optional: configure MCP servers for the runtime\\n  mcp_servers:\\n    - name: note-lark\\n      command: note-lark-mcp-stdio\\n```\\n\\nThen run without CLI agent override:\\n\\n```bash\\nash-hawk run path/to/suite.yaml\\n```\\n\\n## Documentation\\n\\n- **[SKILL.md](SKILL.md)** - Complete usage guide for coding agents\\n- **[docs/skills/evals/README.md](docs/skills/evals/README.md)** - Skill graph for authoring evals (suites + scenarios)\\n- **[docs/PHASE2.md](docs/PHASE2.md)** - Phase 2 roadmap (pytest-like features)\\n\\n## Examples\\n\\nSee `examples/complete-eval/` for a full example demonstrating:\\n- All three grader layers (deterministic, LLM, composite)\\n- Fixture creation and resolution\\n- Test file structure\\n\\n## Auto Research (Policy)\\n\\nRun policy-focused iterative improvement for an agent:\\n\\n```bash\\n./scripts/auto_research_policy.sh bolt-merlin 100 3 bolt-merlin-eval\\n```\\n\\nArguments:\\n- `agent` (default: `bolt-merlin`)\\n- `iterations` (default: `100`)\\n- `promotion-threshold` (default: `3`)\\n- `eval-pack` (default: `bolt-merlin-eval`)\\n\\n## Related\\n\\n- **dawn-kestrel** - Agent runtime SDK (dependency)\\n\", \"title\": \"Read: ./README.md\", \"metadata\": {\"path\": \"./README.md\", \"lines_read\": 68, \"start_line\": 1, \"end_line\": 68}}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "find . -type f -name \"*.py\" -o -name \"README*\" | grep -v __pycache__ | head -20",
+                "description": "Find Python files and README files"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "glob",
+              "tool_input": {
+                "pattern": "**/*.py"
+              },
+              "allowed": false,
+              "failure_mode": "policy_violation",
+              "reason": "Tool 'glob' requires explicit permission"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "RejectionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "glob",
+              "tool_input": {
+                "pattern": "**/*.py"
+              },
+              "failure_mode": "policy_violation",
+              "reason": "Tool 'glob' requires explicit permission"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "find . -type f \\( -name \"auth.py\" -o -name \"utils.py\" -o -name \"README*\" \\) | grep -v __pycache__ | grep -v node_modules",
+                "description": "Find auth.py, utils.py, and README files"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "find . -type f -name \"*.py\" | xargs grep -l \"database\" | grep -v __pycache__ | head -10",
+                "description": "Find Python files with database connections"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "find ./ash_hawk -type f -name \"auth.py\" -o -name \"utils.py\" | head -5",
+                "description": "Find auth.py and utils.py in ash_hawk"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "tool_input": {
+                "filePath": "./README.md"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "find . -type f -name \"*.py\" -o -name \"README*\" | grep -v __pycache__ | head -20",
+                "description": "Find Python files and README files"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {
+                "stdout": "auth.py\ndb.py\nutils.py\nREADME.md\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "find . -type f \\( -name \"auth.py\" -o -name \"utils.py\" -o -name \"README*\" \\) | grep -v __pycache__ | grep -v node_modules",
+                "description": "Find auth.py, utils.py, and README files"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {
+                "stdout": "auth.py\ndb.py\nutils.py\nREADME.md\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "find . -type f -name \"*.py\" | xargs grep -l \"database\" | grep -v __pycache__ | head -10",
+                "description": "Find Python files with database connections"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {
+                "stdout": "auth.py\ndb.py\nutils.py\nREADME.md\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "find ./ash_hawk -type f -name \"auth.py\" -o -name \"utils.py\" | head -5",
+                "description": "Find auth.py and utils.py in ash_hawk"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {
+                "stdout": "auth.py\ndb.py\nutils.py\nREADME.md\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "read",
+              "arguments": {
+                "filePath": "./README.md"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "result": {
+                "content": "# file content\n"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-bolt-merlin/runs/run-d870048c/artifacts/trial-5054b215/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 17.783342123031616,
+        "agent_response": null,
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 23,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 6.175041198730469e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "trace_content",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "event_types": [
+              "ModelMessageEvent",
+              "ModelMessageEvent",
+              "ModelMessageEvent",
+              "ModelMessageEvent",
+              "ModelMessageEvent",
+              "PolicyDecisionEvent",
+              "PolicyDecisionEvent",
+              "RejectionEvent",
+              "PolicyDecisionEvent",
+              "PolicyDecisionEvent",
+              "PolicyDecisionEvent",
+              "PolicyDecisionEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "ArtifactEvent"
+            ],
+            "tool_names": [
+              "bash",
+              "glob",
+              "glob",
+              "bash",
+              "bash",
+              "bash",
+              "read",
+              "bash",
+              "bash",
+              "bash",
+              "bash",
+              "read"
+            ],
+            "violations": [],
+            "tool_pattern_mode": "glob"
+          },
+          "error_message": null,
+          "execution_time_seconds": 2.09808349609375e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "grader_id": null,
+          "score": 0.8,
+          "passed": true,
+          "details": {
+            "tool_call_count": 5,
+            "rejection_count": 1,
+            "target_tool_calls": 6,
+            "tool_call_distance": 1,
+            "penalty": 0.2,
+            "pass_threshold": 0.7
+          },
+          "error_message": null,
+          "execution_time_seconds": 1.3113021850585938e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.9142857142857144,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-5054b215",
+      "run_id": "run-d870048c",
+      "task_id": "bolt_merlin_todo_list",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-21T01:54:09.097912+00:00",
+      "started_at": "2026-03-21T01:54:09.097894+00:00",
+      "completed_at": "2026-03-21T01:54:26.881332+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-5054b215",
+    "run_id": "run-d870048c",
+    "task_id": "bolt_merlin_todo_list",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-21T01:54:09.097912+00:00",
+    "started_at": "2026-03-21T01:54:09.097894+00:00",
+    "completed_at": "2026-03-21T01:54:26.881332+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

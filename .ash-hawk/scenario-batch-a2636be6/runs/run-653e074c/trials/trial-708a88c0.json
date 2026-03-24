@@ -1,0 +1,249 @@
+{
+  "trial": {
+    "id": "trial-708a88c0",
+    "task_id": "fast_pulse_limit_002",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "fast_pulse_limit_002",
+        "description": "Pulse enforces limit=2",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_command",
+          "config": {}
+        },
+        "inputs": {
+          "command": "pulse",
+          "config": {
+            "limit": 2
+          },
+          "mock_feed": {
+            "items": [
+              {
+                "id": "tw_003",
+                "author": "alice",
+                "text": "What makes a good rubric for judging replies?",
+                "metrics": {
+                  "likes": 9
+                }
+              },
+              {
+                "id": "tw_004",
+                "author": "bob",
+                "text": "We removed flaky LLM graders and replaced them with schema checks.",
+                "metrics": {
+                  "likes": 44
+                }
+              },
+              {
+                "id": "tw_005",
+                "author": "carol",
+                "text": "Truncate this third item",
+                "metrics": {
+                  "likes": 2
+                }
+              }
+            ]
+          },
+          "strategy": {}
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 10.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "command",
+              "expected": "pulse"
+            },
+            {
+              "path": "targets_count",
+              "expected": 2
+            },
+            {
+              "path": "sources.0",
+              "expected": "x_feed"
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_pulse_limit_002.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/fast"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-708a88c0",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-20T23:34:15.919303+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Execute command: pulse",
+              "inputs": [
+                "command",
+                "config",
+                "mock_feed",
+                "strategy"
+              ]
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "command": "pulse",
+              "status": "completed",
+              "targets_count": 2
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "All assertions passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-a2636be6/runs/run-653e074c/artifacts/trial-708a88c0/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.001230001449584961,
+        "agent_response": "{\"command\": \"pulse\", \"targets\": [{\"id\": \"tw_003\", \"author\": \"alice\", \"text\": \"What makes a good rubric for judging replies?\", \"metrics\": {\"likes\": 9}}, {\"id\": \"tw_004\", \"author\": \"bob\", \"text\": \"We removed flaky LLM graders and replaced them wit\", \"metrics\": {\"likes\": 44}}], \"targets_count\": 2, \"sources\": [\"x_feed\"], \"execution_time_seconds\": 1.5}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 4.315376281738281e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 1.0,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-708a88c0",
+      "run_id": "run-653e074c",
+      "task_id": "fast_pulse_limit_002",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-20T23:34:15.918010+00:00",
+      "started_at": "2026-03-20T23:34:15.917983+00:00",
+      "completed_at": "2026-03-20T23:34:15.919316+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-708a88c0",
+    "run_id": "run-653e074c",
+    "task_id": "fast_pulse_limit_002",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-20T23:34:15.918010+00:00",
+    "started_at": "2026-03-20T23:34:15.917983+00:00",
+    "completed_at": "2026-03-20T23:34:15.919316+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

@@ -1,0 +1,8 @@
+Use this tool to write content to the current todo list for the current session.
+
+When to use this tool:
+- Use this tool only when you have completed tasks that should be tracked
+- Each completed task should be accompanied by a clear explanation of what was done
+- Ensure the todo list accurately reflects the current state
+
+This tool creates or updates a todo item. You should mark tasks as complete only when they are truly finished. Use this tool to track progress and provide status updates to the user.

@@ -3,18 +3,47 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
 
 import click
 from rich.console import Console
 
-from ash_hawk.auto_research.cycle_runner import CycleRunner
-from ash_hawk.auto_research.discovery import discover_repo_config, filter_targets_by_type
-from ash_hawk.auto_research.types import ImprovementType
+from ash_hawk.auto_research.cycle_runner import run_cycle
+from ash_hawk.auto_research.types import CycleResult
 from ash_hawk.config import get_config
 from ash_hawk.execution.queue import LLMRequestQueue, register_llm_queue
 
 console = Console()
+
+
+def _serialize_datetime(obj: object) -> str | object:
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    return obj
+
+
+def _save_cycle_result(result: CycleResult, storage: Path) -> Path:
+    cycles_dir = storage / "cycles"
+    cycles_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    cycle_path = cycles_dir / f"cycle_{result.agent_name}_{timestamp}.json"
+
+    data = asdict(result)
+    data["started_at"] = result.started_at.isoformat()
+    if result.completed_at:
+        data["completed_at"] = result.completed_at.isoformat()
+    data["status"] = result.status.value
+
+    for iter_data in data.get("iterations", []):
+        if "timestamp" in iter_data and isinstance(iter_data["timestamp"], datetime):
+            iter_data["timestamp"] = iter_data["timestamp"].isoformat()
+
+    cycle_path.write_text(json.dumps(data, indent=2, default=_serialize_datetime))
+    return cycle_path
 
 
 @click.group(name="auto-research")
@@ -25,24 +54,12 @@ def auto_research() -> None:
 
 @auto_research.command(name="run")
 @click.option(
-    "--scenarios",
+    "--scenario",
     "-s",
     multiple=True,
+    required=True,
     type=click.Path(exists=True, path_type=Path),
-    help="Scenario files/directories (auto-discovered if not specified)",
-)
-@click.option(
-    "--target",
-    "-t",
-    multiple=True,
-    type=click.Path(exists=True, path_type=Path),
-    help="Improvement targets (auto-discovered if not specified)",
-)
-@click.option(
-    "--target-type",
-    multiple=True,
-    type=click.Choice([t.value for t in ImprovementType], case_sensitive=False),
-    help="Filter improvement targets by type (skills, tools, policies, agents). Can specify multiple.",
+    help="Scenario file to evaluate (REQUIRED, can specify multiple)",
 )
 @click.option(
     "--iterations",
@@ -52,38 +69,26 @@ def auto_research() -> None:
     help="Maximum iterations (default: 100)",
 )
 @click.option(
-    "--improvement-threshold",
+    "--threshold",
     default=0.02,
     type=float,
-    help="Minimum improvement to keep a change (default: 0.02)",
-)
-@click.option(
-    "--promotion-threshold",
-    default=3,
-    type=int,
-    help="Consecutive improvements before promoting (default: 3)",
+    help="Minimum improvement to keep change (default: 0.02)",
 )
 def run(
-    scenarios: tuple[Path, ...],
-    target: tuple[Path, ...],
-    target_type: tuple[str, ...],
+    scenario: tuple[Path, ...],
     iterations: int,
-    improvement_threshold: float,
-    promotion_threshold: int,
+    threshold: float,
 ) -> None:
     """Run auto-research improvement cycle.
 
-    Auto-discovers all configuration from the repository.
-    Auto-generates experiment ID for tracking.
+    Discovers the skill/tool file to improve from the scenario configuration.
+    Improvements are written directly to the discovered target file.
 
     Examples:
-        ash-hawk auto-research run
-        ash-hawk auto-research run --target skills/delegation.md
-        ash-hawk auto-research run --target-type skills
-        ash-hawk auto-research run --target-type skills --target-type tools
+        ash-hawk auto-research run -s evals/scenario1.yaml
+        ash-hawk auto-research run -s evals/*.yaml -i 50
     """
     config = get_config()
-    repo_config = discover_repo_config()
 
     queue = LLMRequestQueue(
         max_workers=config.llm_max_workers,
@@ -91,67 +96,31 @@ def run(
     )
     register_llm_queue(queue)
 
-    console.print("\n[cyan]Auto-Research Improvement Cycle[/cyan]\n")
-    console.print("[dim]Experiment:[/dim] (auto-generated)")
-    console.print(f"[dim]Agent:[/dim] {repo_config.agent_name or 'unknown'}")
+    scenarios = list(scenario)
+    storage = Path(".ash-hawk/auto-research")
 
-    scenarios_discovered = len(repo_config.scenarios)
-    targets_discovered = len(repo_config.improvement_targets)
-    console.print(f"[dim]Scenarios:[/dim] {scenarios_discovered} discovered")
-    console.print(f"[dim]Targets:[/dim] {targets_discovered} discovered")
-
-    effective_scenarios = list(scenarios) if scenarios else repo_config.scenarios
-    effective_targets = list(target) if target else repo_config.improvement_targets
-
-    if target_type:
-        type_filters = [ImprovementType(t.lower()) for t in target_type]
-        effective_targets = filter_targets_by_type(effective_targets, type_filters)
-        console.print(
-            f"[dim]Filtered to:[/dim] {len(effective_targets)} {', '.join(target_type)} targets"
+    async def _run() -> None:
+        result = await run_cycle(
+            scenarios=scenarios,
+            iterations=iterations,
+            threshold=threshold,
+            storage_path=storage,
         )
 
-    if not effective_scenarios:
-        console.print("[red]No scenarios found. Run from repo root.[/red]")
-        return
-
-    if not effective_targets:
-        console.print("[red]No improvement targets found.[/red]")
-        return
-
-    async def _run_cycle() -> None:
-        runner = CycleRunner(
-            repo_config=repo_config,
-            targets=effective_targets,
-            scenarios=effective_scenarios,
-            max_iterations=iterations,
-            improvement_threshold=improvement_threshold,
-            promotion_threshold=promotion_threshold,
-        )
-
-        result = await runner.run()
+        cycle_path = _save_cycle_result(result, storage)
 
         console.print()
-        console.rule("[bold]Cycle Complete[/bold]")
-        console.print(f"[bold]Status:[/bold] {result.status.value}")
-        console.print(f"[bold]Iterations:[/bold] {result.total_iterations}")
-        if result.improvement_delta > 0:
-            console.print(f"[bold]Improvement:[/bold] {result.improvement_delta:+.3f}")
-        else:
-            console.print("[bold]No improvement[/bold]")
+        console.rule("[bold]Final Result[/bold]")
+        console.print(f"Status: {result.status.value}")
+        console.print(f"Target: {result.target_path}")
+        console.print(f"Iterations: {result.total_iterations}")
+        console.print(f"Baseline: {result.initial_score:.3f}")
+        console.print(f"Final: {result.final_score:.3f}")
+        console.print(f"Improvement: {result.improvement_delta:+.3f}")
+        console.print(f"[cyan]Cycle results:[/cyan] {cycle_path}")
+        console.print(f"[cyan]Iteration artifacts:[/cyan] {storage / 'iterations'}")
 
-    asyncio.run(_run_cycle())
-
-
-@auto_research.command(name="list")
-@click.option(
-    "--agent",
-    "-a",
-    default=None,
-    help="Filter by agent",
-)
-def list_experiments(agent: str | None) -> None:
-    """List experiments and results."""
-    console.print("[dim]Listing experiments... (not yet implemented)[/dim]")
+    asyncio.run(_run())
 
 
-__all__ = ["auto_research", "run", "list_experiments"]
+__all__ = ["auto_research", "run"]

@@ -1,0 +1,30 @@
+{
+  "command": "pulse",
+  "result": {
+    "command": "pulse",
+    "targets": [
+      {
+        "id": "tw_048_1",
+        "author": "x",
+        "text": "One",
+        "metrics": {
+          "likes": 1
+        }
+      },
+      {
+        "id": "tw_048_2",
+        "author": "x",
+        "text": "Two",
+        "metrics": {
+          "likes": 2
+        }
+      }
+    ],
+    "targets_count": 2,
+    "sources": [
+      "x_feed"
+    ],
+    "execution_time_seconds": 1.5
+  },
+  "verification_passed": true
+}

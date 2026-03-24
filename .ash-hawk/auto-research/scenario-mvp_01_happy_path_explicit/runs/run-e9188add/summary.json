@@ -1,0 +1,887 @@
+{
+  "envelope": {
+    "run_id": "run-e9188add",
+    "suite_id": "scenario-mvp_01_happy_path_explicit",
+    "suite_hash": "1c0bc25fe832517f",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-23T20:39:59.250690+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-mvp_01_happy_path_explicit",
+    "run_id": "run-e9188add",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.25,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 6.787482261657715,
+    "latency_p50_seconds": 6.787203788757324,
+    "latency_p95_seconds": 6.787203788757324,
+    "latency_p99_seconds": 6.787203788757324,
+    "pass_at_k": {},
+    "created_at": "2026-03-23T20:40:06.059054+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-dc9e1194",
+      "task_id": "mvp_01_happy_path_explicit",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "mvp_01_happy_path_explicit",
+          "description": "Baseline full-flow scenario with explicit files and strict truth checks.",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "bolt_merlin",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection in db.py\n3. [DOCS] Update README.md with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using todo_create\n- Prioritize bugs before features, features before docs/cleanup\n- Update todo items as work is completed\n- End with: TODO SUMMARY: X/4 complete\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "edit",
+              "write",
+              "todo_create",
+              "todo_update"
+            ],
+            "mocks": {
+              "read": {
+                "input": {},
+                "result": {
+                  "content": ""
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "todo_create": {
+                "input": {},
+                "result": {
+                  "todo_id": "todo-001"
+                }
+              },
+              "todo_update": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 30,
+            "max_tool_calls": 40,
+            "max_tokens": 6000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "todo_state",
+              "config": {
+                "exact_task_count": 4,
+                "allow_extra_tasks": false,
+                "required_tasks": [
+                  {
+                    "id": "bug_auth",
+                    "text_contains": [
+                      "Fix authentication bug",
+                      "auth.py"
+                    ],
+                    "priority": "high",
+                    "category": "BUG"
+                  },
+                  {
+                    "id": "feature_logging",
+                    "text_contains": [
+                      "Add logging",
+                      "db.py"
+                    ],
+                    "priority": "medium",
+                    "category": "FEATURE"
+                  },
+                  {
+                    "id": "docs_readme",
+                    "text_contains": [
+                      "Update README",
+                      "README.md"
+                    ],
+                    "priority": "low",
+                    "category": "DOCS"
+                  },
+                  {
+                    "id": "cleanup_utils",
+                    "text_contains": [
+                      "Remove unused imports",
+                      "utils.py"
+                    ],
+                    "priority": "low",
+                    "category": "CLEANUP"
+                  }
+                ],
+                "required_priority_order": [
+                  "bug_auth",
+                  "feature_logging",
+                  "docs_readme",
+                  "cleanup_utils"
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "repo_diff",
+              "config": {
+                "required_file_changes": [
+                  {
+                    "path": "auth.py"
+                  },
+                  {
+                    "path": "db.py"
+                  },
+                  {
+                    "path": "README.md"
+                  },
+                  {
+                    "path": "utils.py"
+                  }
+                ],
+                "forbidden_file_changes": [
+                  "auth_old.py",
+                  "README_old.md"
+                ],
+                "semantic_assertions": [
+                  {
+                    "path": "auth.py",
+                    "must_not_contain_after": [
+                      "return False"
+                    ]
+                  },
+                  {
+                    "path": "db.py",
+                    "must_contain_after": [
+                      "log",
+                      "connect"
+                    ]
+                  },
+                  {
+                    "path": "README.md",
+                    "must_contain_after": [
+                      "/v2/login",
+                      "/v2/users"
+                    ]
+                  },
+                  {
+                    "path": "utils.py",
+                    "must_not_contain_after": [
+                      "import os",
+                      "import sys"
+                    ]
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "completion_honesty",
+              "config": {
+                "require_file_change_before_completion": true,
+                "task_to_file_map": {
+                  "bug_auth": "auth.py",
+                  "feature_logging": "db.py",
+                  "docs_readme": "README.md",
+                  "cleanup_utils": "utils.py"
+                },
+                "allowed_status_flow": [
+                  [
+                    "pending",
+                    "in_progress"
+                  ],
+                  [
+                    "in_progress",
+                    "completed"
+                  ]
+                ],
+                "forbid_direct_pending_to_completed": false,
+                "require_completion_for_changed_tasks": false
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "summary_truthfulness",
+              "config": {
+                "summary_regex": "TODO SUMMARY:\\s*(\\d)/4 complete",
+                "compare_against": "actual_completed_tasks",
+                "strict_match": true
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_01_happy_path_explicit.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-dc9e1194",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-23T20:40:06.041932+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection in db.py\n3. [DOCS] Update README.md with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using todo_create\n- Prioritize bugs before features, features before docs/cleanup\n- Update todo items as work is completed\n- End with: TODO SUMMARY: X/4 complete\n"
+            },
+            {
+              "role": "assistant",
+              "content": "I'll help you complete these 4 tasks. Let me start by reading the relevant files to understand what needs to be done."
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"filePath\": \"auth.py\"}, \"output\": \"import hashlib\\nfrom typing import Optional\\n\\n# Simulated user database\\nUSERS = {\\n    \\\"admin\\\": \\\"5f4dcc3b5aa765d61d8327deb882cf99\\\",  # \\\"password\\\"\\n    \\\"test\\\": \\\"e10adc3949ba59abbe56e057f20f883e\\\"   # \\\"123456\\\"\\n}\\n\\ndef hash_password(password: str) -> str:\\n    \\\"\\\"\\\"Hash a password using MD5.\\\"\\\"\\\"\\n    return hashlib.md5(password.encode()).hexdigest()\\n\\ndef verify_password(plain_password: str, hashed_password: str) -> bool:\\n    \\\"\\\"\\\"Verify a password against its hash.\\\"\\\"\\\"\\n    # BUG: Not comparing the hashed password correctly\\n    return hash_password(plain_password) == hash_password(hashed_password)\\n\\ndef login(username: str, password: str) -> Optional[str]:\\n    \\\"\\\"\\\"\\n    Authenticate a user.\\n    Returns username on success, None on failure.\\n    \\\"\\\"\\\"\\n    if username not in USERS:\\n        return None\\n    \\n    stored_hash = USERS[username]\\n    \\n    if verify_password(password, stored_hash):\\n        return username\\n    \\n    return None\\n\", \"title\": \"Read: auth.py\", \"metadata\": {\"path\": \"auth.py\", \"lines_read\": 32, \"start_line\": 1, \"end_line\": 32}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"db.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"db.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"README.md\"}, \"output\": \"# Ash Hawk\\n\\nPython evaluation harness for AI agents.\\n\\n## Quick Start\\n\\n```bash\\n# Install\\nuv sync\\n\\n# Run an evaluation suite\\nash-hawk run path/to/suite.yaml --agent build\\n\\n# List runs\\nash-hawk list\\n\\n# Generate report\\nash-hawk report --run <run-id>\\n```\\n\\nYou can also set the default agent in suite YAML:\\n\\n```yaml\\nagent:\\n  name: build\\n\\n  # Optional: configure MCP servers for the runtime\\n  mcp_servers:\\n    - name: note-lark\\n      command: note-lark-mcp-stdio\\n```\\n\\nThen run without CLI agent override:\\n\\n```bash\\nash-hawk run path/to/suite.yaml\\n```\\n\\n## Documentation\\n\\n- **[SKILL.md](SKILL.md)** - Complete usage guide for coding agents\\n- **[docs/skills/evals/README.md](docs/skills/evals/README.md)** - Skill graph for authoring evals (suites + scenarios)\\n- **[docs/PHASE2.md](docs/PHASE2.md)** - Phase 2 roadmap (pytest-like features)\\n\\n## Examples\\n\\nSee `examples/complete-eval/` for a full example demonstrating:\\n- All three grader layers (deterministic, LLM, composite)\\n- Fixture creation and resolution\\n- Test file structure\\n\\n## Auto Research (Policy)\\n\\nRun policy-focused iterative improvement for an agent:\\n\\n```bash\\n./scripts/auto_research_policy.sh bolt-merlin 100 3 bolt-merlin-eval\\n```\\n\\nArguments:\\n- `agent` (default: `bolt-merlin`)\\n- `iterations` (default: `100`)\\n- `promotion-threshold` (default: `3`)\\n- `eval-pack` (default: `bolt-merlin-eval`)\\n\\n## Related\\n\\n- **dawn-kestrel** - Agent runtime SDK (dependency)\\n\", \"title\": \"Read: README.md\", \"metadata\": {\"path\": \"README.md\", \"lines_read\": 68, \"start_line\": 1, \"end_line\": 68}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"utils.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"utils.py\", \"error\": \"File not found\"}}]"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"filePath\": \"db.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"db.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"utils.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"utils.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"src/db.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"src/db.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"src/utils.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"src/utils.py\", \"error\": \"File not found\"}}]"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"filePath\": \"setup.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"setup.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"pyproject.toml\"}, \"output\": \"[build-system]\\nrequires = [\\\"uv_build >=0.9.26,<0.10.0\\\"]\\nbuild-backend = \\\"uv_build\\\"\\n\\n[project]\\nname = \\\"ash-hawk\\\"\\nversion = \\\"0.1.0\\\"\\ndescription = \\\"Ash Hawk - Python evaluation harness for AI agents\\\"\\nreadme = \\\"README.md\\\"\\nrequires-python = \\\">=3.11\\\"\\nlicense = {text = \\\"MIT\\\"}\\nauthors = [\\n  {name = \\\"Ash Hawk Contributors\\\", email = \\\"ashhawk@example.com\\\"}\\n]\\nkeywords = [\\\"ai\\\", \\\"evaluation\\\", \\\"agents\\\", \\\"testing\\\", \\\"cli\\\"]\\nclassifiers = [\\n  \\\"Development Status :: 3 - Alpha\\\",\\n  \\\"Environment :: Console\\\",\\n  \\\"Intended Audience :: Developers\\\",\\n  \\\"License :: OSI Approved :: MIT License\\\",\\n  \\\"Programming Language :: Python :: 3\\\",\\n  \\\"Programming Language :: Python :: 3.11\\\",\\n  \\\"Programming Language :: Python :: 3.12\\\",\\n  \\\"Topic :: Software Development :: Testing\\\",\\n]\\n\\ndependencies = [\\n  \\\"aiofiles>=24.0\\\",\\n  \\\"aiohttp>=3.10\\\",\\n  \\\"aiobotocore>=2.15\\\",\\n  \\\"aiosqlite>=0.20\\\",\\n  \\\"asyncpg>=0.29\\\",\\n  \\\"click>=8.0\\\",\\n  \\\"dawn-kestrel>=0.1.0\\\",\\n  \\\"jinja2>=3.0\\\",\\n  \\\"pydantic>=2.12\\\",\\n  \\\"pydantic-settings>=2.0\\\",\\n  \\\"pyyaml>=6.0\\\",\\n  \\\"rich>=13.0\\\",\\n]\\n\\n[project.optional-dependencies]\\ndev = [\\n  \\\"mypy>=1.8.0\\\",\\n  \\\"pytest-asyncio>=0.23\\\",\\n  \\\"pytest-cov>=4.0\\\",\\n  \\\"pytest>=7.0\\\",\\n  \\\"ruff>=0.1.0\\\",\\n]\\n\\n[project.scripts]\\nash-hawk = \\\"ash_hawk.cli.main:cli\\\"\\n\\n[dependency-groups]\\ndev = [\\n  \\\"pytest\\\",\\n  \\\"pytest-cov\\\",\\n  \\\"pytest-asyncio\\\",\\n  \\\"ruff\\\",\\n  \\\"mypy\\\",\\n  \\\"moto[server]>=5.1.21\\\",\\n]\\n\\n[tool.uv.sources]\\ndawn-kestrel = { path = \\\"../dawn-kestrel\\\", editable = true }\\n\\n[tool.uv.build-backend]\\nmodule-root = \\\"\\\"\\n\\n[tool.ruff]\\nline-length = 100\\ntarget-version = \\\"py311\\\"\\n\\n[tool.ruff.lint]\\nselect = [\\\"E\\\", \\\"F\\\", \\\"I\\\", \\\"W\\\", \\\"UP\\\"]\\nignore = [\\\"F401\\\", \\\"F841\\\", \\\"E501\\\", \\\"E402\\\", \\\"W291\\\", \\\"W293\\\", \\\"UP035\\\", \\\"UP007\\\", \\\"UP006\\\", \\\"UP045\\\", \\\"E712\\\", \\\"E721\\\", \\\"F811\\\"]\\n\\n[tool.ruff.lint.per-file-ignores]\\n\\\"tests/**\\\" = [\\\"F821\\\"]\\n\\n[tool.mypy]\\npython_version = \\\"3.11\\\"\\nstrict = true\\nignore_missing_imports = true\\ndisable_error_code = [\\\"import-untyped\\\"]\\n\\n[[tool.mypy.overrides]]\\nmodule = [\\n  \\\"ash_hawk.graders.code\\\",\\n  \\\"ash_hawk.graders.composite\\\",\\n  \\\"ash_hawk.graders.llm_judge\\\",\\n  \\\"ash_hawk.graders.structured\\\",\\n]\\nignore_errors = true\\n\\n[tool.pytest.ini_options]\\ntestpaths = [\\\"tests\\\"]\\naddopts = \\\"--cov=ash_hawk --cov-report=term-missing\\\"\\nasyncio_mode = \\\"auto\\\"\\n\", \"title\": \"Read: pyproject.toml\", \"metadata\": {\"path\": \"pyproject.toml\", \"lines_read\": 99, \"start_line\": 1, \"end_line\": 99}}]"
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "auth.py"
+              },
+              "output": "import hashlib\nfrom typing import Optional\n\n# Simulated user database\nUSERS = {\n    \"admin\": \"5f4dcc3b5aa765d61d8327deb882cf99\",  # \"password\"\n    \"test\": \"e10adc3949ba59abbe56e057f20f883e\"   # \"123456\"\n}\n\ndef hash_password(password: str) -> str:\n    \"\"\"Hash a password using MD5.\"\"\"\n    return hashlib.md5(password.encode()).hexdigest()\n\ndef verify_password(plain_password: str, hashed_password: str) -> bool:\n    \"\"\"Verify a password against its hash.\"\"\"\n    # BUG: Not comparing the hashed password correctly\n    return hash_password(plain_password) == hash_password(hashed_password)\n\ndef login(username: str, password: str) -> Optional[str]:\n    \"\"\"\n    Authenticate a user.\n    Returns username on success, None on failure.\n    \"\"\"\n    if username not in USERS:\n        return None\n    \n    stored_hash = USERS[username]\n    \n    if verify_password(password, stored_hash):\n        return username\n    \n    return None\n"
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "db.py"
+              },
+              "output": ""
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "README.md"
+              },
+              "output": "# Ash Hawk\n\nPython evaluation harness for AI agents.\n\n## Quick Start\n\n```bash\n# Install\nuv sync\n\n# Run an evaluation suite\nash-hawk run path/to/suite.yaml --agent build\n\n# List runs\nash-hawk list\n\n# Generate report\nash-hawk report --run <run-id>\n```\n\nYou can also set the default agent in suite YAML:\n\n```yaml\nagent:\n  name: build\n\n  # Optional: configure MCP servers for the runtime\n  mcp_servers:\n    - name: note-lark\n      command: note-lark-mcp-stdio\n```\n\nThen run without CLI agent override:\n\n```bash\nash-hawk run path/to/suite.yaml\n```\n\n## Documentation\n\n- **[SKILL.md](SKILL.md)** - Complete usage guide for coding agents\n- **[docs/skills/evals/README.md](docs/skills/evals/README.md)** - Skill graph for authoring evals (suites + scenarios)\n- **[docs/PHASE2.md](docs/PHASE2.md)** - Phase 2 roadmap (pytest-like features)\n\n## Examples\n\nSee `examples/complete-eval/` for a full example demonstrating:\n- All three grader layers (deterministic, LLM, composite)\n- Fixture creation and resolution\n- Test file structure\n\n## Auto Research (Policy)\n\nRun policy-focused iterative improvement for an agent:\n\n```bash\n./scripts/auto_research_policy.sh bolt-merlin 100 3 bolt-merlin-eval\n```\n\nArguments:\n- `agent` (default: `bolt-merlin`)\n- `iterations` (default: `100`)\n- `promotion-threshold` (default: `3`)\n- `eval-pack` (default: `bolt-merlin-eval`)\n\n## Related\n\n- **dawn-kestrel** - Agent runtime SDK (dependency)\n"
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "utils.py"
+              },
+              "output": ""
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "db.py"
+              },
+              "output": ""
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "utils.py"
+              },
+              "output": ""
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "src/db.py"
+              },
+              "output": ""
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "src/utils.py"
+              },
+              "output": ""
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "setup.py"
+              },
+              "output": ""
+            },
+            {
+              "tool": "read",
+              "input": {
+                "filePath": "pyproject.toml"
+              },
+              "output": "[build-system]\nrequires = [\"uv_build >=0.9.26,<0.10.0\"]\nbuild-backend = \"uv_build\"\n\n[project]\nname = \"ash-hawk\"\nversion = \"0.1.0\"\ndescription = \"Ash Hawk - Python evaluation harness for AI agents\"\nreadme = \"README.md\"\nrequires-python = \">=3.11\"\nlicense = {text = \"MIT\"}\nauthors = [\n  {name = \"Ash Hawk Contributors\", email = \"ashhawk@example.com\"}\n]\nkeywords = [\"ai\", \"evaluation\", \"agents\", \"testing\", \"cli\"]\nclassifiers = [\n  \"Development Status :: 3 - Alpha\",\n  \"Environment :: Console\",\n  \"Intended Audience :: Developers\",\n  \"License :: OSI Approved :: MIT License\",\n  \"Programming Language :: Python :: 3\",\n  \"Programming Language :: Python :: 3.11\",\n  \"Programming Language :: Python :: 3.12\",\n  \"Topic :: Software Development :: Testing\",\n]\n\ndependencies = [\n  \"aiofiles>=24.0\",\n  \"aiohttp>=3.10\",\n  \"aiobotocore>=2.15\",\n  \"aiosqlite>=0.20\",\n  \"asyncpg>=0.29\",\n  \"click>=8.0\",\n  \"dawn-kestrel>=0.1.0\",\n  \"jinja2>=3.0\",\n  \"pydantic>=2.12\",\n  \"pydantic-settings>=2.0\",\n  \"pyyaml>=6.0\",\n  \"rich>=13.0\",\n]\n\n[project.optional-dependencies]\ndev = [\n  \"mypy>=1.8.0\",\n  \"pytest-asyncio>=0.23\",\n  \"pytest-cov>=4.0\",\n  \"pytest>=7.0\",\n  \"ruff>=0.1.0\",\n]\n\n[project.scripts]\nash-hawk = \"ash_hawk.cli.main:cli\"\n\n[dependency-groups]\ndev = [\n  \"pytest\",\n  \"pytest-cov\",\n  \"pytest-asyncio\",\n  \"ruff\",\n  \"mypy\",\n  \"moto[server]>=5.1.21\",\n]\n\n[tool.uv.sources]\ndawn-kestrel = { path = \"../dawn-kestrel\", editable = true }\n\n[tool.uv.build-backend]\nmodule-root = \"\"\n\n[tool.ruff]\nline-length = 100\ntarget-version = \"py311\"\n\n[tool.ruff.lint]\nselect = [\"E\", \"F\", \"I\", \"W\", \"UP\"]\nignore = [\"F401\", \"F841\", \"E501\", \"E402\", \"W291\", \"W293\", \"UP035\", \"UP007\", \"UP006\", \"UP045\", \"E712\", \"E721\", \"F811\"]\n\n[tool.ruff.lint.per-file-ignores]\n\"tests/**\" = [\"F821\"]\n\n[tool.mypy]\npython_version = \"3.11\"\nstrict = true\nignore_missing_imports = true\ndisable_error_code = [\"import-untyped\"]\n\n[[tool.mypy.overrides]]\nmodule = [\n  \"ash_hawk.graders.code\",\n  \"ash_hawk.graders.composite\",\n  \"ash_hawk.graders.llm_judge\",\n  \"ash_hawk.graders.structured\",\n]\nignore_errors = true\n\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\naddopts = \"--cov=ash_hawk --cov-report=term-missing\"\nasyncio_mode = \"auto\"\n"
+            }
+          ],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection in db.py\n3. [DOCS] Update README.md with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using todo_create\n- Prioritize bugs before features, features before docs/cleanup\n- Update todo items as work is completed\n- End with: TODO SUMMARY: X/4 complete\n"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "I'll help you complete these 4 tasks. Let me start by reading the relevant files to understand what needs to be done."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"filePath\": \"auth.py\"}, \"output\": \"import hashlib\\nfrom typing import Optional\\n\\n# Simulated user database\\nUSERS = {\\n    \\\"admin\\\": \\\"5f4dcc3b5aa765d61d8327deb882cf99\\\",  # \\\"password\\\"\\n    \\\"test\\\": \\\"e10adc3949ba59abbe56e057f20f883e\\\"   # \\\"123456\\\"\\n}\\n\\ndef hash_password(password: str) -> str:\\n    \\\"\\\"\\\"Hash a password using MD5.\\\"\\\"\\\"\\n    return hashlib.md5(password.encode()).hexdigest()\\n\\ndef verify_password(plain_password: str, hashed_password: str) -> bool:\\n    \\\"\\\"\\\"Verify a password against its hash.\\\"\\\"\\\"\\n    # BUG: Not comparing the hashed password correctly\\n    return hash_password(plain_password) == hash_password(hashed_password)\\n\\ndef login(username: str, password: str) -> Optional[str]:\\n    \\\"\\\"\\\"\\n    Authenticate a user.\\n    Returns username on success, None on failure.\\n    \\\"\\\"\\\"\\n    if username not in USERS:\\n        return None\\n    \\n    stored_hash = USERS[username]\\n    \\n    if verify_password(password, stored_hash):\\n        return username\\n    \\n    return None\\n\", \"title\": \"Read: auth.py\", \"metadata\": {\"path\": \"auth.py\", \"lines_read\": 32, \"start_line\": 1, \"end_line\": 32}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"db.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"db.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"README.md\"}, \"output\": \"# Ash Hawk\\n\\nPython evaluation harness for AI agents.\\n\\n## Quick Start\\n\\n```bash\\n# Install\\nuv sync\\n\\n# Run an evaluation suite\\nash-hawk run path/to/suite.yaml --agent build\\n\\n# List runs\\nash-hawk list\\n\\n# Generate report\\nash-hawk report --run <run-id>\\n```\\n\\nYou can also set the default agent in suite YAML:\\n\\n```yaml\\nagent:\\n  name: build\\n\\n  # Optional: configure MCP servers for the runtime\\n  mcp_servers:\\n    - name: note-lark\\n      command: note-lark-mcp-stdio\\n```\\n\\nThen run without CLI agent override:\\n\\n```bash\\nash-hawk run path/to/suite.yaml\\n```\\n\\n## Documentation\\n\\n- **[SKILL.md](SKILL.md)** - Complete usage guide for coding agents\\n- **[docs/skills/evals/README.md](docs/skills/evals/README.md)** - Skill graph for authoring evals (suites + scenarios)\\n- **[docs/PHASE2.md](docs/PHASE2.md)** - Phase 2 roadmap (pytest-like features)\\n\\n## Examples\\n\\nSee `examples/complete-eval/` for a full example demonstrating:\\n- All three grader layers (deterministic, LLM, composite)\\n- Fixture creation and resolution\\n- Test file structure\\n\\n## Auto Research (Policy)\\n\\nRun policy-focused iterative improvement for an agent:\\n\\n```bash\\n./scripts/auto_research_policy.sh bolt-merlin 100 3 bolt-merlin-eval\\n```\\n\\nArguments:\\n- `agent` (default: `bolt-merlin`)\\n- `iterations` (default: `100`)\\n- `promotion-threshold` (default: `3`)\\n- `eval-pack` (default: `bolt-merlin-eval`)\\n\\n## Related\\n\\n- **dawn-kestrel** - Agent runtime SDK (dependency)\\n\", \"title\": \"Read: README.md\", \"metadata\": {\"path\": \"README.md\", \"lines_read\": 68, \"start_line\": 1, \"end_line\": 68}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"utils.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"utils.py\", \"error\": \"File not found\"}}]"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"filePath\": \"db.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"db.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"utils.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"utils.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"src/db.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"src/db.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"src/utils.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"src/utils.py\", \"error\": \"File not found\"}}]"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"filePath\": \"setup.py\"}, \"output\": \"\", \"title\": \"File not found\", \"metadata\": {\"path\": \"setup.py\", \"error\": \"File not found\"}}, {\"tool\": \"read\", \"input\": {\"filePath\": \"pyproject.toml\"}, \"output\": \"[build-system]\\nrequires = [\\\"uv_build >=0.9.26,<0.10.0\\\"]\\nbuild-backend = \\\"uv_build\\\"\\n\\n[project]\\nname = \\\"ash-hawk\\\"\\nversion = \\\"0.1.0\\\"\\ndescription = \\\"Ash Hawk - Python evaluation harness for AI agents\\\"\\nreadme = \\\"README.md\\\"\\nrequires-python = \\\">=3.11\\\"\\nlicense = {text = \\\"MIT\\\"}\\nauthors = [\\n  {name = \\\"Ash Hawk Contributors\\\", email = \\\"ashhawk@example.com\\\"}\\n]\\nkeywords = [\\\"ai\\\", \\\"evaluation\\\", \\\"agents\\\", \\\"testing\\\", \\\"cli\\\"]\\nclassifiers = [\\n  \\\"Development Status :: 3 - Alpha\\\",\\n  \\\"Environment :: Console\\\",\\n  \\\"Intended Audience :: Developers\\\",\\n  \\\"License :: OSI Approved :: MIT License\\\",\\n  \\\"Programming Language :: Python :: 3\\\",\\n  \\\"Programming Language :: Python :: 3.11\\\",\\n  \\\"Programming Language :: Python :: 3.12\\\",\\n  \\\"Topic :: Software Development :: Testing\\\",\\n]\\n\\ndependencies = [\\n  \\\"aiofiles>=24.0\\\",\\n  \\\"aiohttp>=3.10\\\",\\n  \\\"aiobotocore>=2.15\\\",\\n  \\\"aiosqlite>=0.20\\\",\\n  \\\"asyncpg>=0.29\\\",\\n  \\\"click>=8.0\\\",\\n  \\\"dawn-kestrel>=0.1.0\\\",\\n  \\\"jinja2>=3.0\\\",\\n  \\\"pydantic>=2.12\\\",\\n  \\\"pydantic-settings>=2.0\\\",\\n  \\\"pyyaml>=6.0\\\",\\n  \\\"rich>=13.0\\\",\\n]\\n\\n[project.optional-dependencies]\\ndev = [\\n  \\\"mypy>=1.8.0\\\",\\n  \\\"pytest-asyncio>=0.23\\\",\\n  \\\"pytest-cov>=4.0\\\",\\n  \\\"pytest>=7.0\\\",\\n  \\\"ruff>=0.1.0\\\",\\n]\\n\\n[project.scripts]\\nash-hawk = \\\"ash_hawk.cli.main:cli\\\"\\n\\n[dependency-groups]\\ndev = [\\n  \\\"pytest\\\",\\n  \\\"pytest-cov\\\",\\n  \\\"pytest-asyncio\\\",\\n  \\\"ruff\\\",\\n  \\\"mypy\\\",\\n  \\\"moto[server]>=5.1.21\\\",\\n]\\n\\n[tool.uv.sources]\\ndawn-kestrel = { path = \\\"../dawn-kestrel\\\", editable = true }\\n\\n[tool.uv.build-backend]\\nmodule-root = \\\"\\\"\\n\\n[tool.ruff]\\nline-length = 100\\ntarget-version = \\\"py311\\\"\\n\\n[tool.ruff.lint]\\nselect = [\\\"E\\\", \\\"F\\\", \\\"I\\\", \\\"W\\\", \\\"UP\\\"]\\nignore = [\\\"F401\\\", \\\"F841\\\", \\\"E501\\\", \\\"E402\\\", \\\"W291\\\", \\\"W293\\\", \\\"UP035\\\", \\\"UP007\\\", \\\"UP006\\\", \\\"UP045\\\", \\\"E712\\\", \\\"E721\\\", \\\"F811\\\"]\\n\\n[tool.ruff.lint.per-file-ignores]\\n\\\"tests/**\\\" = [\\\"F821\\\"]\\n\\n[tool.mypy]\\npython_version = \\\"3.11\\\"\\nstrict = true\\nignore_missing_imports = true\\ndisable_error_code = [\\\"import-untyped\\\"]\\n\\n[[tool.mypy.overrides]]\\nmodule = [\\n  \\\"ash_hawk.graders.code\\\",\\n  \\\"ash_hawk.graders.composite\\\",\\n  \\\"ash_hawk.graders.llm_judge\\\",\\n  \\\"ash_hawk.graders.structured\\\",\\n]\\nignore_errors = true\\n\\n[tool.pytest.ini_options]\\ntestpaths = [\\\"tests\\\"]\\naddopts = \\\"--cov=ash_hawk --cov-report=term-missing\\\"\\nasyncio_mode = \\\"auto\\\"\\n\", \"title\": \"Read: pyproject.toml\", \"metadata\": {\"path\": \"pyproject.toml\", \"lines_read\": 99, \"start_line\": 1, \"end_line\": 99}}]"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "auth.py"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "db.py"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "README.md"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "utils.py"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "db.py"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "utils.py"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "src/db.py"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "src/utils.py"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "setup.py"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "filePath": "pyproject.toml"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "auth.py"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "db.py"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "README.md"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "utils.py"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "db.py"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "utils.py"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "src/db.py"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "src/utils.py"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "setup.py"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "read",
+                "arguments": {
+                  "filePath": "pyproject.toml"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "result": {
+                  "content": ""
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": ".ash-hawk/auto-research/scenario-mvp_01_happy_path_explicit/runs/run-e9188add/artifacts/trial-4eccfae3/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 6.771292209625244,
+          "agent_response": null,
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "todo_state",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "todo_count": 0,
+              "todos": [],
+              "errors": [
+                "Expected 4 tasks, got 0",
+                "Missing required tasks: bug_auth, feature_logging, docs_readme, cleanup_utils"
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 2.8848648071289062e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "repo_diff",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "files_changed": [],
+              "changes": {},
+              "errors": [
+                "Required files not changed: auth.py, db.py, README.md, utils.py",
+                "Required file not changed: auth.py",
+                "Required file not changed: db.py",
+                "Required file not changed: README.md",
+                "Required file not changed: utils.py"
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.3113021850585938e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "completion_honesty",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "timeline": [],
+              "errors": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 6.9141387939453125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "summary_truthfulness",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "claimed_count": null,
+              "actual_completed": 0,
+              "errors": [
+                "Could not extract summary claim using pattern: TODO SUMMARY:\\s*(\\d)/4 complete"
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 4.76837158203125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.25,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    }
+  ]
+}

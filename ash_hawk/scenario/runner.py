@@ -58,6 +58,7 @@ class ScenarioRunner:
         parallelism: int | None = None,
         tooling_mode: Literal["mock", "record", "replay"] = "mock",
         adapter_registry: ScenarioAdapterRegistry | None = None,
+        show_failure_patterns: bool = True,
     ) -> None:
         from ash_hawk.storage import FileStorage
 
@@ -69,6 +70,7 @@ class ScenarioRunner:
         self._storage = FileStorage(base_path=resolved_storage)
         self._tooling_mode = tooling_mode
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
+        self._show_failure_patterns = show_failure_patterns
         self._config = EvalConfig(
             parallelism=parallelism or config.parallelism,
             default_timeout_seconds=config.default_timeout_seconds,
@@ -214,7 +216,7 @@ class ScenarioRunner:
             )
 
         # Surface actionable insights
-        if failure_patterns:
+        if failure_patterns and self._show_failure_patterns:
             console.print()
             console.rule("[yellow]Systematic Failures Detected[/yellow]")
             for pattern_info in failure_patterns:
@@ -367,12 +369,14 @@ async def run_scenarios_async(
     parallelism: int | None = None,
     tooling_mode: Literal["mock", "record", "replay"] = "mock",
     adapter_registry: ScenarioAdapterRegistry | None = None,
+    show_failure_patterns: bool = True,
 ) -> EvalRunSummary:
     runner = ScenarioRunner(
         storage_path=storage_path,
         parallelism=parallelism,
         tooling_mode=tooling_mode,
         adapter_registry=adapter_registry,
+        show_failure_patterns=show_failure_patterns,
     )
     return await runner.run_paths(paths)
 

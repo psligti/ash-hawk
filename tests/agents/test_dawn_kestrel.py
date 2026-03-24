@@ -2,6 +2,7 @@
 
 import time
 from decimal import Decimal
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -108,6 +109,69 @@ class TestDawnKestrelAgentRunnerProtocol:
         import asyncio
 
         assert asyncio.iscoroutinefunction(runner.run)
+
+
+class TestDawnKestrelAgentRunnerClientConfig:
+    def test_get_client_uses_env_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
+        monkeypatch.setenv("ASH_HAWK_LLM_TIMEOUT_SECONDS", "420")
+
+        mock_llm_client_type = MagicMock(return_value=object())
+        mock_settings = MagicMock()
+        mock_settings.get_api_key_for_provider.return_value = None
+        mock_settings_module = MagicMock()
+        mock_settings_module.get_settings.return_value = mock_settings
+        mock_llm_module = MagicMock()
+        mock_llm_module.LLMClient = mock_llm_client_type
+
+        def _import_module(name: str) -> Any:
+            if name == "dawn_kestrel.core.settings":
+                return mock_settings_module
+            if name == "dawn_kestrel.llm.client":
+                return mock_llm_module
+            raise AssertionError(f"Unexpected module import: {name}")
+
+        with patch(
+            "ash_hawk.agents.dawn_kestrel.importlib.import_module", side_effect=_import_module
+        ):
+            runner._get_client()
+
+        called_kwargs = mock_llm_client_type.call_args.kwargs
+        assert called_kwargs["timeout_seconds"] == 420.0
+
+    def test_get_client_prefers_runner_timeout_over_env(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        runner = DawnKestrelAgentRunner(
+            provider="anthropic",
+            model="claude-3-5-sonnet",
+            timeout_seconds=600,
+        )
+        monkeypatch.setenv("ASH_HAWK_LLM_TIMEOUT_SECONDS", "420")
+
+        mock_llm_client_type = MagicMock(return_value=object())
+        mock_settings = MagicMock()
+        mock_settings.get_api_key_for_provider.return_value = None
+        mock_settings_module = MagicMock()
+        mock_settings_module.get_settings.return_value = mock_settings
+        mock_llm_module = MagicMock()
+        mock_llm_module.LLMClient = mock_llm_client_type
+
+        def _import_module(name: str) -> Any:
+            if name == "dawn_kestrel.core.settings":
+                return mock_settings_module
+            if name == "dawn_kestrel.llm.client":
+                return mock_llm_module
+            raise AssertionError(f"Unexpected module import: {name}")
+
+        with patch(
+            "ash_hawk.agents.dawn_kestrel.importlib.import_module", side_effect=_import_module
+        ):
+            runner._get_client()
+
+        called_kwargs = mock_llm_client_type.call_args.kwargs
+        assert called_kwargs["timeout_seconds"] == 600.0
 
 
 class TestDawnKestrelAgentRunnerExtraction:

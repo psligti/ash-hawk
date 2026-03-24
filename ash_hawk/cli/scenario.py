@@ -50,7 +50,7 @@ def _collect_scenario_paths(path: str) -> list[Path]:
 
 def _maybe_override_sut(
     scenario_paths: list[Path],
-    sut: str,
+    sut: str | None,
     policy_mode: str | None = None,
     model: str | None = None,
     policy: str | None = None,
@@ -82,7 +82,7 @@ def _maybe_override_sut(
 
 def _override_sut_in_place(
     scenario_paths: list[Path],
-    sut: str,
+    sut: str | None,
     policy_mode: str | None = None,
     model: str | None = None,
     policy: str | None = None,
@@ -99,28 +99,27 @@ def _override_sut_in_place(
             model=model,
             policy=policy,
         )
-        if updated == scenario:
+        if updated != scenario:
+            if temp_dir is None:
+                temp_dir = tempfile.TemporaryDirectory[str]()
+            filename = f"{scenario_path.stem}.sut-{uuid.uuid4().hex[:8]}.scenario.yaml"
+            _write_scenario(dest, updated)
+            adjusted_paths.append(str(dest))
+        else:
             adjusted_paths.append(str(scenario_path))
-            continue
-
-        temp_name = f".{scenario_path.stem}.sut-{uuid.uuid4().hex[:8]}.scenario.yaml"
-        temp_path = scenario_path.parent / temp_name
-        _write_scenario(temp_path, updated)
-        adjusted_paths.append(str(temp_path))
-        temp_paths.append(temp_path)
 
     return adjusted_paths, temp_paths
 
 
 def _apply_sut_overrides(
     scenario: ScenarioV1,
-    sut: str,
+    sut: str | None,
     policy_mode: str | None = None,
     model: str | None = None,
     policy: str | None = None,
 ) -> ScenarioV1:
     updates: dict[str, object] = {}
-    if scenario.sut.adapter != sut:
+    if sut is not None and scenario.sut.adapter != sut:
         updates["adapter"] = sut
 
     config_updates: dict[str, object] = {}
@@ -301,9 +300,8 @@ def validate(path: str) -> None:
 @click.argument("path", type=click.Path(exists=True))
 @click.option(
     "--sut",
-    default="mock_adapter",
-    show_default=True,
-    help="Scenario adapter name to run.",
+    default=None,
+    help="Override scenario adapter (default: use adapter specified in scenario YAML).",
 )
 @click.option(
     "--policy-mode",

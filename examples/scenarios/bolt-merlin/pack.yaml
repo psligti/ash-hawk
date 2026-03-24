@@ -4,22 +4,29 @@ description: "Scenario pack for bolt-merlin core capabilities"
 target_agent: "bolt-merlin"
 
 scenarios:
-  - scenario: "./goal_management.scenario.yaml"
+  - scenario: "./delegation.scenario.yaml"
     weight: 0.35
+    focus:
+      - "delegation"
+      - "task_tool"
+      - "prompt_structure"
+
+  - scenario: "./goal_management.scenario.yaml"
+    weight: 0.30
     focus:
       - "goal_tracking"
       - "progress_monitoring"
       - "task_completion"
 
-  - scenario: "./policy_management.scenario.yaml"
-    weight: 0.35
+  - scenario: "./policy_compliance.scenario.yaml"
+    weight: 0.20
     focus:
-      - "policy_efficiency"
-      - "policy_application"
-      - "compliance"
+      - "policy_compliance"
+      - "explicit_verification"
+      - "type_hints"
 
-  - scenario: "./todo_list.scenario.yaml"
-    weight: 0.30
+  - scenario: "./todo_management.scenario.yaml"
+    weight: 0.15
     focus:
       - "todo_management"
       - "prioritization"

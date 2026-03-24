@@ -704,6 +704,8 @@ class DawnKestrelAgentRunner:
     ) -> tuple[EvalTranscript, EvalOutcome]:
         start_time = time.time()
         mcp_clients: list[_McpStdioClient] = []
+        conversation: list[dict[str, Any]] = []
+        all_tool_calls: list[dict[str, Any]] = []
 
         try:
             client = self._get_client()
@@ -753,8 +755,7 @@ class DawnKestrelAgentRunner:
                 max_tokens=config.get("max_tokens", self._kwargs.get("max_tokens")),
             )
 
-            conversation: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
-            all_tool_calls: list[dict[str, Any]] = []
+            conversation.append({"role": "user", "content": prompt})
             trial_id = str(config.get("trial_id") or f"trial-{int(time.time() * 1000)}")
             max_iterations = int(config.get("max_tool_iterations", 3) or 3)
             response = None
@@ -856,12 +857,33 @@ class DawnKestrelAgentRunner:
         except ImportError as e:
             duration = time.time() - start_time
             transcript = EvalTranscript(
+                messages=conversation,
+                tool_calls=all_tool_calls,
                 error_trace=f"dawn-kestrel not installed: {e}",
                 duration_seconds=duration,
             )
             outcome = EvalOutcome.failure(
                 FailureMode.AGENT_ERROR,
                 f"dawn-kestrel not installed: {e}",
+            )
+            return transcript, outcome
+
+        except Exception as e:
+            duration = time.time() - start_time
+            error_trace = str(e)
+            if hasattr(e, "__traceback__") and e.__traceback__:
+                import traceback
+
+                error_trace = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            transcript = EvalTranscript(
+                messages=conversation,
+                tool_calls=all_tool_calls,
+                error_trace=error_trace,
+                duration_seconds=duration,
+            )
+            outcome = EvalOutcome.failure(
+                FailureMode.AGENT_ERROR,
+                str(e),
             )
             return transcript, outcome
 

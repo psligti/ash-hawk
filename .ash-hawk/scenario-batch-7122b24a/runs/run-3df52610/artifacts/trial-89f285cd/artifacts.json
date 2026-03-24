@@ -1,0 +1,30 @@
+{
+  "command": "harness_tick",
+  "result": {
+    "command": "harness_tick",
+    "notes_processed": 2,
+    "status_changes": [
+      {
+        "action_id": 101,
+        "status": "approved"
+      },
+      {
+        "action_id": 102,
+        "status": "needs_revision"
+      }
+    ],
+    "new_tweets_fetched": 0,
+    "new_actions_created": 0,
+    "new_actions_count": 0,
+    "unique_draft_count": 0,
+    "generic_opener_count": 0,
+    "new_actions": [],
+    "llm_available": true,
+    "used_fallback": false,
+    "available_capacity": 60,
+    "skipped_due_to_pending_limit": false,
+    "total_pending": 0,
+    "index_updated": true
+  },
+  "verification_passed": true
+}

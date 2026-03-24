@@ -1,0 +1,286 @@
+{
+  "trial": {
+    "id": "trial-06bf146a",
+    "task_id": "fast_brief_small_037",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "fast_brief_small_037",
+        "description": "Brief works when output is markdown",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "vox_jay_command",
+          "config": {}
+        },
+        "inputs": {
+          "command": "brief",
+          "config": {
+            "posts": 1,
+            "replies": 1,
+            "trends_limit": 3,
+            "output": "markdown"
+          },
+          "mock_sources": {
+            "trends": [
+              {
+                "topic": "Markdown"
+              },
+              {
+                "topic": "Rich"
+              },
+              {
+                "topic": "Typer"
+              }
+            ],
+            "feed_items": [
+              {
+                "handle": "md",
+                "text": "Do you export to Obsidian?",
+                "tier": 2,
+                "is_question": true
+              }
+            ]
+          },
+          "strategy": {}
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 1,
+          "max_tool_calls": null,
+          "max_tokens": null,
+          "max_time_seconds": 15.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": [
+            {
+              "path": "command",
+              "expected": "brief"
+            },
+            {
+              "path": "digest.posts_count",
+              "expected": 1
+            }
+          ]
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "llm_judge",
+            "config": {
+              "rubric": "quality",
+              "pass_threshold": 0.7
+            },
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_brief_small_037.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/fast"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-06bf146a",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-20T23:46:36.195987+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Execute command: brief",
+              "inputs": [
+                "command",
+                "config",
+                "mock_sources",
+                "strategy"
+              ]
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "command": "brief",
+              "status": "completed",
+              "trends_count": 3,
+              "posts_count": 1,
+              "replies_count": 1
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "All assertions passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-305bc0a0/runs/run-b888bbd6/artifacts/trial-06bf146a/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0006427764892578125,
+        "agent_response": "{\"command\": \"brief\", \"digest\": {\"trends\": [{\"topic\": \"Markdown\"}, {\"topic\": \"Rich\"}, {\"topic\": \"Typer\"}], \"trends_count\": 3, \"posts\": [{\"topic\": \"Markdown\", \"draft\": \"Draft for Markdown\"}], \"posts_count\": 1, \"replies\": [{\"handle\": \"md\", \"text\": \"Do you export to Obsidian?\", \"tier\": 2, \"is_question\": true}], \"replies_count\": 1, \"format\": \"markdown\"}, \"metrics\": {\"execution_time_seconds\": 2.5, \"sources_queried\": 2}}",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 4,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 3.790855407714844e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "grader_id": null,
+          "score": 0.454,
+          "passed": false,
+          "details": {
+            "reasoning": "I'll evaluate the AI agent's response based on the provided criteria.\n\n1. Clarity (weight: 0.3) - Score: 2/5\nThe response is structured as clear JSON with well-defined fields, but it fails to meet the key requirement specified in the scenario - output should be in markdown format. The generic draft content (\"Draft for Markdown\") provides no meaningful information.\n\n2. Structure (weight: 0.3) - Score: 3/5\nThe JSON is well-organized with logical grouping of related elements (trends, posts, replies). However, the structure doesn't match the expected output format of markdown.\n\n3. Usefulness (weight: 0.25) - Score: 2/5\nThe response captures the correct data (trends count=3, posts count=1 as required) but provides minimal value. The draft content is generic and uninformative. The most significant issue is the format mismatch - the expected markdown format would be more useful for human readers.\n\n4. Professionalism (weight: 0.15) - Score: 4/5\nThe tone is appropriate and the JSON formatting is clean with no grammatical errors.\n\nTotal weighted score: 0.52 (below the 0.7 threshold)\n\nThe primary issue is the significant format mismatch. Despite the scenario specifically stating \"Brief works when output is markdown\", the response was delivered in JSON format instead. This undermines both clarity and usefulness for the intended user experience.",
+            "breakdown": null,
+            "issues": [],
+            "strengths": [],
+            "audit": {
+              "prompt_name": "quality",
+              "prompt_version": "1.0.0",
+              "prompt_hash": "200c64e63f2e5da7",
+              "judge_model": "glm-4.7",
+              "judge_provider": "zai-coding-plan",
+              "judge_params": {
+                "temperature": 0.0,
+                "max_tokens": 1024,
+                "n_judges": 1,
+                "consensus_mode": "mean"
+              },
+              "raw_output": "\n{\n  \"answer\": \"I'll evaluate the AI agent's response based on the provided criteria.\\n\\n1. Clarity (weight: 0.3) - Score: 2/5\\nThe response is structured as clear JSON with well-defined fields, but it fails to meet the key requirement specified in the scenario - output should be in markdown format. The generic draft content (\\\"Draft for Markdown\\\") provides no meaningful information.\\n\\n2. Structure (weight: 0.3) - Score: 3/5\\nThe JSON is well-organized with logical grouping of related elements (trends, posts, replies). However, the structure doesn't match the expected output format of markdown.\\n\\n3. Usefulness (weight: 0.25) - Score: 2/5\\nThe response captures the correct data (trends count=3, posts count=1 as required) but provides minimal value. The draft content is generic and uninformative. The most significant issue is the format mismatch - the expected markdown format would be more useful for human readers.\\n\\n4. Professionalism (weight: 0.15) - Score: 4/5\\nThe tone is appropriate and the JSON formatting is clean with no grammatical errors.\\n\\nTotal weighted score: 0.52 (below the 0.7 threshold)\\n\\nThe primary issue is the significant format mismatch. Despite the scenario specifically stating \\\"Brief works when output is markdown\\\", the response was delivered in JSON format instead. This undermines both clarity and usefulness for the intended user experience.\"\n}\n"
+            },
+            "n_judges": 1,
+            "consensus_mode": "mean"
+          },
+          "error_message": null,
+          "execution_time_seconds": 74.61873483657837,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.727,
+      "aggregate_passed": true
+    },
+    "envelope": {
+      "trial_id": "trial-06bf146a",
+      "run_id": "run-b888bbd6",
+      "task_id": "fast_brief_small_037",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-20T23:46:36.195280+00:00",
+      "started_at": "2026-03-20T23:46:36.195253+00:00",
+      "completed_at": "2026-03-20T23:46:36.196010+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-06bf146a",
+    "run_id": "run-b888bbd6",
+    "task_id": "fast_brief_small_037",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-20T23:46:36.195280+00:00",
+    "started_at": "2026-03-20T23:46:36.195253+00:00",
+    "completed_at": "2026-03-20T23:46:36.196010+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

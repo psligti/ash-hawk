@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from ash_hawk.agents.dawn_kestrel import DawnKestrelAgentRunner
 from ash_hawk.policy import PolicyEnforcer
-from ash_hawk.types import EvalOutcome, EvalTask, EvalTranscript, FailureMode
+from ash_hawk.types import EvalOutcome, EvalTask, EvalTranscript
+
+_IRON_ROOK_USER_DIR = Path.home() / ".iron-rook"
+_IRON_ROOK_PACKAGE_DIR = Path(__file__).resolve().parents[3] / "iron-rook"
 
 
 class IronRookAgentRunner(DawnKestrelAgentRunner):
+    """Policy enforcement agent for rule validation and checking."""
+
     policy_agent_default_model = "claude-3-5-sonnet-20241022"
     policy_agent_default_tools = ["validate", "check_policy", "enforce_rules"]
 

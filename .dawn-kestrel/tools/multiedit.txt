@@ -1,0 +1,16 @@
+Launch a new agent to handle complex, multistep tasks autonomously.
+
+Available agent types and tools they have access to:
+{agents}
+
+When using the Task tool, you must specify a subagent_type from the available options. The agent will be launched with the provided description and prompt, and will work on the task until completion or until it's determined that the task cannot be completed.
+
+When to use the Task tool:
+- When you are instructed to execute custom slash commands. Use the Task tool with the slash command invocation as the entire prompt.
+- When you need to break down a complex task into smaller, manageable steps and delegate them to a specialized agent.
+- When the current agent is not well-suited for a particular type of work (e.g., research, planning, implementation).
+- When you need to parallelize work that can be executed independently.
+
+The agent will maintain its own context and state, and will report back its results and progress. You should monitor the agent's progress through its updates and continue to guide it as needed.
+
+Use this tool judiciously. The Task tool is expensive and should only be used when the benefits of delegation outweigh the overhead.

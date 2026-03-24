@@ -1,0 +1,30 @@
+{
+  "command": "pulse",
+  "result": {
+    "command": "pulse",
+    "targets": [
+      {
+        "id": "tw_015",
+        "author": "x",
+        "text": "Fast evals are basically unit tests for behavior.",
+        "metrics": {
+          "likes": 20
+        }
+      },
+      {
+        "id": "tw_016",
+        "author": "x2",
+        "text": "What is your principle for avoiding engagement bai",
+        "metrics": {
+          "likes": 4
+        }
+      }
+    ],
+    "targets_count": 2,
+    "sources": [
+      "x_feed"
+    ],
+    "execution_time_seconds": 1.5
+  },
+  "verification_passed": true
+}

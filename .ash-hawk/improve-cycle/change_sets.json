@@ -1,0 +1,128 @@
+[
+  {
+    "change_set_id": "changeset-0fdde834",
+    "lesson_ids": [
+      "lesson-3d058023"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/tool_interface_layer.md",
+        "surface": "tool interface layer",
+        "change_kind": "update",
+        "description": "Applied tool_wrapper_update from lesson-3d058023"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/tool_interface_layer.md for lesson mapping"
+    ],
+    "temp_only": true
+  },
+  {
+    "change_set_id": "changeset-6a850ded",
+    "lesson_ids": [
+      "lesson-8e7a96c3"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/tool_interface_layer.md",
+        "surface": "tool interface layer",
+        "change_kind": "update",
+        "description": "Applied tool_wrapper_update from lesson-8e7a96c3"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/tool_interface_layer.md for lesson mapping"
+    ],
+    "temp_only": true
+  },
+  {
+    "change_set_id": "changeset-804068fc",
+    "lesson_ids": [
+      "lesson-42b6b1fd"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/tool_interface_layer.md",
+        "surface": "tool interface layer",
+        "change_kind": "update",
+        "description": "Applied tool_wrapper_update from lesson-42b6b1fd"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/tool_interface_layer.md for lesson mapping"
+    ],
+    "temp_only": true
+  },
+  {
+    "change_set_id": "changeset-9037a675",
+    "lesson_ids": [
+      "lesson-7d4f260b"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/tool_interface_layer.md",
+        "surface": "tool interface layer",
+        "change_kind": "update",
+        "description": "Applied tool_wrapper_update from lesson-7d4f260b"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/tool_interface_layer.md for lesson mapping"
+    ],
+    "temp_only": true
+  },
+  {
+    "change_set_id": "changeset-5fb0be87",
+    "lesson_ids": [
+      "lesson-92adc4f0"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/tool_interface_layer.md",
+        "surface": "tool interface layer",
+        "change_kind": "update",
+        "description": "Applied tool_wrapper_update from lesson-92adc4f0"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/tool_interface_layer.md for lesson mapping"
+    ],
+    "temp_only": true
+  },
+  {
+    "change_set_id": "changeset-c74d0c3c",
+    "lesson_ids": [
+      "lesson-9c09868b"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/tool_interface_layer.md",
+        "surface": "tool interface layer",
+        "change_kind": "update",
+        "description": "Applied tool_wrapper_update from lesson-9c09868b"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/tool_interface_layer.md for lesson mapping"
+    ],
+    "temp_only": true
+  },
+  {
+    "change_set_id": "changeset-ca819f79",
+    "lesson_ids": [
+      "lesson-cc146d94"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/tool_interface_layer.md",
+        "surface": "tool interface layer",
+        "change_kind": "update",
+        "description": "Applied tool_wrapper_update from lesson-cc146d94"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/tool_interface_layer.md for lesson mapping"
+    ],
+    "temp_only": true
+  }
+]

@@ -1,9 +1,0 @@
-{
-  "quality": "strong",
-  "note": "Tool Wrapper Update with Backward Compatibility and Clear Migration Path",
-  "input": {
-    "primary_category": "tool_interface_poor",
-    "risk_areas": ["tooling"],
-    "confidence": 0.95
-  }
-}

@@ -1,0 +1,803 @@
+{
+  "id": "scenario-bolt-merlin",
+  "name": "scenario-bolt-merlin",
+  "description": "",
+  "tasks": [
+    {
+      "id": "bolt_merlin_delegation",
+      "description": "Tests bolt-merlin's ability to delegate to specialized subagents",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_delegation",
+          "description": "Tests bolt-merlin's ability to delegate to specialized subagents",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "bolt_merlin",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "You need to understand how authentication works in this codebase.\n\n1. Find all authentication-related code (middleware, handlers, token logic)\n2. Find external documentation on JWT best practices\n\nDo NOT search manually. Delegate to the appropriate subagents.\nYour delegation prompts MUST include:\n- TASK: The specific goal\n- EXPECTED OUTCOME: What you expect back\n- MUST DO: Requirements\n- MUST NOT DO: Constraints\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "task"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "src/auth/middleware.py\nsrc/auth/handlers.py\nsrc/auth/tokens.py",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# auth code\n"
+                }
+              },
+              "task": {
+                "input": {},
+                "result": {
+                  "status": "success",
+                  "output": "Found authentication files:\n- src/auth/middleware.py - JWT validation middleware\n- src/auth/handlers.py - Login/logout endpoints\n- src/auth/tokens.py - Token generation and refresh\n"
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 30,
+            "max_tool_calls": 20,
+            "max_tokens": 8000,
+            "max_time_seconds": 180.0
+          },
+          "expectations": {
+            "must_events": [
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ToolCallEvent"
+                ],
+                "required_tool_calls": [
+                  {
+                    "tool": "task",
+                    "min_calls": 1
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "ordering",
+              "config": {
+                "ordering_rules": [
+                  {
+                    "before": "ToolCallEvent",
+                    "after": "ToolResultEvent"
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 4,
+                "tool_call_penalty": 0.1,
+                "rejection_penalty": 0.15,
+                "max_penalty": 0.5,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/delegation.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_content",
+          "config": {
+            "required_event_types": [
+              "ToolCallEvent"
+            ],
+            "required_tool_calls": [
+              {
+                "tool": "task",
+                "min_calls": 1
+              }
+            ]
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "ordering",
+          "config": {
+            "ordering_rules": [
+              {
+                "before": "ToolCallEvent",
+                "after": "ToolResultEvent"
+              }
+            ]
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "config": {
+            "target_tool_calls": 4,
+            "tool_call_penalty": 0.1,
+            "rejection_penalty": 0.15,
+            "max_penalty": 0.5,
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "bolt_merlin"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/delegation.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 180.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "bolt_merlin_goal_management",
+      "description": "Tests bolt-merlin's ability to track and complete multi-step goals",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_goal_management",
+          "description": "Tests bolt-merlin's ability to track and complete multi-step goals",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "bolt_merlin",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "Implement a feature that requires exactly 4 components:\n1. Create src/api/notifications.py with NotificationService class\n2. Create migrations/add_notifications_table.py \n3. Write tests/test_notifications.py with at least 2 test cases\n4. Update docs/api.md with the new endpoint documentation\n\nRequirements:\n- You MUST explicitly track progress (e.g., \"Component 1/4 complete\")\n- You must verify each component exists before marking complete\n- The goal is ONLY complete when all 4 components are done\n- Report final status as \"GOAL COMPLETE: 4/4 components\" or show which are missing\n\nDO NOT just start working without tracking. Show me:\n- Component 1/4: [verifying/creating]\n- Component 2/4: [verifying/creating]\n- etc.\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "write",
+              "edit"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "ok",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# project file\n"
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 60,
+            "max_tool_calls": 120,
+            "max_tokens": 10000,
+            "max_time_seconds": 300.0
+          },
+          "expectations": {
+            "must_events": [
+              "ModelMessageEvent",
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "ModelMessageEvent",
+                "after": "ToolCallEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ModelMessageEvent",
+                  "ToolCallEvent"
+                ],
+                "forbidden_event_types": []
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 60,
+                "max_tool_calls": 120
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 12,
+                "tool_call_penalty": 0.05,
+                "rejection_penalty": 0.1,
+                "max_penalty": 0.5,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/goal_management.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_content",
+          "config": {
+            "required_event_types": [
+              "ModelMessageEvent",
+              "ToolCallEvent"
+            ],
+            "forbidden_event_types": []
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "budget",
+          "config": {
+            "max_steps": 60,
+            "max_tool_calls": 120
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "config": {
+            "target_tool_calls": 12,
+            "tool_call_penalty": 0.05,
+            "rejection_penalty": 0.1,
+            "max_penalty": 0.5,
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "bolt_merlin"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/goal_management.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 300.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "bolt_merlin_policy_compliance",
+      "description": "Tests bolt-merlin's ability to apply policies during code changes",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_policy_compliance",
+          "description": "Tests bolt-merlin's ability to apply policies during code changes",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "bolt_merlin",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "Apply these policies while making changes:\n\nPOLICY 1: ALWAYS run `ruff check .` before committing\nPOLICY 2: NEVER modify files in node_modules/, .venv/, or __pycache__/\nPOLICY 3: Use relative imports (from .module import func) not absolute\nPOLICY 4: All new functions must have type hints\n\nCreate a new module at src/utils/helpers.py with:\n- Function format_user_name(first: str, last: str) -> str\n\nRequirements:\n- State which policies apply before writing the file\n- Show policies were followed after writing\n- End with \"POLICY CHECK: All policies verified\"\n\nExample output:\n\"Applying POLICY 1 and POLICY 4 to this task...\"\n\"POLICY CHECK: All policies verified\"\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "write",
+              "edit"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "All checks passed!",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# existing code\nfrom .auth import get_user\n"
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 40,
+            "max_tool_calls": 60,
+            "max_tokens": 6000,
+            "max_time_seconds": 180.0
+          },
+          "expectations": {
+            "must_events": [
+              "ToolCallEvent",
+              "ToolResultEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "first": "ToolCallEvent",
+                "then": "ToolResultEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ToolCallEvent",
+                  "ToolResultEvent"
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 40,
+                "max_tool_calls": 60
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 6,
+                "tool_call_penalty": 0.1,
+                "rejection_penalty": 0.15,
+                "max_penalty": 0.5,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/policy_compliance.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_content",
+          "config": {
+            "required_event_types": [
+              "ToolCallEvent",
+              "ToolResultEvent"
+            ]
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "budget",
+          "config": {
+            "max_steps": 40,
+            "max_tool_calls": 60
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "config": {
+            "target_tool_calls": 6,
+            "tool_call_penalty": 0.1,
+            "rejection_penalty": 0.15,
+            "max_penalty": 0.5,
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "bolt_merlin"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/policy_compliance.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 180.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "bolt_merlin_todo_management",
+      "description": "Tests bolt-merlin's ability to create, prioritize, and track tasks",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_todo_management",
+          "description": "Tests bolt-merlin's ability to create, prioritize, and track tasks",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "bolt_merlin",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection\n3. [DOCS] Update README with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using the todo_create tool\n- Prioritize: bugs MUST come before features, features before docs/cleanup\n- Work through tasks in priority order\n- Use todo_update to mark tasks complete\n- End with \"TODO SUMMARY: X/4 complete\"\n\nExample workflow:\n1. Create todo with priority order: Bug -> Feature -> Docs -> Cleanup\n2. Work auth.py (bug)\n3. Work db.py (feature)\n4. Work README.md (docs)\n5. Work utils.py (cleanup)\n6. Report: \"TODO SUMMARY: 4/4 complete\"\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "write",
+              "edit",
+              "todo_create",
+              "todo_update"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "auth.py\ndb.py\nutils.py\nREADME.md\n",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# file content\ndef login():\n    pass\n"
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "todo_create": {
+                "input": {},
+                "result": {
+                  "success": true,
+                  "todo_id": "todo-001"
+                }
+              },
+              "todo_update": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 50,
+            "max_tool_calls": 100,
+            "max_tokens": 8000,
+            "max_time_seconds": 240.0
+          },
+          "expectations": {
+            "must_events": [
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "ToolCallEvent",
+                "after": "ToolResultEvent"
+              },
+              {
+                "before": "todo_create",
+                "after": "todo_update"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ToolCallEvent"
+                ],
+                "required_tool_calls": [
+                  {
+                    "tool": "todo_create",
+                    "min_calls": 1
+                  },
+                  {
+                    "tool": "todo_update",
+                    "min_calls": 1
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "ordering",
+              "config": {
+                "ordering_rules": [
+                  {
+                    "first": "todo_create",
+                    "then": "todo_update"
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 50,
+                "max_tool_calls": 100
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 10,
+                "tool_call_penalty": 0.05,
+                "rejection_penalty": 0.1,
+                "max_penalty": 0.4,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/todo_management.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_content",
+          "config": {
+            "required_event_types": [
+              "ToolCallEvent"
+            ],
+            "required_tool_calls": [
+              {
+                "tool": "todo_create",
+                "min_calls": 1
+              },
+              {
+                "tool": "todo_update",
+                "min_calls": 1
+              }
+            ]
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "ordering",
+          "config": {
+            "ordering_rules": [
+              {
+                "first": "todo_create",
+                "then": "todo_update"
+              }
+            ]
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "budget",
+          "config": {
+            "max_steps": 50,
+            "max_tool_calls": 100
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "config": {
+            "target_tool_calls": 10,
+            "tool_call_penalty": 0.05,
+            "rejection_penalty": 0.1,
+            "max_penalty": 0.4,
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "bolt_merlin"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/todo_management.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 240.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

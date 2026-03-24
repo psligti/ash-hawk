@@ -1,0 +1,20 @@
+Load specialized skill instructions from SKILL.md files.
+
+Skills are markdown files stored in `.opencode/skill/{skill-name}/SKILL.md` or `.claude/skills/{skill-name}/SKILL.md` that contain domain-specific knowledge and guidance.
+
+When to use this tool:
+- When you need domain-specific knowledge for a task (e.g., git operations, frontend development, testing patterns)
+- When you're working in a unfamiliar codebase with specialized patterns
+- When you need to reference project-specific conventions or best practices
+
+The skill file contains:
+- `name`: Skill name from frontmatter
+- `description`: Brief description of what the skill provides
+- Content: Detailed instructions, patterns, and guidance for the domain
+
+After loading a skill, use its guidance to inform your approach to the task. The skill provides additional context and expertise that you should incorporate into your work.
+
+Example usage:
+```
+Load git-master skill for complex git operations
+```

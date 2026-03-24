@@ -1,0 +1,212 @@
+[
+  {
+    "proposal_id": "architect-dd52dfa8",
+    "source_role": "architect",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "rationale": "Harden tool contracts and observability fields",
+    "target_surface": "tool interface layer",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "faster root-cause diagnosis",
+      "lower operational risk"
+    ],
+    "expected_tradeoffs": [
+      "integration complexity"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Disable infra patch via configuration fallback"
+  },
+  {
+    "proposal_id": "architect-c6ead125",
+    "source_role": "architect",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "rationale": "Harden tool contracts and observability fields",
+    "target_surface": "tool interface layer",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "faster root-cause diagnosis",
+      "lower operational risk"
+    ],
+    "expected_tradeoffs": [
+      "integration complexity"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Disable infra patch via configuration fallback"
+  },
+  {
+    "proposal_id": "architect-0ce0358b",
+    "source_role": "architect",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "rationale": "Harden tool contracts and observability fields",
+    "target_surface": "tool interface layer",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "faster root-cause diagnosis",
+      "lower operational risk"
+    ],
+    "expected_tradeoffs": [
+      "integration complexity"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Disable infra patch via configuration fallback"
+  },
+  {
+    "proposal_id": "architect-1c3636d6",
+    "source_role": "architect",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "rationale": "Harden tool contracts and observability fields",
+    "target_surface": "tool interface layer",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "faster root-cause diagnosis",
+      "lower operational risk"
+    ],
+    "expected_tradeoffs": [
+      "integration complexity"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Disable infra patch via configuration fallback"
+  },
+  {
+    "proposal_id": "architect-001fd8f1",
+    "source_role": "architect",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "rationale": "Harden tool contracts and observability fields",
+    "target_surface": "tool interface layer",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "faster root-cause diagnosis",
+      "lower operational risk"
+    ],
+    "expected_tradeoffs": [
+      "integration complexity"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Disable infra patch via configuration fallback"
+  },
+  {
+    "proposal_id": "architect-dbb90cc9",
+    "source_role": "architect",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "rationale": "Harden tool contracts and observability fields",
+    "target_surface": "tool interface layer",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "faster root-cause diagnosis",
+      "lower operational risk"
+    ],
+    "expected_tradeoffs": [
+      "integration complexity"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Disable infra patch via configuration fallback"
+  },
+  {
+    "proposal_id": "architect-0bdc038b",
+    "source_role": "architect",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "rationale": "Harden tool contracts and observability fields",
+    "target_surface": "tool interface layer",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "faster root-cause diagnosis",
+      "lower operational risk"
+    ],
+    "expected_tradeoffs": [
+      "integration complexity"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Disable infra patch via configuration fallback"
+  }
+]

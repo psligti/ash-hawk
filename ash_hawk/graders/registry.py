@@ -147,6 +147,12 @@ _default_registry: GraderRegistry | None = None
 
 
 def _register_builtin_graders(registry: GraderRegistry) -> None:
+    from ash_hawk.graders.bolt_merlin import (
+        CompletionHonestyGrader,
+        RepoDiffGrader,
+        SummaryTruthfulnessGrader,
+        TodoStateGrader,
+    )
     from ash_hawk.graders.cheat_detection import CheatDetectionGrader
     from ash_hawk.graders.code import (
         StaticAnalysisGrader,
@@ -190,6 +196,10 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(DiffConstraintsGrader())
     registry.register(ManualReviewGrader())
     registry.register(CheatDetectionGrader())
+    registry.register(TodoStateGrader())
+    registry.register(RepoDiffGrader())
+    registry.register(CompletionHonestyGrader())
+    registry.register(SummaryTruthfulnessGrader())
 
 
 def get_default_registry() -> GraderRegistry:

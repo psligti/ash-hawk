@@ -1,4 +1,0 @@
-{
-  "target_weakness": "tooling",
-  "expected_failure_mode": "premature confident action"
-}

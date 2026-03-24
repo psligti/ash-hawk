@@ -1,0 +1,114 @@
+[
+  {
+    "lesson_id": "lesson-3d058023",
+    "proposal_id": "architect-dd52dfa8",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "target_surface": "tool interface layer",
+    "approved": true,
+    "curation_notes": "Passed confidence/evidence gates and selected as best proposal for target surface",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-dd52dfa8"
+    ]
+  },
+  {
+    "lesson_id": "lesson-8e7a96c3",
+    "proposal_id": "architect-c6ead125",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "target_surface": "tool interface layer",
+    "approved": true,
+    "curation_notes": "Passed confidence/evidence gates and selected as best proposal for target surface",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-c6ead125"
+    ]
+  },
+  {
+    "lesson_id": "lesson-42b6b1fd",
+    "proposal_id": "architect-0ce0358b",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "target_surface": "tool interface layer",
+    "approved": true,
+    "curation_notes": "Passed confidence/evidence gates and selected as best proposal for target surface",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-0ce0358b"
+    ]
+  },
+  {
+    "lesson_id": "lesson-7d4f260b",
+    "proposal_id": "architect-1c3636d6",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "target_surface": "tool interface layer",
+    "approved": true,
+    "curation_notes": "Passed confidence/evidence gates and selected as best proposal for target surface",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-1c3636d6"
+    ]
+  },
+  {
+    "lesson_id": "lesson-92adc4f0",
+    "proposal_id": "architect-001fd8f1",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "target_surface": "tool interface layer",
+    "approved": true,
+    "curation_notes": "Passed confidence/evidence gates and selected as best proposal for target surface",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-001fd8f1"
+    ]
+  },
+  {
+    "lesson_id": "lesson-9c09868b",
+    "proposal_id": "architect-dbb90cc9",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "target_surface": "tool interface layer",
+    "approved": true,
+    "curation_notes": "Passed confidence/evidence gates and selected as best proposal for target surface",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-dbb90cc9"
+    ]
+  },
+  {
+    "lesson_id": "lesson-cc146d94",
+    "proposal_id": "architect-0bdc038b",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Architect proposal: tool wrapper update",
+    "summary": "Analyzed 2 findings; dominant category=tool_interface_poor",
+    "target_surface": "tool interface layer",
+    "approved": true,
+    "curation_notes": "Passed confidence/evidence gates and selected as best proposal for target surface",
+    "confidence": 0.7166666666666667,
+    "risk_level": "medium",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-0bdc038b"
+    ]
+  }
+]

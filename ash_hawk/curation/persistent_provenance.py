@@ -45,8 +45,22 @@ class PersistentProvenanceTracker:
     def __init__(self, db_path: Path | str | None = None) -> None:
         self._db_path = Path(db_path) if db_path else Path(".ash-hawk/provenance.db")
         self._db: aiosqlite.Connection | None = None
-        self._lock = asyncio.Lock()
+        self._lock: asyncio.Lock | None = None
+        self._lock_loop: asyncio.AbstractEventLoop | None = None
         self._initialized = False
+
+    def _get_lock(self) -> asyncio.Lock:
+        """Get lock, recreating if event loop changed."""
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if self._lock is None or self._lock_loop != current_loop:
+            self._lock = asyncio.Lock()
+            self._lock_loop = current_loop
+        assert self._lock is not None
+        return self._lock
 
     async def _get_db(self) -> aiosqlite.Connection:
         if self._db is None:
@@ -80,7 +94,7 @@ class PersistentProvenanceTracker:
 
     @asynccontextmanager
     async def _transaction(self) -> AsyncIterator[aiosqlite.Connection]:
-        async with self._lock:
+        async with self._get_lock():
             db = await self._get_db()
             await db.execute("BEGIN")
             try:

@@ -1,0 +1,4 @@
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "user", "content": "Run bash and python commands to inspect files and summarize findings."}}
+{"schema_version": 1, "event_type": "VerificationEvent", "ts": "1970-01-01T00:00:00Z", "data": {"pass": true, "message": "Mock verification passed"}}
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "assistant", "content": "OK"}}
+{"schema_version": 1, "event_type": "ArtifactEvent", "ts": "1970-01-01T00:00:00Z", "data": {"path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-72809b2f/runs/run-000893c3/artifacts/trial-bd7f8a95/artifacts.json", "artifact_key": "artifacts"}}

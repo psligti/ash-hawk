@@ -1,0 +1,582 @@
+{
+  "id": "scenario-batch-7122b24a",
+  "name": "scenario-batch-7122b24a",
+  "description": "",
+  "tasks": [
+    {
+      "id": "growth_likes_036",
+      "description": "Prioritize like count when replying to @0x45o (tweet 2034334214858903975)",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "growth_likes_036",
+          "description": "Prioritize like count when replying to @0x45o (tweet 2034334214858903975)",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.3
+            }
+          },
+          "inputs": {
+            "prompt": "You are the Vox Jay growth agent focusing on like count.\nThe goal is to propose a reply or action that advances the user's growth KPI without resorting to cheap engagement bait or follow trains.\n\nProfile snapshot:\n- Followers: 1,234\n- Recent impressions: 5,000\n- Engagement rate: 0.00%\n\nTweet to respond to:\n@0x45o: apparently this is something I shouldn't post got fired \ud83e\udd40\ud83e\udd40\ud83e\udd40\n\nLatest stats for this tweet:\n- Likes: 75\n- Comments: 10\n- Impressions (views): 1,509\n\nInstructions:\n1. Explain why like count is the lever to pull.\n2. Suggest one actionable reply or thread starter referencing concrete details from the tweet.\n3. Offer a brief tracking idea (metrics to watch next).\n",
+            "metadata": {
+              "tweet_id": "2034334214858903975",
+              "author_handle": "0x45o",
+              "author_name": "0x45",
+              "focus_metric": "likes",
+              "like_count": 75,
+              "reply_count": 10,
+              "retweet_count": 0,
+              "quote_count": 0,
+              "impressions": 1509
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 25,
+            "max_tool_calls": 6,
+            "max_tokens": 6000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [
+              "ModelMessageEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "type": "contains",
+                "path": "output.text",
+                "values": [
+                  "likes",
+                  "reply",
+                  "tweet"
+                ],
+                "mode": "any"
+              },
+              {
+                "type": "contains",
+                "path": "output.text",
+                "values": [
+                  "0x45o",
+                  "75",
+                  "10"
+                ],
+                "mode": "any"
+              },
+              {
+                "type": "not_contains",
+                "path": "output.text",
+                "values": [
+                  "follow train",
+                  "follow back",
+                  "follow me",
+                  "FF ",
+                  "follow4follow",
+                  "f4f"
+                ]
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "custom_prompt": "Evaluate the assistant response for growth quality. It must improve like count, reference specific tweet details, and avoid engagement bait/follow-train language. Return a score from 0.0 to 1.0 based on relevance, specificity, and actionability.",
+                "pass_threshold": 0.6
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth/growth_likes_036.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate the assistant response for growth quality. It must improve like count, reference specific tweet details, and avoid engagement bait/follow-train language. Return a score from 0.0 to 1.0 based on relevance, specificity, and actionability.",
+            "pass_threshold": 0.6
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "sdk_dawn_kestrel"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth/growth_likes_036.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 120.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "weekly_pattern_recognition",
+      "description": "Weekly report exposes recognizable patterns and recommendations",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "weekly_pattern_recognition",
+          "description": "Weekly report exposes recognizable patterns and recommendations",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "weekly",
+            "config": {
+              "week": "2026-W10"
+            },
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "weekly"
+              },
+              {
+                "path": "patterns.0",
+                "expected": "Morning posts get more engagement"
+              },
+              {
+                "path": "recommendations.0",
+                "expected": "Post more about Python"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly/weekly_pattern_recognition.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/weekly/weekly_pattern_recognition.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "review_parse_valid",
+      "description": "Harness tick parses valid review notes and applies status updates",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "review_parse_valid",
+          "description": "Harness tick parses valid review notes and applies status updates",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 0
+            },
+            "database": {
+              "existing_actions": [
+                {
+                  "id": 101,
+                  "status": "pending"
+                },
+                {
+                  "id": 102,
+                  "status": "pending"
+                }
+              ]
+            },
+            "review_notes": [
+              {
+                "action_id": 101,
+                "status": "approved"
+              },
+              {
+                "action_id": 102,
+                "status": "needs_revision"
+              }
+            ],
+            "mock_bird_client": {
+              "new_tweets": []
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "notes_processed",
+                "expected": 2
+              },
+              {
+                "path": "status_changes.0.status",
+                "expected": "approved"
+              },
+              {
+                "path": "status_changes.1.status",
+                "expected": "needs_revision"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/review_parse_valid.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/review_parse_valid.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "fast_sources_parallel_048",
+      "description": "Pulse reports sources list consistently",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "fast_sources_parallel_048",
+          "description": "Pulse reports sources list consistently",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "pulse",
+            "config": {
+              "limit": 2
+            },
+            "mock_feed": {
+              "items": [
+                {
+                  "id": "tw_048_1",
+                  "author": "x",
+                  "text": "One",
+                  "metrics": {
+                    "likes": 1
+                  }
+                },
+                {
+                  "id": "tw_048_2",
+                  "author": "x",
+                  "text": "Two",
+                  "metrics": {
+                    "likes": 2
+                  }
+                }
+              ]
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 10.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "sources.0",
+                "expected": "x_feed"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_sources_parallel_048.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/fast"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_sources_parallel_048.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 10.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "growth_likes_029",
+      "description": "Prioritize like count when replying to @md_kasif_uddin (tweet 2034148981232832705)",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "growth_likes_029",
+          "description": "Prioritize like count when replying to @md_kasif_uddin (tweet 2034148981232832705)",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.3
+            }
+          },
+          "inputs": {
+            "prompt": "You are the Vox Jay growth agent focusing on like count.\nThe goal is to propose a reply or action that advances the user's growth KPI without resorting to cheap engagement bait or follow trains.\n\nProfile snapshot:\n- Followers: 1,234\n- Recent impressions: 5,000\n- Engagement rate: 0.00%\n\nTweet to respond to:\n@md_kasif_uddin: As a developer, which one do you prefer more? (Be honest) \ud83d\udc40 https://t.co/l7mgRRbKDV\n\nLatest stats for this tweet:\n- Likes: 106\n- Comments: 109\n- Impressions (views): 4,589\n\nInstructions:\n1. Explain why like count is the lever to pull.\n2. Suggest one actionable reply or thread starter referencing concrete details from the tweet.\n3. Offer a brief tracking idea (metrics to watch next).\n",
+            "metadata": {
+              "tweet_id": "2034148981232832705",
+              "author_handle": "md_kasif_uddin",
+              "author_name": "Kasif",
+              "focus_metric": "likes",
+              "like_count": 106,
+              "reply_count": 109,
+              "retweet_count": 3,
+              "quote_count": 1,
+              "impressions": 4589
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 25,
+            "max_tool_calls": 6,
+            "max_tokens": 6000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [
+              "ModelMessageEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "type": "contains",
+                "path": "output.text",
+                "values": [
+                  "likes",
+                  "reply",
+                  "tweet"
+                ],
+                "mode": "any"
+              },
+              {
+                "type": "contains",
+                "path": "output.text",
+                "values": [
+                  "md_kasif_uddin",
+                  "106",
+                  "109"
+                ],
+                "mode": "any"
+              },
+              {
+                "type": "not_contains",
+                "path": "output.text",
+                "values": [
+                  "follow train",
+                  "follow back",
+                  "follow me",
+                  "FF ",
+                  "follow4follow",
+                  "f4f"
+                ]
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "custom_prompt": "Evaluate the assistant response for growth quality. It must improve like count, reference specific tweet details, and avoid engagement bait/follow-train language. Return a score from 0.0 to 1.0 based on relevance, specificity, and actionability.",
+                "pass_threshold": 0.6
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth/growth_likes_029.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate the assistant response for growth quality. It must improve like count, reference specific tweet details, and avoid engagement bait/follow-train language. Return a score from 0.0 to 1.0 based on relevance, specificity, and actionability.",
+            "pass_threshold": 0.6
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "sdk_dawn_kestrel"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth/growth_likes_029.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 120.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

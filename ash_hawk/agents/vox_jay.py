@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from ash_hawk.agents.dawn_kestrel import DawnKestrelAgentRunner
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.types import EvalOutcome, EvalTask, EvalTranscript
 
+_VOX_JAY_ASSETS_DIR = Path(__file__).resolve().parents[3] / "vox-jay" / "src" / "vox_jay" / "assets"
+_VOX_JAY_USER_DIR = Path.home() / ".vox-jay"
+_VOX_JAY_EVALS_DIR = Path(__file__).resolve().parents[3] / "vox-jay" / "evals"
+
 
 class VoxJayAgentRunner(DawnKestrelAgentRunner):
+    """Communication agent for content generation following persona guidelines."""
+
     communication_agent_default_model = "claude-3-5-sonnet-20241022"
     communication_agent_default_tools = ["read", "write", "format", "summarize"]
 
@@ -20,6 +27,12 @@ class VoxJayAgentRunner(DawnKestrelAgentRunner):
             **kwargs,
         )
         self._agent_type = "vox-jay"
+
+    @classmethod
+    def get_scenario_directory(cls) -> Path | None:
+        if _VOX_JAY_EVALS_DIR.exists():
+            return _VOX_JAY_EVALS_DIR
+        return None
 
     async def run(
         self,

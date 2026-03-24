@@ -1,0 +1,208 @@
+{
+  "trial": {
+    "id": "trial-09634ecb",
+    "task_id": "coding_agent_smoke",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "coding_agent_smoke",
+        "description": "Smoke test for coding agent with deterministic fixture",
+        "sut": {
+          "type": "coding_agent",
+          "adapter": "mock_adapter",
+          "config": {
+            "command": "python apply_fix.py"
+          }
+        },
+        "inputs": {
+          "prompt": "Apply the fix to the application",
+          "repo_fixture": "../fixtures/repos/coding-agent-smoke/"
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 3,
+          "max_tool_calls": 5,
+          "max_tokens": 100,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "diff_constraints",
+            "config": {
+              "allowed_paths": [
+                "src/**"
+              ]
+            },
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpxmntjrz5/004-coding_agent_smoke.scenario.yaml",
+      "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpxmntjrz5"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-09634ecb",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-22T23:28:47.257234+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Apply the fix to the application"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "OK"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-72809b2f/runs/run-000893c3/artifacts/trial-09634ecb/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0002238750457763672,
+        "agent_response": "OK",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "diff_constraints",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "diffs_checked": 0,
+            "changed_files": 0,
+            "added_lines": 0,
+            "violations": [
+              {
+                "error": "missing_diff"
+              }
+            ],
+            "limits": {
+              "max_files": null,
+              "max_loc": null
+            },
+            "allowed_paths": [
+              "src/**"
+            ]
+          },
+          "error_message": null,
+          "execution_time_seconds": 5.984306335449219e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.0,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-09634ecb",
+      "run_id": "run-000893c3",
+      "task_id": "coding_agent_smoke",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-22T23:28:47.256982+00:00",
+      "started_at": "2026-03-22T23:28:47.256969+00:00",
+      "completed_at": "2026-03-22T23:28:47.257241+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-09634ecb",
+    "run_id": "run-000893c3",
+    "task_id": "coding_agent_smoke",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-22T23:28:47.256982+00:00",
+    "started_at": "2026-03-22T23:28:47.256969+00:00",
+    "completed_at": "2026-03-22T23:28:47.257241+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

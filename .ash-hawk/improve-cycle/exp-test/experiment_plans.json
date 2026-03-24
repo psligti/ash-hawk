@@ -1,0 +1,60 @@
+[
+  {
+    "experiment_plan_id": "plan-e7b4a6ff",
+    "lesson_ids": [
+      "lesson-15ceb4e1"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "default"
+    ],
+    "eval_pack_ids": [
+      "default"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  },
+  {
+    "experiment_plan_id": "plan-8323f467",
+    "lesson_ids": [
+      "lesson-f01df3e7"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "default"
+    ],
+    "eval_pack_ids": [
+      "default"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  }
+]

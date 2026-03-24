@@ -1,0 +1,4 @@
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "user", "content": "Edit README.md and update project files immediately."}}
+{"schema_version": 1, "event_type": "VerificationEvent", "ts": "1970-01-01T00:00:00Z", "data": {"pass": true, "message": "Mock verification passed"}}
+{"schema_version": 1, "event_type": "ModelMessageEvent", "ts": "1970-01-01T00:00:00Z", "data": {"role": "assistant", "content": "OK"}}
+{"schema_version": 1, "event_type": "ArtifactEvent", "ts": "1970-01-01T00:00:00Z", "data": {"path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-55910a5a/runs/run-cfbebde1/artifacts/trial-1d8e5cbf/artifacts.json", "artifact_key": "artifacts"}}

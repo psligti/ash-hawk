@@ -1,0 +1,562 @@
+{
+  "id": "scenario-batch-a2636be6",
+  "name": "scenario-batch-a2636be6",
+  "description": "",
+  "tasks": [
+    {
+      "id": "fast_weekly_patterns_045",
+      "description": "Weekly report remains fast",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "fast_weekly_patterns_045",
+          "description": "Weekly report remains fast",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "weekly",
+            "config": {
+              "week": "2026-W15"
+            },
+            "mock_data": {},
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 15.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "weekly"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_weekly_patterns_045.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/fast"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_weekly_patterns_045.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 15.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "fast_pulse_limit_002",
+      "description": "Pulse enforces limit=2",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "fast_pulse_limit_002",
+          "description": "Pulse enforces limit=2",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "pulse",
+            "config": {
+              "limit": 2
+            },
+            "mock_feed": {
+              "items": [
+                {
+                  "id": "tw_003",
+                  "author": "alice",
+                  "text": "What makes a good rubric for judging replies?",
+                  "metrics": {
+                    "likes": 9
+                  }
+                },
+                {
+                  "id": "tw_004",
+                  "author": "bob",
+                  "text": "We removed flaky LLM graders and replaced them with schema checks.",
+                  "metrics": {
+                    "likes": 44
+                  }
+                },
+                {
+                  "id": "tw_005",
+                  "author": "carol",
+                  "text": "Truncate this third item",
+                  "metrics": {
+                    "likes": 2
+                  }
+                }
+              ]
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 10.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "pulse"
+              },
+              {
+                "path": "targets_count",
+                "expected": 2
+              },
+              {
+                "path": "sources.0",
+                "expected": "x_feed"
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_pulse_limit_002.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/fast"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_pulse_limit_002.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 10.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "fast_pulse_sources_008",
+      "description": "Pulse returns x_feed in sources list",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "fast_pulse_sources_008",
+          "description": "Pulse returns x_feed in sources list",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "pulse",
+            "config": {
+              "limit": 2
+            },
+            "mock_feed": {
+              "items": [
+                {
+                  "id": "tw_015",
+                  "author": "x",
+                  "text": "Fast evals are basically unit tests for behavior.",
+                  "metrics": {
+                    "likes": 20
+                  }
+                },
+                {
+                  "id": "tw_016",
+                  "author": "x2",
+                  "text": "What is your principle for avoiding engagement bait?",
+                  "metrics": {
+                    "likes": 4
+                  }
+                }
+              ]
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 10.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "sources.0",
+                "expected": "x_feed"
+              },
+              {
+                "path": "targets_count",
+                "expected": 2
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_pulse_sources_008.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/fast"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_pulse_sources_008.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 10.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "growth_likes_028",
+      "description": "Prioritize like count when replying to @trashh_dev (tweet 2034336106469273662)",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "growth_likes_028",
+          "description": "Prioritize like count when replying to @trashh_dev (tweet 2034336106469273662)",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.3
+            }
+          },
+          "inputs": {
+            "prompt": "You are the Vox Jay growth agent focusing on like count.\nThe goal is to propose a reply or action that advances the user's growth KPI without resorting to cheap engagement bait or follow trains.\n\nProfile snapshot:\n- Followers: 1,234\n- Recent impressions: 5,000\n- Engagement rate: 0.00%\n\nTweet to respond to:\n@trashh_dev: i\u2019m so cooked\n\nLatest stats for this tweet:\n- Likes: 108\n- Comments: 20\n- Impressions (views): 3,213\n\nInstructions:\n1. Explain why like count is the lever to pull.\n2. Suggest one actionable reply or thread starter referencing concrete details from the tweet.\n3. Offer a brief tracking idea (metrics to watch next).\n",
+            "metadata": {
+              "tweet_id": "2034336106469273662",
+              "author_handle": "trashh_dev",
+              "author_name": "trash",
+              "focus_metric": "likes",
+              "like_count": 108,
+              "reply_count": 20,
+              "retweet_count": 0,
+              "quote_count": 1,
+              "impressions": 3213
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 25,
+            "max_tool_calls": 6,
+            "max_tokens": 6000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [
+              "ModelMessageEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "type": "contains",
+                "path": "output.text",
+                "values": [
+                  "likes",
+                  "reply",
+                  "tweet"
+                ],
+                "mode": "any"
+              },
+              {
+                "type": "contains",
+                "path": "output.text",
+                "values": [
+                  "trashh_dev",
+                  "108",
+                  "20"
+                ],
+                "mode": "any"
+              },
+              {
+                "type": "not_contains",
+                "path": "output.text",
+                "values": [
+                  "follow train",
+                  "follow back",
+                  "follow me",
+                  "FF ",
+                  "follow4follow",
+                  "f4f"
+                ]
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "custom_prompt": "Evaluate the assistant response for growth quality. It must improve like count, reference specific tweet details, and avoid engagement bait/follow-train language. Return a score from 0.0 to 1.0 based on relevance, specificity, and actionability.",
+                "pass_threshold": 0.6
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth/growth_likes_028.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate the assistant response for growth quality. It must improve like count, reference specific tweet details, and avoid engagement bait/follow-train language. Return a score from 0.0 to 1.0 based on relevance, specificity, and actionability.",
+            "pass_threshold": 0.6
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "sdk_dawn_kestrel"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth/growth_likes_028.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 120.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "fast_voice_principles_alignment_097",
+      "description": "Principles: be specific and ask a clarifying question",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "fast_voice_principles_alignment_097",
+          "description": "Principles: be specific and ask a clarifying question",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 1
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "v097_1",
+                  "author_handle": "builder",
+                  "text": "We are tracking trends but it is noisy. Any advice?",
+                  "public_metrics": {
+                    "like_count": 70
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {
+              "principles": [
+                "Be specific",
+                "Evidence-first"
+              ]
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 60.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "new_actions_count",
+                "expected": 1
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "rubric": "quality",
+                "pass_threshold": 0.7,
+                "custom_prompt": "Judge the reply for being specific.\n\nPASS if it asks at least one clarifying question (time window, sources, filters) and suggests one concrete filter.\nFAIL if it is generic motivation.\n\nReturn JSON: {score, passed, reasoning, issues, strengths, voice_alignment}.\n"
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_voice_principles_alignment_097.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/fast"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "rubric": "quality",
+            "pass_threshold": 0.7,
+            "custom_prompt": "Judge the reply for being specific.\n\nPASS if it asks at least one clarifying question (time window, sources, filters) and suggests one concrete filter.\nFAIL if it is generic motivation.\n\nReturn JSON: {score, passed, reasoning, issues, strengths, voice_alignment}.\n"
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_voice_principles_alignment_097.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 60.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

@@ -1,0 +1,389 @@
+{
+  "id": "scenario-batch-305bc0a0",
+  "name": "scenario-batch-305bc0a0",
+  "description": "",
+  "tasks": [
+    {
+      "id": "growth_impressions_014",
+      "description": "Prioritize impressions when replying to @auto_grad_ (tweet 2034153354784579703)",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "growth_impressions_014",
+          "description": "Prioritize impressions when replying to @auto_grad_ (tweet 2034153354784579703)",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.3
+            }
+          },
+          "inputs": {
+            "prompt": "You are the Vox Jay growth agent focusing on impressions.\nThe goal is to propose a reply or action that advances the user's growth KPI without resorting to cheap engagement bait or follow trains.\n\nProfile snapshot:\n- Followers: 1,234\n- Recent impressions: 5,000\n- Engagement rate: 0.00%\n\nTweet to respond to:\n@auto_grad_: career update: i have joined @smallest_AI as a researcher engineer to work on improving small models and scale them. hoping to contribute a lot to the team and product! https://t.co/p3ImwxpNFZ\n\nLatest stats for this tweet:\n- Likes: 460\n- Comments: 49\n- Impressions (views): 23,288\n\nInstructions:\n1. Explain why impressions is the lever to pull.\n2. Suggest one actionable reply or thread starter referencing concrete details from the tweet.\n3. Offer a brief tracking idea (metrics to watch next).\n",
+            "metadata": {
+              "tweet_id": "2034153354784579703",
+              "author_handle": "auto_grad_",
+              "author_name": "Ishaan",
+              "focus_metric": "impressions",
+              "like_count": 460,
+              "reply_count": 49,
+              "retweet_count": 5,
+              "quote_count": 0,
+              "impressions": 23288
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 25,
+            "max_tool_calls": 6,
+            "max_tokens": 6000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [
+              "ModelMessageEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "type": "contains",
+                "path": "output.text",
+                "values": [
+                  "impressions",
+                  "reply",
+                  "tweet"
+                ],
+                "mode": "any"
+              },
+              {
+                "type": "contains",
+                "path": "output.text",
+                "values": [
+                  "auto_grad_",
+                  "460",
+                  "49"
+                ],
+                "mode": "any"
+              },
+              {
+                "type": "not_contains",
+                "path": "output.text",
+                "values": [
+                  "follow train",
+                  "follow back",
+                  "follow me",
+                  "FF ",
+                  "follow4follow",
+                  "f4f"
+                ]
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "custom_prompt": "Evaluate the assistant response for growth quality. It must improve impressions, reference specific tweet details, and avoid engagement bait/follow-train language. Return a score from 0.0 to 1.0 based on relevance, specificity, and actionability.",
+                "pass_threshold": 0.6
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth/growth_impressions_014.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "custom_prompt": "Evaluate the assistant response for growth quality. It must improve impressions, reference specific tweet details, and avoid engagement bait/follow-train language. Return a score from 0.0 to 1.0 based on relevance, specificity, and actionability.",
+            "pass_threshold": 0.6
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "sdk_dawn_kestrel"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/skills/growth/growth_impressions_014.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 120.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "fast_brief_small_037",
+      "description": "Brief works when output is markdown",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "fast_brief_small_037",
+          "description": "Brief works when output is markdown",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "brief",
+            "config": {
+              "posts": 1,
+              "replies": 1,
+              "trends_limit": 3,
+              "output": "markdown"
+            },
+            "mock_sources": {
+              "trends": [
+                {
+                  "topic": "Markdown"
+                },
+                {
+                  "topic": "Rich"
+                },
+                {
+                  "topic": "Typer"
+                }
+              ],
+              "feed_items": [
+                {
+                  "handle": "md",
+                  "text": "Do you export to Obsidian?",
+                  "tier": 2,
+                  "is_question": true
+                }
+              ]
+            },
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 15.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "brief"
+              },
+              {
+                "path": "digest.posts_count",
+                "expected": 1
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "llm_judge",
+              "config": {
+                "rubric": "quality",
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_brief_small_037.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/fast"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "llm_judge",
+          "config": {
+            "rubric": "quality",
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/fast/fast_brief_small_037.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 15.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "edge_llm_failure",
+      "description": "Harness tick degrades gracefully when LLM is unavailable",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "edge_llm_failure",
+          "description": "Harness tick degrades gracefully when LLM is unavailable",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "vox_jay_command",
+            "config": {}
+          },
+          "inputs": {
+            "command": "harness_tick",
+            "config": {
+              "max_new_actions": 2,
+              "simulate_llm_failure": true
+            },
+            "mock_bird_client": {
+              "new_tweets": [
+                {
+                  "id": "9101",
+                  "author_handle": "founderx",
+                  "text": "What eval checkpoints do you use for coding agents?",
+                  "public_metrics": {
+                    "like_count": 30
+                  }
+                },
+                {
+                  "id": "9102",
+                  "author_handle": "infraops",
+                  "text": "We switched to raw SQL after ORM N+1 issues.",
+                  "public_metrics": {
+                    "like_count": 110
+                  }
+                }
+              ]
+            },
+            "database": {
+              "existing_actions": []
+            },
+            "review_notes": [],
+            "strategy": {}
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 1,
+            "max_tool_calls": null,
+            "max_tokens": null,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": [
+              {
+                "path": "command",
+                "expected": "harness_tick"
+              },
+              {
+                "path": "llm_available",
+                "expected": false
+              },
+              {
+                "path": "used_fallback",
+                "expected": true
+              },
+              {
+                "path": "new_actions_count",
+                "expected": 2
+              }
+            ]
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_llm_failure.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "vox_jay_command"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/agents/harness/edge_llm_failure.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 30.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

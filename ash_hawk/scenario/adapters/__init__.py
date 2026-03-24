@@ -31,18 +31,19 @@ class ScenarioAdapter(Protocol):
         ...     def name(self) -> str:
         ...         return "coding"
         ...
-        ...     def run_scenario(
-        ...         self,
-        ...         scenario: dict[str, Any],
-        ...         workdir: Path,
-        ...         tooling_harness: dict[str, Any],
-        ...         budgets: dict[str, Any],
-        ...     ) -> tuple[Any, list[Any], dict[str, Any]]:
-        ...         # Run the coding scenario
-        ...         final_output = "result"
-        ...         trace_events = []
-        ...         artifacts = {"files": {}}
-        ...         return final_output, trace_events, artifacts
+    ...     def run_scenario(
+    ...         self,
+    ...         scenario: dict[str, Any],
+    ...         workdir: Path,
+    ...         tooling_harness: dict[str, Any],
+    ...         budgets: dict[str, Any],
+    ...     ) -> tuple[Any, list[Any], dict[str, Any], Any]:
+    ...         # Run the coding scenario
+    ...         final_output = "result"
+    ...         trace_events = []
+    ...         artifacts = {"files": {}}
+    ...         outcome = None
+    ...         return final_output, trace_events, artifacts, outcome
     """
 
     @property
@@ -62,7 +63,7 @@ class ScenarioAdapter(Protocol):
         workdir: Path,
         tooling_harness: dict[str, Any],
         budgets: dict[str, Any],
-    ) -> tuple[Any, list[Any], dict[str, Any]]:
+    ) -> tuple[Any, ...]:
         """Execute a scenario and return results.
 
         Args:
@@ -72,9 +73,12 @@ class ScenarioAdapter(Protocol):
             budgets: Resource budgets (tokens, time, cost, etc.).
 
         Returns:
-            A tuple containing:
+            A tuple containing (4-6 values):
             - final_output: The primary output from the scenario execution
             - trace_events: List of trace events recorded during execution
             - artifacts: Dictionary of artifacts produced (files, logs, etc.)
+            - outcome: EvalOutcome or None with status and metadata
+            - messages: (optional) List of conversation messages
+            - tool_calls: (optional) List of tool calls made during execution
         """
         ...

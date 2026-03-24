@@ -1,0 +1,123 @@
+schema_version: "v1"
+id: "bolt_merlin_todo_management"
+description: "Tests bolt-merlin's ability to create, prioritize, and track tasks"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "bolt_merlin"
+  config:
+    agent: "execution"
+
+inputs:
+  prompt: |
+    You have 4 tasks to complete:
+    
+    1. [BUG] Fix authentication bug in auth.py - users can't login
+    2. [FEATURE] Add logging to database connection
+    3. [DOCS] Update README with new API endpoints
+    4. [CLEANUP] Remove unused imports in utils.py
+    
+    Requirements:
+    - Create a todo list using the todo_create tool
+    - Prioritize: bugs MUST come before features, features before docs/cleanup
+    - Work through tasks in priority order
+    - Use todo_update to mark tasks complete
+    - End with "TODO SUMMARY: X/4 complete"
+    
+    Example workflow:
+    1. Create todo with priority order: Bug -> Feature -> Docs -> Cleanup
+    2. Work auth.py (bug)
+    3. Work db.py (feature)
+    4. Work README.md (docs)
+    5. Work utils.py (cleanup)
+    6. Report: "TODO SUMMARY: 4/4 complete"
+
+tools:
+  allowed_tools:
+    - "bash"
+    - "read"
+    - "write"
+    - "edit"
+    - "todo_create"
+    - "todo_update"
+  mocks:
+    bash:
+      input: {}
+      result:
+        stdout: "auth.py\ndb.py\nutils.py\nREADME.md\n"
+        stderr: ""
+        exit_code: 0
+    read:
+      input: {}
+      result:
+        content: "# file content\ndef login():\n    pass\n"
+    write:
+      input: {}
+      result:
+        success: true
+    edit:
+      input: {}
+      result:
+        success: true
+    todo_create:
+      input: {}
+      result:
+        success: true
+        todo_id: "todo-001"
+    todo_update:
+      input: {}
+      result:
+        success: true
+  fault_injection: {}
+
+budgets:
+  max_steps: 50
+  max_tool_calls: 100
+  max_tokens: 8000
+  max_time_seconds: 240.0
+
+expectations:
+  must_events:
+    - "ToolCallEvent"
+  must_not_events: []
+  ordering_rules:
+    - before: "ToolCallEvent"
+      after: "ToolResultEvent"
+    - before: "todo_create"
+      after: "todo_update"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "trace_content"
+    required: true
+    config:
+      required_event_types:
+        - "ToolCallEvent"
+      required_tool_calls:
+        - tool: "todo_create"
+          min_calls: 1
+        - tool: "todo_update"
+          min_calls: 1
+  - grader_type: "ordering"
+    required: true
+    config:
+      ordering_rules:
+        - first: "todo_create"
+          then: "todo_update"
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 50
+      max_tool_calls: 100
+  - grader_type: "trace_quality"
+    weight: 1.0
+    config:
+      target_tool_calls: 10
+      tool_call_penalty: 0.05
+      rejection_penalty: 0.1
+      max_penalty: 0.4
+      pass_threshold: 0.7

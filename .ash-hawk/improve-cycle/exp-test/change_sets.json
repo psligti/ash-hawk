@@ -1,0 +1,38 @@
+[
+  {
+    "change_set_id": "changeset-2b0158ee",
+    "lesson_ids": [
+      "lesson-15ceb4e1"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/observability_config.md",
+        "surface": "observability config",
+        "change_kind": "update",
+        "description": "Applied observability_improvement from lesson-15ceb4e1"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/observability_config.md for lesson mapping"
+    ],
+    "temp_only": true
+  },
+  {
+    "change_set_id": "changeset-9852228b",
+    "lesson_ids": [
+      "lesson-f01df3e7"
+    ],
+    "applied_changes": [
+      {
+        "path": "surface/tool_interface_layer.md",
+        "surface": "tool interface layer",
+        "change_kind": "update",
+        "description": "Applied tool_wrapper_update from lesson-f01df3e7"
+      }
+    ],
+    "rollback_plan": [
+      "revert surface/tool_interface_layer.md for lesson mapping"
+    ],
+    "temp_only": true
+  }
+]

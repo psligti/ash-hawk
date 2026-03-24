@@ -1,0 +1,247 @@
+[
+  {
+    "verification_id": "verify-60962d8d",
+    "change_set_id": "changeset-0fdde834",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  },
+  {
+    "verification_id": "verify-ab04c3f9",
+    "change_set_id": "changeset-6a850ded",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  },
+  {
+    "verification_id": "verify-80fa6ab9",
+    "change_set_id": "changeset-804068fc",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  },
+  {
+    "verification_id": "verify-222d38b0",
+    "change_set_id": "changeset-9037a675",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  },
+  {
+    "verification_id": "verify-148599d3",
+    "change_set_id": "changeset-5fb0be87",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  },
+  {
+    "verification_id": "verify-dfce62e1",
+    "change_set_id": "changeset-c74d0c3c",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  },
+  {
+    "verification_id": "verify-f3a77374",
+    "change_set_id": "changeset-ca819f79",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  }
+]

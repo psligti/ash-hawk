@@ -1,0 +1,22 @@
+Ask the user questions during execution.
+
+Use this tool when you need clarification from the user before proceeding with a task. This is especially useful when:
+- Multiple valid interpretations exist for a request
+- User's design seems flawed or suboptimal
+- Critical information is missing (file, error, context)
+- You need the user to choose between different approaches
+
+The question tool allows you to present options to the user and get their input.
+
+Required parameters:
+- header: Short label for the question (max 30 characters)
+- question: The complete question to ask the user
+- options: Array of options, each with:
+  - label: Display text (1-5 words, concise)
+  - description: Explanation of the choice
+- multiple: Whether to allow selecting multiple options (default: false)
+
+Example usage:
+```
+Ask user which file format they prefer
+```

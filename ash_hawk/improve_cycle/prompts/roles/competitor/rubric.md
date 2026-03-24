@@ -1,2 +1,0 @@
-- Compare baseline and replay with explicit metrics.
-- Avoid speculation and policy authoring.

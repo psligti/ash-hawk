@@ -1,6 +1,6 @@
 schema_version: "v1"
 id: "bolt_merlin_goal_management"
-description: "Tests bolt-merlin's ability to track and work toward long-running goals"
+description: "Tests bolt-merlin's ability to track and complete multi-step goals"
 
 sut:
   type: "agentic_sdk"
@@ -10,14 +10,22 @@ sut:
 
 inputs:
   prompt: |
-    You need to implement a feature that requires multiple steps:
-    1. Create a new API endpoint for user notifications
-    2. Add database migrations for notification tables
-    3. Write unit tests for the notification service
-    4. Update the API documentation
+    Implement a feature that requires exactly 4 components:
+    1. Create src/api/notifications.py with NotificationService class
+    2. Create migrations/add_notifications_table.py 
+    3. Write tests/test_notifications.py with at least 2 test cases
+    4. Update docs/api.md with the new endpoint documentation
     
-    Track your progress toward completing all four components.
-    The goal is complete only when all four are done.
+    Requirements:
+    - You MUST explicitly track progress (e.g., "Component 1/4 complete")
+    - You must verify each component exists before marking complete
+    - The goal is ONLY complete when all 4 components are done
+    - Report final status as "GOAL COMPLETE: 4/4 components" or show which are missing
+
+    DO NOT just start working without tracking. Show me:
+    - Component 1/4: [verifying/creating]
+    - Component 2/4: [verifying/creating]
+    - etc.
 
 tools:
   allowed_tools:
@@ -47,9 +55,9 @@ tools:
   fault_injection: {}
 
 budgets:
-  max_steps: 50
-  max_tool_calls: 100
-  max_tokens: 8000
+  max_steps: 60
+  max_tool_calls: 120
+  max_tokens: 10000
   max_time_seconds: 300.0
 
 expectations:
@@ -65,16 +73,25 @@ expectations:
 
 graders:
   - grader_type: "trace_schema"
+    required: true
     config: {}
   - grader_type: "trace_content"
+    required: true
     config:
       required_event_types:
         - "ModelMessageEvent"
-  - grader_type: "trace_quality"
-    weight: 1.5
+        - "ToolCallEvent"
+      forbidden_event_types: []
+  - grader_type: "budget"
+    required: true
     config:
-      target_tool_calls: 8
-      tool_call_penalty: 0.08
-      rejection_penalty: 0.12
-      max_penalty: 0.6
+      max_steps: 60
+      max_tool_calls: 120
+  - grader_type: "trace_quality"
+    weight: 1.0
+    config:
+      target_tool_calls: 12
+      tool_call_penalty: 0.05
+      rejection_penalty: 0.1
+      max_penalty: 0.5
       pass_threshold: 0.7

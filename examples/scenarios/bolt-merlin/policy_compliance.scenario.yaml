@@ -1,0 +1,98 @@
+schema_version: "v1"
+id: "bolt_merlin_policy_compliance"
+description: "Tests bolt-merlin's ability to apply policies during code changes"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "bolt_merlin"
+  config:
+    agent: "execution"
+
+inputs:
+  prompt: |
+    Apply these policies while making changes:
+    
+    POLICY 1: ALWAYS run `ruff check .` before committing
+    POLICY 2: NEVER modify files in node_modules/, .venv/, or __pycache__/
+    POLICY 3: Use relative imports (from .module import func) not absolute
+    POLICY 4: All new functions must have type hints
+    
+    Create a new module at src/utils/helpers.py with:
+    - Function format_user_name(first: str, last: str) -> str
+    
+    Requirements:
+    - State which policies apply before writing the file
+    - Show policies were followed after writing
+    - End with "POLICY CHECK: All policies verified"
+    
+    Example output:
+    "Applying POLICY 1 and POLICY 4 to this task..."
+    "POLICY CHECK: All policies verified"
+
+tools:
+  allowed_tools:
+    - "bash"
+    - "read"
+    - "write"
+    - "edit"
+  mocks:
+    bash:
+      input: {}
+      result:
+        stdout: "All checks passed!"
+        stderr: ""
+        exit_code: 0
+    read:
+      input: {}
+      result:
+        content: "# existing code\nfrom .auth import get_user\n"
+    write:
+      input: {}
+      result:
+        success: true
+    edit:
+      input: {}
+      result:
+        success: true
+  fault_injection: {}
+
+budgets:
+  max_steps: 40
+  max_tool_calls: 60
+  max_tokens: 6000
+  max_time_seconds: 180.0
+
+expectations:
+  must_events:
+    - "ToolCallEvent"
+    - "ToolResultEvent"
+  must_not_events: []
+  ordering_rules:
+    - first: "ToolCallEvent"
+      then: "ToolResultEvent"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "trace_content"
+    required: true
+    config:
+      required_event_types:
+        - "ToolCallEvent"
+        - "ToolResultEvent"
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 40
+      max_tool_calls: 60
+  - grader_type: "trace_quality"
+    weight: 1.0
+    config:
+      target_tool_calls: 6
+      tool_call_penalty: 0.1
+      rejection_penalty: 0.15
+      max_penalty: 0.5
+      pass_threshold: 0.7

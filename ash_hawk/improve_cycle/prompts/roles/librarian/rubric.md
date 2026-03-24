@@ -1,2 +1,0 @@
-- Focus on reusable patterns and applicability conditions.
-- Preserve references to source evidence.

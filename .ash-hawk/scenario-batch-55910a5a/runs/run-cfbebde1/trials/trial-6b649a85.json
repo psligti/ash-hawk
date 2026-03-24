@@ -1,0 +1,416 @@
+{
+  "trial": {
+    "id": "trial-6b649a85",
+    "task_id": "bolt_merlin_todo_management",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "bolt_merlin_todo_management",
+        "description": "Tests bolt-merlin's ability to create, prioritize, and track tasks",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "mock_adapter",
+          "config": {
+            "agent": "execution"
+          }
+        },
+        "inputs": {
+          "prompt": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection\n3. [DOCS] Update README with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using the todo_create tool\n- Prioritize: bugs MUST come before features, features before docs/cleanup\n- Work through tasks in priority order\n- Use todo_update to mark tasks complete\n- End with \"TODO SUMMARY: X/4 complete\"\n\nExample workflow:\n1. Create todo with priority order: Bug -> Feature -> Docs -> Cleanup\n2. Work auth.py (bug)\n3. Work db.py (feature)\n4. Work README.md (docs)\n5. Work utils.py (cleanup)\n6. Report: \"TODO SUMMARY: 4/4 complete\"\n"
+        },
+        "tools": {
+          "allowed_tools": [
+            "bash",
+            "read",
+            "write",
+            "edit",
+            "todo_create",
+            "todo_update"
+          ],
+          "mocks": {
+            "bash": {
+              "input": {},
+              "result": {
+                "stdout": "auth.py\ndb.py\nutils.py\nREADME.md\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            },
+            "read": {
+              "input": {},
+              "result": {
+                "content": "# file content\ndef login():\n    pass\n"
+              }
+            },
+            "write": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            },
+            "edit": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            },
+            "todo_create": {
+              "input": {},
+              "result": {
+                "success": true,
+                "todo_id": "todo-001"
+              }
+            },
+            "todo_update": {
+              "input": {},
+              "result": {
+                "success": true
+              }
+            }
+          },
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 50,
+          "max_tool_calls": 100,
+          "max_tokens": 8000,
+          "max_time_seconds": 240.0
+        },
+        "expectations": {
+          "must_events": [
+            "ToolCallEvent"
+          ],
+          "must_not_events": [],
+          "ordering_rules": [
+            {
+              "before": "ToolCallEvent",
+              "after": "ToolResultEvent"
+            },
+            {
+              "before": "todo_create",
+              "after": "todo_update"
+            }
+          ],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "trace_content",
+            "config": {
+              "required_event_types": [
+                "ToolCallEvent"
+              ],
+              "required_tool_calls": [
+                {
+                  "tool": "todo_create",
+                  "min_calls": 1
+                },
+                {
+                  "tool": "todo_update",
+                  "min_calls": 1
+                }
+              ]
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "ordering",
+            "config": {
+              "ordering_rules": [
+                {
+                  "first": "todo_create",
+                  "then": "todo_update"
+                }
+              ]
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "budget_compliance",
+            "config": {
+              "max_steps": 50,
+              "max_tool_calls": 100
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "trace_quality",
+            "config": {
+              "target_tool_calls": 10,
+              "tool_call_penalty": 0.05,
+              "rejection_penalty": 0.1,
+              "max_penalty": 0.4,
+              "pass_threshold": 0.7
+            },
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpnv_3io1o/003-todo_management.scenario.yaml",
+      "scenario_root": "/private/var/folders/7q/3wffhx8n6j927vjvnwqb7fxm0000gp/T/tmpnv_3io1o"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-6b649a85",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-22T23:15:23.949539+00:00"
+      },
+      "transcript": {
+        "messages": [],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection\n3. [DOCS] Update README with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using the todo_create tool\n- Prioritize: bugs MUST come before features, features before docs/cleanup\n- Work through tasks in priority order\n- Use todo_update to mark tasks complete\n- End with \"TODO SUMMARY: X/4 complete\"\n\nExample workflow:\n1. Create todo with priority order: Bug -> Feature -> Docs -> Cleanup\n2. Work auth.py (bug)\n3. Work db.py (feature)\n4. Work README.md (docs)\n5. Work utils.py (cleanup)\n6. Report: \"TODO SUMMARY: 4/4 complete\"\n"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "bash",
+              "input": {
+                "command": "echo 'mock'"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool": "bash",
+              "result": {
+                "stdout": "mock\n",
+                "stderr": "",
+                "exit_code": 0
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "VerificationEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "pass": true,
+              "message": "Mock verification passed"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "OK"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/scenario-batch-55910a5a/runs/run-cfbebde1/artifacts/trial-6b649a85/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 0.0007419586181640625,
+        "agent_response": "OK",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 6,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 2.002716064453125e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "trace_content",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "event_types": [
+              "ModelMessageEvent",
+              "ToolCallEvent",
+              "ToolResultEvent",
+              "VerificationEvent",
+              "ModelMessageEvent",
+              "ArtifactEvent"
+            ],
+            "tool_names": [
+              "bash"
+            ],
+            "violations": [],
+            "tool_pattern_mode": "glob"
+          },
+          "error_message": null,
+          "execution_time_seconds": 9.059906005859375e-06,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "ordering",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {
+            "total_rules": 1,
+            "violations": [
+              {
+                "index": 0,
+                "error": "before must be non-empty string; after must be non-empty string"
+              }
+            ]
+          },
+          "error_message": null,
+          "execution_time_seconds": 7.152557373046875e-06,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "budget_compliance",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: budget_compliance",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "grader_id": null,
+          "score": 0.6,
+          "passed": false,
+          "details": {
+            "tool_call_count": 1,
+            "rejection_count": 0,
+            "target_tool_calls": 10,
+            "tool_call_distance": 9,
+            "penalty": 0.4,
+            "pass_threshold": 0.7
+          },
+          "error_message": null,
+          "execution_time_seconds": 8.344650268554688e-06,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.52,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-6b649a85",
+      "run_id": "run-cfbebde1",
+      "task_id": "bolt_merlin_todo_management",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-22T23:15:23.948757+00:00",
+      "started_at": "2026-03-22T23:15:23.948738+00:00",
+      "completed_at": "2026-03-22T23:15:23.949549+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-6b649a85",
+    "run_id": "run-cfbebde1",
+    "task_id": "bolt_merlin_todo_management",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-22T23:15:23.948757+00:00",
+    "started_at": "2026-03-22T23:15:23.948738+00:00",
+    "completed_at": "2026-03-22T23:15:23.949549+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

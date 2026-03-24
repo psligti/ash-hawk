@@ -115,7 +115,14 @@ class SdkDawnKestrelAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str | dict[str, Any] | None, list[dict[str, Any]], dict[str, Any], Any]:
+    ) -> tuple[
+        str | dict[str, Any] | None,
+        list[dict[str, Any]],
+        dict[str, Any],
+        Any,
+        list[dict[str, Any]],
+        list[dict[str, Any]],
+    ]:
         trace_events: list[dict[str, Any]] = []
         artifacts: dict[str, Any] = {}
 
@@ -257,7 +264,14 @@ class SdkDawnKestrelAdapter:
         if final_output is None:
             final_output = transcript.error_trace
 
-        return final_output, trace_events, artifacts, outcome
+        return (
+            final_output,
+            trace_events,
+            artifacts,
+            outcome,
+            transcript.messages,
+            transcript.tool_calls,
+        )
 
 
 __all__ = ["SdkDawnKestrelAdapter"]

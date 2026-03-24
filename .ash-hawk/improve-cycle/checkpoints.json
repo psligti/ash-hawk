@@ -1,0 +1,23 @@
+[
+  {
+    "checkpoint_id": "run-1",
+    "run_id": "run-1",
+    "experiment_id": "exp-1",
+    "last_completed_role": "complete",
+    "status": "completed",
+    "state": {
+      "promotion_decisions": [
+        {
+          "decision_id": "decision-b339ee7f",
+          "lesson_id": "lesson-cc146d94",
+          "status": "hold_for_more_data",
+          "scope": "agent-specific",
+          "reason": "Verification completed with promotable signal",
+          "effective_version": "2026.03.22",
+          "rollback_trigger": "regression_count>0"
+        }
+      ]
+    },
+    "saved_at": "2026-03-22T04:17:55.071623+00:00"
+  }
+]

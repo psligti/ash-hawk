@@ -1,0 +1,20 @@
+Exit plan mode and return to build mode for implementation work.
+
+Only exit after planning completes with one deterministic outcome from the canonical policy (docs/planning-agent-orchestration.md):
+- recommendation_ready: actionable implementation path with confidence and evidence
+- blocking_question: one precise question that cannot be resolved with available tools
+- budget_exhausted: best-effort recommendation plus explicit unresolved uncertainty
+- stagnation: strategy switch attempted and still no meaningful progress
+- human_required: required secret/access/decision must come from a human
+
+Before exiting, planning output should include:
+- confidence score (0.0-1.0)
+- concise evidence summary and unresolved uncertainties
+- budget consumption (iterations, subagent calls, wall time)
+- next action (implement now or answer blocking question)
+
+After exiting plan mode:
+- Build-mode permissions apply again, including edit/write tooling per BUILD_AGENT policy
+- Focus shifts from investigation to implementation and validation
+
+Note: mode transitions are runtime policy controls and are separate from subagent labels.

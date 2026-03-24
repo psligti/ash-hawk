@@ -1,0 +1,212 @@
+[
+  {
+    "experiment_plan_id": "plan-dd3c8fba",
+    "lesson_ids": [
+      "lesson-3d058023"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "s1",
+      "s2"
+    ],
+    "eval_pack_ids": [
+      "bolt-merlin-eval"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  },
+  {
+    "experiment_plan_id": "plan-6ad17660",
+    "lesson_ids": [
+      "lesson-8e7a96c3"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "s1",
+      "s2"
+    ],
+    "eval_pack_ids": [
+      "bolt-merlin-eval"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  },
+  {
+    "experiment_plan_id": "plan-fec35b83",
+    "lesson_ids": [
+      "lesson-42b6b1fd"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "s1",
+      "s2"
+    ],
+    "eval_pack_ids": [
+      "bolt-merlin-eval"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  },
+  {
+    "experiment_plan_id": "plan-21737a7b",
+    "lesson_ids": [
+      "lesson-7d4f260b"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "s1",
+      "s2"
+    ],
+    "eval_pack_ids": [
+      "bolt-merlin-eval"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  },
+  {
+    "experiment_plan_id": "plan-c6e5f53e",
+    "lesson_ids": [
+      "lesson-92adc4f0"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "s1",
+      "s2"
+    ],
+    "eval_pack_ids": [
+      "bolt-merlin-eval"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  },
+  {
+    "experiment_plan_id": "plan-39b6ef64",
+    "lesson_ids": [
+      "lesson-9c09868b"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "s1",
+      "s2"
+    ],
+    "eval_pack_ids": [
+      "bolt-merlin-eval"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  },
+  {
+    "experiment_plan_id": "plan-01a85d34",
+    "lesson_ids": [
+      "lesson-cc146d94"
+    ],
+    "mode": "isolated",
+    "scenario_ids": [
+      "s1",
+      "s2"
+    ],
+    "eval_pack_ids": [
+      "bolt-merlin-eval"
+    ],
+    "repeat_count": 3,
+    "acceptance_criteria": [
+      "score_delta>0",
+      "regression_count==0"
+    ],
+    "rejection_criteria": [
+      "regression_count>0",
+      "variance>0.02"
+    ],
+    "rollback_criteria": [
+      "latency_delta_pct>15.0",
+      "token_delta_pct>10.0"
+    ],
+    "max_latency_delta_pct": 15.0,
+    "max_token_delta_pct": 10.0,
+    "notes": "Spec-aligned isolated validation"
+  }
+]

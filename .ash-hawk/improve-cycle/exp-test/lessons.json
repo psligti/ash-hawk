@@ -1,0 +1,34 @@
+[
+  {
+    "lesson_id": "lesson-15ceb4e1",
+    "proposal_id": "architect-ffbd9884",
+    "proposal_type": "observability_improvement",
+    "title": "Consolidate tool trace logging schema",
+    "summary": "The analysis detects a recurring medium-severity issue with tool interface observations appearing twice, indicating potential redundancy or structural gaps in logging. Additionally, a low-severity policy finding shows minimal positive movement in scoring, suggesting weak baseline performance.",
+    "target_surface": "observability config",
+    "approved": true,
+    "curation_notes": "High confidence (0.80) low-risk proposal supported by direct evidence of recurring duplicate keys in observability findings. Addressing the schema consolidation is likely to reduce storage costs and noise immediately.",
+    "confidence": 0.8,
+    "risk_level": "low",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-ffbd9884"
+    ]
+  },
+  {
+    "lesson_id": "lesson-f01df3e7",
+    "proposal_id": "architect-254f3993",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Standardize tool wrapper output structure",
+    "summary": "The analysis detects a recurring medium-severity issue with tool interface observations appearing twice, indicating potential redundancy or structural gaps in logging. Additionally, a low-severity policy finding shows minimal positive movement in scoring, suggesting weak baseline performance.",
+    "target_surface": "tool interface layer",
+    "approved": true,
+    "curation_notes": "Passed confidence/evidence gates and selected as best proposal for target surface",
+    "confidence": 0.75,
+    "risk_level": "medium",
+    "lifecycle_state": "curated",
+    "lineage": [
+      "architect-254f3993"
+    ]
+  }
+]

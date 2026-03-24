@@ -1,0 +1,111 @@
+[
+  {
+    "checkpoint_id": "cycle-cycle-test-iter-1",
+    "run_id": "cycle-cycle-test-iter-1",
+    "experiment_id": "exp-test",
+    "last_completed_role": "analyst",
+    "status": "in_progress",
+    "state": {
+      "analyst_output": {
+        "findings": [
+          {
+            "finding_id": "finding-1",
+            "title": "Tool trace observation",
+            "summary": "Observed tool trace keys: duration_ms, error_message, outcome, tool_name",
+            "severity": "medium",
+            "category": "tool_interface_poor",
+            "evidence": [
+              {
+                "artifact_id": "cycle-cycle-test-iter-1",
+                "kind": "tool_trace",
+                "pointer": "0",
+                "note": "interface friction"
+              }
+            ],
+            "metrics": [],
+            "tags": [],
+            "strategy": "tool-quality",
+            "sub_strategy": "tool-efficiency"
+          },
+          {
+            "finding_id": "finding-2",
+            "title": "Tool trace observation",
+            "summary": "Observed tool trace keys: duration_ms, error_message, outcome, tool_name",
+            "severity": "medium",
+            "category": "tool_interface_poor",
+            "evidence": [
+              {
+                "artifact_id": "cycle-cycle-test-iter-1",
+                "kind": "tool_trace",
+                "pointer": "1",
+                "note": "interface friction"
+              }
+            ],
+            "metrics": [],
+            "tags": [],
+            "strategy": "tool-quality",
+            "sub_strategy": "tool-efficiency"
+          },
+          {
+            "finding_id": "finding-replay-improved",
+            "title": "Replay showed improvement",
+            "summary": "Replay improved score from 0.000 to 0.030",
+            "severity": "low",
+            "category": "policy_ordering",
+            "evidence": [
+              {
+                "artifact_id": "cycle-cycle-test-iter-1",
+                "kind": "comparison",
+                "pointer": null,
+                "note": "replay_signal=0.030"
+              }
+            ],
+            "metrics": [],
+            "tags": [],
+            "strategy": "agent-behavior",
+            "sub_strategy": "task-completion"
+          }
+        ],
+        "risk_areas": [
+          "behavior",
+          "tooling"
+        ],
+        "recurring_patterns": [
+          "Tool interface observations limited to a specific set of basic keys"
+        ],
+        "efficiency_metrics": [
+          {
+            "name": "finding_count",
+            "value": 3.0,
+            "unit": null,
+            "baseline_value": null,
+            "delta": null
+          },
+          {
+            "name": "high_severity_count",
+            "value": 0.0,
+            "unit": null,
+            "baseline_value": null,
+            "delta": null
+          },
+          {
+            "name": "category_diversity",
+            "value": 2.0,
+            "unit": null,
+            "baseline_value": null,
+            "delta": null
+          },
+          {
+            "name": "llm_confidence",
+            "value": 0.85,
+            "unit": null,
+            "baseline_value": null,
+            "delta": null
+          }
+        ],
+        "summary": "The analysis reveals a recurring medium-severity issue where tool trace observations are limited to basic keys like duration and outcome, suggesting insufficient observability. Additionally, a low-severity behavioral finding indicates that while policy ordering improved slightly on replay, the baseline performance was initially zero."
+      }
+    },
+    "saved_at": "2026-03-22T04:26:19.236851+00:00"
+  }
+]

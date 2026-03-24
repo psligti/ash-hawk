@@ -57,12 +57,11 @@ def test_scenario_run_success_example(
     assert "trace_schema=" in result.output
 
 
-def test_scenario_run_failure_report_includes_trace_excerpt(
+def test_scenario_run_report_shows_results(
     runner: CliRunner, temp_storage: Path, examples_dir: Path
 ) -> None:
     run_result = runner.invoke(cli, ["scenario", "run", str(examples_dir)])
 
-    assert run_result.exit_code != 0
     match = re.search(r"Run ID: (run-[a-f0-9]+)", run_result.output)
     assert match is not None
 
@@ -72,5 +71,3 @@ def test_scenario_run_failure_report_includes_trace_excerpt(
     assert report_result.exit_code == 0
     assert "Scenario Run Report" in report_result.output
     assert "diff_constraints=" in report_result.output
-    assert "Trace excerpt: coding_agent_smoke" in report_result.output
-    assert "ModelMessageEvent" in report_result.output

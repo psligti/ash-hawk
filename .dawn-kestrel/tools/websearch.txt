@@ -1,0 +1,23 @@
+Use this tool to search the web using Exa AI - performs real-time web searches and can scrape content from specific URLs.
+
+Provides up-to-date information for current events and recent data.
+
+Supports configurable result counts and returns to content from the most relevant websites.
+
+Use this tool when you need to:
+- Find current information about topics, technologies, or events
+- Get information beyond the knowledge cutoff
+- Perform competitive analysis or market research
+- Access real-time web data and live content
+
+Search types: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)
+
+Configurable context length for optimal LLM integration.
+
+Domain filtering and advanced search options are available.
+
+IMPORTANT: If another tool is present that offers better web fetching capabilities, is more targeted to the task at hand, or has fewer restrictions, prefer using that tool instead of this one.
+
+Search results are optimized and returned from the most relevant websites.
+
+NOTE: Today's date is {{date}}. You MUST use this year when searching for recent information or current events.

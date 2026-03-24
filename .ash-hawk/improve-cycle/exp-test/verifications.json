@@ -1,0 +1,72 @@
+[
+  {
+    "verification_id": "verify-7c706ed4",
+    "change_set_id": "changeset-2b0158ee",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  },
+  {
+    "verification_id": "verify-c4335fc4",
+    "change_set_id": "changeset-9852228b",
+    "passed": true,
+    "overall_summary": "Verification completed with promotable signal",
+    "score_delta": 0.015,
+    "variance": 0.006,
+    "regression_count": 0,
+    "checks": [
+      {
+        "name": "correctness",
+        "passed": true,
+        "summary": "Deterministic checks passed",
+        "metrics": []
+      },
+      {
+        "name": "regression",
+        "passed": true,
+        "summary": "No protected-pack regressions",
+        "metrics": []
+      },
+      {
+        "name": "stability",
+        "passed": true,
+        "summary": "Variance 0.0060 within threshold",
+        "metrics": []
+      }
+    ],
+    "recommendation": "promote",
+    "notes": [
+      "mode=isolated",
+      "repeat_count=3",
+      "stable across required repeats"
+    ]
+  }
+]

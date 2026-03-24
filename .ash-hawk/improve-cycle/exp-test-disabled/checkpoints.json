@@ -1,0 +1,92 @@
+[
+  {
+    "checkpoint_id": "cycle-cycle-test-disabled-iter-1",
+    "run_id": "cycle-cycle-test-disabled-iter-1",
+    "experiment_id": "exp-test-disabled",
+    "last_completed_role": "analyst",
+    "status": "in_progress",
+    "state": {
+      "analyst_output": {
+        "findings": [
+          {
+            "finding_id": "finding-1",
+            "title": "Tool trace observation",
+            "summary": "Observed tool trace keys: duration_ms, error_message, outcome, tool_name",
+            "severity": "medium",
+            "category": "tool_interface_poor",
+            "evidence": [
+              {
+                "artifact_id": "cycle-cycle-test-disabled-iter-1",
+                "kind": "tool_trace",
+                "pointer": "0",
+                "note": "interface friction"
+              }
+            ],
+            "metrics": [],
+            "tags": [],
+            "strategy": "tool-quality",
+            "sub_strategy": "tool-efficiency"
+          },
+          {
+            "finding_id": "finding-2",
+            "title": "Tool trace observation",
+            "summary": "Observed tool trace keys: duration_ms, error_message, outcome, tool_name",
+            "severity": "medium",
+            "category": "tool_interface_poor",
+            "evidence": [
+              {
+                "artifact_id": "cycle-cycle-test-disabled-iter-1",
+                "kind": "tool_trace",
+                "pointer": "1",
+                "note": "interface friction"
+              }
+            ],
+            "metrics": [],
+            "tags": [],
+            "strategy": "tool-quality",
+            "sub_strategy": "tool-efficiency"
+          }
+        ],
+        "risk_areas": [
+          "tooling"
+        ],
+        "recurring_patterns": [
+          "identical finding generation",
+          "minimal tool trace schema"
+        ],
+        "efficiency_metrics": [
+          {
+            "name": "finding_count",
+            "value": 2.0,
+            "unit": null,
+            "baseline_value": null,
+            "delta": null
+          },
+          {
+            "name": "high_severity_count",
+            "value": 0.0,
+            "unit": null,
+            "baseline_value": null,
+            "delta": null
+          },
+          {
+            "name": "category_diversity",
+            "value": 1.0,
+            "unit": null,
+            "baseline_value": null,
+            "delta": null
+          },
+          {
+            "name": "llm_confidence",
+            "value": 0.85,
+            "unit": null,
+            "baseline_value": null,
+            "delta": null
+          }
+        ],
+        "summary": "Two identical findings indicate a recurring issue where tool traces consistently observe only a limited subset of keys (duration_ms, error_message, outcome, tool_name), categorized as a 'poor interface'. This suggests potential gaps in logging granularity or instrumentation configuration."
+      }
+    },
+    "saved_at": "2026-03-22T04:25:22.383232+00:00"
+  }
+]

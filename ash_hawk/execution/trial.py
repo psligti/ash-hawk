@@ -234,9 +234,7 @@ class TrialExecutor:
                 FailureMode.TIMEOUT,
                 f"Trial timed out after {timeout_seconds}s",
             )
-            transcript = EvalTranscript(
-                error_trace="Trial execution timed out",
-            )
+            transcript = transcript.model_copy(update={"error_trace": "Trial execution timed out"})
 
         except asyncio.CancelledError:
             cancelled = True
@@ -244,8 +242,8 @@ class TrialExecutor:
                 FailureMode.CRASH,
                 "Trial was cancelled",
             )
-            transcript = EvalTranscript(
-                error_trace="Trial execution was cancelled",
+            transcript = transcript.model_copy(
+                update={"error_trace": "Trial execution was cancelled"}
             )
 
         except Exception as e:
@@ -253,9 +251,7 @@ class TrialExecutor:
                 FailureMode.AGENT_ERROR,
                 str(e),
             )
-            transcript = EvalTranscript(
-                error_trace=_format_exception(e),
-            )
+            transcript = transcript.model_copy(update={"error_trace": _format_exception(e)})
 
         finally:
             end_time = time.time()

@@ -1,0 +1,62 @@
+[
+  {
+    "proposal_id": "architect-ffbd9884",
+    "source_role": "architect",
+    "proposal_type": "observability_improvement",
+    "title": "Consolidate tool trace logging schema",
+    "summary": "The analysis detects a recurring medium-severity issue with tool interface observations appearing twice, indicating potential redundancy or structural gaps in logging. Additionally, a low-severity policy finding shows minimal positive movement in scoring, suggesting weak baseline performance.",
+    "rationale": "The analysis indicated recurring 'Tool trace observation' findings where keys `duration_ms`, `error_message`, `outcome`, and `tool_name` appeared twice. This suggests redundant logging events or a lack of idempotency constraints in the observability pipeline.",
+    "target_surface": "observability config",
+    "confidence": 0.8,
+    "risk_level": "low",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "Elimination of duplicate log entries",
+      "Reduced observability storage costs and noise"
+    ],
+    "expected_tradeoffs": [
+      "needs testing"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Revert the observability schema configuration to the previous version to restore original logging behavior."
+  },
+  {
+    "proposal_id": "architect-254f3993",
+    "source_role": "architect",
+    "proposal_type": "tool_wrapper_update",
+    "title": "Standardize tool wrapper output structure",
+    "summary": "The analysis detects a recurring medium-severity issue with tool interface observations appearing twice, indicating potential redundancy or structural gaps in logging. Additionally, a low-severity policy finding shows minimal positive movement in scoring, suggesting weak baseline performance.",
+    "rationale": "The recurrence of identical tool trace keys implies that the tool wrapper may be returning intermediate or partial structured data multiple times. Standardizing the wrapper to emit a single, finalized output dictionary will prevent structural gaps.",
+    "target_surface": "tool interface layer",
+    "confidence": 0.75,
+    "risk_level": "medium",
+    "evidence": [
+      {
+        "artifact_id": "analyst",
+        "kind": "risk_area",
+        "pointer": null,
+        "note": "behavior, tooling"
+      }
+    ],
+    "expected_benefits": [
+      "Unified interface for data extraction",
+      "Prevention of partial state logging"
+    ],
+    "expected_tradeoffs": [
+      "needs testing"
+    ],
+    "experiment_hints": [
+      "verify latency and token overhead thresholds"
+    ],
+    "rollback_notes": "Revert the tool wrapper base class to the previous implementation to restore legacy output formats."
+  }
+]

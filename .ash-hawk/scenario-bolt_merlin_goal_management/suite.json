@@ -1,0 +1,193 @@
+{
+  "id": "scenario-bolt_merlin_goal_management",
+  "name": "scenario-bolt_merlin_goal_management",
+  "description": "",
+  "tasks": [
+    {
+      "id": "bolt_merlin_goal_management",
+      "description": "Tests bolt-merlin's ability to track and complete multi-step goals",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "bolt_merlin_goal_management",
+          "description": "Tests bolt-merlin's ability to track and complete multi-step goals",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "bolt_merlin",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "Implement a feature that requires exactly 4 components:\n1. Create src/api/notifications.py with NotificationService class\n2. Create migrations/add_notifications_table.py \n3. Write tests/test_notifications.py with at least 2 test cases\n4. Update docs/api.md with the new endpoint documentation\n\nRequirements:\n- You MUST explicitly track progress (e.g., \"Component 1/4 complete\")\n- You must verify each component exists before marking complete\n- The goal is ONLY complete when all 4 components are done\n- Report final status as \"GOAL COMPLETE: 4/4 components\" or show which are missing\n\nDO NOT just start working without tracking. Show me:\n- Component 1/4: [verifying/creating]\n- Component 2/4: [verifying/creating]\n- etc.\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read",
+              "write",
+              "edit"
+            ],
+            "mocks": {
+              "bash": {
+                "input": {},
+                "result": {
+                  "stdout": "ok",
+                  "stderr": "",
+                  "exit_code": 0
+                }
+              },
+              "read": {
+                "input": {},
+                "result": {
+                  "content": "# project file\n"
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 60,
+            "max_tool_calls": 120,
+            "max_tokens": 10000,
+            "max_time_seconds": 300.0
+          },
+          "expectations": {
+            "must_events": [
+              "ModelMessageEvent",
+              "ToolCallEvent"
+            ],
+            "must_not_events": [],
+            "ordering_rules": [
+              {
+                "before": "ModelMessageEvent",
+                "after": "ToolCallEvent"
+              }
+            ],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_content",
+              "config": {
+                "required_event_types": [
+                  "ModelMessageEvent",
+                  "ToolCallEvent"
+                ],
+                "forbidden_event_types": []
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "budget",
+              "config": {
+                "max_steps": 60,
+                "max_tool_calls": 120
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "trace_quality",
+              "config": {
+                "target_tool_calls": 12,
+                "tool_call_penalty": 0.05,
+                "rejection_penalty": 0.1,
+                "max_penalty": 0.5,
+                "pass_threshold": 0.7
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/goal_management.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_content",
+          "config": {
+            "required_event_types": [
+              "ModelMessageEvent",
+              "ToolCallEvent"
+            ],
+            "forbidden_event_types": []
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "budget",
+          "config": {
+            "max_steps": 60,
+            "max_tool_calls": 120
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "trace_quality",
+          "config": {
+            "target_tool_calls": 12,
+            "tool_call_penalty": 0.05,
+            "rejection_penalty": 0.1,
+            "max_penalty": 0.5,
+            "pass_threshold": 0.7
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "bolt_merlin"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/examples/scenarios/bolt-merlin/goal_management.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 300.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}
