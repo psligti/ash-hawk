@@ -11,14 +11,19 @@ from typing import Any
 
 from rich.console import Console
 
-from ash_hawk.auto_research.llm import generate_improvement
+from ash_hawk.auto_research.llm import extract_skill_name, generate_improvement
 from ash_hawk.auto_research.types import (
     CycleResult,
     CycleStatus,
     IterationResult,
 )
 from ash_hawk.scenario import load_scenario, run_scenarios_async
-from ash_hawk.services.dawn_kestrel_injector import DawnKestrelInjector
+from ash_hawk.services.dawn_kestrel_injector import (
+    DawnKestrelInjector,
+    DAWN_KESTREL_DIR,
+    SKILL_SEARCH_DIRS,
+    TOOL_SEARCH_DIRS,
+)
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -60,17 +65,16 @@ class ImprovementTarget:
         return self.injector.save_tool_content(self.name, content)
 
 
-SKILL_SEARCH_PATHS = [
-    ".dawn-kestrel/skills/skill.txt",
-    ".dawn-kestrel/skills/skill.md",
-    ".opencode/skills/skill.md",
-    ".claude/skills/skill.md",
+SKILL_SEARCH_DIRS = [
+    DAWN_KESTREL_DIR / "skills",
+    Path(".opencode/skills"),
+    Path(".claude/skills"),
 ]
 
-TOOL_SEARCH_PATHS = [
-    ".dawn-kestrel/tools",
-    ".opencode/tools",
-    ".claude/tools",
+TOOL_SEARCH_DIRS = [
+    DAWN_KESTREL_DIR / "tools",
+    Path(".opencode/tools"),
+    Path(".claude/tools"),
 ]
 
 
@@ -102,7 +106,7 @@ def _create_llm_client() -> Any:
 
 def _discover_improvement_target(
     scenarios: list[Path],
-    project_root: Path | None = None,
+    project_root: Path | None,
 ) -> ImprovementTarget | None:
     if not scenarios:
         return None
@@ -112,6 +116,7 @@ def _discover_improvement_target(
 
     resolved_root = project_root or _find_project_root(scenario_root)
     if resolved_root is None:
+        logger.warning("Could not find project root")
         return None
 
     injector = DawnKestrelInjector(project_root=resolved_root)
@@ -153,10 +158,14 @@ def _find_project_root(scenario_dir: Path) -> Path | None:
 
 
 def _find_skill_file(project_root: Path) -> Path | None:
-    for search_path in SKILL_SEARCH_PATHS:
-        candidate = project_root / search_path
-        if candidate.exists():
-            return candidate
+    for search_dir in SKILL_SEARCH_DIRS:
+        skills_path = project_root / search_dir
+        if skills_path.exists() and skills_path.is_dir():
+            for skill_dir in skills_path.iterdir():
+                if skill_dir.is_dir():
+                    skill_file = skill_dir / "SKILL.md"
+                    if skill_file.exists():
+                        return skill_file
     return None
 
 
@@ -165,19 +174,20 @@ def _find_primary_tool(project_root: Path, allowed_tools: list[str]) -> Path | N
         return None
 
     primary_tool = allowed_tools[0]
-    for tool_dir in TOOL_SEARCH_PATHS:
+    for tool_dir in TOOL_SEARCH_DIRS:
         tools_path = project_root / tool_dir
-        if tools_path.exists():
-            for ext in (".txt", ".md"):
-                candidate = tools_path / f"{primary_tool}{ext}"
-                if candidate.exists():
-                    return candidate
+        if tools_path.exists() and tools_path.is_dir():
+            for tool_subdir in tools_path.iterdir():
+                if tool_subdir.is_dir() and tool_subdir.name == primary_tool:
+                    tool_file = tool_subdir / "TOOL.md"
+                    if tool_file.exists():
+                        return tool_file
     return None
 
 
 def _infer_name_from_path(path: Path) -> str:
     stem = path.stem
-    if stem.lower() in ("skill", "tool", "agent"):
+    if stem.upper() in ("SKILL", "TOOL", "AGENT"):
         return path.parent.name
     return stem
 
@@ -206,7 +216,6 @@ async def run_cycle(
         llm_client = _create_llm_client()
 
     storage = storage_path or Path(".ash-hawk/auto-research")
-
     target = _discover_improvement_target(scenarios, project_root)
     if target is None:
         return CycleResult(
@@ -216,33 +225,27 @@ async def run_cycle(
             status=CycleStatus.ERROR,
             error_message="Could not discover improvement target from scenarios",
         )
-
     result = CycleResult(
         agent_name=_infer_agent_name(target),
         target_path=str(target.structured_path),
         scenario_paths=[str(s) for s in scenarios],
         status=CycleStatus.RUNNING,
     )
-
     console.rule("[bold]Auto-Research Cycle[/bold]")
     console.print(f"[dim]Target: {target.structured_path} ({target.target_type.value})[/dim]")
     console.print(f"[dim]Name: {target.name}[/dim]")
     console.print(f"[dim]Scenarios: {len(scenarios)}[/dim]")
     console.print(f"[dim]Iterations: {iterations}[/dim]")
     console.print(f"[dim]Threshold: {threshold}[/dim]")
-
     try:
         console.print("\n[cyan]Baseline evaluation...[/cyan]")
         score, transcripts_raw = await _run_evaluation(scenarios, storage)
         result.initial_score = score
         console.print(f"  [dim]Baseline: {score:.3f}[/dim]")
-
         transcripts: list[Any] | None = transcripts_raw
         current_score = score
-
         for i in range(iterations):
             console.print(f"\n[cyan]Iteration {i + 1}/{iterations}[/cyan]")
-
             iter_result = await _run_iteration(
                 iteration_num=i,
                 target=target,
@@ -253,31 +256,24 @@ async def run_cycle(
                 cached_transcripts=transcripts if i == 0 else None,
                 threshold=threshold,
             )
-
             result.iterations.append(iter_result)
             current_score = iter_result.score_after
-
             if iter_result.applied:
                 transcripts = None
-
             console.print(
                 f"  [dim]Score: {iter_result.score_before:.3f} → {iter_result.score_after:.3f} "
                 f"({iter_result.delta:+.3f})[/dim]"
             )
-
             if iter_result.applied:
                 console.print(f"  [green]✓ Kept: {iter_result.improvement_text[:50]}...[/green]")
             else:
                 console.print("  [yellow]✗ Reverted[/yellow]")
-
             if _check_convergence(result.iterations):
                 console.print("  [green]✓ Converged[/green]")
                 break
-
         result.status = CycleStatus.COMPLETED
         result.final_score = current_score
         result.completed_at = datetime.now(UTC)
-
         console.print()
         console.rule("[bold]Cycle Complete[/bold]")
         console.print(f"[dim]Iterations: {result.total_iterations}[/dim]")
@@ -285,14 +281,12 @@ async def run_cycle(
         console.print(f"[dim]Final: {result.final_score:.3f}[/dim]")
         console.print(f"[dim]Improvement: {result.improvement_delta:+.3f}[/dim]")
         console.print(f"[dim]Saved to: {target.structured_path}[/dim]")
-
     except Exception as e:
         logger.error(f"Cycle failed: {e}")
         result.status = CycleStatus.ERROR
         result.error_message = str(e)
         result.completed_at = datetime.now(UTC)
         raise
-
     return result
 
 
@@ -307,14 +301,18 @@ async def _run_iteration(
     threshold: float,
 ) -> IterationResult:
     current_content = target.read_content()
-
+    if not current_content:
+        console.print("  [yellow]No current content to improve[/yellow]")
+        return IterationResult(
+            iteration_num=iteration_num,
+            score_before=score_before,
+            score_after=score_before,
+        )
     transcripts = cached_transcripts
     if transcripts is None:
         _, transcripts = await _run_evaluation(scenarios, storage, show_failure_patterns=False)
-
     console.print("  [dim]Generating improvement...[/dim]")
     improved = await generate_improvement(llm_client, current_content, transcripts)
-
     if not improved:
         console.print("  [yellow]No improvement generated[/yellow]")
         return IterationResult(
@@ -322,30 +320,31 @@ async def _run_iteration(
             score_before=score_before,
             score_after=score_before,
         )
-
+    skill_name = extract_skill_name(improved)
+    if skill_name and skill_name != target.name:
+        target = ImprovementTarget(
+            target_type=TargetType.SKILL,
+            name=skill_name,
+            discovered_path=target.discovered_path,
+            injector=target.injector,
+        )
     saved_path = target.save_content(improved)
-
     score_after, _ = await _run_evaluation(scenarios, storage, show_failure_patterns=False)
     delta = score_after - score_before
-
     applied = delta >= threshold
     improvement_text = improved.split("\n")[0][:80] if improved else ""
-
     artifacts_dir = storage / "iterations"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     artifact_path = (
         artifacts_dir / f"iter_{iteration_num:03d}_{'kept' if applied else 'reverted'}.md"
     )
     artifact_path.write_text(improved)
-
     console.print(f"  [cyan]Proposal:[/cyan] {improvement_text}")
     console.print(f"  [dim]Saved to: {saved_path}[/dim]")
     console.print(f"  [dim]Artifact: {artifact_path}[/dim]")
-
     if not applied:
         target.save_content(current_content)
         score_after = score_before
-
     return IterationResult(
         iteration_num=iteration_num,
         score_before=score_before,
@@ -366,12 +365,10 @@ async def _run_evaluation(
             storage_path=storage,
             show_failure_patterns=show_failure_patterns,
         )
-
         transcripts = []
         for trial in summary.trials:
             if trial.result and trial.result.transcript:
                 transcripts.append(trial.result.transcript)
-
         return summary.metrics.mean_score, transcripts
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
@@ -385,12 +382,7 @@ def _check_convergence(
 ) -> bool:
     if len(iterations) < window:
         return False
-
     recent = [i.score_after for i in iterations[-window:]]
     mean = sum(recent) / len(recent)
     variance = sum((s - mean) ** 2 for s in recent) / len(recent)
-
     return variance < variance_threshold
-
-
-__all__ = ["run_cycle", "ImprovementTarget", "TargetType"]
