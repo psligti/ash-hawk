@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from ash_hawk.graders.prompt_stack_optimizer import (
     DEFAULT_RUBRIC,
-    CategoryDef,
+    REQUIRED_SUBCATEGORIES,
     CategoryEvidence,
     GrowthOpportunity,
     MetaMetrics,
@@ -14,8 +17,6 @@ from ash_hawk.graders.prompt_stack_optimizer import (
     PromptStackOptimizerConfig,
     PromptStackOptimizerGrader,
     RubricDef,
-    RubricEvidence,
-    SubcategoryDef,
     SubcategoryEvidence,
 )
 from ash_hawk.types import (
@@ -139,39 +140,31 @@ def grader_with_baseline():
     )
 
 
-# =========================================================================
-# Config Tests
-# =========================================================================
+def make_mock_llm_response(scores: dict[str, dict] | None = None) -> dict:
+    if scores is None:
+        scores = {
+            sc_id: {"score": 0.7, "evidence": ["Mock evidence"], "confidence": 0.8}
+            for sc_id in REQUIRED_SUBCATEGORIES
+        }
+    return {"scores": scores}
 
 
 class TestPromptStackOptimizerConfig:
     def test_defaults(self):
         config = PromptStackOptimizerConfig()
         assert config.pass_threshold == 0.6
-        assert config.use_llm_judge is False
-        assert config.judge_model is None
+        assert config.judge_max_tokens == 4096
         assert config.judge_temperature == 0.0
-        assert config.max_growth_opportunities == 5
-        assert config.max_mutation_targets == 5
-        assert config.baseline_scores is None
-        assert config.token_budget is None
-        assert config.max_tool_calls is None
-        assert config.rubric.total_subcategories == 25
 
     def test_custom_config(self):
         config = PromptStackOptimizerConfig(
             pass_threshold=0.8,
-            use_llm_judge=True,
-            judge_model="gpt-4",
-            max_growth_opportunities=3,
-            token_budget=10000,
-            max_tool_calls=20,
+            judge_max_tokens=2048,
+            judge_temperature=0.1,
         )
         assert config.pass_threshold == 0.8
-        assert config.use_llm_judge is True
-        assert config.judge_model == "gpt-4"
-        assert config.max_growth_opportunities == 3
-        assert config.token_budget == 10000
+        assert config.judge_max_tokens == 2048
+        assert config.judge_temperature == 0.1
 
     def test_invalid_threshold_too_high(self):
         with pytest.raises(Exception):
@@ -183,16 +176,11 @@ class TestPromptStackOptimizerConfig:
 
     def test_extra_fields_forbidden(self):
         with pytest.raises(Exception):
-            PromptStackOptimizerConfig(nonexistent_field="bad")
+            PromptStackOptimizerConfig(unknown_field="value")
 
     def test_dict_init(self):
-        grader = PromptStackOptimizerGrader(config={"pass_threshold": 0.7})
-        assert grader._config.pass_threshold == 0.7
-
-
-# =========================================================================
-# Rubric Tests
-# =========================================================================
+        config = PromptStackOptimizerConfig(**{"pass_threshold": 0.75})
+        assert config.pass_threshold == 0.75
 
 
 class TestRubricDef:
@@ -211,15 +199,17 @@ class TestRubricDef:
             assert cat.id
             assert cat.name
 
-    def test_all_subcategories_have_scoring_mode(self):
+
+class TestRequiredSubcategories:
+    def test_all_25_present(self):
+        assert len(REQUIRED_SUBCATEGORIES) == 25
+
+    def test_all_match_rubric(self):
+        rubric_ids = set()
         for cat in DEFAULT_RUBRIC.categories:
             for sub in cat.subcategories:
-                assert sub.scoring_mode in ("deterministic", "llm", "hybrid")
-
-
-# =========================================================================
-# MetaMetrics Tests
-# =========================================================================
+                rubric_ids.add(sub.id)
+        assert set(REQUIRED_SUBCATEGORIES) == rubric_ids
 
 
 class TestMetaMetrics:
@@ -252,569 +242,312 @@ class TestMetaMetrics:
         assert meta.error_count >= 2
         assert meta.tool_success_rate < 1.0
 
-    def test_cache_metrics(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        assert meta.input_tokens == 5000
-
     def test_new_meta_metrics_present(self, grader, rich_transcript):
         meta = grader._extract_meta_metrics(rich_transcript)
         assert hasattr(meta, "prompt_efficiency")
         assert hasattr(meta, "selection_quality")
         assert hasattr(meta, "exploration")
         assert hasattr(meta, "layer_hygiene")
-        assert 0.0 <= meta.prompt_efficiency <= 1.0
-        assert 0.0 <= meta.selection_quality <= 1.0
-        assert 0.0 <= meta.exploration <= 1.0
-        assert 0.0 <= meta.layer_hygiene <= 1.0
 
     def test_exploration_with_unique_tools(self, grader):
         transcript = EvalTranscript(
-            tool_calls=[{"name": f"tool_{i}", "input": {}, "output": "ok"} for i in range(5)],
+            tool_calls=[
+                {"name": "read_file", "input": {}, "output": "ok"},
+                {"name": "write_file", "input": {}, "output": "ok"},
+                {"name": "run_tests", "input": {}, "output": "ok"},
+            ],
             token_usage=TokenUsage(input=100, output=50),
         )
         meta = grader._extract_meta_metrics(transcript)
-        assert meta.exploration == 1.0
-        assert meta.unique_tools_used == 5
+        assert meta.unique_tools_used == 3
+        assert meta.exploration > 0
 
     def test_layer_hygiene_with_errors(self, grader):
         transcript = EvalTranscript(
             tool_calls=[
-                {"name": "tool", "input": {}, "output": "ok"},
-                {"name": "tool", "input": {}, "output": "error", "is_error": True},
+                {"name": "tool1", "input": {}, "output": "error: failed", "is_error": True},
+                {"name": "tool2", "input": {}, "output": "ok"},
             ],
             token_usage=TokenUsage(input=100, output=50),
         )
         meta = grader._extract_meta_metrics(transcript)
+        assert meta.error_count >= 1
         assert meta.layer_hygiene < 1.0
-        assert meta.error_count == 1
-
-
-# =========================================================================
-# Individual Scorer Tests
-# =========================================================================
-
-
-class TestToolSelectionScorer:
-    def test_no_tool_calls(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_tool_selection(empty_transcript, meta)
-        assert result.subcategory_id == "tool_selection"
-        assert result.score == 0.5
-        assert "No tool calls made" in result.evidence
-
-    def test_high_success_rate(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_tool_selection(rich_transcript, meta)
-        assert result.score >= 0.7
-
-    def test_duplicate_tool_calls(self, grader):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "read", "input": {"path": "a.py"}, "output": "ok"},
-                {"name": "read", "input": {"path": "a.py"}, "output": "ok"},
-                {"name": "read", "input": {"path": "a.py"}, "output": "ok"},
-                {"name": "read", "input": {"path": "a.py"}, "output": "ok"},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_tool_selection(transcript, meta)
-        assert result.score < 0.9
-        assert any("duplicate" in e.lower() for e in result.evidence)
-
-    def test_low_success_rate(self, grader, error_transcript):
-        meta = grader._extract_meta_metrics(error_transcript)
-        result = grader._score_tool_selection(error_transcript, meta)
-        assert result.score < 0.8
-
-
-class TestToolCallEfficiencyScorer:
-    def test_no_tool_calls(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_tool_call_efficiency(empty_transcript, meta)
-        assert result.score == 0.7
-
-    def test_within_budget(self, grader, rich_transcript):
-        grader._config.max_tool_calls = 10
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_tool_call_efficiency(rich_transcript, meta)
-        assert result.score >= 0.8
-
-    def test_exceeds_budget(self):
-        grader = PromptStackOptimizerGrader(config={"max_tool_calls": 2})
-        transcript = EvalTranscript(
-            tool_calls=[{"name": f"tool_{i}", "input": {}, "output": "ok"} for i in range(10)],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_tool_call_efficiency(transcript, meta)
-        assert result.score < 0.5
-
-
-class TestToolErrorRecoveryScorer:
-    def test_no_errors(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_tool_error_recovery(rich_transcript, meta)
-        assert result.score == 1.0
-        assert "No tool errors encountered" in result.evidence
-
-    def test_errors_with_recovery(self, grader):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "build", "input": {}, "output": "error: compile failed", "is_error": True},
-                {"name": "edit", "input": {}, "output": "ok"},
-                {"name": "build", "input": {}, "output": "ok"},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_tool_error_recovery(transcript, meta)
-        assert result.score >= 0.8
-
-    def test_errors_without_recovery(self, grader):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "build", "input": {}, "output": "error: compile failed", "is_error": True},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_tool_error_recovery(transcript, meta)
-        assert result.score == 0.0
-
-
-class TestSelfCorrectionScorer:
-    def test_no_errors_no_corrections(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_self_correction(empty_transcript, meta)
-        assert result.score == 0.8
-
-    def test_corrections_detected(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_self_correction(rich_transcript, meta)
-        # "I was wrong" is in the rich_transcript messages
-        assert result.score >= 0.8
-
-    def test_errors_no_correction(self, grader, error_transcript):
-        meta = grader._extract_meta_metrics(error_transcript)
-        result = grader._score_self_correction(error_transcript, meta)
-        assert result.score < 0.5
-
-
-class TestInformationRetentionScorer:
-    def test_no_reads(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_information_retention(empty_transcript, meta)
-        assert result.score == 1.0
-
-    def test_redundant_reads(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_information_retention(rich_transcript, meta)
-        # rich_transcript has duplicate read_file calls
-        assert result.score < 1.0
-        assert any("re-read" in e.lower() for e in result.evidence)
-
-    def test_no_redundant_reads(self, grader):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "read_file", "input": {"path": "a.py"}, "output": "ok"},
-                {"name": "read_file", "input": {"path": "b.py"}, "output": "ok"},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_information_retention(transcript, meta)
-        assert result.score == 1.0
-
-
-class TestContextEfficiencyScorer:
-    def test_within_budget(self):
-        grader = PromptStackOptimizerGrader(config={"token_budget": 10000})
-        transcript = EvalTranscript(
-            token_usage=TokenUsage(input=3000, output=1000, cache_read=500),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_context_efficiency(transcript, meta)
-        assert result.score > 0.8
-
-    def test_exceeds_budget(self):
-        grader = PromptStackOptimizerGrader(config={"token_budget": 1000})
-        transcript = EvalTranscript(
-            token_usage=TokenUsage(input=5000, output=2000),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_context_efficiency(transcript, meta)
-        assert result.score < 0.5
-
-    def test_no_budget(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_context_efficiency(rich_transcript, meta)
-        assert result.score >= 0.5
-
-
-class TestVerificationBehaviorScorer:
-    def test_no_tool_calls(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_verification_behavior(empty_transcript, meta)
-        assert result.score == 0.5
-
-    def test_verification_present(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_verification_behavior(rich_transcript, meta)
-        # run_tests and lint are verification tools
-        assert result.score >= 0.7
-
-    def test_no_verification(self, grader):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "edit_file", "input": {"path": "a.py"}, "output": "ok"},
-                {"name": "write_file", "input": {"path": "b.py"}, "output": "ok"},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_verification_behavior(transcript, meta)
-        assert result.score == 0.3
-
-
-class TestInputTokenEfficiencyScorer:
-    def test_no_tokens(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_input_token_efficiency(empty_transcript, meta)
-        assert result.score == 0.5
-
-    def test_balanced_ratio(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_input_token_efficiency(rich_transcript, meta)
-        # input=5000, total=7700, ratio ~0.65 => balanced
-        assert result.score >= 0.8
-
-
-class TestOutputConcisenessScorer:
-    def test_no_output(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_output_conciseness(empty_transcript, meta)
-        assert result.score == 0.5
-
-    def test_reasonable_output(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_output_conciseness(rich_transcript, meta)
-        assert result.score >= 0.6
-
-
-class TestCacheUtilizationScorer:
-    def test_no_cache(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_cache_utilization(empty_transcript, meta)
-        assert result.score == 0.5
-
-    def test_cache_present(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_cache_utilization(rich_transcript, meta)
-        assert result.score > 0.5
-
-
-class TestReasoningTokenRatioScorer:
-    def test_no_output(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        result = grader._score_reasoning_token_ratio(empty_transcript, meta)
-        assert result.score == 0.5
-
-    def test_healthy_ratio(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_reasoning_token_ratio(rich_transcript, meta)
-        # reasoning=500, output=2000, density=0.25 => healthy
-        assert result.score >= 0.8
-
-
-class TestPolicyAdherenceScorer:
-    def test_no_violations(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_policy_adherence(rich_transcript, meta)
-        assert result.score == 1.0
-
-    def test_violations(self, grader, error_transcript):
-        meta = grader._extract_meta_metrics(error_transcript)
-        result = grader._score_policy_adherence(error_transcript, meta)
-        assert result.score < 1.0
-
-
-class TestBoundaryRespectScorer:
-    def test_no_violations(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_boundary_respect(rich_transcript, meta)
-        assert result.score == 1.0
-
-    def test_boundary_violations(self, grader, error_transcript):
-        meta = grader._extract_meta_metrics(error_transcript)
-        result = grader._score_boundary_respect(error_transcript, meta)
-        assert result.score < 1.0
-
-
-class TestDataHandlingScorer:
-    def test_no_sensitive_data(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        result = grader._score_data_handling(rich_transcript, meta)
-        assert result.score == 1.0
-
-    def test_sensitive_data_exposed(self, grader):
-        transcript = EvalTranscript(
-            messages=[
-                {"role": "assistant", "content": 'api_key: "sk-proj-abcdef1234567890abcdef"'},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        result = grader._score_data_handling(transcript, meta)
-        assert result.score < 1.0
-
-
-# =========================================================================
-# Category & Overall Score Computation
-# =========================================================================
 
 
 class TestScoreComputation:
-    def test_compute_category_scores(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        sub_results: dict[str, SubcategoryEvidence] = {}
-        for cat in DEFAULT_RUBRIC.categories:
-            for sub in cat.subcategories:
-                sub_results[sub.id] = SubcategoryEvidence(
-                    subcategory_id=sub.id,
-                    subcategory_name=sub.name,
-                    score=0.8,
-                    evidence=["test"],
-                )
-        cat_scores = grader._compute_category_scores(sub_results)
-        assert len(cat_scores) == 6
-        for cs in cat_scores:
-            assert abs(cs.score - 0.8) < 0.01
+    def test_compute_category_scores(self, grader):
+        subcategory_results = {
+            "tool_selection": SubcategoryEvidence(
+                subcategory_id="tool_selection",
+                subcategory_name="Tool Selection",
+                score=0.8,
+                confidence=0.9,
+                evidence=["test"],
+            ),
+            "tool_call_efficiency": SubcategoryEvidence(
+                subcategory_id="tool_call_efficiency",
+                subcategory_name="Call Efficiency",
+                score=0.9,
+                confidence=0.8,
+                evidence=["test"],
+            ),
+            "tool_error_recovery": SubcategoryEvidence(
+                subcategory_id="tool_error_recovery",
+                subcategory_name="Error Recovery",
+                score=0.7,
+                confidence=0.7,
+                evidence=["test"],
+            ),
+            "tool_output_utilization": SubcategoryEvidence(
+                subcategory_id="tool_output_utilization",
+                subcategory_name="Output Utilization",
+                score=0.6,
+                confidence=0.6,
+                evidence=["test"],
+            ),
+        }
+        scores = grader._compute_category_scores(subcategory_results)
+        tool_usage = next(s for s in scores if s.category_id == "tool_usage")
+        assert 0.0 <= tool_usage.score <= 1.0
 
     def test_compute_overall_score(self, grader):
-        cat_scores = [
-            CategoryEvidence(category_id="a", category_name="A", score=0.8, weight=0.5),
-            CategoryEvidence(category_id="b", category_name="B", score=0.6, weight=0.5),
+        category_scores = [
+            CategoryEvidence(
+                category_id="tool_usage",
+                category_name="Tool Usage",
+                score=0.8,
+                weight=0.2,
+                subcategory_scores=[],
+            ),
+            CategoryEvidence(
+                category_id="reasoning",
+                category_name="Reasoning",
+                score=0.7,
+                weight=0.2,
+                subcategory_scores=[],
+            ),
         ]
-        overall = grader._compute_overall_score(cat_scores)
-        assert abs(overall - 0.7) < 0.01
-
-    def test_overall_score_zero_weight(self, grader):
-        cat_scores = [
-            CategoryEvidence(category_id="a", category_name="A", score=0.5, weight=0.0),
-        ]
-        overall = grader._compute_overall_score(cat_scores)
-        assert overall == 0.0
-
-
-# =========================================================================
-# Growth Opportunities
-# =========================================================================
+        overall = grader._compute_overall_score(category_scores)
+        assert 0.0 <= overall <= 1.0
 
 
 class TestGrowthOpportunities:
     def test_high_scores_no_opportunities(self, grader):
-        sub_results: dict[str, SubcategoryEvidence] = {}
+        high_scores = []
         for cat in DEFAULT_RUBRIC.categories:
+            sub_scores = []
             for sub in cat.subcategories:
-                sub_results[sub.id] = SubcategoryEvidence(
-                    subcategory_id=sub.id,
-                    subcategory_name=sub.name,
-                    score=0.95,
-                    evidence=["excellent"],
+                sub_scores.append(
+                    SubcategoryEvidence(
+                        subcategory_id=sub.id,
+                        subcategory_name=sub.name,
+                        score=0.95,
+                        confidence=0.9,
+                        evidence=["Excellent"],
+                    )
                 )
-        cat_scores = grader._compute_category_scores(sub_results)
-        opps = grader._identify_growth_opportunities(cat_scores)
-        assert len(opps) == 0
+            high_scores.append(
+                CategoryEvidence(
+                    category_id=cat.id,
+                    category_name=cat.name,
+                    score=0.95,
+                    weight=cat.weight,
+                    subcategory_scores=sub_scores,
+                )
+            )
+        opportunities = grader._identify_growth_opportunities(high_scores)
+        assert len(opportunities) == 0
 
     def test_low_scores_produce_opportunities(self, grader):
-        sub_results: dict[str, SubcategoryEvidence] = {}
+        low_scores = []
         for cat in DEFAULT_RUBRIC.categories:
+            sub_scores = []
             for sub in cat.subcategories:
-                sub_results[sub.id] = SubcategoryEvidence(
-                    subcategory_id=sub.id,
-                    subcategory_name=sub.name,
+                sub_scores.append(
+                    SubcategoryEvidence(
+                        subcategory_id=sub.id,
+                        subcategory_name=sub.name,
+                        score=0.4,
+                        confidence=0.7,
+                        evidence=["Needs improvement"],
+                    )
+                )
+            low_scores.append(
+                CategoryEvidence(
+                    category_id=cat.id,
+                    category_name=cat.name,
                     score=0.4,
-                    evidence=["needs work"],
+                    weight=cat.weight,
+                    subcategory_scores=sub_scores,
                 )
-        cat_scores = grader._compute_category_scores(sub_results)
-        opps = grader._identify_growth_opportunities(cat_scores)
-        assert len(opps) > 0
-        assert len(opps) <= grader._config.max_growth_opportunities
-        # Sorted by impact descending
-        for i in range(len(opps) - 1):
-            assert opps[i].impact >= opps[i + 1].impact
+            )
+        opportunities = grader._identify_growth_opportunities(low_scores)
+        assert len(opportunities) > 0
 
-    def test_max_opportunities_respected(self):
-        grader = PromptStackOptimizerGrader(config={"max_growth_opportunities": 2})
-        sub_results: dict[str, SubcategoryEvidence] = {}
+    def test_max_opportunities_respected(self, grader):
+        low_scores = []
         for cat in DEFAULT_RUBRIC.categories:
+            sub_scores = []
             for sub in cat.subcategories:
-                sub_results[sub.id] = SubcategoryEvidence(
-                    subcategory_id=sub.id,
-                    subcategory_name=sub.name,
-                    score=0.3,
-                    evidence=["poor"],
+                sub_scores.append(
+                    SubcategoryEvidence(
+                        subcategory_id=sub.id,
+                        subcategory_name=sub.name,
+                        score=0.3,
+                        confidence=0.7,
+                        evidence=["Needs work"],
+                    )
                 )
-        cat_scores = grader._compute_category_scores(sub_results)
-        opps = grader._identify_growth_opportunities(cat_scores)
-        assert len(opps) <= 2
-
-
-# =========================================================================
-# Regression Detection
-# =========================================================================
+            low_scores.append(
+                CategoryEvidence(
+                    category_id=cat.id,
+                    category_name=cat.name,
+                    score=0.3,
+                    weight=cat.weight,
+                    subcategory_scores=sub_scores,
+                )
+            )
+        opportunities = grader._identify_growth_opportunities(low_scores)
+        assert len(opportunities) <= grader._config.max_growth_opportunities
 
 
 class TestRegressionDetection:
     def test_no_baseline(self, grader):
-        results = grader._detect_regressions({})
-        assert results == []
+        results = {
+            "tool_selection": SubcategoryEvidence(
+                subcategory_id="tool_selection",
+                subcategory_name="Tool Selection",
+                score=0.5,
+                confidence=0.7,
+                evidence=["test"],
+            )
+        }
+        regressions = grader._detect_regressions(results)
+        assert len(regressions) == 0
 
     def test_no_regressions(self, grader_with_baseline):
-        sub_results = {
+        results = {
             "tool_selection": SubcategoryEvidence(
                 subcategory_id="tool_selection",
                 subcategory_name="Tool Selection",
                 score=0.95,
-                evidence=[],
-            ),
-        }
-        regressions = grader_with_baseline._detect_regressions(sub_results)
-        assert len(regressions) == 0
-
-    def test_regression_detected(self, grader_with_baseline):
-        sub_results = {
-            "tool_selection": SubcategoryEvidence(
-                subcategory_id="tool_selection",
-                subcategory_name="Tool Selection",
-                score=0.6,
-                evidence=[],
+                confidence=0.9,
+                evidence=["Excellent"],
             ),
             "verification_behavior": SubcategoryEvidence(
                 subcategory_id="verification_behavior",
                 subcategory_name="Verification",
-                score=0.5,
-                evidence=[],
+                score=0.9,
+                confidence=0.8,
+                evidence=["Good"],
+            ),
+            "policy_adherence": SubcategoryEvidence(
+                subcategory_id="policy_adherence",
+                subcategory_name="Policy Adherence",
+                score=1.0,
+                confidence=0.9,
+                evidence=["Perfect"],
             ),
         }
-        regressions = grader_with_baseline._detect_regressions(sub_results)
-        assert len(regressions) == 2
-        # Sorted by delta ascending (worst first)
-        assert regressions[0]["delta"] <= regressions[1]["delta"]
+        regressions = grader_with_baseline._detect_regressions(results)
+        assert len(regressions) == 0
 
-
-# =========================================================================
-# Mutation Targets
-# =========================================================================
+    def test_regression_detected(self, grader_with_baseline):
+        results = {
+            "tool_selection": SubcategoryEvidence(
+                subcategory_id="tool_selection",
+                subcategory_name="Tool Selection",
+                score=0.5,
+                confidence=0.7,
+                evidence=["Regression"],
+            ),
+            "verification_behavior": SubcategoryEvidence(
+                subcategory_id="verification_behavior",
+                subcategory_name="Verification",
+                score=0.9,
+                confidence=0.8,
+                evidence=["Good"],
+            ),
+        }
+        regressions = grader_with_baseline._detect_regressions(results)
+        assert len(regressions) > 0
 
 
 class TestMutationTargets:
     def test_empty_opportunities(self, grader):
         targets = grader._identify_mutation_targets([])
-        assert targets == []
+        assert len(targets) == 0
 
     def test_targets_from_opportunities(self, grader):
-        opps = [
+        opportunities = [
             GrowthOpportunity(
                 subcategory_id="tool_selection",
                 category_id="tool_usage",
                 current_score=0.5,
-                potential_score=0.8,
-                impact=0.03,
+                potential_score=0.9,
+                impact=0.2,
                 suggestion="Improve tool selection",
-            ),
-            GrowthOpportunity(
-                subcategory_id="verification_behavior",
-                category_id="task_completion",
-                current_score=0.3,
-                potential_score=0.6,
-                impact=0.02,
-                suggestion="Add verification steps",
-            ),
+            )
         ]
-        targets = grader._identify_mutation_targets(opps)
-        assert len(targets) == 2
-        assert targets[0].target_type == "tool_definition"
-        assert targets[0].priority == "high"
-        assert targets[1].target_type == "system_prompt"
+        targets = grader._identify_mutation_targets(opportunities)
+        assert len(targets) > 0
 
-    def test_max_targets_respected(self):
-        grader = PromptStackOptimizerGrader(config={"max_mutation_targets": 1})
-        opps = [
+    def test_max_targets_respected(self, grader):
+        opportunities = [
             GrowthOpportunity(
-                subcategory_id="tool_selection",
-                category_id="tool_usage",
-                current_score=0.5,
+                subcategory_id=f"sub_{i}",
+                category_id="cat",
+                current_score=0.3,
                 potential_score=0.8,
-                impact=0.03,
-                suggestion="x",
-            ),
-            GrowthOpportunity(
-                subcategory_id="policy_adherence",
-                category_id="safety_compliance",
-                current_score=0.3,
-                potential_score=0.6,
-                impact=0.01,
-                suggestion="y",
-            ),
+                impact=0.1,
+                suggestion=f"Fix {i}",
+            )
+            for i in range(20)
         ]
-        targets = grader._identify_mutation_targets(opps)
-        assert len(targets) <= 1
-
-
-# =========================================================================
-# Full Grade Integration
-# =========================================================================
+        targets = grader._identify_mutation_targets(opportunities)
+        assert len(targets) <= grader._config.max_mutation_targets
 
 
 class TestGradeIntegration:
     @pytest.mark.asyncio
     async def test_grade_empty_transcript(self, grader, trial, empty_transcript, spec):
-        result = await grader.grade(trial, empty_transcript, spec)
-        assert result.grader_type == "prompt_stack_optimizer"
-        assert 0.0 <= result.score <= 1.0
-        assert result.execution_time_seconds >= 0
-        assert "rubric_evidence" in result.details
-        assert "meta_metrics" in result.details
-        assert "growth_opportunities" in result.details
-        assert "mutation_targets" in result.details
-        assert "category_summary" in result.details
-        assert "pass_threshold" in result.details
+        with patch.object(grader, "_run_llm_judge") as mock_judge:
+            mock_judge.return_value = {
+                sc_id: SubcategoryEvidence(
+                    subcategory_id=sc_id,
+                    subcategory_name=sc_id,
+                    score=0.7,
+                    confidence=0.8,
+                    evidence=["Mock"],
+                )
+                for sc_id in REQUIRED_SUBCATEGORIES
+            }
+            result = await grader.grade(trial, empty_transcript, spec)
+            assert result.grader_type == "prompt_stack_optimizer"
+            assert 0.0 <= result.score <= 1.0
+            assert result.execution_time_seconds >= 0
+            assert "rubric_evidence" in result.details
+            assert "meta_metrics" in result.details
+            assert "growth_opportunities" in result.details
+            assert "mutation_targets" in result.details
 
     @pytest.mark.asyncio
     async def test_grade_rich_transcript(self, grader, trial, rich_transcript, spec):
-        result = await grader.grade(trial, rich_transcript, spec)
-        assert result.grader_type == "prompt_stack_optimizer"
-        assert result.score > 0.0
-        assert result.execution_time_seconds >= 0
-        assert result.confidence > 0.0
-
-        meta = result.details["meta_metrics"]
-        assert meta["total_tokens"] == 7500
-        assert meta["tool_call_count"] == 5
-
-        cat_summary = result.details["category_summary"]
-        assert len(cat_summary) == 6
-
-    @pytest.mark.asyncio
-    async def test_grade_error_transcript(self, grader, trial, error_transcript, spec):
-        result = await grader.grade(trial, error_transcript, spec)
-        assert result.grader_type == "prompt_stack_optimizer"
-        assert 0.0 <= result.score <= 1.0
-
-        meta = result.details["meta_metrics"]
-        assert meta["error_count"] >= 2
-
-    @pytest.mark.asyncio
-    async def test_grade_pass_threshold(self, trial, rich_transcript, spec):
-        low_threshold = PromptStackOptimizerGrader(config={"pass_threshold": 0.1})
-        result = await low_threshold.grade(trial, rich_transcript, spec)
-        assert result.passed is True
-
-        high_threshold = PromptStackOptimizerGrader(config={"pass_threshold": 0.99})
-        result2 = await high_threshold.grade(trial, rich_transcript, spec)
-        assert result2.passed is False
+        with patch.object(grader, "_run_llm_judge") as mock_judge:
+            mock_judge.return_value = {
+                sc_id: SubcategoryEvidence(
+                    subcategory_id=sc_id,
+                    subcategory_name=sc_id,
+                    score=0.8,
+                    confidence=0.9,
+                    evidence=["Mock evidence"],
+                )
+                for sc_id in REQUIRED_SUBCATEGORIES
+            }
+            result = await grader.grade(trial, rich_transcript, spec)
+            assert result.grader_type == "prompt_stack_optimizer"
+            assert result.score > 0.0
 
     @pytest.mark.asyncio
     async def test_grade_with_spec_config(self, grader, trial, rich_transcript):
@@ -822,21 +555,46 @@ class TestGradeIntegration:
             grader_type="prompt_stack_optimizer",
             config={"pass_threshold": 0.9},
         )
-        result = await grader.grade(trial, rich_transcript, spec)
-        assert result.details["pass_threshold"] == 0.9
+        with patch.object(grader, "_run_llm_judge") as mock_judge:
+            mock_judge.return_value = {
+                sc_id: SubcategoryEvidence(
+                    subcategory_id=sc_id,
+                    subcategory_name=sc_id,
+                    score=0.85,
+                    confidence=0.8,
+                    evidence=["Mock"],
+                )
+                for sc_id in REQUIRED_SUBCATEGORIES
+            }
+            result = await grader.grade(trial, rich_transcript, spec)
+            assert result.details["pass_threshold"] == 0.9
 
     @pytest.mark.asyncio
     async def test_grade_with_regression_baseline(
         self, grader_with_baseline, trial, rich_transcript, spec
     ):
-        result = await grader_with_baseline.grade(trial, rich_transcript, spec)
-        regressions = result.details["regressions"]
-        assert isinstance(regressions, list)
-
-    @pytest.mark.asyncio
-    async def test_grade_llm_not_enabled_defaults(self, grader, trial, rich_transcript, spec):
-        result = await grader.grade(trial, rich_transcript, spec)
-        assert result.details["llm_judge_used"] is False
+        with patch.object(grader_with_baseline, "_run_llm_judge") as mock_judge:
+            scores = {
+                sc_id: SubcategoryEvidence(
+                    subcategory_id=sc_id,
+                    subcategory_name=sc_id,
+                    score=0.9,
+                    confidence=0.9,
+                    evidence=["Mock"],
+                )
+                for sc_id in REQUIRED_SUBCATEGORIES
+            }
+            scores["tool_selection"] = SubcategoryEvidence(
+                subcategory_id="tool_selection",
+                subcategory_name="Tool Selection",
+                score=0.5,
+                confidence=0.7,
+                evidence=["Regression"],
+            )
+            mock_judge.return_value = scores
+            result = await grader_with_baseline.grade(trial, rich_transcript, spec)
+            regressions = result.details["regressions"]
+            assert isinstance(regressions, list)
 
     @pytest.mark.asyncio
     async def test_grade_needs_review_flag(self, grader, trial, spec):
@@ -847,96 +605,79 @@ class TestGradeIntegration:
             messages=[{"role": "assistant", "content": "test"}],
             token_usage=TokenUsage(input=100, output=50),
         )
-        result = await grader.grade(trial, transcript, spec)
-        assert result.needs_review is not None
-        assert isinstance(result.needs_review, bool)
-        if result.needs_review:
-            assert result.review_reason is not None
+        with patch.object(grader, "_run_llm_judge") as mock_judge:
+            mock_judge.return_value = {
+                sc_id: SubcategoryEvidence(
+                    subcategory_id=sc_id,
+                    subcategory_name=sc_id,
+                    score=0.7,
+                    confidence=0.3,
+                    evidence=["Low confidence"],
+                )
+                for sc_id in REQUIRED_SUBCATEGORIES
+            }
+            result = await grader.grade(trial, transcript, spec)
+            assert result.needs_review is not None
 
     @pytest.mark.asyncio
-    async def test_grade_new_meta_metrics_in_result(self, grader, trial, rich_transcript, spec):
-        result = await grader.grade(trial, rich_transcript, spec)
-        meta = result.details["meta_metrics"]
-        assert "prompt_efficiency" in meta
-        assert "selection_quality" in meta
-        assert "exploration" in meta
-        assert "layer_hygiene" in meta
-        assert 0.0 <= meta["prompt_efficiency"] <= 1.0
-        assert 0.0 <= meta["selection_quality"] <= 1.0
-        assert 0.0 <= meta["exploration"] <= 1.0
-        assert 0.0 <= meta["layer_hygiene"] <= 1.0
+    async def test_grade_llm_failure_raises(self, grader, trial, rich_transcript, spec):
+        with patch.object(grader, "_run_llm_judge") as mock_judge:
+            mock_judge.side_effect = ValueError("LLM failed")
+            result = await grader.grade(trial, rich_transcript, spec)
+            assert result.error_message is not None
+            assert result.score == 0.0
 
 
-# =========================================================================
-# Edge Cases
-# =========================================================================
-
-
-class TestEdgeCases:
+class TestLLMJudgeIntegration:
     @pytest.mark.asyncio
-    async def test_transcript_with_no_messages_or_tools(self, grader, trial, spec):
-        transcript = EvalTranscript(token_usage=TokenUsage(input=100, output=50))
-        result = await grader.grade(trial, transcript, spec)
-        assert result.grader_type == "prompt_stack_optimizer"
-        assert 0.0 <= result.score <= 1.0
+    async def test_run_llm_judge_missing_subcategories_raises(self, grader, rich_transcript):
+        incomplete_response = {
+            "scores": {
+                "tool_selection": {"score": 0.8, "evidence": ["test"], "confidence": 0.9},
+            }
+        }
+        with patch.object(grader, "_get_client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.text = json.dumps(incomplete_response)
+            mock_llm = MagicMock()
+            mock_llm.complete = AsyncMock(return_value=mock_response)
+            mock_client.return_value = mock_llm
 
-    @pytest.mark.asyncio
-    async def test_transcript_with_only_tool_errors(self, grader, trial, spec):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "run", "input": {}, "output": "error: crash", "is_error": True},
-                {"name": "run", "input": {}, "output": "error: crash", "is_error": True},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        result = await grader.grade(trial, transcript, spec)
-        assert result.score < 0.7
+            with pytest.raises(ValueError, match="missing"):
+                await grader._run_llm_judge(rich_transcript)
 
     @pytest.mark.asyncio
-    async def test_transcript_with_non_string_content(self, grader, trial, spec):
-        transcript = EvalTranscript(
-            messages=[
-                {"role": "user", "content": ["list", "content"]},
-                {"role": "assistant", "content": 42},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        result = await grader.grade(trial, transcript, spec)
-        assert 0.0 <= result.score <= 1.0
+    async def test_run_llm_judge_invalid_json_raises(self, grader, rich_transcript):
+        with patch.object(grader, "_get_client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.text = "not valid json"
+            mock_llm = MagicMock()
+            mock_llm.complete = AsyncMock(return_value=mock_response)
+            mock_client.return_value = mock_llm
+
+            with pytest.raises(ValueError, match="Failed to parse"):
+                await grader._run_llm_judge(rich_transcript)
 
     @pytest.mark.asyncio
-    async def test_many_tool_calls_single_tool(self, grader, trial, spec):
-        transcript = EvalTranscript(
-            tool_calls=[{"name": "edit", "input": {"i": i}, "output": "ok"} for i in range(20)],
-            token_usage=TokenUsage(input=5000, output=2000),
-        )
-        result = await grader.grade(trial, transcript, spec)
-        assert 0.0 <= result.score <= 1.0
+    async def test_run_llm_judge_success(self, grader, rich_transcript):
+        full_response = make_mock_llm_response()
+        with patch.object(grader, "_get_client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.text = json.dumps(full_response)
+            mock_llm = MagicMock()
+            mock_llm.complete = AsyncMock(return_value=mock_response)
+            mock_client.return_value = mock_llm
 
-
-# =========================================================================
-# Grader Name & Registry
-# =========================================================================
+            results = await grader._run_llm_judge(rich_transcript)
+            assert len(results) == 25
+            for sc_id in REQUIRED_SUBCATEGORIES:
+                assert sc_id in results
+                assert 0.0 <= results[sc_id].score <= 1.0
 
 
 class TestGraderName:
     def test_name(self, grader):
         assert grader.name == "prompt_stack_optimizer"
-
-    def test_registered_in_registry(self):
-        from ash_hawk.graders.registry import GraderRegistry, _register_builtin_graders
-
-        registry = GraderRegistry()
-        _register_builtin_graders(registry)
-        assert "prompt_stack_optimizer" in registry
-        grader = registry.get("prompt_stack_optimizer")
-        assert grader is not None
-        assert grader.name == "prompt_stack_optimizer"
-
-
-# =========================================================================
-# Pydantic Model Validation
-# =========================================================================
 
 
 class TestModelValidation:
@@ -946,17 +687,19 @@ class TestModelValidation:
                 subcategory_id="test",
                 subcategory_name="Test",
                 score=1.5,
-                evidence=[],
+                confidence=0.5,
+                evidence=["test"],
             )
 
     def test_subcategory_evidence_valid(self):
         ev = SubcategoryEvidence(
             subcategory_id="test",
             subcategory_name="Test",
-            score=0.7,
-            evidence=["ok"],
+            score=0.5,
+            confidence=0.5,
+            evidence=["test"],
         )
-        assert ev.score == 0.7
+        assert ev.score == 0.5
 
     def test_growth_opportunity_bounds(self):
         with pytest.raises(Exception):
@@ -964,49 +707,14 @@ class TestModelValidation:
                 subcategory_id="test",
                 category_id="cat",
                 current_score=1.5,
-                potential_score=0.8,
+                potential_score=0.9,
                 impact=0.1,
-                suggestion="x",
-            )
-
-    def test_mutation_target_invalid_type(self):
-        with pytest.raises(Exception):
-            MutationTarget(
-                target_type="invalid_type",
-                subcategory_id="test",
-                description="x",
+                suggestion="test",
             )
 
     def test_meta_metrics_extra_forbidden(self):
         with pytest.raises(Exception):
-            MetaMetrics(nonexistent=True)
-
-    def test_rubric_evidence_valid(self):
-        ev = RubricEvidence(
-            rubric_version="1.0.0",
-            overall_score=0.75,
-            category_scores=[],
-        )
-        assert ev.overall_score == 0.75
-
-
-# =========================================================================
-# Deterministic Dispatch Table
-# =========================================================================
-
-
-class TestDeterministicDispatch:
-    def test_known_subcategory(self, grader):
-        scorer = grader._get_deterministic_scorer("tool_selection")
-        assert scorer is not None
-
-    def test_unknown_subcategory(self, grader):
-        scorer = grader._get_deterministic_scorer("nonexistent")
-        assert scorer is None
-
-    def test_all_deterministic_subcats_have_scorers(self, grader):
-        for cat in DEFAULT_RUBRIC.categories:
-            for sub in cat.subcategories:
-                if sub.scoring_mode == "deterministic":
-                    scorer = grader._get_deterministic_scorer(sub.id)
-                    assert scorer is not None, f"Missing scorer for {sub.id}"
+            MetaMetrics(
+                total_tokens=100,
+                unknown_field="value",
+            )

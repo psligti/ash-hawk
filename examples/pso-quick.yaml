@@ -1,0 +1,22 @@
+id: pso-quick-test
+name: PSO Quick Test
+description: Quick test of prompt_stack_optimizer grader (LLM-only)
+version: 1.0.0
+
+agent:
+  name: build
+
+tasks:
+  - id: code-task
+    description: Write a simple function with verification
+    input: |
+      Write a Python function `add(a: int, b: int) -> int` that returns the sum of two numbers.
+      Include a docstring. After writing, verify it works by reading the file back.
+    grader_specs:
+      - grader_type: prompt_stack_optimizer
+        config:
+          pass_threshold: 0.5
+          token_budget: 5000
+          max_tool_calls: 15
+    timeout_seconds: 120
+    tags: [test, pso]
