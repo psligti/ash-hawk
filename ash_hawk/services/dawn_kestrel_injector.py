@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -190,6 +191,24 @@ class DawnKestrelInjector:
         self._current_skill_name = skill_name
         logger.info(f"Saved skill content to {path}")
         return path
+
+    def delete_skill_content(self, skill_name: str) -> bool:
+        """Delete a skill directory and its contents.
+
+        Args:
+            skill_name: Name of the skill to delete.
+
+        Returns:
+            True if deleted, False if it didn't exist.
+        """
+        path = self._resolve_path(SKILL_PATH_TEMPLATE, skill_name)
+        skill_dir = path.parent
+        if skill_dir.exists() and skill_dir.is_dir():
+            shutil.rmtree(skill_dir)
+            self.invalidate_cache(path)
+            logger.info(f"Deleted skill directory: {skill_dir}")
+            return True
+        return False
 
     def save_tool_content(self, tool_name: str, content: str) -> Path:
         path = self._resolve_path(TOOL_PATH_TEMPLATE, tool_name)
