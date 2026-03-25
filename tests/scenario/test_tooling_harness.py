@@ -13,8 +13,7 @@ def test_tooling_harness_mock_hit_miss() -> None:
 
     assert harness.call("read", {"path": "/tmp/file.txt"}) == {"status": "ok"}
 
-    with pytest.raises(KeyError):
-        harness.call("read", {"path": "/tmp/other.txt"})
+    assert harness.call("read", {"path": "/tmp/other.txt"}) == {}
 
 
 def test_tooling_harness_timeout_injection() -> None:

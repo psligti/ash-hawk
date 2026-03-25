@@ -49,7 +49,7 @@ class ScenarioAgentRunner:
     def __init__(
         self,
         adapter_registry: ScenarioAdapterRegistry | None = None,
-        tooling_mode: Literal["mock", "record", "replay"] = "mock",
+        tooling_mode: Literal["mock", "record", "replay"] = "record",
         artifacts_root: Path | None = None,
         injector: Any | None = None,
     ) -> None:
