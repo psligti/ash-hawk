@@ -62,6 +62,12 @@ class ImprovementTarget:
             return self.injector.save_skill_content(self.name, content)
         return self.injector.save_tool_content(self.name, content)
 
+    def delete_content(self) -> bool:
+        """Delete this target's content. Only works for skills currently."""
+        if self.target_type == TargetType.SKILL:
+            return self.injector.delete_skill_content(self.name)
+        return False
+
 
 SKILL_SEARCH_DIRS = [
     DAWN_KESTREL_DIR / "skills",
@@ -169,6 +175,52 @@ def _find_skill_file(project_root: Path) -> Path | None:
     return None
 
 
+def _discover_all_skills(project_root: Path) -> list[Path]:
+    skill_files: list[Path] = []
+    for search_dir in SKILL_SEARCH_DIRS:
+        skills_path = project_root / search_dir
+        if skills_path.exists() and skills_path.is_dir():
+            for skill_dir in sorted(skills_path.iterdir()):
+                if skill_dir.is_dir():
+                    skill_file = skill_dir / "SKILL.md"
+                    if skill_file.exists():
+                        skill_files.append(skill_file)
+    return skill_files
+
+
+def _discover_all_tools(project_root: Path) -> list[Path]:
+    tool_files: list[Path] = []
+    for search_dir in TOOL_SEARCH_DIRS:
+        tools_path = project_root / search_dir
+        if tools_path.exists() and tools_path.is_dir():
+            for tool_dir in sorted(tools_path.iterdir()):
+                if tool_dir.is_dir():
+                    tool_file = tool_dir / "TOOL.md"
+                    if tool_file.exists():
+                        tool_files.append(tool_file)
+    return tool_files
+
+
+def _load_existing_skill_names(project_root: Path) -> list[str]:
+    skill_names: list[str] = []
+    for search_dir in SKILL_SEARCH_DIRS:
+        skills_path = project_root / search_dir
+        if skills_path.exists() and skills_path.is_dir():
+            for skill_dir in sorted(skills_path.iterdir()):
+                if skill_dir.is_dir():
+                    skill_file = skill_dir / "SKILL.md"
+                    if skill_file.exists():
+                        skill_names.append(skill_dir.name)
+    return skill_names
+
+
+def _discover_all_targets(project_root: Path) -> list[tuple[TargetType, Path]]:
+    targets: list[tuple[TargetType, Path]] = []
+    targets.extend((TargetType.SKILL, p) for p in _discover_all_skills(project_root))
+    targets.extend((TargetType.TOOL, p) for p in _discover_all_tools(project_root))
+    return targets
+
+
 def _find_primary_tool(project_root: Path, allowed_tools: list[str]) -> Path | None:
     if not allowed_tools:
         return None
@@ -204,6 +256,37 @@ def _infer_agent_name(target: Path | ImprovementTarget) -> str:
     return "unknown"
 
 
+def _create_target_from_path(
+    target_path: Path, project_root: Path, strategy: Any = None
+) -> ImprovementTarget | None:
+    resolved = target_path.resolve()
+    parts = resolved.parts
+
+    target_type = TargetType.SKILL
+    for p in parts:
+        if p == "skills":
+            target_type = TargetType.SKILL
+            break
+        elif p == "tools":
+            target_type = TargetType.TOOL
+            break
+        elif p == "agents":
+            target_type = TargetType.AGENT
+            break
+
+    injector = DawnKestrelInjector(project_root=project_root, strategy=strategy)
+    name = _infer_name_from_path(resolved)
+    if target_type == TargetType.SKILL:
+        injector.current_skill_name = name
+
+    return ImprovementTarget(
+        target_type=target_type,
+        name=name,
+        discovered_path=resolved,
+        injector=injector,
+    )
+
+
 async def run_cycle(
     scenarios: list[Path],
     iterations: int = 100,
@@ -213,6 +296,7 @@ async def run_cycle(
     project_root: Path | None = None,
     strategy_name: str | None = None,
     use_policy_adaptation: bool = False,
+    explicit_targets: list[Path] | None = None,
 ) -> CycleResult:
     if llm_client is None:
         llm_client = _create_llm_client()
@@ -270,11 +354,19 @@ async def run_cycle(
         status=CycleStatus.RUNNING,
     )
     console.rule("[bold]Auto-Research Cycle[/bold]")
+    console.print(f"[dim]Agent: {_infer_agent_name(target)}[/dim]")
+    console.print(f"[dim]Skills: {len(_discover_all_skills(project_root or Path.cwd()))}[/dim]")
+    console.print(f"[dim]Tools: {len(_discover_all_tools(project_root or Path.cwd()))}[/dim]")
     console.print(f"[dim]Target: {target.structured_path} ({target.target_type.value})[/dim]")
     console.print(f"[dim]Name: {target.name}[/dim]")
     console.print(f"[dim]Scenarios: {len(scenarios)}[/dim]")
     console.print(f"[dim]Iterations: {iterations}[/dim]")
     console.print(f"[dim]Threshold: {threshold}[/dim]")
+
+    existing_skills = _load_existing_skill_names(project_root or Path.cwd())
+    if existing_skills:
+        console.print(f"[dim]Existing skills for context: {len(existing_skills)}[/dim]")
+
     try:
         console.print("\n[cyan]Baseline evaluation...[/cyan]")
         score, transcripts_raw = await _run_evaluation(scenarios, storage, injector=target.injector)
@@ -301,6 +393,7 @@ async def run_cycle(
                 threshold=threshold,
                 failed_proposals=failed_proposals,
                 consecutive_failures=consecutive_failures,
+                existing_skills=existing_skills,
             )
             result.iterations.append(iter_result)
             current_score = iter_result.score_after
@@ -350,9 +443,11 @@ async def _run_iteration(
     threshold: float,
     failed_proposals: list[str] | None = None,
     consecutive_failures: int = 0,
+    existing_skills: list[str] | None = None,
 ) -> IterationResult:
-    current_content = target.read_content()
-    if not current_content:
+    original_target = target
+    original_content = target.read_content()
+    if not original_content:
         console.print("  [yellow]No current content to improve[/yellow]")
         return IterationResult(
             iteration_num=iteration_num,
@@ -366,7 +461,12 @@ async def _run_iteration(
         )
     console.print("  [dim]Generating improvement...[/dim]")
     improved = await generate_improvement(
-        llm_client, current_content, transcripts, failed_proposals, consecutive_failures
+        llm_client,
+        original_content,
+        transcripts,
+        failed_proposals,
+        consecutive_failures,
+        existing_skills=existing_skills,
     )
     if not improved:
         console.print("  [yellow]No improvement generated[/yellow]")
@@ -376,17 +476,18 @@ async def _run_iteration(
             score_after=score_before,
         )
     skill_name = extract_skill_name(improved)
+    new_target = target
     if skill_name and skill_name != target.name:
-        target = ImprovementTarget(
+        new_target = ImprovementTarget(
             target_type=TargetType.SKILL,
             name=skill_name,
             discovered_path=target.discovered_path,
             injector=target.injector,
         )
-        target.injector.current_skill_name = skill_name
-    saved_path = target.save_content(improved)
+        new_target.injector.current_skill_name = skill_name
+    saved_path = new_target.save_content(improved)
     score_after, _ = await _run_evaluation(
-        scenarios, storage, show_failure_patterns=False, injector=target.injector
+        scenarios, storage, show_failure_patterns=False, injector=new_target.injector
     )
     delta = score_after - score_before
     applied = delta >= threshold
@@ -401,7 +502,11 @@ async def _run_iteration(
     console.print(f"  [dim]Saved to: {saved_path}[/dim]")
     console.print(f"  [dim]Artifact: {artifact_path}[/dim]")
     if not applied:
-        target.save_content(current_content)
+        if new_target.name != original_target.name:
+            new_target.delete_content()
+            console.print(f"  [dim]Deleted failed skill: {new_target.name}[/dim]")
+        else:
+            original_target.save_content(original_content)
         score_after = score_before
     return IterationResult(
         iteration_num=iteration_num,

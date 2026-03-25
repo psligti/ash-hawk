@@ -21,6 +21,7 @@ ANALYZE_AND_IMPROVE_PROMPT = """You are improving an AI agent skill file.
 ## Recent Agent Behavior (transcript excerpt)
 {transcript_text}
 {history_section}
+{existing_skills_section}
 ## Task
 1. Identify what went wrong (root cause)
 2. What behavior was missing or incorrect
@@ -51,7 +52,8 @@ The `name` field must be:
 - Lowercase alphanumeric with hyphens only (e.g., "goal-tracking", "delegation")
 - Concise but descriptive of the behavior
 - Match the behavior being tested in the scenarios
-- DIFFERENT from any previously tried names listed above"""
+- DIFFERENT from any previously tried names listed above
+- DIFFERENT from any existing skills listed above (reuse or extend existing skills instead of creating duplicates)"""
 
 
 async def generate_improvement(
@@ -60,6 +62,7 @@ async def generate_improvement(
     transcripts: list[EvalTranscript],
     failed_proposals: list[str] | None = None,
     consecutive_failures: int = 0,
+    existing_skills: list[str] | None = None,
 ) -> str | None:
     """Analyze failures and generate improved content.
 
@@ -69,9 +72,10 @@ async def generate_improvement(
         transcripts: Failed run transcripts to analyze
         failed_proposals: List of previously tried proposal names that failed
         consecutive_failures: Number of consecutive failures (for temperature scheduling)
+        existing_skills: List of existing skill names to avoid duplicating
 
     Returns:
-        Improved content string, or None if generation failed
+        Improved content string, or None if generation failed.
     """
     if llm_client is None:
         logger.warning("No LLM client configured")
@@ -83,11 +87,13 @@ async def generate_improvement(
         return None
 
     history_section = _format_history_section(failed_proposals)
+    existing_skills_section = _format_existing_skills_section(existing_skills)
 
     prompt = ANALYZE_AND_IMPROVE_PROMPT.format(
         current_content=current_content[:6000],
         transcript_text=transcript_text[:8000],
         history_section=history_section,
+        existing_skills_section=existing_skills_section,
     )
 
     temperature = min(1.0, 0.3 + (0.1 * consecutive_failures))
@@ -131,6 +137,22 @@ def _format_history_section(failed_proposals: list[str] | None) -> str:
     ]
     for name in names:
         lines.append(f"- {name}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _format_existing_skills_section(existing_skills: list[str] | None) -> str:
+    if not existing_skills:
+        return ""
+    skills = [s for s in existing_skills if s][:20]
+    if not skills:
+        return ""
+    lines = [
+        "\n## Existing Skills (REUSE OR EXTEND THESE)",
+        "These skills already exist. Reuse or extend them instead of creating duplicates:",
+    ]
+    for skill in skills:
+        lines.append(f"- {skill}")
     lines.append("")
     return "\n".join(lines)
 
