@@ -63,6 +63,13 @@ class EvalConfig(pydantic_settings.BaseSettings):
         description="Timeout for LLM requests in auto-research improvement cycle",
     )
 
+    auto_research_llm_max_retries: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum retry attempts for LLM requests in auto-research",
+    )
+
     trial_max_workers: int = Field(
         default=4,
         ge=1,

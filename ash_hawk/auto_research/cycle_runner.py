@@ -112,6 +112,7 @@ def _create_llm_client() -> Any:
             model=account.model,
             api_key=account.api_key.get_secret_value(),
             timeout_seconds=config.auto_research_llm_timeout_seconds,
+            max_retries=config.auto_research_llm_max_retries,
         )
     except ImportError as e:
         logger.warning(f"dawn_kestrel not available: {e}")
