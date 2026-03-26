@@ -148,10 +148,14 @@ class SdkDawnKestrelAdapter:
 
         runner = DawnKestrelAgentRunner(provider=provider, model=model, **runner_kwargs)
 
-        # Extract and set injector from tooling_context if available
         injector = None
         if isinstance(tooling_harness, dict):
             injector = tooling_harness.get("injector")
+
+        skill_name = sut_config.get("skill_name")
+        if injector is not None and skill_name is not None:
+            injector.current_skill_name = skill_name
+
         if injector is not None and hasattr(runner, "set_lesson_injector"):
             runner.set_lesson_injector(injector)
 
