@@ -63,6 +63,7 @@ async def generate_improvement(
     failed_proposals: list[str] | None = None,
     consecutive_failures: int = 0,
     existing_skills: list[str] | None = None,
+    target_type: str | None = None,
 ) -> str | None:
     """Analyze failures and generate improved content.
 
@@ -73,6 +74,7 @@ async def generate_improvement(
         failed_proposals: List of previously tried proposal names that failed
         consecutive_failures: Number of consecutive failures (for temperature scheduling)
         existing_skills: List of existing skill names to avoid duplicating
+        target_type: Type of target being improved (skill, policy, agent, tool)
 
     Returns:
         Improved content string, or None if generation failed.

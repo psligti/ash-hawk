@@ -10,7 +10,7 @@ from typing import Any
 
 from rich.console import Console
 
-from ash_hawk.auto_research.llm import extract_target_name, generate_improvement
+from ash_hawk.auto_research.llm import extract_skill_name, generate_improvement
 from ash_hawk.auto_research.types import (
     CycleResult,
     CycleStatus,
@@ -566,7 +566,7 @@ async def _run_iteration(
             score_before=score_before,
             score_after=score_before,
         )
-    target_name = extract_target_name(improved)
+    target_name = extract_skill_name(improved)
     new_target = target
     if target_name and target_name != target.name:
         new_target = ImprovementTarget(

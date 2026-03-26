@@ -15,6 +15,15 @@ class CycleStatus(StrEnum):
     ERROR = "error"
 
 
+class TargetType(StrEnum):
+    """Type of improvement target."""
+
+    AGENT = "agent"
+    SKILL = "skill"
+    POLICY = "policy"
+    TOOL = "tool"
+
+
 @dataclass
 class IterationResult:
     """Result of a single improvement iteration."""
@@ -39,6 +48,7 @@ class CycleResult:
     agent_name: str
     target_path: str
     scenario_paths: list[str]
+    target_type: TargetType | None = None
     status: CycleStatus = CycleStatus.RUNNING
     iterations: list[IterationResult] = field(default_factory=list)
     initial_score: float = 0.0
@@ -58,4 +68,4 @@ class CycleResult:
         return len(self.iterations)
 
 
-__all__ = ["CycleResult", "CycleStatus", "IterationResult"]
+__all__ = ["CycleResult", "CycleStatus", "IterationResult", "TargetType"]
