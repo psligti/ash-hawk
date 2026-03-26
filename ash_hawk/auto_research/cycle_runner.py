@@ -544,12 +544,17 @@ async def run_cycle(
         async with progress_indicator(
             "Baseline eval", tracker=ProgressTracker(total=len(scenarios), label="scenarios")
         ) as tracker:
-            score, transcripts_raw = await _run_evaluation(
+            score, transcripts_raw, category_scores = await _run_evaluation(
                 scenarios, storage, injector=target.injector
             )
             tracker.current = len(scenarios)
         result.initial_score = score
-        console.print(f"  [dim]Baseline: {score:.3f}[/dim]")
+        if category_scores:
+            weak_cats = sorted(category_scores.items(), key=lambda x: x[1])[:3]
+            weak_str = ", ".join(f"{c}:{s:.2f}" for c, s in weak_cats)
+            console.print(f"  [dim]Baseline: {score:.3f} | Weak: {weak_str}[/dim]")
+        else:
+            console.print(f"  [dim]Baseline: {score:.3f}[/dim]")
 
         heldout_score: float | None = None
         if heldout_scenarios:
@@ -557,7 +562,7 @@ async def run_cycle(
                 "Held-out baseline",
                 tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
             ) as tracker:
-                heldout_score, _ = await _run_evaluation(
+                heldout_score, _, _ = await _run_evaluation(
                     heldout_scenarios, storage / "heldout", injector=target.injector
                 )
                 tracker.current = len(heldout_scenarios)
@@ -586,11 +591,13 @@ async def run_cycle(
                 failed_proposals=failed_proposals,
                 consecutive_failures=consecutive_failures,
                 existing_skills=existing_skills,
+                category_scores=category_scores,
             )
             result.iterations.append(iter_result)
             current_score = iter_result.score_after
             if iter_result.applied:
                 transcripts = None
+                category_scores = iter_result.category_scores or category_scores
                 consecutive_failures = 0
             else:
                 consecutive_failures += 1
@@ -608,7 +615,7 @@ async def run_cycle(
                     "Held-out eval",
                     tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
                 ) as tracker:
-                    heldout_score, _ = await _run_evaluation(
+                    heldout_score, _, _ = await _run_evaluation(
                         heldout_scenarios, storage / "heldout", injector=target.injector
                     )
                     tracker.current = len(heldout_scenarios)
@@ -661,6 +668,7 @@ async def _run_iteration(
     failed_proposals: list[str] | None = None,
     consecutive_failures: int = 0,
     existing_skills: list[str] | None = None,
+    category_scores: dict[str, float] | None = None,
 ) -> IterationResult:
     original_target = target
     original_content = target.read_content()
@@ -674,7 +682,7 @@ async def _run_iteration(
     transcripts = cached_transcripts
     if transcripts is None:
         async with progress_indicator("Eval for transcripts"):
-            _, transcripts = await _run_evaluation(
+            _, transcripts, _ = await _run_evaluation(
                 scenarios, storage, show_failure_patterns=False, injector=target.injector
             )
     async with progress_indicator("LLM generate"):
@@ -686,6 +694,7 @@ async def _run_iteration(
             consecutive_failures,
             existing_skills=existing_skills if target.target_type == TargetType.SKILL else None,
             target_type=target.target_type.value,
+            category_scores=category_scores,
         )
     if not improved:
         console.print("  [yellow]No improvement generated[/yellow]")
@@ -706,8 +715,9 @@ async def _run_iteration(
         if target.target_type == TargetType.SKILL:
             new_target.injector.current_skill_name = target_name
     saved_path = new_target.save_content(improved)
+    new_category_scores: dict[str, float] | None
     async with progress_indicator("Eval proposal"):
-        score_after, _ = await _run_evaluation(
+        score_after, _, new_category_scores = await _run_evaluation(
             scenarios, storage, show_failure_patterns=False, injector=new_target.injector
         )
     delta = score_after - score_before
@@ -733,12 +743,14 @@ async def _run_iteration(
         else:
             original_target.save_content(original_content)
         score_after = score_before
+        new_category_scores = None
     return IterationResult(
         iteration_num=iteration_num,
         score_before=score_before,
         score_after=score_after,
         improvement_text=improvement_text,
         applied=applied,
+        category_scores=new_category_scores,
     )
 
 
@@ -747,7 +759,7 @@ async def _run_evaluation(
     storage: Path,
     show_failure_patterns: bool = True,
     injector: Any | None = None,
-) -> tuple[float, list[Any]]:
+) -> tuple[float, list[Any], dict[str, float]]:
     tracker = get_progress_tracker()
 
     async def on_progress(completed: int, total: int, running_delta: int) -> None:
@@ -769,13 +781,25 @@ async def _run_evaluation(
             on_trial_progress=on_progress,
         )
         transcripts = []
+        category_scores: dict[str, float] = {}
         for trial in summary.trials:
             if trial.result and trial.result.transcript:
                 transcripts.append(trial.result.transcript)
-        return summary.metrics.mean_score, transcripts
+            if trial.result and trial.result.grader_results:
+                for grader_result in trial.result.grader_results:
+                    if isinstance(grader_result, dict):
+                        details = grader_result.get("details", {})
+                        cat_summary = details.get("category_summary", {})
+                        if cat_summary:
+                            for cat_id, score in cat_summary.items():
+                                if cat_id not in category_scores:
+                                    category_scores[cat_id] = score
+                                else:
+                                    category_scores[cat_id] = (category_scores[cat_id] + score) / 2
+        return summary.metrics.mean_score, transcripts, category_scores
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
-        return 0.0, []
+        return 0.0, [], {}
 
 
 def _check_convergence(

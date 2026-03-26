@@ -34,6 +34,7 @@ class IterationResult:
     improvement_text: str = ""
     applied: bool = False
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    category_scores: dict[str, float] | None = None
 
     @property
     def delta(self) -> float:

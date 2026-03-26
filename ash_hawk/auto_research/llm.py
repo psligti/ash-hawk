@@ -11,33 +11,41 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-ANALYZE_AND_IMPROVE_PROMPT = """You are improving an AI agent skill file.
+ANALYZE_AND_IMPROVE_PROMPT = """You are improving an AI agent skill file based on category-level performance analysis.
 
 ## Current Content
 ```markdown
 {current_content}
 ```
 
+## Category Performance Scores (0.0-1.0 scale)
+{category_scores_section}
+
 ## Recent Agent Behavior (transcript excerpt)
 {transcript_text}
 {history_section}
 {existing_skills_section}
 ## Task
-1. Identify what went wrong (root cause)
-2. What behavior was missing or incorrect
-3. Generate an IMPROVED skill that addresses the issue
+
+1. Identify the WEAKEST category above (lowest score)
+2. Analyze what behavior was missing or incorrect in that category
+3. Generate an IMPROVED skill that specifically addresses that weak category
+
+IMPORTANT: Focus your improvement on the weakest category. Do NOT try to improve everything at once.
 
 Output the improved skill as a complete markdown file with YAML frontmatter:
 
 ```markdown
 ---
 name: "<infer-a-descriptive-name>"
-description: "<1-2 sentence description of what this skill does>"
+description: "<1-2 sentence description targeting the weak category>"
+targets_categories:
+  - "<weak_category_id>"
 ---
 
 ## What I do
 
-<describe the specific behaviors this skill enables>
+<describe specific behaviors that address the weak category>
 
 ## When to use me
 
@@ -45,7 +53,7 @@ description: "<1-2 sentence description of what this skill does>"
 
 ## Guidelines
 
-<specific instructions for the agent to follow>
+<specific instructions targeting the weak category>
 ```
 
 The `name` field must be:
@@ -64,6 +72,7 @@ async def generate_improvement(
     consecutive_failures: int = 0,
     existing_skills: list[str] | None = None,
     target_type: str | None = None,
+    category_scores: dict[str, float] | None = None,
 ) -> str | None:
     """Analyze failures and generate improved content.
 
@@ -75,6 +84,7 @@ async def generate_improvement(
         consecutive_failures: Number of consecutive failures (for temperature scheduling)
         existing_skills: List of existing skill names to avoid duplicating
         target_type: Type of target being improved (skill, policy, agent, tool)
+        category_scores: Per-category scores from grader (e.g., {"tool_usage": 0.5, ...})
 
     Returns:
         Improved content string, or None if generation failed.
@@ -90,9 +100,11 @@ async def generate_improvement(
 
     history_section = _format_history_section(failed_proposals)
     existing_skills_section = _format_existing_skills_section(existing_skills)
+    category_scores_section = _format_category_scores_section(category_scores)
 
     prompt = ANALYZE_AND_IMPROVE_PROMPT.format(
         current_content=current_content[:6000],
+        category_scores_section=category_scores_section,
         transcript_text=transcript_text[:8000],
         history_section=history_section,
         existing_skills_section=existing_skills_section,
@@ -156,6 +168,29 @@ def _format_existing_skills_section(existing_skills: list[str] | None) -> str:
     for skill in skills:
         lines.append(f"- {skill}")
     lines.append("")
+    return "\n".join(lines)
+
+
+def _format_category_scores_section(category_scores: dict[str, float] | None) -> str:
+    if not category_scores:
+        return "No category scores available (scores will be used when available)."
+
+    sorted_scores = sorted(category_scores.items(), key=lambda x: x[1])
+    lines = ["| Category | Score | Status |", "|----------|-------|--------|"]
+
+    for cat_id, score in sorted_scores:
+        if score < 0.4:
+            status = "WEAK - FOCUS HERE"
+        elif score < 0.6:
+            status = "NEEDS IMPROVEMENT"
+        elif score < 0.8:
+            status = "ACCEPTABLE"
+        else:
+            status = "GOOD"
+        lines.append(f"| {cat_id} | {score:.2f} | {status} |")
+
+    lines.append("")
+    lines.append("**Weakest category needs targeted improvement.**")
     return "\n".join(lines)
 
 
