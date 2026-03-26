@@ -5,18 +5,19 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 from rich.console import Console
 
-from ash_hawk.auto_research.llm import extract_skill_name, generate_improvement
+from ash_hawk.auto_research.llm import extract_target_name, generate_improvement
 from ash_hawk.auto_research.types import (
     CycleResult,
     CycleStatus,
     IterationResult,
+    TargetType,
 )
+from ash_hawk.improvement.guardrails import GuardrailChecker, GuardrailConfig
 from ash_hawk.scenario import load_scenario, run_scenarios_async
 from ash_hawk.services.dawn_kestrel_injector import (
     DAWN_KESTREL_DIR,
@@ -25,12 +26,6 @@ from ash_hawk.services.dawn_kestrel_injector import (
 
 logger = logging.getLogger(__name__)
 console = Console()
-
-
-class TargetType(StrEnum):
-    AGENT = "agent"
-    SKILL = "skill"
-    TOOL = "tool"
 
 
 @dataclass
@@ -44,8 +39,10 @@ class ImprovementTarget:
     def structured_path(self) -> Path:
         if self.target_type == TargetType.AGENT:
             return self.injector.get_agent_path(self.name)
-        elif self.target_type == TargetType.SKILL:
+        if self.target_type == TargetType.SKILL:
             return self.injector.get_skill_path(self.name)
+        if self.target_type == TargetType.POLICY:
+            return self.injector.get_policy_path(self.name)
         return self.injector.get_tool_path(self.name)
 
     def read_content(self) -> str:
@@ -58,14 +55,21 @@ class ImprovementTarget:
     def save_content(self, content: str) -> Path:
         if self.target_type == TargetType.AGENT:
             return self.injector.save_agent_content(self.name, content)
-        elif self.target_type == TargetType.SKILL:
+        if self.target_type == TargetType.SKILL:
             return self.injector.save_skill_content(self.name, content)
+        if self.target_type == TargetType.POLICY:
+            return self.injector.save_policy_content(self.name, content)
         return self.injector.save_tool_content(self.name, content)
 
     def delete_content(self) -> bool:
-        """Delete this target's content. Only works for skills currently."""
         if self.target_type == TargetType.SKILL:
             return self.injector.delete_skill_content(self.name)
+        if self.target_type == TargetType.TOOL:
+            return self.injector.delete_tool_content(self.name)
+        if self.target_type == TargetType.AGENT:
+            return self.injector.delete_agent_content(self.name)
+        if self.target_type == TargetType.POLICY:
+            return self.injector.delete_policy_content(self.name)
         return False
 
 
@@ -79,6 +83,12 @@ TOOL_SEARCH_DIRS = [
     DAWN_KESTREL_DIR / "tools",
     Path(".opencode/tools"),
     Path(".claude/tools"),
+]
+
+POLICY_SEARCH_DIRS = [
+    DAWN_KESTREL_DIR / "policies",
+    Path(".opencode/policies"),
+    Path(".claude/policies"),
 ]
 
 
@@ -201,6 +211,19 @@ def _discover_all_tools(project_root: Path) -> list[Path]:
     return tool_files
 
 
+def _discover_all_policies(project_root: Path) -> list[Path]:
+    policy_files: list[Path] = []
+    for search_dir in POLICY_SEARCH_DIRS:
+        policies_path = project_root / search_dir
+        if policies_path.exists() and policies_path.is_dir():
+            for policy_dir in sorted(policies_path.iterdir()):
+                if policy_dir.is_dir():
+                    policy_file = policy_dir / "POLICY.md"
+                    if policy_file.exists():
+                        policy_files.append(policy_file)
+    return policy_files
+
+
 def _load_existing_skill_names(project_root: Path) -> list[str]:
     skill_names: list[str] = []
     for search_dir in SKILL_SEARCH_DIRS:
@@ -216,9 +239,29 @@ def _load_existing_skill_names(project_root: Path) -> list[str]:
 
 def _discover_all_targets(project_root: Path) -> list[tuple[TargetType, Path]]:
     targets: list[tuple[TargetType, Path]] = []
+    targets.extend((TargetType.AGENT, p) for p in _discover_all_agents(project_root))
+    targets.extend((TargetType.POLICY, p) for p in _discover_all_policies(project_root))
     targets.extend((TargetType.SKILL, p) for p in _discover_all_skills(project_root))
     targets.extend((TargetType.TOOL, p) for p in _discover_all_tools(project_root))
     return targets
+
+
+def _discover_all_agents(project_root: Path) -> list[Path]:
+    agent_files: list[Path] = []
+    agents_dirs = [
+        DAWN_KESTREL_DIR / "agents",
+        Path(".opencode/agents"),
+        Path(".claude/agents"),
+    ]
+    for search_dir in agents_dirs:
+        agents_path = project_root / search_dir
+        if agents_path.exists() and agents_path.is_dir():
+            for agent_dir in sorted(agents_path.iterdir()):
+                if agent_dir.is_dir():
+                    agent_file = agent_dir / "AGENT.md"
+                    if agent_file.exists():
+                        agent_files.append(agent_file)
+    return agent_files
 
 
 def _find_primary_tool(project_root: Path, allowed_tools: list[str]) -> Path | None:
@@ -239,7 +282,7 @@ def _find_primary_tool(project_root: Path, allowed_tools: list[str]) -> Path | N
 
 def _infer_name_from_path(path: Path) -> str:
     stem = path.stem
-    if stem.upper() in ("SKILL", "TOOL", "AGENT"):
+    if stem.upper() in ("SKILL", "TOOL", "AGENT", "POLICY"):
         return path.parent.name
     return stem
 
@@ -273,6 +316,9 @@ def _create_target_from_path(
         elif p == "agents":
             target_type = TargetType.AGENT
             break
+        elif p == "policies":
+            target_type = TargetType.POLICY
+            break
 
     injector = DawnKestrelInjector(project_root=project_root, strategy=strategy)
     name = _infer_name_from_path(resolved)
@@ -297,6 +343,8 @@ async def run_cycle(
     strategy_name: str | None = None,
     use_policy_adaptation: bool = False,
     explicit_targets: list[Path] | None = None,
+    heldout_scenarios: list[Path] | None = None,
+    guardrail_config: GuardrailConfig | None = None,
 ) -> CycleResult:
     if llm_client is None:
         llm_client = _create_llm_client()
@@ -338,7 +386,11 @@ async def run_cycle(
         except ImportError:
             logger.warning("Context strategy not available, using file-based behavior")
 
-    target = _discover_improvement_target(scenarios, project_root, strategy)
+    target: ImprovementTarget | None = None
+    if explicit_targets:
+        target = _create_target_from_path(explicit_targets[0], project_root or Path.cwd(), strategy)
+    if target is None:
+        target = _discover_improvement_target(scenarios, project_root, strategy)
     if target is None:
         return CycleResult(
             agent_name="unknown",
@@ -350,6 +402,7 @@ async def run_cycle(
     result = CycleResult(
         agent_name=_infer_agent_name(target),
         target_path=str(target.structured_path),
+        target_type=target.target_type,
         scenario_paths=[str(s) for s in scenarios],
         status=CycleStatus.RUNNING,
     )
@@ -357,9 +410,12 @@ async def run_cycle(
     console.print(f"[dim]Agent: {_infer_agent_name(target)}[/dim]")
     console.print(f"[dim]Skills: {len(_discover_all_skills(project_root or Path.cwd()))}[/dim]")
     console.print(f"[dim]Tools: {len(_discover_all_tools(project_root or Path.cwd()))}[/dim]")
+    console.print(f"[dim]Policies: {len(_discover_all_policies(project_root or Path.cwd()))}[/dim]")
     console.print(f"[dim]Target: {target.structured_path} ({target.target_type.value})[/dim]")
     console.print(f"[dim]Name: {target.name}[/dim]")
     console.print(f"[dim]Scenarios: {len(scenarios)}[/dim]")
+    if heldout_scenarios:
+        console.print(f"[dim]Held-out: {len(heldout_scenarios)}[/dim]")
     console.print(f"[dim]Iterations: {iterations}[/dim]")
     console.print(f"[dim]Threshold: {threshold}[/dim]")
 
@@ -367,16 +423,27 @@ async def run_cycle(
     if existing_skills:
         console.print(f"[dim]Existing skills for context: {len(existing_skills)}[/dim]")
 
+    guardrail_checker = GuardrailChecker(guardrail_config)
+
     try:
         console.print("\n[cyan]Baseline evaluation...[/cyan]")
         score, transcripts_raw = await _run_evaluation(scenarios, storage, injector=target.injector)
         result.initial_score = score
         console.print(f"  [dim]Baseline: {score:.3f}[/dim]")
+
+        heldout_score: float | None = None
+        if heldout_scenarios:
+            heldout_score, _ = await _run_evaluation(
+                heldout_scenarios, storage / "heldout", injector=target.injector
+            )
+            console.print(f"  [dim]Held-out baseline: {heldout_score:.3f}[/dim]")
+            guardrail_checker.record_iteration(heldout_score, applied=True)
+
         transcripts: list[Any] | None = transcripts_raw
         current_score = score
         consecutive_failures = 0
         for i in range(iterations):
-            console.print(f"\n[cyan]Iteration {i + 1}/{iterations}[/cyan]")
+            console.print(f"\n[cyan][{target.name}] Iteration {i + 1}/{iterations}[/cyan]")
             failed_proposals = [
                 iter.improvement_text
                 for iter in result.iterations
@@ -399,9 +466,9 @@ async def run_cycle(
             current_score = iter_result.score_after
             if iter_result.applied:
                 transcripts = None
-                consecutive_failures = 0  # Reset on success
+                consecutive_failures = 0
             else:
-                consecutive_failures += 1  # Increment on failure
+                consecutive_failures += 1
             console.print(
                 f"  [dim]Score: {iter_result.score_before:.3f} → {iter_result.score_after:.3f} "
                 f"({iter_result.delta:+.3f})[/dim]"
@@ -410,6 +477,26 @@ async def run_cycle(
                 console.print(f"  [green]✓ Kept: {iter_result.improvement_text[:50]}...[/green]")
             else:
                 console.print("  [yellow]✗ Reverted[/yellow]")
+
+            if heldout_scenarios and iter_result.applied:
+                heldout_score, _ = await _run_evaluation(
+                    heldout_scenarios, storage / "heldout", injector=target.injector
+                )
+                console.print(f"  [dim]Held-out: {heldout_score:.3f}[/dim]")
+                guardrail_checker.record_iteration(heldout_score, applied=True)
+                if guardrail_checker.should_stop():
+                    console.print(
+                        f"  [yellow]⚠ Guardrail triggered: {guardrail_checker.stop_reason}[/yellow]"
+                    )
+                    break
+
+            if (
+                guardrail_checker.state.total_reverts
+                >= (guardrail_config or GuardrailConfig()).max_reverts
+            ):
+                console.print("  [yellow]⚠ Max reverts reached[/yellow]")
+                break
+
             if _check_convergence(result.iterations):
                 console.print("  [green]✓ Converged[/green]")
                 break
@@ -466,7 +553,8 @@ async def _run_iteration(
         transcripts,
         failed_proposals,
         consecutive_failures,
-        existing_skills=existing_skills,
+        existing_skills=existing_skills if target.target_type == TargetType.SKILL else None,
+        target_type=target.target_type.value,
     )
     if not improved:
         console.print("  [yellow]No improvement generated[/yellow]")
@@ -475,23 +563,24 @@ async def _run_iteration(
             score_before=score_before,
             score_after=score_before,
         )
-    skill_name = extract_skill_name(improved)
+    target_name = extract_target_name(improved)
     new_target = target
-    if skill_name and skill_name != target.name:
+    if target_name and target_name != target.name:
         new_target = ImprovementTarget(
-            target_type=TargetType.SKILL,
-            name=skill_name,
+            target_type=target.target_type,
+            name=target_name,
             discovered_path=target.discovered_path,
             injector=target.injector,
         )
-        new_target.injector.current_skill_name = skill_name
+        if target.target_type == TargetType.SKILL:
+            new_target.injector.current_skill_name = target_name
     saved_path = new_target.save_content(improved)
     score_after, _ = await _run_evaluation(
         scenarios, storage, show_failure_patterns=False, injector=new_target.injector
     )
     delta = score_after - score_before
     applied = delta >= threshold
-    improvement_text = skill_name or improved.split("\n")[0][:80] if improved else ""
+    improvement_text = target_name or improved.split("\n")[0][:80] if improved else ""
     artifacts_dir = storage / "iterations"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     artifact_path = (
@@ -504,7 +593,11 @@ async def _run_iteration(
     if not applied:
         if new_target.name != original_target.name:
             new_target.delete_content()
-            console.print(f"  [dim]Deleted failed skill: {new_target.name}[/dim]")
+            if original_target.target_type == TargetType.SKILL:
+                new_target.injector.current_skill_name = original_target.name
+            console.print(
+                f"  [dim]Deleted failed {new_target.target_type.value}: {new_target.name}[/dim]"
+            )
         else:
             original_target.save_content(original_content)
         score_after = score_before

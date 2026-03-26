@@ -249,3 +249,77 @@ def test_sdk_adapter_no_tool_calls_no_policy_events():
     # Verify no RejectionEvents were created
     rejection_events = [e for e in trace_events if e["event_type"] == "RejectionEvent"]
     assert len(rejection_events) == 0
+
+
+def test_sdk_adapter_does_not_duplicate_policy_events_from_transcript():
+    adapter = SdkDawnKestrelAdapter()
+
+    mock_transcript = EvalTranscript(
+        messages=[
+            {"role": "user", "content": "Test prompt"},
+            {"role": "assistant", "content": "Done"},
+        ],
+        trace_events=[
+            {
+                "schema_version": 1,
+                "event_type": "PolicyDecisionEvent",
+                "ts": "1970-01-01T00:00:00Z",
+                "data": {"tool_name": "bash", "allowed": True},
+            }
+        ],
+        tool_calls=[
+            {
+                "name": "bash",
+                "arguments": {"command": "echo test"},
+            }
+        ],
+        agent_response="Done",
+    )
+    mock_outcome = EvalOutcome(status=EvalStatus.COMPLETED)
+
+    tool_calls_log: list[tuple[str, dict[str, Any]]] = []
+
+    def mock_tool_call(tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
+        tool_calls_log.append((tool_name, tool_input))
+        return {"stdout": "test output", "exit_code": 0}
+
+    tooling_harness = {
+        "policy": {
+            "allowed_tools": ["bash"],
+            "denied_tools": [],
+        },
+        "call": mock_tool_call,
+    }
+
+    scenario = {
+        "id": "test-sdk-scenario-existing-policy-events",
+        "sut": {
+            "type": "coding_agent",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+                "provider": "test_provider",
+                "model": "test_model",
+            },
+        },
+        "tools": {"allowed_tools": ["bash"]},
+        "inputs": {"prompt": "Test prompt"},
+        "expectations": {},
+        "budgets": {},
+    }
+
+    workdir = Path("/tmp")
+    budgets = {}
+
+    with patch("ash_hawk.scenario.adapters.sdk_dawn_kestrel.DawnKestrelAgentRunner") as mock_runner:
+        mock_runner_instance = MagicMock()
+        mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
+        mock_runner.return_value = mock_runner_instance
+
+        _, trace_events, _, _, _, _ = adapter.run_scenario(
+            scenario, workdir, tooling_harness, budgets
+        )
+
+    policy_events = [e for e in trace_events if e["event_type"] == "PolicyDecisionEvent"]
+    assert len(policy_events) == 1
+    assert policy_events[0]["data"]["tool_name"] == "bash"
+    assert len(tool_calls_log) == 1

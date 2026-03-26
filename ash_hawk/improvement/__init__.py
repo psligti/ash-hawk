@@ -33,6 +33,12 @@ from ash_hawk.improvement.decision_engine import (
     Finding,
     ReviewMetrics,
 )
+from ash_hawk.improvement.fixture_splitter import FixtureSplit, FixtureSplitter
+from ash_hawk.improvement.guardrails import (
+    GuardrailChecker,
+    GuardrailConfig,
+    GuardrailState,
+)
 from ash_hawk.improvement.prompt_capture import (
     DEFAULT_DAWN_KESTREL_DIR,
     CapturedPrompt,
@@ -48,4 +54,9 @@ __all__ = [
     "DEFAULT_DAWN_KESTREL_DIR",
     "CONTROL_LEVEL_TO_LESSON_TYPE",
     "CONTROL_LEVEL_TO_STRATEGY",
+    "FixtureSplit",
+    "FixtureSplitter",
+    "GuardrailChecker",
+    "GuardrailConfig",
+    "GuardrailState",
 ]

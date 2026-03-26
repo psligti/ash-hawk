@@ -15,7 +15,14 @@ class BoltMerlinScenarioAdapter(SdkDawnKestrelAdapter):
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str | dict[str, Any] | None, list[dict[str, Any]], dict[str, Any], Any]:
+    ) -> tuple[
+        str | dict[str, Any] | None,
+        list[dict[str, Any]],
+        dict[str, Any],
+        Any,
+        list[dict[str, Any]],
+        list[dict[str, Any]],
+    ]:
         scenario_copy = dict(scenario)
         sut_raw = scenario_copy.get("sut", {})
         sut = dict(sut_raw) if isinstance(sut_raw, dict) else {}
