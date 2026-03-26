@@ -1,0 +1,136 @@
+id: python-bugfix-v1
+name: Python Bug Fix Evaluation
+description: Self-improvement loop experiment for Python bug fixing skill
+version: 1.0.0
+tags:
+  - python
+  - bugfix
+  - self-improvement
+
+storage:
+  backend: file
+  path: .ash-hawk/python-bugfix-eval/
+
+agent:
+  name: dawn-kestrel
+  skills:
+    - python-bugfix
+
+# Tasks will be auto-discovered from fixture directories
+# Each subdirectory under evals/python-bugfix/ should contain:
+#   - src/solution.py  (the buggy code to fix)
+#   - test_bug.py      (the failing test)
+tasks:
+  - id: fix-off-by-one
+    description: Fix off-by-one error in loop
+    input:
+      prompt: |
+        Fix the bug in the provided Python code.
+        
+        The code is located at $solution_file.
+        Tests are located at $test_file.
+        
+        Run the tests first to see the failure, then fix the bug with minimal changes.
+      fixtures:
+        solution_file: ./01-off-by-one/src/solution.py
+        test_file: ./01-off-by-one/test_bug.py
+    grader_specs:
+      - grader_type: composite
+        config:
+          mode: weighted
+          weights: [0.7, 0.2, 0.1]
+          graders:
+            - grader_type: test_runner
+              config:
+                test_path: $test_file
+                pass_threshold: 1.0
+                partial_credit: true
+                timeout_seconds: 60
+            - grader_type: diff_constraints
+              config:
+                max_loc: 10
+                max_files: 1
+            - grader_type: transcript
+              config:
+                max_tool_calls: 15
+                partial_credit: true
+    timeout_seconds: 300
+    tags:
+      - off-by-one
+      - loops
+
+  - id: fix-missing-return
+    description: Fix missing return statement
+    input:
+      prompt: |
+        Fix the bug in the provided Python code.
+        
+        The code is located at $solution_file.
+        Tests are located at $test_file.
+        
+        Run the tests first to see the failure, then fix the bug with minimal changes.
+      fixtures:
+        solution_file: ./02-missing-return/src/solution.py
+        test_file: ./02-missing-return/test_bug.py
+    grader_specs:
+      - grader_type: composite
+        config:
+          mode: weighted
+          weights: [0.7, 0.2, 0.1]
+          graders:
+            - grader_type: test_runner
+              config:
+                test_path: $test_file
+                pass_threshold: 1.0
+                partial_credit: true
+                timeout_seconds: 60
+            - grader_type: diff_constraints
+              config:
+                max_loc: 10
+                max_files: 1
+            - grader_type: transcript
+              config:
+                max_tool_calls: 15
+                partial_credit: true
+    timeout_seconds: 300
+    tags:
+      - missing-return
+      - functions
+
+  - id: fix-wrong-operator
+    description: Fix wrong operator (and vs or)
+    input:
+      prompt: |
+        Fix the bug in the provided Python code.
+        
+        The code is located at $solution_file.
+        Tests are located at $test_file.
+        
+        Run the tests first to see the failure, then fix the bug with minimal changes.
+      fixtures:
+        solution_file: ./03-wrong-operator/src/solution.py
+        test_file: ./03-wrong-operator/test_bug.py
+    grader_specs:
+      - grader_type: composite
+        config:
+          mode: weighted
+          weights: [0.7, 0.2, 0.1]
+          graders:
+            - grader_type: test_runner
+              config:
+                test_path: $test_file
+                pass_threshold: 1.0
+                partial_credit: true
+                timeout_seconds: 60
+            - grader_type: diff_constraints
+              config:
+                max_loc: 10
+                max_files: 1
+            - grader_type: transcript
+              config:
+                max_tool_calls: 15
+                partial_credit: true
+    timeout_seconds: 300
+    tags:
+      - operators
+      - logic

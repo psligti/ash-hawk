@@ -1,0 +1,62 @@
+schema_version: "v1"
+id: "python-bugfix-02"
+description: "Fix bug in Python code - off-by-one-slice"
+
+sut:
+  type: "coding_agent"
+  adapter: "sdk_dawn_kestrel"
+  config:
+    skill: python-bugfix
+
+inputs:
+  prompt: |
+    Fix the bug in the provided Python code.
+
+    The code is located at src/solution.py.
+    Tests are located at test_bug.py.
+
+    Run the tests first to see the failure, then fix the bug with minimal changes.
+  repo_fixture: ./
+
+tools:
+  allowed_tools:
+    - "bash"
+    - "read_file"
+    - "write_file"
+    - "edit_file"
+  mocks: {}
+  fault_injection: {}
+
+budgets:
+  max_steps: 10
+  max_tool_calls: 30
+  max_tokens: 2000
+  max_time_seconds: 120.0
+
+expectations:
+  must_events: []
+  must_not_events: []
+  ordering_rules: []
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "composite"
+    config:
+      mode: "weighted"
+      weights: [0.7, 0.2, 0.1]
+      graders:
+        - grader_type: "test_runner"
+          config:
+            test_path: "test_bug.py"
+            pass_threshold: 1.0
+            partial_credit: true
+            timeout_seconds: 60
+        - grader_type: "diff_constraints"
+          config:
+            max_loc: 10
+            max_files: 1
+        - grader_type: "transcript"
+          config:
+            max_tool_calls: 15
+            partial_credit: true
