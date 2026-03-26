@@ -535,6 +535,10 @@ class PromptStackOptimizerConfig(pd.BaseModel):
         ge=0,
         description="Expected max tool calls for efficiency scoring",
     )
+    quiet: bool = pd.Field(
+        default=False,
+        description="Suppress score table output",
+    )
 
     model_config = pd.ConfigDict(extra="forbid")
 
@@ -1456,7 +1460,8 @@ class PromptStackOptimizerGrader(Grader):
             category_scores = self._compute_category_scores(subcategory_results)
             overall_score = self._compute_overall_score(category_scores)
 
-            _print_scores_table(subcategory_results, category_scores)
+            if not config.quiet:
+                _print_scores_table(subcategory_results, category_scores)
 
             # Build rubric evidence
             rubric_evidence = RubricEvidence(

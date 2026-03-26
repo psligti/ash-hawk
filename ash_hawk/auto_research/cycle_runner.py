@@ -625,6 +625,7 @@ async def _run_evaluation(
             storage_path=storage,
             show_failure_patterns=show_failure_patterns,
             injector=injector,
+            grader_config_overrides={"quiet": True},
         )
         transcripts = []
         for trial in summary.trials:

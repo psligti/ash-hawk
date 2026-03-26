@@ -60,6 +60,7 @@ class ScenarioRunner:
         adapter_registry: ScenarioAdapterRegistry | None = None,
         show_failure_patterns: bool = True,
         injector: Any | None = None,
+        grader_config_overrides: dict[str, Any] | None = None,
     ) -> None:
         from ash_hawk.storage import FileStorage
 
@@ -73,6 +74,7 @@ class ScenarioRunner:
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._show_failure_patterns = show_failure_patterns
         self._injector = injector
+        self._grader_config_overrides = grader_config_overrides or {}
         self._config = EvalConfig(
             parallelism=parallelism or config.parallelism,
             default_timeout_seconds=config.default_timeout_seconds,
@@ -312,9 +314,11 @@ class ScenarioRunner:
         )
 
     def _grader_from_spec(self, spec: ScenarioGraderSpec) -> GraderSpec:
+        merged_config = dict(spec.config)
+        merged_config.update(self._grader_config_overrides)
         return GraderSpec(
             grader_type=spec.grader_type,
-            config=dict(spec.config),
+            config=merged_config,
             weight=spec.weight,
             required=spec.required,
             timeout_seconds=spec.timeout_seconds,
@@ -385,6 +389,7 @@ async def run_scenarios_async(
     adapter_registry: ScenarioAdapterRegistry | None = None,
     show_failure_patterns: bool = True,
     injector: Any | None = None,
+    grader_config_overrides: dict[str, Any] | None = None,
 ) -> EvalRunSummary:
     runner = ScenarioRunner(
         storage_path=storage_path,
@@ -393,6 +398,7 @@ async def run_scenarios_async(
         adapter_registry=adapter_registry,
         show_failure_patterns=show_failure_patterns,
         injector=injector,
+        grader_config_overrides=grader_config_overrides,
     )
     return await runner.run_paths(paths)
 
