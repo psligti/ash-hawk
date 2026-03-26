@@ -31,22 +31,33 @@
    - 100% coverage of FixtureSplitter and GuardrailChecker
    - Integration tests for self-improvement loop
 
-## 🔍 Known Issue: Workdir in SDK Adapter
+## 🔍 Known Issue: Rate Limiting with Concurrent Agents
 
-The SDK dawn-kestrel adapter has a workdir issue where bash commands execute in the wrong directory:
+When running multiple agents concurrently, the LLM provider may rate limit, causing stream cancellations:
 
 ```
-cat: src/solution.py: No such file or directory
+LLM stream cancelled during collection
+transient failure after 74.13s: LLM stream cancelled before completion
 ```
 
-**Root Cause**: The `BashTool` uses `workdir` from args (defaults to ".") rather than `ctx.base_dir`. The adapter sets `run_config["workdir"]` but this isn't automatically passed to bash tool calls.
+**Root Cause**: Too many concurrent agents hitting provider rate limits.
 
-**Impact**: Baseline scores are 0.1 (low) because the agent can't read fixture files.
+**Solution**: The `LLMClient` uses tenacity for retries with exponential backoff, acting as a "poor man's queue". Increase retries to handle rate limiting:
 
-**Workaround Options**:
-1. Update scenario prompts to use absolute paths
-2. Modify dawn-kestrel BashTool to default to `ctx.base_dir`
-3. Use a different adapter (e.g., `coding_agent_subprocess`)
+```bash
+# Increase from default 10 to 20-30 for heavy concurrent usage
+export ASH_HAWK_AUTO_RESEARCH_LLM_MAX_RETRIES=20
+
+# Then run
+uv run ash-hawk auto-research run -s evals/scenarios/*.scenario.yaml
+```
+
+**Configuration**:
+- Default: 10 retries
+- Max: 50 retries  
+- Env var: `ASH_HAWK_AUTO_RESEARCH_LLM_MAX_RETRIES`
+
+**Future**: A proper request queue is planned to serialize agent execution with configurable workers.
 
 ## 🚀 Usage
 
