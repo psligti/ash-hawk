@@ -329,7 +329,18 @@ class ScenarioRunner:
             candidate = Path(value)
             if not candidate.is_absolute():
                 return str((root / candidate).resolve())
+        if isinstance(value, str) and key == "prompt":
+            return self._resolve_placeholders(value, root)
         return value
+
+    def _resolve_placeholders(self, text: str, root: Path) -> str:
+        replacements = {
+            "scenario_root": str(root.resolve()),
+            "scenario_path": str((root / "scenario.yaml").resolve()),
+        }
+        for placeholder, replacement in replacements.items():
+            text = text.replace(f"{{{placeholder}}}", replacement)
+        return text
 
     def _create_run_envelope(
         self,
