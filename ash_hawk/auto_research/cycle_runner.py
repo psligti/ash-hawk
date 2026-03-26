@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import logging
 import sys
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -31,38 +33,82 @@ from ash_hawk.services.dawn_kestrel_injector import (
 logger = logging.getLogger(__name__)
 console = Console()
 
+THROBBER_CHARS = "|/-\\"
+
+
+class ProgressTracker:
+    """Track progress for long-running operations."""
+
+    def __init__(self, total: int = 0, label: str = ""):
+        self.current = 0
+        self.total = total
+        self.label = label
+        self._lock = asyncio.Lock()
+
+    async def increment(self) -> None:
+        async with self._lock:
+            self.current += 1
+
+    def set_total(self, total: int) -> None:
+        self.total = total
+
+    @property
+    def display(self) -> str:
+        if self.total > 0:
+            if self.current > 0:
+                return f"{self.current}/{self.total} {self.label}"
+            return f"{self.total} {self.label}"
+        return ""
+
+
+_current_tracker: contextvars.ContextVar[ProgressTracker | None] = contextvars.ContextVar(
+    "progress_tracker", default=None
+)
+
+
+def get_progress_tracker() -> ProgressTracker | None:
+    return _current_tracker.get()
+
 
 @asynccontextmanager
-async def progress_indicator(message: str = ""):
-    """Show progress dots while an async operation runs.
-
-    Usage:
-        async with progress_indicator("Evaluating"):
-            result = await some_async_operation()
-    """
+async def progress_indicator(
+    message: str = "", tracker: ProgressTracker | None = None
+) -> AsyncIterator[ProgressTracker]:
     start_time = time.time()
-    dot_task = None
+    display_task = None
+    throbber_idx = 0
 
-    async def print_dots():
+    if tracker is None:
+        tracker = ProgressTracker()
+
+    token = _current_tracker.set(tracker)
+
+    async def display_progress() -> None:
+        nonlocal throbber_idx
         while True:
-            await asyncio.sleep(0.5)
-            elapsed = time.time() - start_time
-            sys.stdout.write(".")
+            await asyncio.sleep(0.15)
+            throbber_idx = (throbber_idx + 1) % len(THROBBER_CHARS)
+            throbber = THROBBER_CHARS[throbber_idx]
+            progress_str = f"{tracker.label} " if tracker.label else ""
+            progress_str += tracker.display
+            line = f"\r  {message} {throbber} {progress_str}   "
+            sys.stdout.write(line)
             sys.stdout.flush()
 
     try:
         if message:
-            sys.stdout.write(f"  {message}")
+            sys.stdout.write(f"  {message} ")
             sys.stdout.flush()
-        dot_task = asyncio.create_task(print_dots())
-        yield
+        display_task = asyncio.create_task(display_progress())
+        yield tracker
     finally:
-        if dot_task:
-            dot_task.cancel()
+        if display_task:
+            display_task.cancel()
             try:
-                await dot_task
+                await display_task
             except asyncio.CancelledError:
                 pass
+        _current_tracker.reset(token)
         elapsed = time.time() - start_time
         if elapsed >= 60:
             mins = int(elapsed // 60)
@@ -70,7 +116,8 @@ async def progress_indicator(message: str = ""):
             time_str = f"{mins}m{secs}s"
         else:
             time_str = f"{elapsed:.1f}s"
-        sys.stdout.write(f" [{time_str}]\n")
+        final_count = tracker.display
+        sys.stdout.write(f"\r  {message} ✓ {final_count} [{time_str}]\n")
         sys.stdout.flush()
 
 
@@ -475,19 +522,26 @@ async def run_cycle(
     guardrail_checker = GuardrailChecker(guardrail_config)
 
     try:
-        async with progress_indicator("Baseline eval"):
+        async with progress_indicator(
+            "Baseline eval", ProgressTracker(total=len(scenarios), label="scenarios")
+        ) as tracker:
             score, transcripts_raw = await _run_evaluation(
                 scenarios, storage, injector=target.injector
             )
+            tracker.current = len(scenarios)
         result.initial_score = score
         console.print(f"  [dim]Baseline: {score:.3f}[/dim]")
 
         heldout_score: float | None = None
         if heldout_scenarios:
-            async with progress_indicator("Held-out baseline"):
+            async with progress_indicator(
+                "Held-out baseline",
+                ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
+            ) as tracker:
                 heldout_score, _ = await _run_evaluation(
                     heldout_scenarios, storage / "heldout", injector=target.injector
                 )
+                tracker.current = len(heldout_scenarios)
             console.print(f"  [dim]Held-out baseline: {heldout_score:.3f}[/dim]")
             guardrail_checker.record_iteration(heldout_score, applied=True)
 
@@ -531,10 +585,14 @@ async def run_cycle(
                 console.print("  [yellow]✗ Reverted[/yellow]")
 
             if heldout_scenarios and iter_result.applied:
-                async with progress_indicator("Held-out eval"):
+                async with progress_indicator(
+                    "Held-out eval",
+                    ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
+                ) as tracker:
                     heldout_score, _ = await _run_evaluation(
                         heldout_scenarios, storage / "heldout", injector=target.injector
                     )
+                    tracker.current = len(heldout_scenarios)
                 console.print(f"  [dim]Held-out: {heldout_score:.3f}[/dim]")
                 guardrail_checker.record_iteration(heldout_score, applied=True)
                 if guardrail_checker.should_stop():
