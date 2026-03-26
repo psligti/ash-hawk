@@ -64,10 +64,10 @@ class EvalConfig(pydantic_settings.BaseSettings):
     )
 
     auto_research_llm_max_retries: int = Field(
-        default=5,
+        default=10,
         ge=1,
-        le=20,
-        description="Maximum retry attempts for LLM requests in auto-research",
+        le=50,
+        description="Maximum retry attempts for LLM requests in auto-research (handles rate limiting)",
     )
 
     trial_max_workers: int = Field(
