@@ -189,6 +189,7 @@ class TrialExecutionQueue:
         self,
         jobs: list[TrialJob],
         execute: Callable[[TrialJob], Awaitable[Any]],
+        on_progress: Callable[[int, int, int], Awaitable[None]] | None = None,
     ) -> list[TrialJobResult | Exception]:
         """Execute trial jobs with throttling.
 
@@ -197,6 +198,8 @@ class TrialExecutionQueue:
             execute: Async function to execute each trial. Can return either
                 (transcript, outcome) tuple or a TrialResult-like object with
                 additional fields.
+            on_progress: Optional callback(completed, total, running_delta) called
+                when trials start (running_delta=+1) and complete (running_delta=-1).
 
         Returns:
             List of results or exceptions in job order.
@@ -206,9 +209,15 @@ class TrialExecutionQueue:
 
         results: list[TrialJobResult | Exception] = [Exception("not executed") for _ in jobs]
         semaphore = asyncio.Semaphore(self.max_workers)
+        completed = 0
+        completed_lock = asyncio.Lock()
 
         async def run_one(idx: int, job: TrialJob) -> None:
+            nonlocal completed
             async with semaphore:
+                if on_progress:
+                    await on_progress(0, len(jobs), 1)
+
                 started = time.time()
                 try:
                     raw_result = await asyncio.wait_for(
@@ -219,6 +228,11 @@ class TrialExecutionQueue:
                     results[idx] = self._to_trial_job_result(job, raw_result, elapsed)
                 except Exception as exc:
                     results[idx] = exc
+
+                if on_progress:
+                    async with completed_lock:
+                        completed += 1
+                    await on_progress(completed, len(jobs), -1)
 
         await asyncio.gather(
             *(run_one(idx, job) for idx, job in enumerate(jobs)),

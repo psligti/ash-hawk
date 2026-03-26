@@ -7,6 +7,7 @@ import logging
 import platform
 import sys
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Literal
@@ -61,6 +62,7 @@ class ScenarioRunner:
         show_failure_patterns: bool = True,
         injector: Any | None = None,
         grader_config_overrides: dict[str, Any] | None = None,
+        on_trial_progress: Callable[[int, int, int], Awaitable[None]] | None = None,
     ) -> None:
         from ash_hawk.storage import FileStorage
 
@@ -75,6 +77,7 @@ class ScenarioRunner:
         self._show_failure_patterns = show_failure_patterns
         self._injector = injector
         self._grader_config_overrides = grader_config_overrides or {}
+        self._on_trial_progress = on_trial_progress
         self._config = EvalConfig(
             parallelism=parallelism or config.parallelism,
             default_timeout_seconds=config.default_timeout_seconds,
@@ -123,7 +126,9 @@ class ScenarioRunner:
             policy=policy,
             agent_runner=scenario_agent_runner,
         )
-        runner = EvalRunner(self._config, self._storage, trial_executor)
+        runner = EvalRunner(
+            self._config, self._storage, trial_executor, on_trial_progress=self._on_trial_progress
+        )
         summary = await runner.run_suite(
             suite=suite,
             agent_config=agent_config,
@@ -390,6 +395,7 @@ async def run_scenarios_async(
     show_failure_patterns: bool = True,
     injector: Any | None = None,
     grader_config_overrides: dict[str, Any] | None = None,
+    on_trial_progress: Callable[[int, int, int], Awaitable[None]] | None = None,
 ) -> EvalRunSummary:
     runner = ScenarioRunner(
         storage_path=storage_path,
@@ -399,6 +405,7 @@ async def run_scenarios_async(
         show_failure_patterns=show_failure_patterns,
         injector=injector,
         grader_config_overrides=grader_config_overrides,
+        on_trial_progress=on_trial_progress,
     )
     return await runner.run_paths(paths)
 

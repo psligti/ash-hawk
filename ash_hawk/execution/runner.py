@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -94,31 +95,7 @@ class ResourceTracker:
 
 
 class EvalRunner:
-    """Parallel suite runner with timeout, budget, and cancellation support.
-
-    This class manages the execution of evaluation suites with controlled
-    parallelism, resource tracking, and graceful cancellation handling.
-
-    Key features:
-    - Semaphore-based concurrency control
-    - Per-trial timeout enforcement
-    - Resource usage tracking (tokens, cost, duration)
-    - Graceful cancellation with partial artifact storage
-    - Suite-level metrics aggregation
-
-    Example:
-        >>> from ash_hawk.config import EvalConfig
-        >>> from ash_hawk.storage import FileStorage
-        >>> from ash_hawk.execution import TrialExecutor
-        >>>
-        >>> config = EvalConfig(parallelism=4)
-        >>> storage = FileStorage(base_path="./results")
-        >>> policy = ToolSurfacePolicy()
-        >>> trial_executor = TrialExecutor(storage, policy)
-        >>>
-        >>> runner = EvalRunner(config, storage, trial_executor)
-        >>> summary = await runner.run_suite(suite, agent_config, run_envelope)
-    """
+    """Parallel suite runner with timeout, budget, and cancellation support."""
 
     def __init__(
         self,
@@ -126,10 +103,12 @@ class EvalRunner:
         storage: StorageBackend,
         trial_executor: TrialExecutor,
         post_run_hook: Any | None = None,
+        on_trial_progress: Callable[[int, int, int], Awaitable[None]] | None = None,
     ) -> None:
         self._config = config
         self._storage = storage
         self._trial_executor = trial_executor
+        self._on_trial_progress = on_trial_progress
         self._llm_queue = LLMRequestQueue(
             max_workers=config.llm_max_workers,
             timeout_seconds=config.llm_timeout_seconds,
@@ -219,7 +198,9 @@ class EvalRunner:
                 )
                 return result
 
-            results = await self._trial_queue.run_trials(jobs, execute_trial)
+            results = await self._trial_queue.run_trials(
+                jobs, execute_trial, on_progress=self._on_trial_progress
+            )
 
             for i, result in enumerate(results):
                 task = suite.tasks[i]

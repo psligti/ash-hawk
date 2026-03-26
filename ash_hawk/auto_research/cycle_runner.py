@@ -43,22 +43,31 @@ class ProgressTracker:
         self.current = 0
         self.total = total
         self.label = label
+        self.running = 0
         self._lock = asyncio.Lock()
 
     async def increment(self) -> None:
         async with self._lock:
             self.current += 1
+            self.running = max(0, self.running - 1)
+
+    async def start_one(self) -> None:
+        async with self._lock:
+            self.running += 1
 
     def set_total(self, total: int) -> None:
         self.total = total
 
     @property
     def display(self) -> str:
+        parts = []
         if self.total > 0:
-            if self.current > 0:
-                return f"{self.current}/{self.total} {self.label}"
-            return f"{self.total} {self.label}"
-        return ""
+            parts.append(f"{self.current}/{self.total}")
+            if self.running > 0:
+                parts.append(f"({self.running} running)")
+        if self.label:
+            parts.append(self.label)
+        return " ".join(parts)
 
 
 _current_tracker: contextvars.ContextVar[ProgressTracker | None] = contextvars.ContextVar(
@@ -68,6 +77,19 @@ _current_tracker: contextvars.ContextVar[ProgressTracker | None] = contextvars.C
 
 def get_progress_tracker() -> ProgressTracker | None:
     return _current_tracker.get()
+
+
+def _format_elapsed(elapsed: float) -> str:
+    if elapsed >= 3600:
+        hours = int(elapsed // 3600)
+        mins = int((elapsed % 3600) // 60)
+        secs = int(elapsed % 60)
+        return f"{hours}h{mins}m{secs}s"
+    if elapsed >= 60:
+        mins = int(elapsed // 60)
+        secs = int(elapsed % 60)
+        return f"{mins}m{secs}s"
+    return f"{elapsed:.1f}s"
 
 
 @asynccontextmanager
@@ -86,19 +108,21 @@ async def progress_indicator(
     async def display_progress() -> None:
         nonlocal throbber_idx
         while True:
-            await asyncio.sleep(0.15)
+            await asyncio.sleep(0.12)
             throbber_idx = (throbber_idx + 1) % len(THROBBER_CHARS)
-            throbber = THROBBER_CHARS[throbber_idx]
-            progress_str = f"{tracker.label} " if tracker.label else ""
-            progress_str += tracker.display
-            line = f"\r  {message} {throbber} {progress_str}   "
+            elapsed = time.time() - start_time
+            time_str = _format_elapsed(elapsed)
+
+            throbbers = THROBBER_CHARS[throbber_idx] * min(tracker.running, 5)
+            if tracker.running > 5:
+                throbbers += f"+{tracker.running - 5}"
+
+            progress_str = tracker.display
+            line = f"\r  {message} {throbbers} {progress_str} [{time_str}]  "
             sys.stdout.write(line)
             sys.stdout.flush()
 
     try:
-        if message:
-            sys.stdout.write(f"  {message} ")
-            sys.stdout.flush()
         display_task = asyncio.create_task(display_progress())
         yield tracker
     finally:
@@ -110,12 +134,7 @@ async def progress_indicator(
                 pass
         _current_tracker.reset(token)
         elapsed = time.time() - start_time
-        if elapsed >= 60:
-            mins = int(elapsed // 60)
-            secs = int(elapsed % 60)
-            time_str = f"{mins}m{secs}s"
-        else:
-            time_str = f"{elapsed:.1f}s"
+        time_str = _format_elapsed(elapsed)
         final_count = tracker.display
         sys.stdout.write(f"\r  {message} ✓ {final_count} [{time_str}]\n")
         sys.stdout.flush()
@@ -523,7 +542,7 @@ async def run_cycle(
 
     try:
         async with progress_indicator(
-            "Baseline eval", ProgressTracker(total=len(scenarios), label="scenarios")
+            "Baseline eval", tracker=ProgressTracker(total=len(scenarios), label="scenarios")
         ) as tracker:
             score, transcripts_raw = await _run_evaluation(
                 scenarios, storage, injector=target.injector
@@ -536,7 +555,7 @@ async def run_cycle(
         if heldout_scenarios:
             async with progress_indicator(
                 "Held-out baseline",
-                ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
+                tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
             ) as tracker:
                 heldout_score, _ = await _run_evaluation(
                     heldout_scenarios, storage / "heldout", injector=target.injector
@@ -587,7 +606,7 @@ async def run_cycle(
             if heldout_scenarios and iter_result.applied:
                 async with progress_indicator(
                     "Held-out eval",
-                    ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
+                    tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
                 ) as tracker:
                     heldout_score, _ = await _run_evaluation(
                         heldout_scenarios, storage / "heldout", injector=target.injector
@@ -729,6 +748,17 @@ async def _run_evaluation(
     show_failure_patterns: bool = True,
     injector: Any | None = None,
 ) -> tuple[float, list[Any]]:
+    tracker = get_progress_tracker()
+
+    async def on_progress(completed: int, total: int, running_delta: int) -> None:
+        if tracker:
+            if tracker.total == 0:
+                tracker.set_total(total)
+            if running_delta > 0:
+                await tracker.start_one()
+            else:
+                await tracker.increment()
+
     try:
         summary = await run_scenarios_async(
             paths=[str(p) for p in scenarios],
@@ -736,6 +766,7 @@ async def _run_evaluation(
             show_failure_patterns=show_failure_patterns,
             injector=injector,
             grader_config_overrides={"quiet": True},
+            on_trial_progress=on_progress,
         )
         transcripts = []
         for trial in summary.trials:
