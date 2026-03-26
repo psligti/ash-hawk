@@ -25,9 +25,9 @@ inputs:
 
     - File paths are relative to the working directory above
 
-    - Use absolute paths like {scenario_root}/src/solution.py
+    - Read files: {scenario_root}/src/solution.py
 
-    - Run tests from the working directory'
+    - Run tests with: python {scenario_root}/test_bug.py'
   repo_fixture: ./
 tools:
   allowed_tools:
