@@ -84,11 +84,24 @@ class LLMRequestQueue:
         self.max_workers = max_workers
         self.timeout_seconds = timeout_seconds
         self.poll_interval = poll_interval
-        self._semaphore = asyncio.Semaphore(max_workers)
+        self._semaphore: asyncio.Semaphore | None = None
+        self._semaphore_loop: asyncio.AbstractEventLoop | None = None
         self._stats = {
             "total_requests": 0,
             "total_wait_time": 0.0,
         }
+
+    def _get_semaphore(self) -> asyncio.Semaphore:
+        """Get semaphore, recreating if event loop changed."""
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if self._semaphore is None or self._semaphore_loop != current_loop:
+            self._semaphore = asyncio.Semaphore(self.max_workers)
+            self._semaphore_loop = current_loop
+        return self._semaphore
 
     async def execute(
         self,
@@ -109,7 +122,7 @@ class LLMRequestQueue:
         """
         start_time = time.time()
 
-        async with self._semaphore:
+        async with self._get_semaphore():
             response = await execute(request)
 
         wait_time = time.time() - start_time
