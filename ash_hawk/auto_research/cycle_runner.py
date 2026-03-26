@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import sys
+import time
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -26,6 +30,48 @@ from ash_hawk.services.dawn_kestrel_injector import (
 
 logger = logging.getLogger(__name__)
 console = Console()
+
+
+@asynccontextmanager
+async def progress_indicator(message: str = ""):
+    """Show progress dots while an async operation runs.
+
+    Usage:
+        async with progress_indicator("Evaluating"):
+            result = await some_async_operation()
+    """
+    start_time = time.time()
+    dot_task = None
+
+    async def print_dots():
+        while True:
+            await asyncio.sleep(0.5)
+            elapsed = time.time() - start_time
+            sys.stdout.write(".")
+            sys.stdout.flush()
+
+    try:
+        if message:
+            sys.stdout.write(f"  {message}")
+            sys.stdout.flush()
+        dot_task = asyncio.create_task(print_dots())
+        yield
+    finally:
+        if dot_task:
+            dot_task.cancel()
+            try:
+                await dot_task
+            except asyncio.CancelledError:
+                pass
+        elapsed = time.time() - start_time
+        if elapsed >= 60:
+            mins = int(elapsed // 60)
+            secs = int(elapsed % 60)
+            time_str = f"{mins}m{secs}s"
+        else:
+            time_str = f"{elapsed:.1f}s"
+        sys.stdout.write(f" [{time_str}]\n")
+        sys.stdout.flush()
 
 
 @dataclass
@@ -429,16 +475,19 @@ async def run_cycle(
     guardrail_checker = GuardrailChecker(guardrail_config)
 
     try:
-        console.print("\n[cyan]Baseline evaluation...[/cyan]")
-        score, transcripts_raw = await _run_evaluation(scenarios, storage, injector=target.injector)
+        async with progress_indicator("Baseline eval"):
+            score, transcripts_raw = await _run_evaluation(
+                scenarios, storage, injector=target.injector
+            )
         result.initial_score = score
         console.print(f"  [dim]Baseline: {score:.3f}[/dim]")
 
         heldout_score: float | None = None
         if heldout_scenarios:
-            heldout_score, _ = await _run_evaluation(
-                heldout_scenarios, storage / "heldout", injector=target.injector
-            )
+            async with progress_indicator("Held-out baseline"):
+                heldout_score, _ = await _run_evaluation(
+                    heldout_scenarios, storage / "heldout", injector=target.injector
+                )
             console.print(f"  [dim]Held-out baseline: {heldout_score:.3f}[/dim]")
             guardrail_checker.record_iteration(heldout_score, applied=True)
 
@@ -482,9 +531,10 @@ async def run_cycle(
                 console.print("  [yellow]✗ Reverted[/yellow]")
 
             if heldout_scenarios and iter_result.applied:
-                heldout_score, _ = await _run_evaluation(
-                    heldout_scenarios, storage / "heldout", injector=target.injector
-                )
+                async with progress_indicator("Held-out eval"):
+                    heldout_score, _ = await _run_evaluation(
+                        heldout_scenarios, storage / "heldout", injector=target.injector
+                    )
                 console.print(f"  [dim]Held-out: {heldout_score:.3f}[/dim]")
                 guardrail_checker.record_iteration(heldout_score, applied=True)
                 if guardrail_checker.should_stop():
@@ -546,19 +596,20 @@ async def _run_iteration(
         )
     transcripts = cached_transcripts
     if transcripts is None:
-        _, transcripts = await _run_evaluation(
-            scenarios, storage, show_failure_patterns=False, injector=target.injector
+        async with progress_indicator("Eval for transcripts"):
+            _, transcripts = await _run_evaluation(
+                scenarios, storage, show_failure_patterns=False, injector=target.injector
+            )
+    async with progress_indicator("LLM generate"):
+        improved = await generate_improvement(
+            llm_client,
+            original_content,
+            transcripts,
+            failed_proposals,
+            consecutive_failures,
+            existing_skills=existing_skills if target.target_type == TargetType.SKILL else None,
+            target_type=target.target_type.value,
         )
-    console.print("  [dim]Generating improvement...[/dim]")
-    improved = await generate_improvement(
-        llm_client,
-        original_content,
-        transcripts,
-        failed_proposals,
-        consecutive_failures,
-        existing_skills=existing_skills if target.target_type == TargetType.SKILL else None,
-        target_type=target.target_type.value,
-    )
     if not improved:
         console.print("  [yellow]No improvement generated[/yellow]")
         return IterationResult(
@@ -578,9 +629,10 @@ async def _run_iteration(
         if target.target_type == TargetType.SKILL:
             new_target.injector.current_skill_name = target_name
     saved_path = new_target.save_content(improved)
-    score_after, _ = await _run_evaluation(
-        scenarios, storage, show_failure_patterns=False, injector=new_target.injector
-    )
+    async with progress_indicator("Eval proposal"):
+        score_after, _ = await _run_evaluation(
+            scenarios, storage, show_failure_patterns=False, injector=new_target.injector
+        )
     delta = score_after - score_before
     applied = delta >= threshold
     improvement_text = target_name or improved.split("\n")[0][:80] if improved else ""
