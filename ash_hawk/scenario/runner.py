@@ -62,7 +62,7 @@ class ScenarioRunner:
         show_failure_patterns: bool = True,
         injector: Any | None = None,
         grader_config_overrides: dict[str, Any] | None = None,
-        on_trial_progress: Callable[[int, int, int], Awaitable[None]] | None = None,
+        on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
     ) -> None:
         from ash_hawk.storage import FileStorage
 
@@ -395,7 +395,7 @@ async def run_scenarios_async(
     show_failure_patterns: bool = True,
     injector: Any | None = None,
     grader_config_overrides: dict[str, Any] | None = None,
-    on_trial_progress: Callable[[int, int, int], Awaitable[None]] | None = None,
+    on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
 ) -> EvalRunSummary:
     runner = ScenarioRunner(
         storage_path=storage_path,

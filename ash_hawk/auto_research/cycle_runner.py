@@ -808,7 +808,7 @@ async def _run_evaluation(
 ) -> tuple[float, list[Any], dict[str, float]]:
     tracker = get_progress_tracker()
 
-    async def on_progress(completed: int, total: int, running_delta: int) -> None:
+    async def on_progress(completed: int, total: int, running_delta: int, status: str) -> None:
         if tracker:
             if tracker.total == 0:
                 tracker.set_total(total)
