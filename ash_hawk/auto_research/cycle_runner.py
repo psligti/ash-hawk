@@ -23,12 +23,14 @@ from ash_hawk.auto_research.types import (
     IterationResult,
     TargetType,
 )
+from ash_hawk.graders.validity import TranscriptValidityGrader
 from ash_hawk.improvement.guardrails import GuardrailChecker, GuardrailConfig
 from ash_hawk.scenario import load_scenario, run_scenarios_async
 from ash_hawk.services.dawn_kestrel_injector import (
     DAWN_KESTREL_DIR,
     DawnKestrelInjector,
 )
+from ash_hawk.types import EvalTrial, GraderSpec
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -448,6 +450,37 @@ def _create_target_from_path(
     )
 
 
+_validity_grader = TranscriptValidityGrader()
+_validity_spec = GraderSpec(grader_type="transcript_validity")
+
+
+async def _filter_valid_transcripts(
+    transcripts: list[Any],
+) -> tuple[list[Any], list[dict[str, Any]]]:
+    """Filter transcripts for validity, returning valid ones and error signals.
+
+    Args:
+        transcripts: List of EvalTranscript objects.
+
+    Returns:
+        Tuple of (valid_transcripts, error_signals).
+    """
+    valid: list[Any] = []
+    error_signals: list[dict[str, Any]] = []
+
+    for idx, transcript in enumerate(transcripts):
+        trial = EvalTrial(id=f"filter-{idx}", task_id="validity-check")
+        result = await _validity_grader.grade(trial, transcript, _validity_spec)
+
+        if result.passed:
+            valid.append(transcript)
+        elif result.details.get("error_signal"):
+            error_signals.append(result.details["error_signal"])
+            console.print(f"  [dim]Invalid transcript {idx}: {result.details['error_type']}[/dim]")
+
+    return valid, error_signals
+
+
 async def run_cycle(
     scenarios: list[Path],
     iterations: int = 100,
@@ -685,6 +718,19 @@ async def _run_iteration(
             _, transcripts, _ = await _run_evaluation(
                 scenarios, storage, show_failure_patterns=False, injector=target.injector
             )
+
+    valid_transcripts, error_signals = await _filter_valid_transcripts(transcripts)
+    if error_signals:
+        console.print(f"  [dim]Filtered {len(error_signals)} invalid transcripts[/dim]")
+    if not valid_transcripts:
+        console.print("  [yellow]No valid transcripts, skipping improvement[/yellow]")
+        return IterationResult(
+            iteration_num=iteration_num,
+            score_before=score_before,
+            score_after=score_before,
+        )
+    transcripts = valid_transcripts
+
     async with progress_indicator("LLM generate"):
         improved = await generate_improvement(
             llm_client,
