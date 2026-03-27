@@ -176,6 +176,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
         TraceSchemaGrader,
         VerifyBeforeDoneGrader,
     )
+    from ash_hawk.graders.validity import TranscriptValidityGrader
 
     registry.register(StringMatchGrader())
     registry.register(TestRunnerGrader())
@@ -202,6 +203,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(CompletionHonestyGrader())
     registry.register(SummaryTruthfulnessGrader())
     registry.register(PromptStackOptimizerGrader())
+    registry.register(TranscriptValidityGrader())
 
 
 def get_default_registry() -> GraderRegistry:
