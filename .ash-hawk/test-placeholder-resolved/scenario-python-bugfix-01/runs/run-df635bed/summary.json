@@ -1,0 +1,661 @@
+{
+  "envelope": {
+    "run_id": "run-df635bed",
+    "suite_id": "scenario-python-bugfix-01",
+    "suite_hash": "55bb52dc763e3dcf",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-26T18:05:14.986219+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-python-bugfix-01",
+    "run_id": "run-df635bed",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.1,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 9.494686126708984,
+    "latency_p50_seconds": 9.494377851486206,
+    "latency_p95_seconds": 9.494377851486206,
+    "latency_p99_seconds": 9.494377851486206,
+    "pass_at_k": {},
+    "created_at": "2026-03-26T18:05:24.487372+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-3ac25a35",
+      "task_id": "python-bugfix-01",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "python-bugfix-01",
+          "description": "Fix bug in Python code - off-by-one-loop",
+          "sut": {
+            "type": "coding_agent",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "skill": "python-bugfix"
+            }
+          },
+          "inputs": {
+            "prompt": "Working directory: /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop\n\nFix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\nIMPORTANT:\n- File paths are relative to the working directory above\n- Use absolute paths like /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py\n- Run tests from the working directory",
+            "repo_fixture": "./"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read_file",
+              "write_file",
+              "edit_file"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 30,
+            "max_tokens": 2000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "composite",
+              "config": {
+                "mode": "weighted",
+                "weights": [
+                  0.7,
+                  0.2,
+                  0.1
+                ],
+                "graders": [
+                  {
+                    "grader_type": "test_runner",
+                    "config": {
+                      "test_path": "test_bug.py",
+                      "pass_threshold": 1.0,
+                      "partial_credit": true,
+                      "timeout_seconds": 60
+                    }
+                  },
+                  {
+                    "grader_type": "diff_constraints",
+                    "config": {
+                      "max_loc": 10,
+                      "max_files": 1
+                    }
+                  },
+                  {
+                    "grader_type": "transcript",
+                    "config": {
+                      "max_tool_calls": 15,
+                      "partial_credit": true
+                    }
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-3ac25a35",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-26T18:05:24.282062+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Working directory: /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop\n\nFix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\nIMPORTANT:\n- File paths are relative to the working directory above\n- Use absolute paths like /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py\n- Run tests from the working directory"
+            },
+            {
+              "role": "assistant",
+              "content": "I'll help you fix the bug in the Python code. Let me start by examining the files and running the tests to see the failure."
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"path\": \"/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py\"}, \"error\": \"Tool not available: read\"}, {\"tool\": \"read\", \"input\": {\"path\": \"/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py\"}, \"error\": \"Tool not available: read\"}]"
+            },
+            {
+              "role": "assistant",
+              "content": "Let me use bash to read the files:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py\", \"description\": \"Read the solution.py file\"}, \"output\": \"from __future__ import annotations\\n\\n\\ndef sum_first_n(n: int) -> int:\\n    total = 0\\n    for value in range(1, n):\\n        total += value\\n    return total\\n\", \"title\": \"Read the solution.py file\", \"metadata\": {\"exit_code\": 0, \"description\": \"Read the solution.py file\"}}, {\"tool\": \"bash\", \"input\": {\"command\": \"cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py\", \"description\": \"Read the test_bug.py file\"}, \"output\": \"from __future__ import annotations\\n\\nfrom src.solution import sum_first_n\\n\\n\\ndef test_sum_first_n_includes_upper_bound() -> None:\\n    assert sum_first_n(1) == 1\\n    assert sum_first_n(5) == 15\\n\", \"title\": \"Read the test_bug.py file\", \"metadata\": {\"exit_code\": 0, \"description\": \"Read the test_bug.py file\"}}]"
+            },
+            {
+              "role": "assistant",
+              "content": "Now let me run the tests to see the failure:"
+            },
+            {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"python -m pytest test_bug.py -v\", \"description\": \"Run tests to see the failure\"}, \"output\": \"============================= test session starts ==============================\\nplatform darwin -- Python 3.12.6, pytest-9.0.2, pluggy-1.6.0 -- /Users/parkersligting/develop/pt/ash-hawk/.venv/bin/python\\ncachedir: .pytest_cache\\nrootdir: /Users/parkersligting/develop/pt/ash-hawk\\nconfigfile: pyproject.toml\\nplugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0\\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\\ncollecting ... collected 0 items\\n\\n============================ no tests ran in 0.01s =============================\\n\\n[Stderr]\\nERROR: file or directory not found: test_bug.py\\n\\n\", \"title\": \"Run tests to see the failure\", \"metadata\": {\"exit_code\": 4, \"description\": \"Run tests to see the failure\"}}]"
+            }
+          ],
+          "tool_calls": [
+            {
+              "tool": "read",
+              "name": "read",
+              "input": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py"
+              },
+              "arguments": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py"
+              },
+              "output": null,
+              "error": "Tool not available: read"
+            },
+            {
+              "tool": "read",
+              "name": "read",
+              "input": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py"
+              },
+              "arguments": {
+                "path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py"
+              },
+              "output": null,
+              "error": "Tool not available: read"
+            },
+            {
+              "tool": "bash",
+              "name": "bash",
+              "input": {
+                "command": "cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py",
+                "description": "Read the solution.py file"
+              },
+              "arguments": {
+                "command": "cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py",
+                "description": "Read the solution.py file"
+              },
+              "output": "from __future__ import annotations\n\n\ndef sum_first_n(n: int) -> int:\n    total = 0\n    for value in range(1, n):\n        total += value\n    return total\n"
+            },
+            {
+              "tool": "bash",
+              "name": "bash",
+              "input": {
+                "command": "cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py",
+                "description": "Read the test_bug.py file"
+              },
+              "arguments": {
+                "command": "cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py",
+                "description": "Read the test_bug.py file"
+              },
+              "output": "from __future__ import annotations\n\nfrom src.solution import sum_first_n\n\n\ndef test_sum_first_n_includes_upper_bound() -> None:\n    assert sum_first_n(1) == 1\n    assert sum_first_n(5) == 15\n"
+            },
+            {
+              "tool": "bash",
+              "name": "bash",
+              "input": {
+                "command": "python -m pytest test_bug.py -v",
+                "description": "Run tests to see the failure"
+              },
+              "arguments": {
+                "command": "python -m pytest test_bug.py -v",
+                "description": "Run tests to see the failure"
+              },
+              "output": "============================= test session starts ==============================\nplatform darwin -- Python 3.12.6, pytest-9.0.2, pluggy-1.6.0 -- /Users/parkersligting/develop/pt/ash-hawk/.venv/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/parkersligting/develop/pt/ash-hawk\nconfigfile: pyproject.toml\nplugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 0 items\n\n============================ no tests ran in 0.01s =============================\n\n[Stderr]\nERROR: file or directory not found: test_bug.py\n\n"
+            }
+          ],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "IterationStarted",
+                "payload": {
+                  "max_iterations": 1
+                },
+                "iteration": 1,
+                "session_id": "trial-1774548315020"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "ProposalGenerated",
+                "payload": {
+                  "intent": "Working directory: /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop\n\nFix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\nIMPORTANT:\n- File paths are relative to the working directory above\n- Use absolute paths like /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py\n- Run tests from the working directory",
+                  "action_types": [],
+                  "risk_level": "RiskLevel.LOW"
+                },
+                "iteration": 1,
+                "session_id": "trial-1774548315020"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "IterationCompleted",
+                "payload": {
+                  "duration_ms": 9259.825706481934,
+                  "response_length": 44
+                },
+                "iteration": 1,
+                "session_id": "trial-1774548315020"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "RunCompleted",
+                "payload": {
+                  "success": true,
+                  "error": null
+                },
+                "iteration": 1,
+                "session_id": "trial-1774548315020"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Working directory: /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop\n\nFix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\nIMPORTANT:\n- File paths are relative to the working directory above\n- Use absolute paths like /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py\n- Run tests from the working directory"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "I'll help you fix the bug in the Python code. Let me start by examining the files and running the tests to see the failure."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"path\": \"/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py\"}, \"error\": \"Tool not available: read\"}, {\"tool\": \"read\", \"input\": {\"path\": \"/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py\"}, \"error\": \"Tool not available: read\"}]"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "Let me use bash to read the files:"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py\", \"description\": \"Read the solution.py file\"}, \"output\": \"from __future__ import annotations\\n\\n\\ndef sum_first_n(n: int) -> int:\\n    total = 0\\n    for value in range(1, n):\\n        total += value\\n    return total\\n\", \"title\": \"Read the solution.py file\", \"metadata\": {\"exit_code\": 0, \"description\": \"Read the solution.py file\"}}, {\"tool\": \"bash\", \"input\": {\"command\": \"cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py\", \"description\": \"Read the test_bug.py file\"}, \"output\": \"from __future__ import annotations\\n\\nfrom src.solution import sum_first_n\\n\\n\\ndef test_sum_first_n_includes_upper_bound() -> None:\\n    assert sum_first_n(1) == 1\\n    assert sum_first_n(5) == 15\\n\", \"title\": \"Read the test_bug.py file\", \"metadata\": {\"exit_code\": 0, \"description\": \"Read the test_bug.py file\"}}]"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "Now let me run the tests to see the failure:"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"python -m pytest test_bug.py -v\", \"description\": \"Run tests to see the failure\"}, \"output\": \"============================= test session starts ==============================\\nplatform darwin -- Python 3.12.6, pytest-9.0.2, pluggy-1.6.0 -- /Users/parkersligting/develop/pt/ash-hawk/.venv/bin/python\\ncachedir: .pytest_cache\\nrootdir: /Users/parkersligting/develop/pt/ash-hawk\\nconfigfile: pyproject.toml\\nplugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0\\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\\ncollecting ... collected 0 items\\n\\n============================ no tests ran in 0.01s =============================\\n\\n[Stderr]\\nERROR: file or directory not found: test_bug.py\\n\\n\", \"title\": \"Run tests to see the failure\", \"metadata\": {\"exit_code\": 4, \"description\": \"Run tests to see the failure\"}}]"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py"
+                },
+                "allowed": false,
+                "failure_mode": "policy_violation",
+                "reason": "Tool 'read' requires explicit permission"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "RejectionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py"
+                },
+                "failure_mode": "policy_violation",
+                "reason": "Tool 'read' requires explicit permission"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py"
+                },
+                "allowed": false,
+                "failure_mode": "policy_violation",
+                "reason": "Tool 'read' requires explicit permission"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "RejectionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "read",
+                "tool_input": {
+                  "path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py"
+                },
+                "failure_mode": "policy_violation",
+                "reason": "Tool 'read' requires explicit permission"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "bash",
+                "tool_input": {
+                  "command": "cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py",
+                  "description": "Read the solution.py file"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "bash",
+                "tool_input": {
+                  "command": "cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py",
+                  "description": "Read the test_bug.py file"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "PolicyDecisionEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "bash",
+                "tool_input": {
+                  "command": "python -m pytest test_bug.py -v",
+                  "description": "Run tests to see the failure"
+                },
+                "allowed": true,
+                "failure_mode": null,
+                "reason": null
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "bash",
+                "arguments": {
+                  "command": "cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/src/solution.py",
+                  "description": "Read the solution.py file"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "bash",
+                "result": {}
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "bash",
+                "arguments": {
+                  "command": "cat /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/01-off-by-one-loop/test_bug.py",
+                  "description": "Read the test_bug.py file"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "bash",
+                "result": {}
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolCallEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "name": "bash",
+                "arguments": {
+                  "command": "python -m pytest test_bug.py -v",
+                  "description": "Run tests to see the failure"
+                }
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ToolResultEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "tool_name": "bash",
+                "result": {}
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": ".ash-hawk/test-placeholder-resolved/scenario-python-bugfix-01/runs/run-df635bed/artifacts/trial-4a784245/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 9.290251731872559,
+          "agent_response": "Now let me run the tests to see the failure:",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "composite",
+            "grader_id": null,
+            "score": 0.1,
+            "passed": false,
+            "details": {
+              "mode": "weighted",
+              "threshold": 0.7,
+              "grader_results": [
+                {
+                  "grader_type": "test_runner",
+                  "grader_id": null,
+                  "score": 0.0,
+                  "passed": false,
+                  "details": {
+                    "command": "pytest test_bug.py -v --tb=short",
+                    "return_code": 4,
+                    "total_tests": 0,
+                    "passed_tests": 0,
+                    "failed_tests": 0,
+                    "skipped_tests": 0,
+                    "pass_ratio": 0.0,
+                    "execution_time_seconds": 0.18746280670166016,
+                    "timed_out": false
+                  },
+                  "error_message": null,
+                  "execution_time_seconds": 0.18786406517028809,
+                  "confidence": null,
+                  "needs_review": false,
+                  "review_reason": null
+                },
+                {
+                  "grader_type": "diff_constraints",
+                  "grader_id": null,
+                  "score": 0.0,
+                  "passed": false,
+                  "details": {
+                    "diffs_checked": 0,
+                    "changed_files": 0,
+                    "added_lines": 0,
+                    "violations": [
+                      {
+                        "error": "missing_diff"
+                      }
+                    ],
+                    "limits": {
+                      "max_files": 1,
+                      "max_loc": 10
+                    },
+                    "allowed_paths": []
+                  },
+                  "error_message": null,
+                  "execution_time_seconds": 7.104873657226562e-05,
+                  "confidence": null,
+                  "needs_review": false,
+                  "review_reason": null
+                },
+                {
+                  "grader_type": "transcript",
+                  "grader_id": null,
+                  "score": 1.0,
+                  "passed": true,
+                  "details": {
+                    "metrics": {
+                      "turn_count": 3,
+                      "message_count": 7,
+                      "user_message_count": 4,
+                      "assistant_message_count": 3,
+                      "message_types": {
+                        "user": 4,
+                        "assistant": 3
+                      },
+                      "tool_call_count": 5,
+                      "tool_summary": {
+                        "read": 2,
+                        "bash": 3
+                      },
+                      "has_error": false
+                    },
+                    "violations": [],
+                    "warnings": [],
+                    "token_usage": {
+                      "input": 0,
+                      "output": 0,
+                      "reasoning": 0,
+                      "total": 0
+                    },
+                    "duration_seconds": 9.290251731872559,
+                    "tool_call_count": 5,
+                    "cost_usd": 0.0
+                  },
+                  "error_message": null,
+                  "execution_time_seconds": 2.8133392333984375e-05,
+                  "confidence": null,
+                  "needs_review": false,
+                  "review_reason": null
+                }
+              ],
+              "weights": [
+                0.7,
+                0.2,
+                0.1
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.1,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "agent_name": "promoter-scorer",
+  "target_path": "/Users/parkersligting/develop/pt/vox-jay/.dawn-kestrel/skills/promoter-scorer/SKILL.md",
+  "scenario_paths": [
+    "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/engagement_worthy_001.scenario.yaml",
+    "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/nice_thought_001.scenario.yaml"
+  ],
+  "target_type": "skill",
+  "status": "completed",
+  "iterations": [
+    {
+      "iteration_num": 0,
+      "score_before": 0.25,
+      "score_after": 0.25,
+      "improvement_text": "promoter-nuance-moderate",
+      "applied": false,
+      "timestamp": "2026-03-28T18:21:48.241786+00:00",
+      "category_scores": null
+    },
+    {
+      "iteration_num": 1,
+      "score_before": 0.25,
+      "score_after": 0.25,
+      "improvement_text": "moderate-mixed-signal-evaluation",
+      "applied": false,
+      "timestamp": "2026-03-28T18:23:32.018349+00:00",
+      "category_scores": null
+    },
+    {
+      "iteration_num": 2,
+      "score_before": 0.25,
+      "score_after": 0.25,
+      "improvement_text": "moderate-reciprocity-check",
+      "applied": false,
+      "timestamp": "2026-03-28T18:25:08.273240+00:00",
+      "category_scores": null
+    },
+    {
+      "iteration_num": 3,
+      "score_before": 0.25,
+      "score_after": 0.25,
+      "improvement_text": "moderate-broadcaster-filter",
+      "applied": false,
+      "timestamp": "2026-03-28T18:26:48.439191+00:00",
+      "category_scores": null
+    },
+    {
+      "iteration_num": 4,
+      "score_before": 0.25,
+      "score_after": 0.25,
+      "improvement_text": "moderate-signal-originality",
+      "applied": false,
+      "timestamp": "2026-03-28T18:28:19.009981+00:00",
+      "category_scores": null
+    }
+  ],
+  "initial_score": 0.25,
+  "final_score": 0.25,
+  "started_at": "2026-03-28T18:19:27.744934+00:00",
+  "completed_at": "2026-03-28T18:28:19.010313+00:00",
+  "error_message": null
+}

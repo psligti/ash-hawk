@@ -202,6 +202,22 @@ class TestLLMJudgeGrader:
         with pytest.raises(ValueError, match="Failed to parse"):
             grader._parse_judge_output(raw)
 
+    def test_parse_judge_output_with_prefixed_text_extracts_json_object(self):
+        grader = LLMJudgeGrader()
+        raw = (
+            'Judge result: {"score": 0.8, "passed": true, "reasoning": "Good", '
+            '"issues": [], "strengths": []}'
+        )
+        output = grader._parse_judge_output(raw)
+        assert output.score == 0.8
+        assert output.passed is True
+
+    def test_parse_judge_output_empty_markdown_block_raises_clear_error(self):
+        grader = LLMJudgeGrader()
+        raw = "```json\n```"
+        with pytest.raises(ValueError, match="empty JSON after extraction"):
+            grader._parse_judge_output(raw)
+
     def test_parse_judge_output_with_nested_answer_payload(self):
         grader = LLMJudgeGrader()
         raw = json.dumps(

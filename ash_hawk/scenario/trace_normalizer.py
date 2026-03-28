@@ -4,6 +4,7 @@ from typing import Any
 
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
+    EVENT_TYPE_MODEL_MAP,
     ArtifactEvent,
     BudgetEvent,
     DiffEvent,
@@ -97,8 +98,36 @@ def _tool_result_payload(tool_call: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
+def _event_from_trace_payload(payload: dict[str, Any]) -> TraceEvent | None:
+    event_type = payload.get("event_type")
+    if not isinstance(event_type, str):
+        return None
+
+    model = EVENT_TYPE_MODEL_MAP.get(event_type, TraceEvent)
+    ts_value = payload.get("ts")
+    data_value = payload.get("data")
+
+    normalized_payload = dict(payload)
+    if not isinstance(ts_value, str) or not ts_value:
+        normalized_payload["ts"] = DEFAULT_TRACE_TS
+    if not isinstance(data_value, dict):
+        normalized_payload["data"] = {}
+
+    try:
+        return model.model_validate(normalized_payload)
+    except Exception:
+        return None
+
+
 def normalize_eval_transcript(transcript: EvalTranscript) -> list[TraceEvent]:
     events: list[TraceEvent] = []
+
+    for trace_event in transcript.trace_events:
+        if not isinstance(trace_event, dict):
+            continue
+        parsed = _event_from_trace_payload(trace_event)
+        if parsed is not None:
+            events.append(parsed)
 
     for message in transcript.messages:
         if not isinstance(message, dict):

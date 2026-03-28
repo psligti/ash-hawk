@@ -119,29 +119,13 @@ class GitRepoBackend(MaterializerBackend):
     ) -> CommitMetadata:
         repo_root = Path(config.repo_root)
 
-        subprocess.run(
-            ["git", "add", "-A"],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
+        await self._run_command("git add -A", repo_root)
+        await self._run_command(
+            f'git commit -m "{message}" --author "ash-hawk <ash-hawk@local>"',
+            repo_root,
         )
 
-        _commit_result = subprocess.run(
-            ["git", "commit", "-m", message, "--author", "ash-hawk <ash-hawk@local>"],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-        sha_result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        sha_result = await self._run_command("git rev-parse HEAD", repo_root)
         sha = sha_result.stdout.strip() or "unknown"
 
         return CommitMetadata(
@@ -153,23 +137,10 @@ class GitRepoBackend(MaterializerBackend):
     async def rollback(self, config: MaterializationConfig) -> bool:
         repo_root = Path(config.repo_root)
 
-        result = subprocess.run(
-            ["git", "checkout", "--", "."],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        checkout_result = await self._run_command("git checkout -- .", repo_root)
+        clean_result = await self._run_command("git clean -fd", repo_root)
 
-        clean_result = subprocess.run(
-            ["git", "clean", "-fd"],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-        return result.returncode == 0 and clean_result.returncode == 0
+        return checkout_result.returncode == 0 and clean_result.returncode == 0
 
     def _apply_patch(self, patch: PatchOperation, repo_root: Path) -> str | None:
         target_path = repo_root / patch.path

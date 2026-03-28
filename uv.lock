@@ -841,8 +841,10 @@ provides-extras = ["cli", "tui", "redis", "full", "dev"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "bandit", specifier = ">=1.9.4" },
     { name = "faker" },
     { name = "mypy" },
+    { name = "pre-commit", specifier = ">=4.5.1" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },

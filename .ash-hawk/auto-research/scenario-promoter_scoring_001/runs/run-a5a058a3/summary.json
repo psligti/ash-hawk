@@ -1,0 +1,318 @@
+{
+  "envelope": {
+    "run_id": "run-a5a058a3",
+    "suite_id": "scenario-promoter_scoring_001",
+    "suite_hash": "19be763e0ef0340d",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-28T17:59:25.803735+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-promoter_scoring_001",
+    "run_id": "run-a5a058a3",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.25,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 17.757402181625366,
+    "latency_p50_seconds": 17.757185220718384,
+    "latency_p95_seconds": 17.757185220718384,
+    "latency_p99_seconds": 17.757185220718384,
+    "pass_at_k": {},
+    "created_at": "2026-03-28T17:59:43.561663+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-2d154a89",
+      "task_id": "promoter_scoring_001",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "promoter_scoring_001",
+          "description": "Score engagement-worthy account that amplifies others and engages small accounts",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.2
+            }
+          },
+          "inputs": {
+            "visible_to_agent": {
+              "prompt": "You are Vox Jay's promoter scorer. Evaluate this X account for engagement potential.\n\nAccount: @techbuilder_founder\nFollowers: 8500\nFollowing: 340\n\nRecent tweets:\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here's what I learned and how to fix it...\" (38 likes, 7 replies)\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn't what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\n\nEvaluate:\n1. Does this account amplify others (retweets/quotes with commentary)?\n2. Does this account engage with smaller accounts (<10K followers)?\n3. Is there multi-turn conversation engagement?\n4. Does the account share technical content (repos, papers, code)?\n5. Is there niche focus (AI agents, RL, coding tools)?\n\nReturn valid JSON with exactly these fields:\n{\n  \"score_percentage\": <0-100>,\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\n  \"recommendation\": \"<one sentence recommendation>\"\n}\n"
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 0,
+            "max_tokens": 800,
+            "max_time_seconds": 45.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_match",
+              "config": {
+                "path": "output.category",
+                "expected": "HIGH_VALUE"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_threshold",
+              "config": {
+                "path": "output.score_percentage",
+                "min": 70
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "rationale_grounding",
+              "config": {
+                "rationale_path": "output.key_signals",
+                "required_evidence_any": [
+                  "amplifies",
+                  "retweets",
+                  "quotes",
+                  "engages small",
+                  "technical content",
+                  "niche focus",
+                  "multi-turn",
+                  "shares code"
+                ],
+                "min_matches": 3
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/engagement_worthy_001.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-2d154a89",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-28T17:59:43.559304+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}\n\n---\n\n## Skill: ai-slop-detection\n\n---\nname: \"ai-slop-detection\"\ndescription: \"Distinguishes between genuine technical discourse and low-effort 'AI slop' or engagement farming to properly classify accounts as LOW value.\"\ntargets_categories:\n  - \"LOW\"\n---\n\n## What I do\n\nI analyze tweet content for superficial patterns often found in \"Nice-thought\" accounts that should be classified as **LOW** or **SKIP**. Specifically, I detect formulaic threads, generic motivational quotes paired with buzzwords, and engagement baiting. I verify if technical claims are backed by specific evidence (code, screenshots, papers) or if they are vague platitudes.\n\n## When to use me\n\nApply this skill when evaluating an account that frequently posts about AI/tech trends but lacks specific technical depth or unique insights. This is crucial when the account has a moderate-to-high follower count, which might otherwise trigger a default assumption of credibility, or when the account uses \"engagement farming\" language.\n\n## Guidelines\n\n- **Flag Formulaic Content**: Identify threads that follow a rigid \"hot take\" -> \"generic advice\" -> \"CTA\" structure without substance.\n- **Detect Buzzword Salad**: Penalize tweets high in buzzwords (e.g., \"game-changer,\" \"unleash,\" \"paradigm shift\") but low in technical specificity.\n- **Check for Reciprocity**: Heavily weight the lack of engagement with smaller accounts or lack of amplification of others' work.\n- **Evidence Verification**: If an account claims to have \"shipped\" something or broken news, look for links, repos, or proof. Absence of proof in >3 recent \"claim\" tweets indicates LOW value.\n- **Volume vs. Value**: A high frequency of posts with no interaction (replies/quotes) from the user usually indicates a broadcast bot rather than a community member."
+            },
+            {
+              "role": "assistant",
+              "content": "```json\n{\n  \"score_percentage\": 92,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Ships verifiable open-source code with specific performance metrics (sub-50ms latency)\",\n    \"Deep technical engagement: discusses specific debugging scenarios (agent loops, tool output)\",\n    \"Amplifies others with added technical insight rather than blind retweets\",\n    \"Focused niche expertise in AI agents and infrastructure\"\n  ],\n  \"recommendation\": \" highly engaged builder with verifiable technical output; prioritize for direct outreach or partnership.\"\n}\n```"
+            }
+          ],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "IterationStarted",
+                "payload": {
+                  "max_iterations": 1
+                },
+                "iteration": 1,
+                "session_id": "trial-1774720765808"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "ProposalGenerated",
+                "payload": {
+                  "intent": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}\n\n---\n\n## Skill: ai-slop-detection\n\n---\nname: \"ai-slop-detection\"\ndescription: \"Distinguishes between genuine technical discourse and low-effort 'AI slop' or engagement farming to properly classify accounts as LOW value.\"\ntargets_categories:\n  - \"LOW\"\n---\n\n## What I do\n\nI analyze tweet content for superficial patterns often found in \"Nice-thought\" accounts that should be classified as **LOW** or **SKIP**. Specifically, I detect formulaic threads, generic motivational quotes paired with buzzwords, and engagement baiting. I verify if technical claims are backed by specific evidence (code, screenshots, papers) or if they are vague platitudes.\n\n## When to use me\n\nApply this skill when evaluating an account that frequently posts about AI/tech trends but lacks specific technical depth or unique insights. This is crucial when the account has a moderate-to-high follower count, which might otherwise trigger a default assumption of credibility, or when the account uses \"engagement farming\" language.\n\n## Guidelines\n\n- **Flag Formulaic Content**: Identify threads that follow a rigid \"hot take\" -> \"generic advice\" -> \"CTA\" structure without substance.\n- **Detect Buzzword Salad**: Penalize tweets high in buzzwords (e.g., \"game-changer,\" \"unleash,\" \"paradigm shift\") but low in technical specificity.\n- **Check for Reciprocity**: Heavily weight the lack of engagement with smaller accounts or lack of amplification of others' work.\n- **Evidence Verification**: If an account claims to have \"shipped\" something or broken news, look for links, repos, or proof. Absence of proof in >3 recent \"claim\" tweets indicates LOW value.\n- **Volume vs. Value**: A high frequency of posts with no interaction (replies/quotes) from the user usually indicates a broadcast bot rather than a community member.",
+                  "action_types": [],
+                  "risk_level": "RiskLevel.LOW"
+                },
+                "iteration": 1,
+                "session_id": "trial-1774720765808"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "IterationCompleted",
+                "payload": {
+                  "duration_ms": 17750.78773498535,
+                  "response_length": 556
+                },
+                "iteration": 1,
+                "session_id": "trial-1774720765808"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "RunCompleted",
+                "payload": {
+                  "success": true,
+                  "error": null
+                },
+                "iteration": 1,
+                "session_id": "trial-1774720765808"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}\n\n---\n\n## Skill: ai-slop-detection\n\n---\nname: \"ai-slop-detection\"\ndescription: \"Distinguishes between genuine technical discourse and low-effort 'AI slop' or engagement farming to properly classify accounts as LOW value.\"\ntargets_categories:\n  - \"LOW\"\n---\n\n## What I do\n\nI analyze tweet content for superficial patterns often found in \"Nice-thought\" accounts that should be classified as **LOW** or **SKIP**. Specifically, I detect formulaic threads, generic motivational quotes paired with buzzwords, and engagement baiting. I verify if technical claims are backed by specific evidence (code, screenshots, papers) or if they are vague platitudes.\n\n## When to use me\n\nApply this skill when evaluating an account that frequently posts about AI/tech trends but lacks specific technical depth or unique insights. This is crucial when the account has a moderate-to-high follower count, which might otherwise trigger a default assumption of credibility, or when the account uses \"engagement farming\" language.\n\n## Guidelines\n\n- **Flag Formulaic Content**: Identify threads that follow a rigid \"hot take\" -> \"generic advice\" -> \"CTA\" structure without substance.\n- **Detect Buzzword Salad**: Penalize tweets high in buzzwords (e.g., \"game-changer,\" \"unleash,\" \"paradigm shift\") but low in technical specificity.\n- **Check for Reciprocity**: Heavily weight the lack of engagement with smaller accounts or lack of amplification of others' work.\n- **Evidence Verification**: If an account claims to have \"shipped\" something or broken news, look for links, repos, or proof. Absence of proof in >3 recent \"claim\" tweets indicates LOW value.\n- **Volume vs. Value**: A high frequency of posts with no interaction (replies/quotes) from the user usually indicates a broadcast bot rather than a community member."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "```json\n{\n  \"score_percentage\": 92,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Ships verifiable open-source code with specific performance metrics (sub-50ms latency)\",\n    \"Deep technical engagement: discusses specific debugging scenarios (agent loops, tool output)\",\n    \"Amplifies others with added technical insight rather than blind retweets\",\n    \"Focused niche expertise in AI agents and infrastructure\"\n  ],\n  \"recommendation\": \" highly engaged builder with verifiable technical output; prioritize for direct outreach or partnership.\"\n}\n```"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": ".ash-hawk/auto-research/scenario-promoter_scoring_001/runs/run-a5a058a3/artifacts/trial-e516e44d/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 17.75578498840332,
+          "agent_response": "```json\n{\n  \"score_percentage\": 92,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Ships verifiable open-source code with specific performance metrics (sub-50ms latency)\",\n    \"Deep technical engagement: discusses specific debugging scenarios (agent loops, tool output)\",\n    \"Amplifies others with added technical insight rather than blind retweets\",\n    \"Focused niche expertise in AI agents and infrastructure\"\n  ],\n  \"recommendation\": \" highly engaged builder with verifiable technical output; prioritize for direct outreach or partnership.\"\n}\n```",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 7,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 3.0994415283203125e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "json_path_match",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: json_path_match",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "json_path_threshold",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: json_path_threshold",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "rationale_grounding",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: rationale_grounding",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.25,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    }
+  ]
+}

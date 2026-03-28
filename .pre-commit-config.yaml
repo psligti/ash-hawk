@@ -1,0 +1,87 @@
+# Pre-commit hooks for Ash Hawk
+# Install: uv run pre-commit install
+# Run manually: uv run pre-commit run --all-files
+
+exclude: |
+  (?x)^(
+    \.ash-hawk/|
+    \.venv/|
+    __pycache__/|
+    \.mypy_cache/|
+    \.pytest_cache/|
+    \.ruff_cache/|
+    .*\.egg-info/|
+    dist/|
+    build/|
+    node_modules/
+  )
+
+repos:
+  # Standard file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom YAML tags
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+        exclude: ^tests/
+      - id: debug-statements
+
+  # Ruff - linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.2
+    hooks:
+      # Linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      # Formatter
+      - id: ruff-format
+
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        name: mypy (ash_hawk)
+        args: [--config-file=pyproject.toml]
+        pass_filenames: false
+        entry: mypy ash_hawk
+        additional_dependencies:
+          - pydantic>=2.12
+          - types-PyYAML
+          - types-aiofiles
+
+  # Run tests (fast subset for quick feedback)
+  # Skip with: SKIP=pytest git commit
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest (fast)
+        entry: uv run pytest tests/ -x --no-cov -q
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        always_run: true
+
+  # Security checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        args: ['-c', 'pyproject.toml']
+        additional_dependencies: ['bandit[toml]']
+
+# CI configuration
+ci:
+  autofix_prs: false
+  autofix_commit_msg: 'style: auto-fix pre-commit issues'
+  autoupdate_branch: main
+  autoupdate_commit_msg: 'chore: pre-commit autoupdate'

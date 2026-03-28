@@ -63,6 +63,25 @@ class EvalConfig(pydantic_settings.BaseSettings):
         description="Timeout for LLM requests in auto-research improvement cycle",
     )
 
+    auto_research_llm_max_retries: int = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Maximum retry attempts for LLM requests in auto-research (handles rate limiting)",
+    )
+
+    llm_use_queue: bool = Field(
+        default=False,
+        description="Enable persistent request queue for cross-process rate limiting",
+    )
+
+    llm_queue_max_concurrent: int = Field(
+        default=3,
+        ge=1,
+        le=100,
+        description="Maximum concurrent LLM requests per provider/model when queue is enabled",
+    )
+
     trial_max_workers: int = Field(
         default=4,
         ge=1,

@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 from ash_hawk.scenario.adapters import ScenarioAdapter
+from ash_hawk.scenario.models import ScenarioAdapterResult, ScenarioTraceEvent
 from ash_hawk.scenario.registry import (
     ENTRY_POINT_GROUP,
     ScenarioAdapterRegistry,
@@ -29,13 +30,19 @@ class MockScenarioAdapter:
         workdir: Path,
         tooling_harness: dict[str, Any],
         budgets: dict[str, Any],
-    ) -> tuple[Any, list[Any], dict[str, Any], Any]:
+    ) -> ScenarioAdapterResult:
         """Mock implementation of run_scenario."""
         final_output = f"output for {scenario.get('id', 'unknown')}"
-        trace_events = [{"event": "start"}, {"event": "end"}]
+        trace_events = [
+            {"event_type": "MockStart", "data": {"event": "start"}},
+            {"event_type": "MockEnd", "data": {"event": "end"}},
+        ]
         artifacts = {"result": "success"}
-        outcome = None
-        return final_output, trace_events, artifacts, outcome
+        return ScenarioAdapterResult(
+            final_output=final_output,
+            trace_events=[ScenarioTraceEvent.model_validate(event) for event in trace_events],
+            artifacts=artifacts,
+        )
 
 
 class TestScenarioAdapterProtocol:
@@ -197,13 +204,11 @@ class TestScenarioAdapterExecution:
         tooling_harness = {"allowed_tools": ["read", "write"]}
         budgets = {"max_tokens": 1000, "timeout_seconds": 60}
 
-        final_output, trace_events, artifacts, _ = adapter.run_scenario(
-            scenario, workdir, tooling_harness, budgets
-        )
+        result = adapter.run_scenario(scenario, workdir, tooling_harness, budgets)
 
-        assert final_output == "output for scenario-1"
-        assert len(trace_events) == 2
-        assert artifacts["result"] == "success"
+        assert result.final_output == "output for scenario-1"
+        assert len(result.trace_events) == 2
+        assert result.artifacts["result"] == "success"
 
     def test_registry_with_executed_adapter(self):
         """Registry can store and retrieve an adapter that was executed."""
@@ -217,10 +222,8 @@ class TestScenarioAdapterExecution:
         assert isinstance(retrieved, ScenarioAdapter)
 
         # Execute the retrieved adapter
-        final_output, trace_events, artifacts, _ = retrieved.run_scenario(
-            {"id": "test"}, Path("/tmp"), {}, {}
-        )
+        result = retrieved.run_scenario({"id": "test"}, Path("/tmp"), {}, {})
 
-        assert final_output == "output for test"
-        assert len(trace_events) == 2
-        assert "result" in artifacts
+        assert result.final_output == "output for test"
+        assert len(result.trace_events) == 2
+        assert "result" in result.artifacts

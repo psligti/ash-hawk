@@ -578,6 +578,57 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
 
         assert captured_enforcer is enforcer
 
+    @pytest.mark.asyncio
+    async def test_run_ignores_empty_policy_snapshot_allowed_tools_override(self, sample_policy):
+        runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
+        enforcer = PolicyEnforcer(sample_policy)
+        task = EvalTask(
+            id="task-003",
+            description="Task with empty policy snapshot override",
+            input={
+                "prompt": "Do the thing",
+                "policy_snapshot": {
+                    "allowed_tools": [],
+                    "denied_tools": [],
+                },
+            },
+        )
+
+        class MockResponse:
+            text = "Test"
+            messages = []
+            tool_calls = []
+            usage = None
+            cost = 0.0
+
+        mock_client = MagicMock()
+        mock_client.complete = AsyncMock(return_value=MockResponse())
+
+        captured_allowed: list[str] | None = None
+        captured_denied: list[str] | None = None
+
+        def capture_overrides(
+            _policy_enforcer,
+            base_registry=None,
+            allowed_tools_override=None,
+            denied_tools_override=None,
+        ):
+            del base_registry
+            nonlocal captured_allowed, captured_denied
+            captured_allowed = allowed_tools_override
+            captured_denied = denied_tools_override
+            mock_result = MagicMock()
+            mock_result.tools = {}
+            mock_result.get_all = AsyncMock(return_value={})
+            return mock_result
+
+        with patch.object(runner, "_get_client", return_value=mock_client):
+            with patch.object(runner, "_create_filtered_registry", side_effect=capture_overrides):
+                await runner.run(task=task, policy_enforcer=enforcer, config={})
+
+        assert captured_allowed is None
+        assert captured_denied is None
+
 
 class TestDawnKestrelAgentRunnerMCPIntegration:
     @pytest.mark.asyncio

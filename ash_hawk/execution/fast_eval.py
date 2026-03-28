@@ -27,6 +27,50 @@ from ash_hawk.types import (
 logger = logging.getLogger(__name__)
 
 
+def _extract_json_candidate(raw_output: str) -> str:
+    candidate = raw_output.strip()
+    if "```json" in candidate:
+        start = candidate.find("```json") + 7
+        end = candidate.find("```", start)
+        if end != -1:
+            return candidate[start:end].strip()
+    if "```" in candidate:
+        start = candidate.find("```") + 3
+        end = candidate.find("```", start)
+        if end != -1:
+            return candidate[start:end].strip()
+    return candidate
+
+
+def _extract_first_json_object(candidate: str) -> str | None:
+    start = candidate.find("{")
+    if start == -1:
+        return None
+
+    depth = 0
+    in_string = False
+    escape_next = False
+    for idx, char in enumerate(candidate[start:]):
+        if escape_next:
+            escape_next = False
+            continue
+        if char == "\\":
+            escape_next = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return candidate[start : start + idx + 1]
+    return None
+
+
 class FastEvalRunner:
     """Lightweight runner for fast evaluation suites.
 
@@ -249,19 +293,16 @@ Respond with ONLY the JSON object, no additional text."""
             judge_response = await client.complete(messages=messages, options=options)
             raw_output = judge_response.text or ""
 
-            # Parse JSON from response
-            if "```json" in raw_output:
-                start = raw_output.find("```json") + 7
-                end = raw_output.find("```", start)
-                if end != -1:
-                    raw_output = raw_output[start:end].strip()
-            elif "```" in raw_output:
-                start = raw_output.find("```") + 3
-                end = raw_output.find("```", start)
-                if end != -1:
-                    raw_output = raw_output[start:end].strip()
-
-            data = json.loads(raw_output)
+            json_candidate = _extract_json_candidate(raw_output)
+            if not json_candidate:
+                raise ValueError("Judge returned empty JSON after extraction")
+            try:
+                data = json.loads(json_candidate)
+            except json.JSONDecodeError as parse_error:
+                extracted = _extract_first_json_object(json_candidate)
+                if extracted is None:
+                    raise ValueError(f"Failed to parse judge output as JSON: {parse_error}")
+                data = json.loads(extracted)
             score = float(data.get("score", 0.0))
             score = max(0.0, min(1.0, score))
             passed = data.get("passed")

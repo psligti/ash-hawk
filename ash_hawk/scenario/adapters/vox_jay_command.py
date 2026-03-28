@@ -19,6 +19,7 @@ from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any, cast
 
+from ash_hawk.scenario.models import ScenarioAdapterResult, ScenarioTraceEvent
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
     ModelMessageEvent,
@@ -73,7 +74,7 @@ class VoxJayCommandAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str, list[dict[str, Any]], dict[str, Any], Any]:
+    ) -> ScenarioAdapterResult:
         """Execute vox-jay command evaluation and return results.
 
         Args:
@@ -123,7 +124,11 @@ class VoxJayCommandAdapter:
             "verification_passed": verification_passed,
         }
 
-        return final_output, trace_events, artifacts, None
+        return ScenarioAdapterResult(
+            final_output=final_output,
+            trace_events=[ScenarioTraceEvent.model_validate(event) for event in trace_events],
+            artifacts=artifacts,
+        )
 
     def _execute_command(
         self, command: str, inputs: dict[str, Any], trace_events: list[dict[str, Any]]

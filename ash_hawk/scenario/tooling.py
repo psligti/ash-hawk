@@ -117,16 +117,13 @@ class ToolingHarness:
             return deepcopy(record.result)
 
         key = (tool_name, normalized_input)
-        if key not in self._mocks:
+        result: dict[str, Any] = {}
+        if key in self._mocks:
+            result = deepcopy(self._mocks[key])
+        else:
             default_key = (tool_name, _normalize_input({}))
             if default_key in self._mocks:
-                key = default_key
-            else:
-                raise KeyError(
-                    f"No mock registered for tool {tool_name} and input {normalized_input}"
-                )
-
-        result = deepcopy(self._mocks[key])
+                result = deepcopy(self._mocks[default_key])
         if self.mode == "record":
             record = ToolingRecord(
                 tool_name=tool_name,

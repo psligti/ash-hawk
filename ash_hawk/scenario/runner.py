@@ -7,6 +7,7 @@ import logging
 import platform
 import sys
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Literal
@@ -56,10 +57,13 @@ class ScenarioRunner:
         self,
         storage_path: str | Path | None = None,
         parallelism: int | None = None,
-        tooling_mode: Literal["mock", "record", "replay"] = "mock",
+        tooling_mode: Literal["mock", "record", "replay"] = "record",
         adapter_registry: ScenarioAdapterRegistry | None = None,
         show_failure_patterns: bool = True,
         injector: Any | None = None,
+        scenario_timeout_seconds: float | None = None,
+        grader_config_overrides: dict[str, Any] | None = None,
+        on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
     ) -> None:
         from ash_hawk.storage import FileStorage
 
@@ -73,6 +77,9 @@ class ScenarioRunner:
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._show_failure_patterns = show_failure_patterns
         self._injector = injector
+        self._scenario_timeout_seconds = scenario_timeout_seconds
+        self._grader_config_overrides = grader_config_overrides or {}
+        self._on_trial_progress = on_trial_progress
         self._config = EvalConfig(
             parallelism=parallelism or config.parallelism,
             default_timeout_seconds=config.default_timeout_seconds,
@@ -115,13 +122,16 @@ class ScenarioRunner:
             tooling_mode=self._tooling_mode,
             artifacts_root=self._storage_root,
             injector=self._injector,
+            scenario_timeout_seconds=self._scenario_timeout_seconds,
         )
         trial_executor = TrialExecutor(
             storage=self._storage,
             policy=policy,
             agent_runner=scenario_agent_runner,
         )
-        runner = EvalRunner(self._config, self._storage, trial_executor)
+        runner = EvalRunner(
+            self._config, self._storage, trial_executor, on_trial_progress=self._on_trial_progress
+        )
         summary = await runner.run_suite(
             suite=suite,
             agent_config=agent_config,
@@ -129,9 +139,23 @@ class ScenarioRunner:
         )
 
         # Detect systematic failures and surface them
-        self._detect_and_surface_failures(summary)
+        failure_summary = self._detect_and_surface_failures(summary)
+        self._raise_on_critical_failures(failure_summary)
 
         return summary
+
+    def _raise_on_critical_failures(self, failure_summary: dict[str, Any]) -> None:
+        empty_transcript_trials = failure_summary.get("empty_transcript_trials", [])
+        if not isinstance(empty_transcript_trials, list) or not empty_transcript_trials:
+            return
+
+        sample = empty_transcript_trials[0]
+        trial_id = sample.get("trial_id") if isinstance(sample, dict) else "unknown"
+        task_id = sample.get("task_id") if isinstance(sample, dict) else "unknown"
+        raise ValueError(
+            "Detected empty transcripts; aborting scenario run. "
+            f"First affected trial: trial_id={trial_id}, task_id={task_id}."
+        )
 
     def _detect_and_surface_failures(self, summary: EvalRunSummary) -> dict[str, Any]:
         """Detect systematic failures and surface actionable insights.
@@ -139,7 +163,7 @@ class ScenarioRunner:
         Checks for:
         1. All trials with same low score (e.g., 0.25)
         2. All transcripts with error_trace
-        3. All transcripts with empty tool_calls and messages
+        3. All transcripts with no observable execution data
         """
 
         # Collect failure patterns
@@ -181,8 +205,18 @@ class ScenarioRunner:
                     }
                 )
 
-            # Check for empty tool calls/messages (no work done)
-            if len(transcript.tool_calls) == 0 and len(transcript.messages) == 0:
+            has_no_messages = len(transcript.messages) == 0
+            has_no_tool_calls = len(transcript.tool_calls) == 0
+            has_no_trace_events = len(transcript.trace_events) == 0
+            has_no_agent_response = transcript.agent_response in (None, "")
+            has_no_error_trace = transcript.error_trace in (None, "")
+            if (
+                has_no_messages
+                and has_no_tool_calls
+                and has_no_trace_events
+                and has_no_agent_response
+                and has_no_error_trace
+            ):
                 empty_transcript_trials.append(
                     {
                         "trial_id": trial.id,
@@ -295,7 +329,9 @@ class ScenarioRunner:
         resolved_inputs = self._resolve_paths(scenario.inputs, path.parent)
         scenario_resolved = scenario.model_copy(update={"inputs": resolved_inputs})
         grader_specs = [self._grader_from_spec(spec) for spec in scenario.graders]
-        timeout_seconds = scenario.budgets.max_time_seconds
+        timeout_seconds = self._scenario_timeout_seconds
+        if timeout_seconds is None:
+            timeout_seconds = scenario.budgets.max_time_seconds
 
         return EvalTask(
             id=scenario.id,
@@ -312,9 +348,11 @@ class ScenarioRunner:
         )
 
     def _grader_from_spec(self, spec: ScenarioGraderSpec) -> GraderSpec:
+        merged_config = dict(spec.config)
+        merged_config.update(self._grader_config_overrides)
         return GraderSpec(
             grader_type=spec.grader_type,
-            config=dict(spec.config),
+            config=merged_config,
             weight=spec.weight,
             required=spec.required,
             timeout_seconds=spec.timeout_seconds,
@@ -329,7 +367,18 @@ class ScenarioRunner:
             candidate = Path(value)
             if not candidate.is_absolute():
                 return str((root / candidate).resolve())
+        if isinstance(value, str) and key == "prompt":
+            return self._resolve_placeholders(value, root)
         return value
+
+    def _resolve_placeholders(self, text: str, root: Path) -> str:
+        replacements = {
+            "scenario_root": str(root.resolve()),
+            "scenario_path": str((root / "scenario.yaml").resolve()),
+        }
+        for placeholder, replacement in replacements.items():
+            text = text.replace(f"{{{placeholder}}}", replacement)
+        return text
 
     def _create_run_envelope(
         self,
@@ -370,10 +419,13 @@ async def run_scenarios_async(
     paths: list[str],
     storage_path: str | Path | None = None,
     parallelism: int | None = None,
-    tooling_mode: Literal["mock", "record", "replay"] = "mock",
+    tooling_mode: Literal["mock", "record", "replay"] = "record",
     adapter_registry: ScenarioAdapterRegistry | None = None,
     show_failure_patterns: bool = True,
     injector: Any | None = None,
+    scenario_timeout_seconds: float | None = None,
+    grader_config_overrides: dict[str, Any] | None = None,
+    on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
 ) -> EvalRunSummary:
     runner = ScenarioRunner(
         storage_path=storage_path,
@@ -382,6 +434,9 @@ async def run_scenarios_async(
         adapter_registry=adapter_registry,
         show_failure_patterns=show_failure_patterns,
         injector=injector,
+        scenario_timeout_seconds=scenario_timeout_seconds,
+        grader_config_overrides=grader_config_overrides,
+        on_trial_progress=on_trial_progress,
     )
     return await runner.run_paths(paths)
 

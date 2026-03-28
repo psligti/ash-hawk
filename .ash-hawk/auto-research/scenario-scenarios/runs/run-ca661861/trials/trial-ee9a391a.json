@@ -1,0 +1,336 @@
+{
+  "trial": {
+    "id": "trial-ee9a391a",
+    "task_id": "promoter_scoring_001",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "promoter_scoring_001",
+        "description": "Score engagement-worthy account that amplifies others and engages small accounts",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "sdk_dawn_kestrel",
+          "config": {
+            "agent": "vox-jay",
+            "provider": "zai-coding-plan",
+            "model": "glm-4.7",
+            "temperature": 0.2
+          }
+        },
+        "inputs": {
+          "visible_to_agent": {
+            "prompt": "You are Vox Jay's promoter scorer. Evaluate this X account for engagement potential.\n\nAccount: @techbuilder_founder\nFollowers: 8500\nFollowing: 340\n\nRecent tweets:\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here's what I learned and how to fix it...\" (38 likes, 7 replies)\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn't what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\n\nEvaluate:\n1. Does this account amplify others (retweets/quotes with commentary)?\n2. Does this account engage with smaller accounts (<10K followers)?\n3. Is there multi-turn conversation engagement?\n4. Does the account share technical content (repos, papers, code)?\n5. Is there niche focus (AI agents, RL, coding tools)?\n\nReturn valid JSON with exactly these fields:\n{\n  \"score_percentage\": <0-100>,\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\n  \"recommendation\": \"<one sentence recommendation>\"\n}\n"
+          }
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 10,
+          "max_tool_calls": 0,
+          "max_tokens": 800,
+          "max_time_seconds": 45.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "json_path_match",
+            "config": {
+              "path": "output.category",
+              "expected": "HIGH_VALUE"
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "json_path_threshold",
+            "config": {
+              "path": "output.score_percentage",
+              "min": 70
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "rationale_grounding",
+            "config": {
+              "rationale_path": "output.key_signals",
+              "required_evidence_any": [
+                "amplifies",
+                "retweets",
+                "quotes",
+                "engages small",
+                "technical content",
+                "niche focus",
+                "multi-turn",
+                "shares code"
+              ],
+              "min_matches": 3
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/engagement_worthy_001.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-ee9a391a",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-28T18:22:05.331610+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"score_percentage\": 92,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Actively ships technical content (GitHub repos, code)\",\n    \"Engages in expert-level technical discussions\",\n    \"Provides value through educational threads on debugging\",\n    \"Amplifies community via quote tweets and retweets\",\n    \"Strong niche focus on AI agents and LLMs\"\n  ],\n  \"recommendation\": \"This account is a high-value target showing strong technical authority and active community engagement in the AI agent niche.\"\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "IterationStarted",
+              "payload": {
+                "max_iterations": 1
+              },
+              "iteration": 1,
+              "session_id": "trial-1774722108253"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "ProposalGenerated",
+              "payload": {
+                "intent": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}",
+                "action_types": [],
+                "risk_level": "RiskLevel.LOW"
+              },
+              "iteration": 1,
+              "session_id": "trial-1774722108253"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "IterationCompleted",
+              "payload": {
+                "duration_ms": 17077.48508453369,
+                "response_length": 522
+              },
+              "iteration": 1,
+              "session_id": "trial-1774722108253"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "RunCompleted",
+              "payload": {
+                "success": true,
+                "error": null
+              },
+              "iteration": 1,
+              "session_id": "trial-1774722108253"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"score_percentage\": 92,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Actively ships technical content (GitHub repos, code)\",\n    \"Engages in expert-level technical discussions\",\n    \"Provides value through educational threads on debugging\",\n    \"Amplifies community via quote tweets and retweets\",\n    \"Strong niche focus on AI agents and LLMs\"\n  ],\n  \"recommendation\": \"This account is a high-value target showing strong technical authority and active community engagement in the AI agent niche.\"\n}\n```"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": ".ash-hawk/auto-research/scenario-scenarios/runs/run-ca661861/artifacts/trial-ee9a391a/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 17.08594822883606,
+        "agent_response": "```json\n{\n  \"score_percentage\": 92,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Actively ships technical content (GitHub repos, code)\",\n    \"Engages in expert-level technical discussions\",\n    \"Provides value through educational threads on debugging\",\n    \"Amplifies community via quote tweets and retweets\",\n    \"Strong niche focus on AI agents and LLMs\"\n  ],\n  \"recommendation\": \"This account is a high-value target showing strong technical authority and active community engagement in the AI agent niche.\"\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 7,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 3.4809112548828125e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "json_path_match",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: json_path_match",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "json_path_threshold",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: json_path_threshold",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "rationale_grounding",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: rationale_grounding",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.25,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-ee9a391a",
+      "run_id": "run-ca661861",
+      "task_id": "promoter_scoring_001",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-28T18:21:48.246769+00:00",
+      "started_at": "2026-03-28T18:21:48.246753+00:00",
+      "completed_at": "2026-03-28T18:22:05.332763+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-ee9a391a",
+    "run_id": "run-ca661861",
+    "task_id": "promoter_scoring_001",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-28T18:21:48.246769+00:00",
+    "started_at": "2026-03-28T18:21:48.246753+00:00",
+    "completed_at": "2026-03-28T18:22:05.332763+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

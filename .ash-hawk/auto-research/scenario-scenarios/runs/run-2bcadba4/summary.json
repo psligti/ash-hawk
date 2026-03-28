@@ -1,0 +1,590 @@
+{
+  "envelope": {
+    "run_id": "run-2bcadba4",
+    "suite_id": "scenario-scenarios",
+    "suite_hash": "b40b13f7a378b22c",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-28T18:26:12.144461+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-scenarios",
+    "run_id": "run-2bcadba4",
+    "total_tasks": 2,
+    "completed_tasks": 2,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.25,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 36.29099178314209,
+    "latency_p50_seconds": 36.290348052978516,
+    "latency_p95_seconds": 36.290348052978516,
+    "latency_p99_seconds": 36.290348052978516,
+    "pass_at_k": {},
+    "created_at": "2026-03-28T18:26:48.435919+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-6275210e",
+      "task_id": "promoter_scoring_001",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "promoter_scoring_001",
+          "description": "Score engagement-worthy account that amplifies others and engages small accounts",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.2
+            }
+          },
+          "inputs": {
+            "visible_to_agent": {
+              "prompt": "You are Vox Jay's promoter scorer. Evaluate this X account for engagement potential.\n\nAccount: @techbuilder_founder\nFollowers: 8500\nFollowing: 340\n\nRecent tweets:\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here's what I learned and how to fix it...\" (38 likes, 7 replies)\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn't what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\n\nEvaluate:\n1. Does this account amplify others (retweets/quotes with commentary)?\n2. Does this account engage with smaller accounts (<10K followers)?\n3. Is there multi-turn conversation engagement?\n4. Does the account share technical content (repos, papers, code)?\n5. Is there niche focus (AI agents, RL, coding tools)?\n\nReturn valid JSON with exactly these fields:\n{\n  \"score_percentage\": <0-100>,\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\n  \"recommendation\": \"<one sentence recommendation>\"\n}\n"
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 0,
+            "max_tokens": 800,
+            "max_time_seconds": 45.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_match",
+              "config": {
+                "path": "output.category",
+                "expected": "HIGH_VALUE"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_threshold",
+              "config": {
+                "path": "output.score_percentage",
+                "min": 70
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "rationale_grounding",
+              "config": {
+                "rationale_path": "output.key_signals",
+                "required_evidence_any": [
+                  "amplifies",
+                  "retweets",
+                  "quotes",
+                  "engages small",
+                  "technical content",
+                  "niche focus",
+                  "multi-turn",
+                  "shares code"
+                ],
+                "min_matches": 3
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/engagement_worthy_001.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-6275210e",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-28T18:26:24.509795+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}\n\n---\n\n## Skill: moderate-broadcaster-filter\n\n---\nname: \"moderate-broadcaster-filter\"\ndescription: \"Downgrades technical accounts that behave solely as one-way broadcasters (no reciprocity) to the MODERATE category.\"\ntargets_categories:\n  - \"MODERATE\"\n---\n\n## What I do\n\nI identify and penalize accounts that demonstrate technical capability or share high-value resources (repos, code, papers) but fail to engage in two-way communication. I distinguish between \"Builders in Public\" (who interact) and \"Broadcasters\" (who only announce). I verify that the presence of technical content does not automatically qualify an account for HIGH_VALUE if it lacks social reciprocity.\n\n## When to use me\n\nApply this logic when an account shows strong evidence of technical output (GitHub links, technical threads) but has:\n- Very low reply-to-tweet ratio\n- No evidence of amplifying others\n- Follower count significantly higher than engagement/interaction depth\n- A timeline consisting almost entirely of links to their own work\n\n## Guidelines\n\n1. **Check for Broadcasting Signals**: Look for accounts that post their own work but do not reply to comments, quote-tweet others with added value, or engage with accounts smaller than themselves.\n2. **Score Capping**: If an account has \"High Tech\" signals but \"Low Reciprocity\" signals, cap the score at **MODERATE** (max 69%).\n3. **Differentiation**: A HIGH_VALUE account must *give* to the community (insights, amplification, replies), not just *show* their work.\n4. **Signal Weighting**: Reduce the weight of \"Technical Content\" signals if \"Reciprocity\" signals are below a threshold."
+            },
+            {
+              "role": "assistant",
+              "content": "```json\n{\n  \"score_percentage\": 88,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Shares original technical work (agent framework)\",\n    \"Active multi-turn conversation engagement\",\n    \"Amplifies others with added commentary (RTs/Quotes)\",\n    \"Strong niche focus on AI agents and debugging\"\n  ],\n  \"recommendation\": \"This account demonstrates a strong balance of technical contribution and community reciprocity, making it a high-value target.\"\n}\n```"
+            }
+          ],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "IterationStarted",
+                "payload": {
+                  "max_iterations": 1
+                },
+                "iteration": 1,
+                "session_id": "trial-1774722372151"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "ProposalGenerated",
+                "payload": {
+                  "intent": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}\n\n---\n\n## Skill: moderate-broadcaster-filter\n\n---\nname: \"moderate-broadcaster-filter\"\ndescription: \"Downgrades technical accounts that behave solely as one-way broadcasters (no reciprocity) to the MODERATE category.\"\ntargets_categories:\n  - \"MODERATE\"\n---\n\n## What I do\n\nI identify and penalize accounts that demonstrate technical capability or share high-value resources (repos, code, papers) but fail to engage in two-way communication. I distinguish between \"Builders in Public\" (who interact) and \"Broadcasters\" (who only announce). I verify that the presence of technical content does not automatically qualify an account for HIGH_VALUE if it lacks social reciprocity.\n\n## When to use me\n\nApply this logic when an account shows strong evidence of technical output (GitHub links, technical threads) but has:\n- Very low reply-to-tweet ratio\n- No evidence of amplifying others\n- Follower count significantly higher than engagement/interaction depth\n- A timeline consisting almost entirely of links to their own work\n\n## Guidelines\n\n1. **Check for Broadcasting Signals**: Look for accounts that post their own work but do not reply to comments, quote-tweet others with added value, or engage with accounts smaller than themselves.\n2. **Score Capping**: If an account has \"High Tech\" signals but \"Low Reciprocity\" signals, cap the score at **MODERATE** (max 69%).\n3. **Differentiation**: A HIGH_VALUE account must *give* to the community (insights, amplification, replies), not just *show* their work.\n4. **Signal Weighting**: Reduce the weight of \"Technical Content\" signals if \"Reciprocity\" signals are below a threshold.",
+                  "action_types": [],
+                  "risk_level": "RiskLevel.LOW"
+                },
+                "iteration": 1,
+                "session_id": "trial-1774722372151"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "IterationCompleted",
+                "payload": {
+                  "duration_ms": 12358.092069625854,
+                  "response_length": 458
+                },
+                "iteration": 1,
+                "session_id": "trial-1774722372151"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "RunCompleted",
+                "payload": {
+                  "success": true,
+                  "error": null
+                },
+                "iteration": 1,
+                "session_id": "trial-1774722372151"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @techbuilder_founder\\nFollowers: 8500\\nFollowing: 340\\n\\nRecent tweets:\\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here\\'s what I learned and how to fix it...\" (38 likes, 7 replies)\\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn\\'t what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus (AI agents, RL, coding tools)?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\\n  \"recommendation\": \"<one sentence recommendation>\"\\n}\\n'}}\n\n---\n\n## Skill: moderate-broadcaster-filter\n\n---\nname: \"moderate-broadcaster-filter\"\ndescription: \"Downgrades technical accounts that behave solely as one-way broadcasters (no reciprocity) to the MODERATE category.\"\ntargets_categories:\n  - \"MODERATE\"\n---\n\n## What I do\n\nI identify and penalize accounts that demonstrate technical capability or share high-value resources (repos, code, papers) but fail to engage in two-way communication. I distinguish between \"Builders in Public\" (who interact) and \"Broadcasters\" (who only announce). I verify that the presence of technical content does not automatically qualify an account for HIGH_VALUE if it lacks social reciprocity.\n\n## When to use me\n\nApply this logic when an account shows strong evidence of technical output (GitHub links, technical threads) but has:\n- Very low reply-to-tweet ratio\n- No evidence of amplifying others\n- Follower count significantly higher than engagement/interaction depth\n- A timeline consisting almost entirely of links to their own work\n\n## Guidelines\n\n1. **Check for Broadcasting Signals**: Look for accounts that post their own work but do not reply to comments, quote-tweet others with added value, or engage with accounts smaller than themselves.\n2. **Score Capping**: If an account has \"High Tech\" signals but \"Low Reciprocity\" signals, cap the score at **MODERATE** (max 69%).\n3. **Differentiation**: A HIGH_VALUE account must *give* to the community (insights, amplification, replies), not just *show* their work.\n4. **Signal Weighting**: Reduce the weight of \"Technical Content\" signals if \"Reciprocity\" signals are below a threshold."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "```json\n{\n  \"score_percentage\": 88,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Shares original technical work (agent framework)\",\n    \"Active multi-turn conversation engagement\",\n    \"Amplifies others with added commentary (RTs/Quotes)\",\n    \"Strong niche focus on AI agents and debugging\"\n  ],\n  \"recommendation\": \"This account demonstrates a strong balance of technical contribution and community reciprocity, making it a high-value target.\"\n}\n```"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": ".ash-hawk/auto-research/scenario-scenarios/runs/run-2bcadba4/artifacts/trial-c2ad901f/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 12.365720987319946,
+          "agent_response": "```json\n{\n  \"score_percentage\": 88,\n  \"category\": \"HIGH_VALUE\",\n  \"key_signals\": [\n    \"Shares original technical work (agent framework)\",\n    \"Active multi-turn conversation engagement\",\n    \"Amplifies others with added commentary (RTs/Quotes)\",\n    \"Strong niche focus on AI agents and debugging\"\n  ],\n  \"recommendation\": \"This account demonstrates a strong balance of technical contribution and community reciprocity, making it a high-value target.\"\n}\n```",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 7,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 2.7894973754882812e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "json_path_match",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: json_path_match",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "json_path_threshold",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: json_path_threshold",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "rationale_grounding",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: rationale_grounding",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.25,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    },
+    {
+      "id": "trial-25e0032b",
+      "task_id": "promoter_scoring_002",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "promoter_scoring_002",
+          "description": "Score nice-thought account that only amplifies own content and engages big accounts",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.2
+            }
+          },
+          "inputs": {
+            "visible_to_agent": {
+              "prompt": "You are Vox Jay's promoter scorer. Evaluate this X account for engagement potential.\n\nAccount: @aimindset_daily\nFollowers: 45000\nFollowing: 120\n\nRecent tweets:\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\n2. \"The future of AI is here. Don't get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\n\nEvaluate:\n1. Does this account amplify others (retweets/quotes with commentary)?\n2. Does this account engage with smaller accounts (<10K followers)?\n3. Is there multi-turn conversation engagement?\n4. Does the account share technical content (repos, papers, code)?\n5. Is there niche focus or is it generic/broad?\n\nReturn valid JSON with exactly these fields:\n{\n  \"score_percentage\": <0-100>,\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\n  \"key_signals\": \"<list the key signals you observed>\"\n}\n"
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 0,
+            "max_tokens": 800,
+            "max_time_seconds": 30.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_match",
+              "config": {
+                "path": "output.category",
+                "expected": "LOW"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_threshold",
+              "config": {
+                "path": "output.score_percentage",
+                "max": 50
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "rationale_grounding",
+              "config": {
+                "rationale_path": "output.key_signals",
+                "required_evidence_any": [
+                  "only amplifies self",
+                  "engagement farming",
+                  "generic content",
+                  "no technical depth",
+                  "motivational without evidence",
+                  "AI slop",
+                  "formulaic threads",
+                  "big accounts only"
+                ],
+                "min_matches": 2
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/nice_thought_001.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-25e0032b",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-28T18:26:48.430847+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @aimindset_daily\\nFollowers: 45000\\nFollowing: 120\\n\\nRecent tweets:\\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\\n2. \"The future of AI is here. Don\\'t get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus or is it generic/broad?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": \"<list the key signals you observed>\"\\n}\\n'}}\n\n---\n\n## Skill: moderate-broadcaster-filter\n\n---\nname: \"moderate-broadcaster-filter\"\ndescription: \"Downgrades technical accounts that behave solely as one-way broadcasters (no reciprocity) to the MODERATE category.\"\ntargets_categories:\n  - \"MODERATE\"\n---\n\n## What I do\n\nI identify and penalize accounts that demonstrate technical capability or share high-value resources (repos, code, papers) but fail to engage in two-way communication. I distinguish between \"Builders in Public\" (who interact) and \"Broadcasters\" (who only announce). I verify that the presence of technical content does not automatically qualify an account for HIGH_VALUE if it lacks social reciprocity.\n\n## When to use me\n\nApply this logic when an account shows strong evidence of technical output (GitHub links, technical threads) but has:\n- Very low reply-to-tweet ratio\n- No evidence of amplifying others\n- Follower count significantly higher than engagement/interaction depth\n- A timeline consisting almost entirely of links to their own work\n\n## Guidelines\n\n1. **Check for Broadcasting Signals**: Look for accounts that post their own work but do not reply to comments, quote-tweet others with added value, or engage with accounts smaller than themselves.\n2. **Score Capping**: If an account has \"High Tech\" signals but \"Low Reciprocity\" signals, cap the score at **MODERATE** (max 69%).\n3. **Differentiation**: A HIGH_VALUE account must *give* to the community (insights, amplification, replies), not just *show* their work.\n4. **Signal Weighting**: Reduce the weight of \"Technical Content\" signals if \"Reciprocity\" signals are below a threshold."
+            },
+            {
+              "role": "assistant",
+              "content": "```json\n{\n  \"score_percentage\": 35,\n  \"category\": \"LOW\",\n  \"key_signals\": \"High follower-to-following ratio (45000/120) indicates one-way broadcasting; Content consists of generic listicles, clickbait, and viral bait rather than technical insights; No evidence of community engagement, replies, or conversation; Pure retweet of high-profile account (Elon) without added commentary; Focus on 'follow farming' tactics rather than value sharing.\"\n}\n```"
+            }
+          ],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "IterationStarted",
+                "payload": {
+                  "max_iterations": 1
+                },
+                "iteration": 1,
+                "session_id": "trial-1774722372151"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "ProposalGenerated",
+                "payload": {
+                  "intent": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @aimindset_daily\\nFollowers: 45000\\nFollowing: 120\\n\\nRecent tweets:\\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\\n2. \"The future of AI is here. Don\\'t get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus or is it generic/broad?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": \"<list the key signals you observed>\"\\n}\\n'}}\n\n---\n\n## Skill: moderate-broadcaster-filter\n\n---\nname: \"moderate-broadcaster-filter\"\ndescription: \"Downgrades technical accounts that behave solely as one-way broadcasters (no reciprocity) to the MODERATE category.\"\ntargets_categories:\n  - \"MODERATE\"\n---\n\n## What I do\n\nI identify and penalize accounts that demonstrate technical capability or share high-value resources (repos, code, papers) but fail to engage in two-way communication. I distinguish between \"Builders in Public\" (who interact) and \"Broadcasters\" (who only announce). I verify that the presence of technical content does not automatically qualify an account for HIGH_VALUE if it lacks social reciprocity.\n\n## When to use me\n\nApply this logic when an account shows strong evidence of technical output (GitHub links, technical threads) but has:\n- Very low reply-to-tweet ratio\n- No evidence of amplifying others\n- Follower count significantly higher than engagement/interaction depth\n- A timeline consisting almost entirely of links to their own work\n\n## Guidelines\n\n1. **Check for Broadcasting Signals**: Look for accounts that post their own work but do not reply to comments, quote-tweet others with added value, or engage with accounts smaller than themselves.\n2. **Score Capping**: If an account has \"High Tech\" signals but \"Low Reciprocity\" signals, cap the score at **MODERATE** (max 69%).\n3. **Differentiation**: A HIGH_VALUE account must *give* to the community (insights, amplification, replies), not just *show* their work.\n4. **Signal Weighting**: Reduce the weight of \"Technical Content\" signals if \"Reciprocity\" signals are below a threshold.",
+                  "action_types": [],
+                  "risk_level": "RiskLevel.LOW"
+                },
+                "iteration": 1,
+                "session_id": "trial-1774722372151"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "IterationCompleted",
+                "payload": {
+                  "duration_ms": 36279.34122085571,
+                  "response_length": 449
+                },
+                "iteration": 1,
+                "session_id": "trial-1774722372151"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "event_type": "RunCompleted",
+                "payload": {
+                  "success": true,
+                  "error": null
+                },
+                "iteration": 1,
+                "session_id": "trial-1774722372151"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @aimindset_daily\\nFollowers: 45000\\nFollowing: 120\\n\\nRecent tweets:\\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\\n2. \"The future of AI is here. Don\\'t get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus or is it generic/broad?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": \"<list the key signals you observed>\"\\n}\\n'}}\n\n---\n\n## Skill: moderate-broadcaster-filter\n\n---\nname: \"moderate-broadcaster-filter\"\ndescription: \"Downgrades technical accounts that behave solely as one-way broadcasters (no reciprocity) to the MODERATE category.\"\ntargets_categories:\n  - \"MODERATE\"\n---\n\n## What I do\n\nI identify and penalize accounts that demonstrate technical capability or share high-value resources (repos, code, papers) but fail to engage in two-way communication. I distinguish between \"Builders in Public\" (who interact) and \"Broadcasters\" (who only announce). I verify that the presence of technical content does not automatically qualify an account for HIGH_VALUE if it lacks social reciprocity.\n\n## When to use me\n\nApply this logic when an account shows strong evidence of technical output (GitHub links, technical threads) but has:\n- Very low reply-to-tweet ratio\n- No evidence of amplifying others\n- Follower count significantly higher than engagement/interaction depth\n- A timeline consisting almost entirely of links to their own work\n\n## Guidelines\n\n1. **Check for Broadcasting Signals**: Look for accounts that post their own work but do not reply to comments, quote-tweet others with added value, or engage with accounts smaller than themselves.\n2. **Score Capping**: If an account has \"High Tech\" signals but \"Low Reciprocity\" signals, cap the score at **MODERATE** (max 69%).\n3. **Differentiation**: A HIGH_VALUE account must *give* to the community (insights, amplification, replies), not just *show* their work.\n4. **Signal Weighting**: Reduce the weight of \"Technical Content\" signals if \"Reciprocity\" signals are below a threshold."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "```json\n{\n  \"score_percentage\": 35,\n  \"category\": \"LOW\",\n  \"key_signals\": \"High follower-to-following ratio (45000/120) indicates one-way broadcasting; Content consists of generic listicles, clickbait, and viral bait rather than technical insights; No evidence of community engagement, replies, or conversation; Pure retweet of high-profile account (Elon) without added commentary; Focus on 'follow farming' tactics rather than value sharing.\"\n}\n```"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": ".ash-hawk/auto-research/scenario-scenarios/runs/run-2bcadba4/artifacts/trial-ff98ea20/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 36.28764605522156,
+          "agent_response": "```json\n{\n  \"score_percentage\": 35,\n  \"category\": \"LOW\",\n  \"key_signals\": \"High follower-to-following ratio (45000/120) indicates one-way broadcasting; Content consists of generic listicles, clickbait, and viral bait rather than technical insights; No evidence of community engagement, replies, or conversation; Pure retweet of high-profile account (Elon) without added commentary; Focus on 'follow farming' tactics rather than value sharing.\"\n}\n```",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "trace_schema",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "total_events": 7,
+              "failed_events": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 0.000102996826171875,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "json_path_match",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: json_path_match",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "json_path_threshold",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: json_path_threshold",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "rationale_grounding",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {},
+            "error_message": "Unknown grader type: rationale_grounding",
+            "execution_time_seconds": null,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.25,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    }
+  ]
+}

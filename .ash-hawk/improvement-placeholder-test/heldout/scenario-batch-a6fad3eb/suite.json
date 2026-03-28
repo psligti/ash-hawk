@@ -1,0 +1,291 @@
+{
+  "id": "scenario-batch-a6fad3eb",
+  "name": "scenario-batch-a6fad3eb",
+  "description": "",
+  "tasks": [
+    {
+      "id": "python-bugfix-04",
+      "description": "Fix bug in Python code - missing-return-branch",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "python-bugfix-04",
+          "description": "Fix bug in Python code - missing-return-branch",
+          "sut": {
+            "type": "coding_agent",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "skill": "python-bugfix"
+            }
+          },
+          "inputs": {
+            "prompt": "Working directory: /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/04-missing-return-branch\n\nFix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\nIMPORTANT:\n- File paths are relative to the working directory above\n- Use absolute paths like /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/04-missing-return-branch/src/solution.py\n- Run tests from the working directory",
+            "repo_fixture": "./"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read_file",
+              "write_file",
+              "edit_file"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 30,
+            "max_tokens": 2000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "composite",
+              "config": {
+                "mode": "weighted",
+                "weights": [
+                  0.7,
+                  0.2,
+                  0.1
+                ],
+                "graders": [
+                  {
+                    "grader_type": "test_runner",
+                    "config": {
+                      "test_path": "test_bug.py",
+                      "pass_threshold": 1.0,
+                      "partial_credit": true,
+                      "timeout_seconds": 60
+                    }
+                  },
+                  {
+                    "grader_type": "diff_constraints",
+                    "config": {
+                      "max_loc": 10,
+                      "max_files": 1
+                    }
+                  },
+                  {
+                    "grader_type": "transcript",
+                    "config": {
+                      "max_tool_calls": 15,
+                      "partial_credit": true
+                    }
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/04-missing-return-branch/scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/04-missing-return-branch"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "composite",
+          "config": {
+            "mode": "weighted",
+            "weights": [
+              0.7,
+              0.2,
+              0.1
+            ],
+            "graders": [
+              {
+                "grader_type": "test_runner",
+                "config": {
+                  "test_path": "test_bug.py",
+                  "pass_threshold": 1.0,
+                  "partial_credit": true,
+                  "timeout_seconds": 60
+                }
+              },
+              {
+                "grader_type": "diff_constraints",
+                "config": {
+                  "max_loc": 10,
+                  "max_files": 1
+                }
+              },
+              {
+                "grader_type": "transcript",
+                "config": {
+                  "max_tool_calls": 15,
+                  "partial_credit": true
+                }
+              }
+            ]
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "sdk_dawn_kestrel"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/04-missing-return-branch/scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 120.0,
+      "max_attempts": 1
+    },
+    {
+      "id": "python-bugfix-19",
+      "description": "Fix bug in Python code - data-structure-shallow-copy",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "python-bugfix-19",
+          "description": "Fix bug in Python code - data-structure-shallow-copy",
+          "sut": {
+            "type": "coding_agent",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "skill": "python-bugfix"
+            }
+          },
+          "inputs": {
+            "prompt": "Working directory: /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/19-data-structure-shallow-copy\n\nFix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\nIMPORTANT:\n- File paths are relative to the working directory above\n- Use absolute paths like /Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/19-data-structure-shallow-copy/src/solution.py\n- Run tests from the working directory",
+            "repo_fixture": "./"
+          },
+          "tools": {
+            "allowed_tools": [
+              "bash",
+              "read_file",
+              "write_file",
+              "edit_file"
+            ],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 30,
+            "max_tokens": 2000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "composite",
+              "config": {
+                "mode": "weighted",
+                "weights": [
+                  0.7,
+                  0.2,
+                  0.1
+                ],
+                "graders": [
+                  {
+                    "grader_type": "test_runner",
+                    "config": {
+                      "test_path": "test_bug.py",
+                      "pass_threshold": 1.0,
+                      "partial_credit": true,
+                      "timeout_seconds": 60
+                    }
+                  },
+                  {
+                    "grader_type": "diff_constraints",
+                    "config": {
+                      "max_loc": 10,
+                      "max_files": 1
+                    }
+                  },
+                  {
+                    "grader_type": "transcript",
+                    "config": {
+                      "max_tool_calls": 15,
+                      "partial_credit": true
+                    }
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": false,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/19-data-structure-shallow-copy/scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/19-data-structure-shallow-copy"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "composite",
+          "config": {
+            "mode": "weighted",
+            "weights": [
+              0.7,
+              0.2,
+              0.1
+            ],
+            "graders": [
+              {
+                "grader_type": "test_runner",
+                "config": {
+                  "test_path": "test_bug.py",
+                  "pass_threshold": 1.0,
+                  "partial_credit": true,
+                  "timeout_seconds": 60
+                }
+              },
+              {
+                "grader_type": "diff_constraints",
+                "config": {
+                  "max_loc": 10,
+                  "max_files": 1
+                }
+              },
+              {
+                "grader_type": "transcript",
+                "config": {
+                  "max_tool_calls": 15,
+                  "partial_credit": true
+                }
+              }
+            ]
+          },
+          "weight": 1.0,
+          "required": false,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "sdk_dawn_kestrel"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/19-data-structure-shallow-copy/scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 120.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

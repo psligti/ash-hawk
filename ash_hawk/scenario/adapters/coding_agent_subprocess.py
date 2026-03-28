@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Coroutine, TypeVar
 
+from ash_hawk.scenario.models import JSONValue, ScenarioAdapterResult, ScenarioTraceEvent
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
     ArtifactEvent,
@@ -98,16 +99,19 @@ class CodingAgentSubprocessAdapter:
 
     def run_scenario(
         self,
-        scenario: dict[str, Any],
+        scenario: dict[str, JSONValue],
         workdir: Path,
-        tooling_harness: Any,
-        budgets: dict[str, Any],
-    ) -> tuple[str, list[dict[str, Any]], dict[str, Any], Any]:
+        tooling_harness: dict[str, object],
+        budgets: dict[str, JSONValue],
+    ) -> ScenarioAdapterResult:
         del tooling_harness, budgets
 
-        trace_events: list[dict[str, Any]] = []
+        trace_events: list[dict[str, JSONValue]] = []
 
-        inputs = scenario.get("inputs", {})
+        inputs_raw = scenario.get("inputs", {})
+        if not isinstance(inputs_raw, dict):
+            raise ValueError("Scenario inputs must be a mapping")
+        inputs = inputs_raw
         repo_fixture_raw = inputs.get("repo_fixture")
         if not isinstance(repo_fixture_raw, str) or not repo_fixture_raw.strip():
             raise ValueError("Scenario inputs must include a repo_fixture path")
@@ -211,4 +215,8 @@ class CodingAgentSubprocessAdapter:
                     ).model_dump()
                 )
 
-            return command_result.get("stdout", ""), trace_events, artifacts, None
+            return ScenarioAdapterResult(
+                final_output=command_result.get("stdout", ""),
+                trace_events=[ScenarioTraceEvent.model_validate(event) for event in trace_events],
+                artifacts=artifacts,
+            )

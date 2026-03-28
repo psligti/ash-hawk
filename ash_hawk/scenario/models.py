@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal, TypeAlias, cast
 
 import pydantic as pd
+
+from ash_hawk.types import EvalOutcome
+
+JSONValue: TypeAlias = object
 
 
 class SUTConfig(pd.BaseModel):
@@ -12,7 +16,7 @@ class SUTConfig(pd.BaseModel):
     adapter: str = pd.Field(
         description="Adapter identifier for the SUT",
     )
-    config: dict[str, Any] = pd.Field(
+    config: dict[str, JSONValue] = pd.Field(
         default_factory=dict,
         description="Adapter-specific configuration",
     )
@@ -25,11 +29,11 @@ class ToolingConfig(pd.BaseModel):
         default_factory=list,
         description="Allowlist of tools available to the SUT",
     )
-    mocks: dict[str, Any] = pd.Field(
+    mocks: dict[str, JSONValue] = pd.Field(
         default_factory=dict,
         description="Mock tool responses keyed by tool name",
     )
-    fault_injection: dict[str, Any] = pd.Field(
+    fault_injection: dict[str, JSONValue] = pd.Field(
         default_factory=dict,
         description="Fault injection configuration for tools",
     )
@@ -67,15 +71,15 @@ class ExpectationConfig(pd.BaseModel):
         default_factory=list,
         description="Events that must not occur",
     )
-    ordering_rules: list[dict[str, Any]] = pd.Field(
+    ordering_rules: list[dict[str, JSONValue]] = pd.Field(
         default_factory=list,
         description="Ordering rules for event sequences",
     )
-    diff_assertions: list[dict[str, Any]] = pd.Field(
+    diff_assertions: list[dict[str, JSONValue]] = pd.Field(
         default_factory=list,
         description="Diff-based assertions for outputs",
     )
-    output_assertions: list[dict[str, Any]] = pd.Field(
+    output_assertions: list[dict[str, JSONValue]] = pd.Field(
         default_factory=list,
         description="Output assertions for responses",
     )
@@ -87,7 +91,7 @@ class ScenarioGraderSpec(pd.BaseModel):
     grader_type: str = pd.Field(
         description="Type of grader (e.g., 'string_match', 'test_runner')",
     )
-    config: dict[str, Any] = pd.Field(
+    config: dict[str, JSONValue] = pd.Field(
         default_factory=dict,
         description="Grader-specific configuration",
     )
@@ -122,7 +126,7 @@ class ScenarioV1(pd.BaseModel):
     sut: SUTConfig = pd.Field(
         description="System under test configuration",
     )
-    inputs: dict[str, Any] = pd.Field(
+    inputs: dict[str, JSONValue] = pd.Field(
         default_factory=dict,
         description="Scenario input payloads",
     )
@@ -146,11 +150,106 @@ class ScenarioV1(pd.BaseModel):
     model_config = pd.ConfigDict(extra="forbid")
 
 
+class ScenarioTraceEvent(pd.BaseModel):
+    schema_version: int = pd.Field(default=1, description="Trace event schema version")
+    event_type: str = pd.Field(default="UnknownEvent", description="Trace event type")
+    ts: str = pd.Field(default="1970-01-01T00:00:00Z", description="Timestamp for trace event")
+    data: dict[str, JSONValue] = pd.Field(default_factory=dict, description="Trace event payload")
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
+class ScenarioMessage(pd.BaseModel):
+    role: str = pd.Field(description="Message role")
+    content: str = pd.Field(description="Message content")
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
+class ScenarioToolCall(pd.BaseModel):
+    name: str = pd.Field(description="Tool name")
+    arguments: dict[str, JSONValue] = pd.Field(
+        default_factory=dict,
+        description="Tool arguments",
+    )
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
+def parse_scenario_tool_call(raw: object) -> ScenarioToolCall | None:
+    if isinstance(raw, ScenarioToolCall):
+        return raw
+    if not isinstance(raw, dict):
+        return None
+
+    tool_name_raw = raw.get("name") or raw.get("tool") or raw.get("tool_name")
+    if not isinstance(tool_name_raw, str) or not tool_name_raw.strip():
+        return None
+
+    arguments_raw = raw.get("arguments")
+    if arguments_raw is None:
+        arguments_raw = raw.get("input")
+    if arguments_raw is None:
+        arguments_raw = raw.get("args")
+    if arguments_raw is None:
+        arguments_raw = {}
+
+    if not isinstance(arguments_raw, dict):
+        arguments: dict[str, JSONValue] = {"value": cast(JSONValue, arguments_raw)}
+    else:
+        arguments = {str(key): cast(JSONValue, value) for key, value in arguments_raw.items()}
+
+    try:
+        return ScenarioToolCall.model_validate(
+            {
+                "name": tool_name_raw.strip(),
+                "arguments": arguments,
+            }
+        )
+    except pd.ValidationError:
+        return None
+
+
+class ScenarioAdapterResult(pd.BaseModel):
+    final_output: str | dict[str, object] | None = pd.Field(
+        default=None,
+        description="Primary adapter output",
+    )
+    trace_events: list[ScenarioTraceEvent] = pd.Field(
+        default_factory=list,
+        description="Structured trace events",
+    )
+    artifacts: dict[str, JSONValue] = pd.Field(
+        default_factory=dict,
+        description="Adapter artifacts",
+    )
+    outcome: EvalOutcome = pd.Field(
+        default_factory=EvalOutcome.success,
+        description="Outcome from adapter execution",
+    )
+    messages: list[ScenarioMessage] = pd.Field(
+        default_factory=list,
+        description="Conversation messages",
+    )
+    tool_calls: list[ScenarioToolCall] = pd.Field(
+        default_factory=list,
+        description="Tool calls made during scenario execution",
+    )
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
 __all__ = [
     "BudgetConfig",
     "ExpectationConfig",
+    "JSONValue",
+    "ScenarioAdapterResult",
     "ScenarioGraderSpec",
+    "ScenarioMessage",
+    "ScenarioToolCall",
+    "ScenarioTraceEvent",
     "ScenarioV1",
     "SUTConfig",
     "ToolingConfig",
+    "parse_scenario_tool_call",
 ]

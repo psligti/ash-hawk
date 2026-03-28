@@ -21,6 +21,7 @@ from typing import Any, cast
 
 from ash_hawk.execution.queue import LLMRequest, get_llm_queue_sync
 from ash_hawk.policy import PolicyEnforcer
+from ash_hawk.scenario.trace import DEFAULT_TRACE_TS
 from ash_hawk.types import (
     EvalOutcome,
     EvalTask,
@@ -245,6 +246,190 @@ class _McpToolProxy:
         )
 
 
+class _NoOpPolicyEngine:
+    def __init__(self, step_proposal_type: Any) -> None:
+        self._step_proposal_type = step_proposal_type
+
+    def propose(self, policy_input: Any) -> Any:
+        intent = getattr(policy_input, "goal", "Execute task")
+        return self._step_proposal_type(intent=intent, actions=[])
+
+
+class _SinglePassRuntime:
+    def __init__(
+        self,
+        *,
+        runner: DawnKestrelAgentRunner,
+        client: Any,
+        prompt: str,
+        tool_definitions: list[dict[str, Any]],
+        filtered_registry: Any,
+        config: dict[str, Any],
+        trial_id: str,
+        llm_request_options_type: Any,
+    ) -> None:
+        self._runner = runner
+        self._client = client
+        self._tool_definitions = tool_definitions
+        self._filtered_registry = filtered_registry
+        self._config = config
+        self._trial_id = trial_id
+        self._llm_request_options_type = llm_request_options_type
+        self._executed = False
+        self._last_response = ""
+        self._last_cost = 0.0
+        self._last_tokens: dict[str, int] = {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0,
+        }
+        self.conversation: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
+        self.normalized_tool_calls: list[dict[str, Any]] = []
+
+    async def execute_step(self) -> dict[str, Any]:
+        if self._executed:
+            return {
+                "response": self._last_response,
+                "parts": [],
+                "tokens": dict(self._last_tokens),
+                "tools_called": [
+                    str(item.get("tool", ""))
+                    for item in self.normalized_tool_calls
+                    if isinstance(item.get("tool"), str)
+                ],
+                "tool_calls": self._to_v2_tool_calls(),
+            }
+
+        options = self._llm_request_options_type(
+            temperature=self._config.get("temperature", self._runner._kwargs.get("temperature")),
+            max_tokens=self._config.get("max_tokens", self._runner._kwargs.get("max_tokens")),
+        )
+
+        max_iterations = int(self._config.get("max_tool_iterations", 3) or 3)
+        response: Any | None = None
+
+        for iteration in range(max_iterations):
+            llm_queue = get_llm_queue_sync()
+            if llm_queue is not None:
+                request_id = f"{self._trial_id}_llm_{iteration}"
+                request = LLMRequest(
+                    request_id=request_id,
+                    messages=self.conversation,
+                    tools=self._tool_definitions if self._tool_definitions else None,
+                    options=options,
+                )
+
+                async def execute_llm(req: LLMRequest) -> Any:
+                    return await self._client.complete(
+                        messages=req.messages,
+                        tools=req.tools,
+                        options=req.options,
+                    )
+
+                llm_response = await llm_queue.execute(request, execute_llm)
+                response = llm_response.response
+            else:
+                response = await self._client.complete(
+                    messages=self.conversation,
+                    tools=self._tool_definitions if self._tool_definitions else None,
+                    options=options,
+                )
+
+            model_text = self._runner._extract_agent_response(response)
+            if isinstance(model_text, str) and model_text.strip():
+                self.conversation.append({"role": "assistant", "content": model_text})
+
+            tool_calls = self._runner._extract_tool_calls(response)
+            if not tool_calls and isinstance(model_text, str) and model_text.strip():
+                tool_calls = self._runner._extract_text_tool_calls(model_text)
+            if not tool_calls:
+                break
+
+            started_at = time.time()
+            executed = await self._runner._execute_tool_calls(
+                tool_calls=tool_calls,
+                filtered_registry=self._filtered_registry,
+                config=self._config,
+                trial_id=self._trial_id,
+            )
+            ended_at = time.time()
+            duration_ms = max((ended_at - started_at) * 1000.0, 0.0)
+
+            self.conversation.append(
+                {
+                    "role": "user",
+                    "content": "Tool execution results:\n"
+                    + json.dumps(executed, ensure_ascii=True, default=str),
+                }
+            )
+
+            for item in executed:
+                self.normalized_tool_calls.append(
+                    {
+                        "tool": item.get("tool"),
+                        "input": item.get("input", {}),
+                        "output": item.get("output"),
+                        "error": item.get("error"),
+                        "started_at": started_at,
+                        "ended_at": ended_at,
+                        "duration_ms": duration_ms,
+                    }
+                )
+
+        if response is None:
+            raise RuntimeError("LLM completion failed to produce a response")
+
+        usage = self._runner._extract_token_usage(response)
+        self._last_tokens = {
+            "input": usage.input,
+            "output": usage.output,
+            "reasoning": usage.reasoning,
+            "cache_read": usage.cache_read,
+            "cache_write": usage.cache_write,
+        }
+
+        final_response = self._runner._extract_agent_response(response)
+        self._last_response = final_response if isinstance(final_response, str) else ""
+        self._last_cost = float(self._runner._extract_cost(response))
+        self._executed = True
+
+        return {
+            "response": self._last_response,
+            "parts": [],
+            "tokens": dict(self._last_tokens),
+            "tools_called": [
+                str(item.get("tool", ""))
+                for item in self.normalized_tool_calls
+                if isinstance(item.get("tool"), str)
+            ],
+            "tool_calls": self._to_v2_tool_calls(),
+        }
+
+    def _to_v2_tool_calls(self) -> list[dict[str, Any]]:
+        v2_calls: list[dict[str, Any]] = []
+        for item in self.normalized_tool_calls:
+            tool_name = item.get("tool")
+            if not isinstance(tool_name, str) or not tool_name:
+                continue
+            entry: dict[str, Any] = {
+                "tool_name": tool_name,
+                "arguments": item.get("input", {}),
+                "result": item.get("output"),
+                "error": item.get("error"),
+                "status": "error" if item.get("error") else "success",
+            }
+            if "started_at" in item:
+                entry["started_at"] = item["started_at"]
+            if "ended_at" in item:
+                entry["ended_at"] = item["ended_at"]
+            if "duration_ms" in item:
+                entry["duration_ms"] = item["duration_ms"]
+            v2_calls.append(entry)
+        return v2_calls
+
+
 class DawnKestrelAgentRunner:
     """Agent runner that uses the dawn-kestrel framework.
 
@@ -373,14 +558,23 @@ class DawnKestrelAgentRunner:
                         input_schema=input_schema,
                         client=client,
                     )
-                    await base_registry.register(
-                        proxy,
-                        tool_id,
-                        metadata={
-                            "mcp_server": server.name,
-                            "mcp_tool": tool_name,
-                        },
-                    )
+                    metadata = {
+                        "mcp_server": server.name,
+                        "mcp_tool": tool_name,
+                    }
+
+                    register_method = getattr(base_registry, "register", None)
+                    if callable(register_method):
+                        result = register_method(proxy, tool_id, metadata=metadata)
+                        if hasattr(result, "__await__"):
+                            await result
+                    else:
+                        tools_attr = getattr(base_registry, "tools", None)
+                        if isinstance(tools_attr, dict):
+                            tools_attr[tool_id] = proxy
+                        tool_metadata_attr = getattr(base_registry, "tool_metadata", None)
+                        if isinstance(tool_metadata_attr, dict):
+                            tool_metadata_attr[tool_id] = metadata
 
                 clients.append(client)
 
@@ -406,12 +600,19 @@ class DawnKestrelAgentRunner:
             settings = get_settings()
             api_key_secret = settings.get_api_key_for_provider(self._provider)
             api_key = api_key_secret.get_secret_value() if api_key_secret else None
+            env_timeout = os.getenv("ASH_HAWK_LLM_TIMEOUT_SECONDS")
+            timeout_value = self._kwargs.get("timeout_seconds", env_timeout)
+            timeout_seconds = float(timeout_value) if timeout_value is not None else None
 
-            self._client = llm_client_type(
-                provider_id=self._provider,
-                model=self._model,
-                api_key=api_key,
-            )
+            client_kwargs: dict[str, Any] = {
+                "provider_id": self._provider,
+                "model": self._model,
+                "api_key": api_key,
+            }
+            if timeout_seconds is not None:
+                client_kwargs["timeout_seconds"] = timeout_seconds
+
+            self._client = llm_client_type(**client_kwargs)
         return self._client
 
     def _create_filtered_registry(
@@ -696,6 +897,23 @@ class DawnKestrelAgentRunner:
             return response.get("text") or response.get("content")
         return None
 
+    def _extract_trace_events(self, response: Any) -> list[dict[str, Any]]:
+        if hasattr(response, "trace_events") and isinstance(response.trace_events, list):
+            return [event for event in response.trace_events if isinstance(event, dict)]
+
+        if isinstance(response, dict):
+            direct_events = response.get("trace_events")
+            if isinstance(direct_events, list):
+                return [event for event in direct_events if isinstance(event, dict)]
+
+            canonical_export = response.get("canonical_export")
+            if isinstance(canonical_export, dict):
+                canonical_events = canonical_export.get("trace_events")
+                if isinstance(canonical_events, list):
+                    return [event for event in canonical_events if isinstance(event, dict)]
+
+        return []
+
     async def run(
         self,
         task: EvalTask,
@@ -708,6 +926,21 @@ class DawnKestrelAgentRunner:
         all_tool_calls: list[dict[str, Any]] = []
 
         try:
+            agents_v2_module = importlib.import_module("dawn_kestrel.agents.v2")
+            policy_contracts_module = importlib.import_module("dawn_kestrel.policy.contracts")
+            core_models_module = importlib.import_module("dawn_kestrel.core.models")
+            llm_client_module = importlib.import_module("dawn_kestrel.llm.client")
+
+            agent_v2_builder_type = getattr(agents_v2_module, "AgentV2Builder")
+            command_router_type = getattr(agents_v2_module, "CommandRouter")
+            execution_loop_type = getattr(agents_v2_module, "ExecutionLoop")
+            filesystem_loader_type = getattr(agents_v2_module, "FilesystemAgentLoader")
+            injected_skill_loader_type = getattr(agents_v2_module, "InjectedSkillLoader")
+            from_prompt = getattr(agents_v2_module, "from_prompt")
+            step_proposal_type = getattr(policy_contracts_module, "StepProposal")
+            session_type = getattr(core_models_module, "Session")
+            llm_request_options_type = getattr(llm_client_module, "LLMRequestOptions")
+
             client = self._get_client()
             task_input = task.input
             override_allowed_tools: list[str] | None = None
@@ -717,14 +950,14 @@ class DawnKestrelAgentRunner:
                 if isinstance(policy_snapshot, dict):
                     raw_allowed = policy_snapshot.get("allowed_tools")
                     if isinstance(raw_allowed, list):
-                        override_allowed_tools = [
-                            tool for tool in raw_allowed if isinstance(tool, str)
-                        ]
+                        allowed_override = [tool for tool in raw_allowed if isinstance(tool, str)]
+                        if allowed_override:
+                            override_allowed_tools = allowed_override
                     raw_denied = policy_snapshot.get("denied_tools")
                     if isinstance(raw_denied, list):
-                        override_denied_tools = [
-                            tool for tool in raw_denied if isinstance(tool, str)
-                        ]
+                        denied_override = [tool for tool in raw_denied if isinstance(tool, str)]
+                        if denied_override:
+                            override_denied_tools = denied_override
 
             base_registry = self._create_base_registry()
             mcp_clients = await self._register_mcp_tools(base_registry)
@@ -736,7 +969,8 @@ class DawnKestrelAgentRunner:
             )
 
             if isinstance(task_input, dict):
-                prompt = task_input.get("prompt", task_input.get("message", str(task_input)))
+                prompt_value = task_input.get("prompt", task_input.get("message", str(task_input)))
+                prompt = prompt_value if isinstance(prompt_value, str) else str(prompt_value)
             else:
                 prompt = str(task_input)
 
@@ -748,100 +982,144 @@ class DawnKestrelAgentRunner:
                     agent_id, prompt, skills=skills_to_inject
                 )
 
+            trial_id = str(config.get("trial_id") or f"trial-{int(time.time() * 1000)}")
             available_tools = await filtered_registry.get_all()
             tool_definitions = self._build_tool_definitions(available_tools)
 
-            llm_client_module = importlib.import_module("dawn_kestrel.llm.client")
-            llm_request_options = getattr(llm_client_module, "LLMRequestOptions")
-
-            options = llm_request_options(
-                temperature=config.get("temperature", self._kwargs.get("temperature")),
-                max_tokens=config.get("max_tokens", self._kwargs.get("max_tokens")),
+            runtime = _SinglePassRuntime(
+                runner=self,
+                client=client,
+                prompt=prompt,
+                tool_definitions=tool_definitions,
+                filtered_registry=filtered_registry,
+                config=config,
+                trial_id=trial_id,
+                llm_request_options_type=llm_request_options_type,
             )
 
-            conversation.append({"role": "user", "content": prompt})
-            trial_id = str(config.get("trial_id") or f"trial-{int(time.time() * 1000)}")
-            max_iterations = int(config.get("max_tool_iterations", 3) or 3)
-            response = None
+            base_dir_value = config.get("workdir") or "."
+            base_dir = Path(base_dir_value) if isinstance(base_dir_value, str) else Path(".")
+            agent_loader = filesystem_loader_type(base_dir=base_dir)
+            skill_loader = injected_skill_loader_type(base_dir=base_dir)
+            command_router = command_router_type()
+            policy_engine = _NoOpPolicyEngine(step_proposal_type)
 
-            for iteration in range(max_iterations):
-                llm_queue = get_llm_queue_sync()
-                if llm_queue is not None:
-                    request_id = f"{trial_id}_llm_{iteration}"
-                    request = LLMRequest(
-                        request_id=request_id,
-                        messages=conversation,
-                        tools=tool_definitions if tool_definitions else None,
-                        options=options,
-                    )
+            max_loop_iterations = int(config.get("max_iterations", 1) or 1)
+            if max_loop_iterations < 1:
+                max_loop_iterations = 1
 
-                    async def execute_llm(req: LLMRequest) -> Any:
-                        return await client.complete(
-                            messages=req.messages,
-                            tools=req.tools,
-                            options=req.options,
-                        )
+            build_result = (
+                agent_v2_builder_type()
+                .with_name(str(config.get("agent_name", "ash_hawk_eval")))
+                .with_description("Ash Hawk evaluation runner")
+                .with_mode("primary")
+                .with_model(f"{self._provider}/{self._model}")
+                .with_max_iterations(max_loop_iterations)
+                .build()
+            )
+            if hasattr(build_result, "is_err") and build_result.is_err():
+                error_text = str(build_result.error)
+                raise RuntimeError(f"AgentV2 config build failed: {error_text}")
+            loop_config = build_result.unwrap()
 
-                    llm_response = await llm_queue.execute(request, execute_llm)
-                    response = llm_response.response
-                else:
-                    response = await client.complete(
-                        messages=conversation,
-                        tools=tool_definitions if tool_definitions else None,
-                        options=options,
-                    )
+            loop = execution_loop_type(
+                config=loop_config,
+                policy_engine=policy_engine,
+                command_router=command_router,
+                runtime=runtime,
+                agent_loader=agent_loader,
+                skill_loader=skill_loader,
+            )
 
-                model_text = self._extract_agent_response(response)
-                if isinstance(model_text, str) and model_text.strip():
-                    conversation.append({"role": "assistant", "content": model_text})
+            initial_input = from_prompt(prompt, max_iterations=max_loop_iterations)
+            session = session_type(
+                id=trial_id,
+                slug=str(config.get("agent_name", "ash_hawk_eval")),
+                project_id="ash-hawk",
+                directory=str(base_dir.resolve()),
+                title=task.description or "Ash Hawk evaluation",
+                version="v2",
+            )
 
-                tool_calls = self._extract_tool_calls(response)
-                if not tool_calls and isinstance(model_text, str) and model_text.strip():
-                    tool_calls = self._extract_text_tool_calls(model_text)
-                if not tool_calls:
-                    break
+            loop_result = await loop.run(initial_input, session)
+            conversation = list(runtime.conversation)
 
-                executed = await self._execute_tool_calls(
-                    tool_calls=tool_calls,
-                    filtered_registry=filtered_registry,
-                    config=config,
-                    trial_id=trial_id,
-                )
-
-                for item in executed:
-                    normalized = {
-                        "tool": item.get("tool"),
-                        "input": item.get("input", {}),
+            telemetry_ledger = loop_result.telemetry.get_tool_call_ledger()
+            if telemetry_ledger:
+                for item in telemetry_ledger:
+                    normalized: dict[str, Any] = {
+                        "tool": item.get("tool_name"),
+                        "name": item.get("tool_name"),
+                        "input": item.get("arguments", {}),
+                        "arguments": item.get("arguments", {}),
                     }
-                    if "output" in item:
-                        normalized["output"] = item.get("output")
-                    if "error" in item:
+                    if "result" in item:
+                        normalized["output"] = item.get("result")
+                    if "error" in item and item.get("error") is not None:
                         normalized["error"] = item.get("error")
                     all_tool_calls.append(normalized)
+            else:
+                all_tool_calls = list(runtime.normalized_tool_calls)
 
-                conversation.append(
+            trace_events: list[dict[str, Any]] = []
+            for event in loop_result.telemetry.get_trace_events():
+                event_type_raw = str(event.get("event_type", ""))
+                mapped_type = {
+                    "PolicyDecision": "PolicyDecisionEvent",
+                    "Rejection": "RejectionEvent",
+                    "ToolCallStarted": "ToolCallEvent",
+                    "ToolCallCompleted": "ToolResultEvent",
+                }.get(event_type_raw, "ModelMessageEvent")
+                trace_events.append(
                     {
-                        "role": "user",
-                        "content": "Tool execution results:\n"
-                        + json.dumps(executed, ensure_ascii=True, default=str),
+                        "schema_version": 1,
+                        "event_type": mapped_type,
+                        "ts": DEFAULT_TRACE_TS,
+                        "data": {
+                            "event_type": event_type_raw,
+                            "payload": event.get("payload", {}),
+                            "iteration": event.get("iteration"),
+                            "session_id": event.get("session_id"),
+                        },
                     }
                 )
 
-            if response is None:
-                raise RuntimeError("LLM completion failed to produce a response")
+            summary = loop_result.telemetry.get_summary()
+            total_cost_usd = float(summary.get("cost_usd_total", 0.0))
+            if total_cost_usd <= 0.0:
+                total_cost_usd = float(runtime._last_cost)
 
             duration = time.time() - start_time
 
             transcript = EvalTranscript(
                 messages=conversation,
                 tool_calls=all_tool_calls,
-                token_usage=self._extract_token_usage(response),
-                cost_usd=self._extract_cost(response),
+                trace_events=trace_events,
+                token_usage=TokenUsage(
+                    input=int(loop_result.tokens_used.get("input", 0)),
+                    output=int(loop_result.tokens_used.get("output", 0)),
+                    reasoning=int(loop_result.tokens_used.get("reasoning", 0)),
+                    cache_read=int(loop_result.tokens_used.get("cache_read", 0)),
+                    cache_write=int(loop_result.tokens_used.get("cache_write", 0)),
+                ),
+                cost_usd=total_cost_usd,
                 duration_seconds=duration,
-                agent_response=self._extract_agent_response(response),
+                agent_response=loop_result.response,
+                error_trace=loop_result.error,
             )
 
-            outcome = EvalOutcome.success()
+            if loop_result.outcome is not None and not bool(loop_result.outcome.success):
+                outcome = EvalOutcome.failure(
+                    FailureMode.AGENT_ERROR,
+                    str(loop_result.outcome.message),
+                )
+            elif loop_result.error is not None:
+                outcome = EvalOutcome.failure(
+                    FailureMode.AGENT_ERROR,
+                    loop_result.error,
+                )
+            else:
+                outcome = EvalOutcome.success()
 
             if self._post_run_hook is not None:
                 try:
@@ -891,22 +1169,5 @@ class DawnKestrelAgentRunner:
             )
             return transcript, outcome
 
-        except Exception as e:
-            duration = time.time() - start_time
-            error_trace = str(e)
-            if hasattr(e, "__traceback__") and e.__traceback__:
-                import traceback
-
-                error_trace = "".join(traceback.format_exception(type(e), e, e.__traceback__))
-
-            transcript = EvalTranscript(
-                error_trace=error_trace,
-                duration_seconds=duration,
-            )
-            outcome = EvalOutcome.failure(
-                FailureMode.AGENT_ERROR,
-                str(e),
-            )
-            return transcript, outcome
         finally:
             await self._close_mcp_clients(mcp_clients)

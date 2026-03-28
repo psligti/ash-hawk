@@ -7,6 +7,12 @@ from typing import Any, Callable, Coroutine, TypeVar
 
 from ash_hawk.agents import DawnKestrelAgentRunner
 from ash_hawk.policy import PolicyEnforcer
+from ash_hawk.scenario.models import (
+    ScenarioAdapterResult,
+    ScenarioMessage,
+    ScenarioTraceEvent,
+    parse_scenario_tool_call,
+)
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
     EVENT_TYPE_TOOL_CALL,
@@ -115,14 +121,7 @@ class SdkDawnKestrelAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[
-        str | dict[str, Any] | None,
-        list[dict[str, Any]],
-        dict[str, Any],
-        Any,
-        list[dict[str, Any]],
-        list[dict[str, Any]],
-    ]:
+    ) -> ScenarioAdapterResult:
         trace_events: list[dict[str, Any]] = []
         artifacts: dict[str, Any] = {}
 
@@ -148,10 +147,14 @@ class SdkDawnKestrelAdapter:
 
         runner = DawnKestrelAgentRunner(provider=provider, model=model, **runner_kwargs)
 
-        # Extract and set injector from tooling_context if available
         injector = None
         if isinstance(tooling_harness, dict):
             injector = tooling_harness.get("injector")
+
+        skill_name = sut_config.get("skill_name")
+        if injector is not None and skill_name is not None:
+            injector.current_skill_name = skill_name
+
         if injector is not None and hasattr(runner, "set_lesson_injector"):
             runner.set_lesson_injector(injector)
 
@@ -200,9 +203,12 @@ class SdkDawnKestrelAdapter:
         )
 
         normalized_events = normalize_eval_transcript(transcript)
+        has_policy_trace_events = False
         for event in normalized_events:
             if event.event_type in {EVENT_TYPE_TOOL_CALL, EVENT_TYPE_TOOL_RESULT}:
                 continue
+            if event.event_type in {"PolicyDecisionEvent", "RejectionEvent"}:
+                has_policy_trace_events = True
             trace_events.append(event.model_dump())
 
         for tool_call in transcript.tool_calls:
@@ -227,30 +233,14 @@ class SdkDawnKestrelAdapter:
                 if not count_result.allowed:
                     policy_result = count_result
 
-            trace_events.append(
-                PolicyDecisionEvent.create(
-                    ts=DEFAULT_TRACE_TS,
-                    data={
-                        "tool_name": tool_name,
-                        "tool_input": tool_input,
-                        "allowed": policy_result.allowed,
-                        "failure_mode": (
-                            policy_result.failure_mode.value
-                            if policy_result.failure_mode is not None
-                            else None
-                        ),
-                        "reason": policy_result.reason,
-                    },
-                ).model_dump()
-            )
-
-            if not policy_result.allowed:
+            if not has_policy_trace_events:
                 trace_events.append(
-                    RejectionEvent.create(
+                    PolicyDecisionEvent.create(
                         ts=DEFAULT_TRACE_TS,
                         data={
                             "tool_name": tool_name,
                             "tool_input": tool_input,
+                            "allowed": policy_result.allowed,
                             "failure_mode": (
                                 policy_result.failure_mode.value
                                 if policy_result.failure_mode is not None
@@ -260,6 +250,24 @@ class SdkDawnKestrelAdapter:
                         },
                     ).model_dump()
                 )
+
+            if not policy_result.allowed:
+                if not has_policy_trace_events:
+                    trace_events.append(
+                        RejectionEvent.create(
+                            ts=DEFAULT_TRACE_TS,
+                            data={
+                                "tool_name": tool_name,
+                                "tool_input": tool_input,
+                                "failure_mode": (
+                                    policy_result.failure_mode.value
+                                    if policy_result.failure_mode is not None
+                                    else None
+                                ),
+                                "reason": policy_result.reason,
+                            },
+                        ).model_dump()
+                    )
                 continue
 
             if tooling_call is None:
@@ -271,13 +279,17 @@ class SdkDawnKestrelAdapter:
         if final_output is None:
             final_output = transcript.error_trace
 
-        return (
-            final_output,
-            trace_events,
-            artifacts,
-            outcome,
-            transcript.messages,
-            transcript.tool_calls,
+        return ScenarioAdapterResult(
+            final_output=final_output,
+            trace_events=[ScenarioTraceEvent.model_validate(event) for event in trace_events],
+            artifacts=artifacts,
+            outcome=outcome,
+            messages=[ScenarioMessage.model_validate(message) for message in transcript.messages],
+            tool_calls=[
+                parsed
+                for tool_call in transcript.tool_calls
+                if (parsed := parse_scenario_tool_call(tool_call)) is not None
+            ],
         )
 
 

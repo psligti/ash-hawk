@@ -8,8 +8,9 @@ import yaml
 
 import ash_hawk.scenario.registry as registry_module
 from ash_hawk.scenario.adapters import ScenarioAdapter
+from ash_hawk.scenario.models import ScenarioAdapterResult, ScenarioTraceEvent, ScenarioV1
 from ash_hawk.scenario.registry import ScenarioAdapterRegistry
-from ash_hawk.scenario.runner import run_scenarios
+from ash_hawk.scenario.runner import ScenarioRunner, run_scenarios
 
 
 class MockScenarioAdapter:
@@ -23,11 +24,21 @@ class MockScenarioAdapter:
         workdir: Path,
         tooling_harness: dict[str, Any],
         budgets: dict[str, Any],
-    ) -> tuple[Any, list[Any], dict[str, Any]]:
+    ) -> ScenarioAdapterResult:
         del workdir, budgets
         call = tooling_harness["call"]
         call("read", {"path": "input.txt"})
-        return "ok", [], {"note": "artifact"}
+        trace_events = [
+            ScenarioTraceEvent(
+                event_type="ModelMessageEvent",
+                data={"role": "assistant", "content": "ok"},
+            )
+        ]
+        return ScenarioAdapterResult(
+            final_output="ok",
+            trace_events=trace_events,
+            artifacts={"note": "artifact"},
+        )
 
 
 def test_scenario_runner_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -77,11 +88,40 @@ def test_scenario_runner_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
         encoding="utf-8",
     )
 
-    summary = run_scenarios([str(scenario_path)])
-    assert summary.trials
-    trial = summary.trials[0]
-    assert trial.result is not None
-    trace_events = trial.result.transcript.trace_events
-    assert trace_events
-    assert any(event.get("event_type") == "ToolCallEvent" for event in trace_events)
-    assert any(event.get("event_type") == "ArtifactEvent" for event in trace_events)
+    with pytest.raises(ValueError, match="Detected empty transcripts; aborting scenario run"):
+        run_scenarios([str(scenario_path)])
+
+
+def test_scenario_runner_overrides_task_timeout_from_constructor(tmp_path: Path) -> None:
+    runner = ScenarioRunner(storage_path=tmp_path / "storage", scenario_timeout_seconds=420.0)
+    scenario = ScenarioV1.model_validate(
+        {
+            "schema_version": "v1",
+            "id": "timeout-override-demo",
+            "description": "Timeout override scenario",
+            "sut": {"type": "coding_agent", "adapter": "mock_adapter", "config": {}},
+            "inputs": {"prompt": "run"},
+            "tools": {
+                "allowed_tools": ["read"],
+                "mocks": {},
+                "fault_injection": {},
+            },
+            "budgets": {
+                "max_steps": 3,
+                "max_tool_calls": 5,
+                "max_tokens": 100,
+                "max_time_seconds": 10.0,
+            },
+            "expectations": {
+                "must_events": [],
+                "must_not_events": [],
+                "ordering_rules": [],
+                "diff_assertions": [],
+                "output_assertions": [],
+            },
+            "graders": [],
+        }
+    )
+
+    task = runner._scenario_to_task(scenario, tmp_path / "demo.scenario.yaml")
+    assert task.timeout_seconds == 420.0

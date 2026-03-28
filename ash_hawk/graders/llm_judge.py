@@ -132,13 +132,58 @@ You MUST respond with a valid JSON object matching this schema:
 }}
 ```
 
-Respond with ONLY the JSON object, no additional text.
+Return raw JSON only. Do not use markdown code fences. Do not add any prefix or suffix text.
 """
 
 
 def _wrap_rubric_text_as_prompt(rubric_text: str) -> str:
     safe_text = _escape_format_braces(rubric_text.strip())
     return _RUBRIC_TEXT_WRAPPER_TEMPLATE.replace("__RUBRIC_TEXT__", safe_text)
+
+
+def _extract_json_candidate(raw_output: str) -> str:
+    candidate = raw_output.strip()
+    if "```json" in candidate:
+        start = candidate.find("```json") + 7
+        end = candidate.find("```", start)
+        if end != -1:
+            return candidate[start:end].strip()
+    if "```" in candidate:
+        start = candidate.find("```") + 3
+        end = candidate.find("```", start)
+        if end != -1:
+            return candidate[start:end].strip()
+    return candidate
+
+
+def _extract_first_json_object(candidate: str) -> str | None:
+    start = candidate.find("{")
+    if start == -1:
+        return None
+
+    depth = 0
+    in_string = False
+    escape_next = False
+
+    for idx, char in enumerate(candidate[start:]):
+        if escape_next:
+            escape_next = False
+            continue
+        if char == "\\":
+            escape_next = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return candidate[start : start + idx + 1]
+    return None
 
 
 class JudgeOutputBreakdown(pd.BaseModel):
@@ -656,28 +701,24 @@ class LLMJudgeGrader(Grader):
             logger.warning("Judge returned empty output")
             raise ValueError("Judge returned empty output - cannot grade")
 
-        # Try to extract JSON from the response
-        json_str = raw_output.strip()
-
-        # Handle potential markdown code blocks
-        if "```json" in json_str:
-            start = json_str.find("```json") + 7
-            end = json_str.find("```", start)
-            if end != -1:
-                json_str = json_str[start:end].strip()
-        elif "```" in json_str:
-            start = json_str.find("```") + 3
-            end = json_str.find("```", start)
-            if end != -1:
-                json_str = json_str[start:end].strip()
+        json_str = _extract_json_candidate(raw_output)
+        if not json_str:
+            raise ValueError("Judge returned empty JSON after extraction")
 
         try:
             data = json.loads(json_str)
         except json.JSONDecodeError as e:
-            logger.warning(f"Failed to parse judge output as JSON: {e}")
-            # Raise instead of returning a fake failure - this will be caught
-            # by the grade() method and properly marked as JUDGE_ERROR
-            raise ValueError(f"Failed to parse judge output as JSON: {e}") from e
+            extracted = _extract_first_json_object(json_str)
+            if extracted is None:
+                logger.warning(f"Failed to parse judge output as JSON: {e}")
+                raise ValueError(f"Failed to parse judge output as JSON: {e}") from e
+            try:
+                data = json.loads(extracted)
+            except json.JSONDecodeError as extracted_error:
+                logger.warning(f"Failed to parse judge output as JSON: {extracted_error}")
+                raise ValueError(
+                    f"Failed to parse judge output as JSON: {extracted_error}"
+                ) from extracted_error
 
         normalized = self._normalize_judge_payload(data)
 

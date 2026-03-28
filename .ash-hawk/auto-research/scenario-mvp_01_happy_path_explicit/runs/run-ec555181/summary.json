@@ -1,0 +1,417 @@
+{
+  "envelope": {
+    "run_id": "run-ec555181",
+    "suite_id": "scenario-mvp_01_happy_path_explicit",
+    "suite_hash": "1c0bc25fe832517f",
+    "harness_version": "0.1.0",
+    "git_commit": null,
+    "agent_name": "scenario-adapter",
+    "agent_version": null,
+    "provider": "scenario",
+    "model": "scenario",
+    "model_params": {},
+    "seed": null,
+    "tool_policy_hash": "d783e1cb5350e2e4",
+    "python_version": "3.12.6",
+    "os_info": "macOS-15.7.3-arm64-arm-64bit",
+    "config_snapshot": {},
+    "created_at": "2026-03-24T21:11:56.060724+00:00"
+  },
+  "metrics": {
+    "suite_id": "scenario-mvp_01_happy_path_explicit",
+    "run_id": "run-ec555181",
+    "total_tasks": 1,
+    "completed_tasks": 1,
+    "passed_tasks": 0,
+    "failed_tasks": 0,
+    "pass_rate": 0.0,
+    "mean_score": 0.25,
+    "total_tokens": {
+      "input": 0,
+      "output": 0,
+      "reasoning": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "total_cost_usd": 0.0,
+    "total_duration_seconds": 4.732960939407349,
+    "latency_p50_seconds": 4.7326977252960205,
+    "latency_p95_seconds": 4.7326977252960205,
+    "latency_p99_seconds": 4.7326977252960205,
+    "pass_at_k": {},
+    "created_at": "2026-03-24T21:12:00.794165+00:00"
+  },
+  "trials": [
+    {
+      "id": "trial-d5fa5140",
+      "task_id": "mvp_01_happy_path_explicit",
+      "status": "completed",
+      "attempt_number": 1,
+      "input_snapshot": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "mvp_01_happy_path_explicit",
+          "description": "Baseline full-flow scenario with explicit files and strict truth checks.",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "bolt_merlin",
+            "config": {
+              "agent": "execution"
+            }
+          },
+          "inputs": {
+            "prompt": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection in db.py\n3. [DOCS] Update README.md with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using todo_create\n- Prioritize bugs before features, features before docs/cleanup\n- Update todo items as work is completed\n- End with: TODO SUMMARY: X/4 complete\n"
+          },
+          "tools": {
+            "allowed_tools": [
+              "read",
+              "edit",
+              "write",
+              "todo_create",
+              "todo_update"
+            ],
+            "mocks": {
+              "read": {
+                "input": {},
+                "result": {
+                  "content": ""
+                }
+              },
+              "edit": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "write": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              },
+              "todo_create": {
+                "input": {},
+                "result": {
+                  "todo_id": "todo-001"
+                }
+              },
+              "todo_update": {
+                "input": {},
+                "result": {
+                  "success": true
+                }
+              }
+            },
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 30,
+            "max_tool_calls": 40,
+            "max_tokens": 6000,
+            "max_time_seconds": 120.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "todo_state",
+              "config": {
+                "exact_task_count": 4,
+                "allow_extra_tasks": false,
+                "required_tasks": [
+                  {
+                    "id": "bug_auth",
+                    "text_contains": [
+                      "Fix authentication bug",
+                      "auth.py"
+                    ],
+                    "priority": "high",
+                    "category": "BUG"
+                  },
+                  {
+                    "id": "feature_logging",
+                    "text_contains": [
+                      "Add logging",
+                      "db.py"
+                    ],
+                    "priority": "medium",
+                    "category": "FEATURE"
+                  },
+                  {
+                    "id": "docs_readme",
+                    "text_contains": [
+                      "Update README",
+                      "README.md"
+                    ],
+                    "priority": "low",
+                    "category": "DOCS"
+                  },
+                  {
+                    "id": "cleanup_utils",
+                    "text_contains": [
+                      "Remove unused imports",
+                      "utils.py"
+                    ],
+                    "priority": "low",
+                    "category": "CLEANUP"
+                  }
+                ],
+                "required_priority_order": [
+                  "bug_auth",
+                  "feature_logging",
+                  "docs_readme",
+                  "cleanup_utils"
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "repo_diff",
+              "config": {
+                "required_file_changes": [
+                  {
+                    "path": "auth.py"
+                  },
+                  {
+                    "path": "db.py"
+                  },
+                  {
+                    "path": "README.md"
+                  },
+                  {
+                    "path": "utils.py"
+                  }
+                ],
+                "forbidden_file_changes": [
+                  "auth_old.py",
+                  "README_old.md"
+                ],
+                "semantic_assertions": [
+                  {
+                    "path": "auth.py",
+                    "must_not_contain_after": [
+                      "return False"
+                    ]
+                  },
+                  {
+                    "path": "db.py",
+                    "must_contain_after": [
+                      "log",
+                      "connect"
+                    ]
+                  },
+                  {
+                    "path": "README.md",
+                    "must_contain_after": [
+                      "/v2/login",
+                      "/v2/users"
+                    ]
+                  },
+                  {
+                    "path": "utils.py",
+                    "must_not_contain_after": [
+                      "import os",
+                      "import sys"
+                    ]
+                  }
+                ]
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "completion_honesty",
+              "config": {
+                "require_file_change_before_completion": true,
+                "task_to_file_map": {
+                  "bug_auth": "auth.py",
+                  "feature_logging": "db.py",
+                  "docs_readme": "README.md",
+                  "cleanup_utils": "utils.py"
+                },
+                "allowed_status_flow": [
+                  [
+                    "pending",
+                    "in_progress"
+                  ],
+                  [
+                    "in_progress",
+                    "completed"
+                  ]
+                ],
+                "forbid_direct_pending_to_completed": false,
+                "require_completion_for_changed_tasks": false
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "summary_truthfulness",
+              "config": {
+                "summary_regex": "TODO SUMMARY:\\s*(\\d)/4 complete",
+                "compare_against": "actual_completed_tasks",
+                "strict_match": true
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_01_happy_path_explicit.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios"
+      },
+      "task_tags": [],
+      "result": {
+        "trial_id": "trial-d5fa5140",
+        "outcome": {
+          "status": "completed",
+          "failure_mode": null,
+          "error_message": null,
+          "completed_at": "2026-03-24T21:12:00.791506+00:00"
+        },
+        "transcript": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection in db.py\n3. [DOCS] Update README.md with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using todo_create\n- Prioritize bugs before features, features before docs/cleanup\n- Update todo items as work is completed\n- End with: TODO SUMMARY: X/4 complete\n\n\n---\n\n## Skill: strict-task-inference-and-validation\n\n---\nname: \"strict-task-inference-and-validation\"\ndescription: \"Enforces mandatory task tracking with intelligent tool name resolution (handling typos) and strict formatting prohibition on fallbacks\"\n---\n\n## What I do\n\nI enforce a rigorous, multi-step protocol for handling task requests that ensures task tracking is established via the correct tools whenever possible, falling back to Markdown only when absolutely necessary and without conversational filler.\n\n## When to use me\n\nUse me for all multi-task requests, specifically when:\n- Users provide a list of tasks to complete.\n- Users explicitly mention tools by name (even with potential typos, e.g., `todo_creat`).\n- Any workflow requiring systematic file operations.\n\n## Guidelines\n\n### STOP 0: Intelligent Tool Availability Check\n- Verify tool availability BEFORE doing ANYTHING else.\n- **Fuzzy Matching:** If a user explicitly requests a tool but uses a typo (e.g., `todo_creat` instead of `todo_create`), you MUST attempt to infer the correct tool name first.\n- Only declare a tool unavailable if the *corrected/inferred* tool name does not exist.\n- Do not skip this step based on literal string matching failure alone.\n\n### STOP 1: Initialize Task Tracking\n- **If `todo_create` (or inferred equivalent) is available:**\n  - Call the tool immediately with ALL tasks.\n  - Do not output a Markdown list if the tool is available.\n- **If `todo_create` is genuinely unavailable:**\n  - Output a Markdown TODO list as your **FIRST AND ONLY response**.\n  - **CRITICAL:** Do not append notes, apologies, or explanations (e.g., \"Note: todo_create not found\").\n  - The fallback must be a clean, standalone Markdown block.\n\n### STOP 2-5: Execute Workflow\n- Proceed with discovery, reading, and execution ONLY after task tracking is established (either via tool confirmation OR the clean Markdown list has been output).\n\n### Verification Checks\n- **Typo Tolerance:** Did I check for `todo_create` even if the user typed `todo_creat`?\n- **Cleanliness:** If I used the Markdown fallback, was it free of any conversational text (`*Note: ...`)? If not, I failed.\n\n### Forbidden Behaviors\n- **NEVER** fall back to Markdown simply because of a typo in the user's prompt.\n- **NEVER** append explanatory text to the Markdown fallback. It must be the *only* content of the message.\n- **NEVER** proceed to file operations until tracking is settled."
+            },
+            {
+              "role": "assistant",
+              "content": "## TODO\n\n1. **[BUG]** Fix authentication bug in auth.py - users can't login\n2. **[FEATURE]** Add logging to database connection in db.py\n3. **[DOCS]** Update README.md with new API endpoints\n4. **[CLEANUP]** Remove unused imports in utils.py"
+            }
+          ],
+          "tool_calls": [],
+          "trace_events": [
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "user",
+                "content": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection in db.py\n3. [DOCS] Update README.md with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using todo_create\n- Prioritize bugs before features, features before docs/cleanup\n- Update todo items as work is completed\n- End with: TODO SUMMARY: X/4 complete\n\n\n---\n\n## Skill: strict-task-inference-and-validation\n\n---\nname: \"strict-task-inference-and-validation\"\ndescription: \"Enforces mandatory task tracking with intelligent tool name resolution (handling typos) and strict formatting prohibition on fallbacks\"\n---\n\n## What I do\n\nI enforce a rigorous, multi-step protocol for handling task requests that ensures task tracking is established via the correct tools whenever possible, falling back to Markdown only when absolutely necessary and without conversational filler.\n\n## When to use me\n\nUse me for all multi-task requests, specifically when:\n- Users provide a list of tasks to complete.\n- Users explicitly mention tools by name (even with potential typos, e.g., `todo_creat`).\n- Any workflow requiring systematic file operations.\n\n## Guidelines\n\n### STOP 0: Intelligent Tool Availability Check\n- Verify tool availability BEFORE doing ANYTHING else.\n- **Fuzzy Matching:** If a user explicitly requests a tool but uses a typo (e.g., `todo_creat` instead of `todo_create`), you MUST attempt to infer the correct tool name first.\n- Only declare a tool unavailable if the *corrected/inferred* tool name does not exist.\n- Do not skip this step based on literal string matching failure alone.\n\n### STOP 1: Initialize Task Tracking\n- **If `todo_create` (or inferred equivalent) is available:**\n  - Call the tool immediately with ALL tasks.\n  - Do not output a Markdown list if the tool is available.\n- **If `todo_create` is genuinely unavailable:**\n  - Output a Markdown TODO list as your **FIRST AND ONLY response**.\n  - **CRITICAL:** Do not append notes, apologies, or explanations (e.g., \"Note: todo_create not found\").\n  - The fallback must be a clean, standalone Markdown block.\n\n### STOP 2-5: Execute Workflow\n- Proceed with discovery, reading, and execution ONLY after task tracking is established (either via tool confirmation OR the clean Markdown list has been output).\n\n### Verification Checks\n- **Typo Tolerance:** Did I check for `todo_create` even if the user typed `todo_creat`?\n- **Cleanliness:** If I used the Markdown fallback, was it free of any conversational text (`*Note: ...`)? If not, I failed.\n\n### Forbidden Behaviors\n- **NEVER** fall back to Markdown simply because of a typo in the user's prompt.\n- **NEVER** append explanatory text to the Markdown fallback. It must be the *only* content of the message.\n- **NEVER** proceed to file operations until tracking is settled."
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ModelMessageEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "role": "assistant",
+                "content": "## TODO\n\n1. **[BUG]** Fix authentication bug in auth.py - users can't login\n2. **[FEATURE]** Add logging to database connection in db.py\n3. **[DOCS]** Update README.md with new API endpoints\n4. **[CLEANUP]** Remove unused imports in utils.py"
+              }
+            },
+            {
+              "schema_version": 1,
+              "event_type": "ArtifactEvent",
+              "ts": "1970-01-01T00:00:00Z",
+              "data": {
+                "path": ".ash-hawk/auto-research/scenario-mvp_01_happy_path_explicit/runs/run-ec555181/artifacts/trial-f7287ddf/artifacts.json",
+                "artifact_key": "artifacts"
+              }
+            }
+          ],
+          "token_usage": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          },
+          "cost_usd": 0.0,
+          "duration_seconds": 4.7312171459198,
+          "agent_response": "## TODO\n\n1. **[BUG]** Fix authentication bug in auth.py - users can't login\n2. **[FEATURE]** Add logging to database connection in db.py\n3. **[DOCS]** Update README.md with new API endpoints\n4. **[CLEANUP]** Remove unused imports in utils.py",
+          "error_trace": null
+        },
+        "grader_results": [
+          {
+            "grader_type": "todo_state",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "todo_count": 0,
+              "todos": [],
+              "errors": [
+                "Expected 4 tasks, got 0",
+                "Missing required tasks: bug_auth, feature_logging, docs_readme, cleanup_utils"
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 2.4080276489257812e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "repo_diff",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "files_changed": [],
+              "changes": {},
+              "errors": [
+                "Required files not changed: auth.py, db.py, README.md, utils.py",
+                "Required file not changed: auth.py",
+                "Required file not changed: db.py",
+                "Required file not changed: README.md",
+                "Required file not changed: utils.py"
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 1.0967254638671875e-05,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "completion_honesty",
+            "grader_id": null,
+            "score": 1.0,
+            "passed": true,
+            "details": {
+              "timeline": [],
+              "errors": []
+            },
+            "error_message": null,
+            "execution_time_seconds": 5.9604644775390625e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          },
+          {
+            "grader_type": "summary_truthfulness",
+            "grader_id": null,
+            "score": 0.0,
+            "passed": false,
+            "details": {
+              "claimed_count": null,
+              "actual_completed": 0,
+              "errors": [
+                "Could not extract summary claim using pattern: TODO SUMMARY:\\s*(\\d)/4 complete"
+              ]
+            },
+            "error_message": null,
+            "execution_time_seconds": 8.106231689453125e-06,
+            "confidence": null,
+            "needs_review": false,
+            "review_reason": null
+          }
+        ],
+        "aggregate_score": 0.25,
+        "aggregate_passed": false
+      },
+      "envelope": null
+    }
+  ]
+}
