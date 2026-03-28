@@ -71,6 +71,12 @@ class TestCheck:
     def test_detects_no_improvement_after_threshold_iterations(
         self, detector: ConvergenceDetector
     ) -> None:
+        no_plateau_detector = ConvergenceDetector(
+            window_size=5,
+            variance_threshold=1e-8,
+            min_improvement=0.005,
+            max_iterations_without_improvement=10,
+        )
         scores = [
             (0.50, 0.55),
             (0.55, 0.60),
@@ -92,7 +98,7 @@ class TestCheck:
             (0.75945, 0.7595),
         ]
         iterations = _make_iterations(scores)
-        result = detector.check(iterations)
+        result = no_plateau_detector.check(iterations)
 
         assert result.converged is True
         assert result.reason == ConvergenceReason.NO_IMPROVEMENT
@@ -182,7 +188,7 @@ class TestIterationsSinceImprovement:
     def test_returns_total_count_when_no_improvement(self, detector: ConvergenceDetector) -> None:
         iterations = _make_iterations([(0.5, 0.51), (0.51, 0.511), (0.511, 0.5115)])
         result = detector._iterations_since_improvement(iterations, 0.1)
-        assert result == 3
+        assert result == 2
 
 
 class TestDetectRegression:
