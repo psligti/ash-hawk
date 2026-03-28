@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ash_hawk.auto_research.convergence import ConvergenceDetector, _REGRESSION_WINDOW
+from ash_hawk.auto_research.convergence import _REGRESSION_WINDOW, ConvergenceDetector
 from ash_hawk.auto_research.types import ConvergenceReason, IterationResult
 
 
