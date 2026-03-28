@@ -323,3 +323,47 @@ def test_sdk_adapter_does_not_duplicate_policy_events_from_transcript():
     assert len(policy_events) == 1
     assert policy_events[0]["data"]["tool_name"] == "bash"
     assert len(tool_calls_log) == 1
+
+
+def test_sdk_adapter_normalizes_tool_call_alias_fields() -> None:
+    adapter = SdkDawnKestrelAdapter()
+
+    mock_transcript = EvalTranscript(
+        tool_calls=[{"tool": "bash", "input": {"command": "echo test"}}],
+        agent_response="Done",
+    )
+    mock_outcome = EvalOutcome(status=EvalStatus.COMPLETED)
+
+    tooling_harness = {
+        "policy": {
+            "allowed_tools": ["bash"],
+            "denied_tools": [],
+        },
+        "call": lambda name, inp: {"ok": True},
+    }
+
+    scenario = {
+        "id": "test-sdk-tool-alias",
+        "sut": {
+            "type": "coding_agent",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+                "provider": "test_provider",
+                "model": "test_model",
+            },
+        },
+        "tools": {"allowed_tools": ["bash"]},
+        "inputs": {"prompt": "Test prompt"},
+        "expectations": {},
+        "budgets": {},
+    }
+
+    with patch("ash_hawk.scenario.adapters.sdk_dawn_kestrel.DawnKestrelAgentRunner") as mock_runner:
+        mock_runner_instance = MagicMock()
+        mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
+        mock_runner.return_value = mock_runner_instance
+
+        result = adapter.run_scenario(scenario, Path("/tmp"), tooling_harness, {})
+
+    assert result.tool_calls[0].name == "bash"
+    assert result.tool_calls[0].arguments == {"command": "echo test"}

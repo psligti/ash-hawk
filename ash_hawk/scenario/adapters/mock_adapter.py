@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from ash_hawk.scenario.models import ScenarioAdapterResult, ScenarioTraceEvent
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
     ModelMessageEvent,
@@ -41,7 +42,7 @@ class MockAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[str, list[dict[str, Any]], dict[str, Any], Any]:
+    ) -> ScenarioAdapterResult:
         """Execute mock scenario and return deterministic results.
 
         Args:
@@ -163,4 +164,8 @@ class MockAdapter:
         trace_events.append(final_msg.model_dump())
 
         # Return final output, trace events, empty artifacts, and None outcome
-        return final_content, trace_events, {}, None
+        return ScenarioAdapterResult(
+            final_output=final_content,
+            trace_events=[ScenarioTraceEvent.model_validate(event) for event in trace_events],
+            artifacts={},
+        )

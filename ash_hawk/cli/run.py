@@ -299,7 +299,7 @@ async def _run_suite_async(
     if hasattr(agent_runner, "set_lesson_injector"):
         from ash_hawk.services import DawnKestrelInjector, LessonInjector
 
-        dk_injector = DawnKestrelInjector()
+        dk_injector = DawnKestrelInjector(project_root=suite_file.parent.resolve())
         agent_runner.set_lesson_injector(dk_injector)
 
         if lessons:

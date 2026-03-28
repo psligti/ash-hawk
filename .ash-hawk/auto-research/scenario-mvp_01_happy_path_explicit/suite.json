@@ -15,52 +15,16 @@
             "type": "agentic_sdk",
             "adapter": "bolt_merlin",
             "config": {
-              "agent": "execution"
+              "agent": "orchestrator",
+              "skill_name": "coding-task-execution"
             }
           },
           "inputs": {
             "prompt": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection in db.py\n3. [DOCS] Update README.md with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using todo_create\n- Prioritize bugs before features, features before docs/cleanup\n- Update todo items as work is completed\n- End with: TODO SUMMARY: X/4 complete\n"
           },
           "tools": {
-            "allowed_tools": [
-              "read",
-              "edit",
-              "write",
-              "todo_create",
-              "todo_update"
-            ],
-            "mocks": {
-              "read": {
-                "input": {},
-                "result": {
-                  "content": ""
-                }
-              },
-              "edit": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              },
-              "write": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              },
-              "todo_create": {
-                "input": {},
-                "result": {
-                  "todo_id": "todo-001"
-                }
-              },
-              "todo_update": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              }
-            },
+            "allowed_tools": [],
+            "mocks": {},
             "fault_injection": {}
           },
           "budgets": {
@@ -223,6 +187,17 @@
               "weight": 1.0,
               "required": true,
               "timeout_seconds": null
+            },
+            {
+              "grader_type": "prompt_stack_optimizer",
+              "config": {
+                "pass_threshold": 0.5,
+                "max_growth_opportunities": 3,
+                "max_mutation_targets": 2
+              },
+              "weight": 0.5,
+              "required": false,
+              "timeout_seconds": null
             }
           ]
         },
@@ -279,7 +254,8 @@
               "feature_logging",
               "docs_readme",
               "cleanup_utils"
-            ]
+            ],
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
@@ -334,7 +310,8 @@
                   "import sys"
                 ]
               }
-            ]
+            ],
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
@@ -361,7 +338,8 @@
               ]
             ],
             "forbid_direct_pending_to_completed": false,
-            "require_completion_for_changed_tasks": false
+            "require_completion_for_changed_tasks": false,
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
@@ -372,10 +350,23 @@
           "config": {
             "summary_regex": "TODO SUMMARY:\\s*(\\d)/4 complete",
             "compare_against": "actual_completed_tasks",
-            "strict_match": true
+            "strict_match": true,
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "prompt_stack_optimizer",
+          "config": {
+            "pass_threshold": 0.5,
+            "max_growth_opportunities": 3,
+            "max_mutation_targets": 2,
+            "quiet": true
+          },
+          "weight": 0.5,
+          "required": false,
           "timeout_seconds": null
         }
       ],
@@ -387,7 +378,7 @@
         "scenario_path": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_01_happy_path_explicit.scenario.yaml"
       },
       "fixtures": {},
-      "timeout_seconds": 120.0,
+      "timeout_seconds": 180.0,
       "max_attempts": 1
     }
   ],

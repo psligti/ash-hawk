@@ -1,0 +1,31 @@
+{
+  "agent_name": "strict-task-tracking-workflow",
+  "target_path": "/Users/parkersligting/develop/pt/bolt-merlin/.dawn-kestrel/skills/strict-task-tracking-workflow/SKILL.md",
+  "scenario_paths": [
+    "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_01_happy_path_explicit.scenario.yaml"
+  ],
+  "status": "completed",
+  "iterations": [
+    {
+      "iteration_num": 0,
+      "score_before": 0.25,
+      "score_after": 0.25,
+      "improvement_text": "strict-task-inference-and-validation",
+      "applied": false,
+      "timestamp": "2026-03-24T21:12:00.795607+00:00"
+    },
+    {
+      "iteration_num": 1,
+      "score_before": 0.25,
+      "score_after": 0.5,
+      "improvement_text": "blocking-task-fallback-protocol",
+      "applied": true,
+      "timestamp": "2026-03-24T21:13:12.515809+00:00"
+    }
+  ],
+  "initial_score": 0.25,
+  "final_score": 0.5,
+  "started_at": "2026-03-24T21:10:43.548374+00:00",
+  "completed_at": "2026-03-24T21:13:12.516079+00:00",
+  "error_message": null
+}

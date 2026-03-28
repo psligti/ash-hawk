@@ -950,14 +950,14 @@ class DawnKestrelAgentRunner:
                 if isinstance(policy_snapshot, dict):
                     raw_allowed = policy_snapshot.get("allowed_tools")
                     if isinstance(raw_allowed, list):
-                        override_allowed_tools = [
-                            tool for tool in raw_allowed if isinstance(tool, str)
-                        ]
+                        allowed_override = [tool for tool in raw_allowed if isinstance(tool, str)]
+                        if allowed_override:
+                            override_allowed_tools = allowed_override
                     raw_denied = policy_snapshot.get("denied_tools")
                     if isinstance(raw_denied, list):
-                        override_denied_tools = [
-                            tool for tool in raw_denied if isinstance(tool, str)
-                        ]
+                        denied_override = [tool for tool in raw_denied if isinstance(tool, str)]
+                        if denied_override:
+                            override_denied_tools = denied_override
 
             base_registry = self._create_base_registry()
             mcp_clients = await self._register_mcp_tools(base_registry)

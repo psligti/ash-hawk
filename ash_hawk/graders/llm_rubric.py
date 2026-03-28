@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -25,13 +24,56 @@ from ash_hawk.types import (
     FailureMode,
     GraderResult,
     GraderSpec,
-    TokenUsage,
 )
 
 if TYPE_CHECKING:
     from dawn_kestrel.llm.client import LLMClient
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_json_candidate(raw_output: str) -> str:
+    candidate = raw_output.strip()
+    if "```json" in candidate:
+        start = candidate.find("```json") + 7
+        end = candidate.find("```", start)
+        if end != -1:
+            return candidate[start:end].strip()
+    if "```" in candidate:
+        start = candidate.find("```") + 3
+        end = candidate.find("```", start)
+        if end != -1:
+            return candidate[start:end].strip()
+    return candidate
+
+
+def _extract_first_json_object(candidate: str) -> str | None:
+    start = candidate.find("{")
+    if start == -1:
+        return None
+
+    depth = 0
+    in_string = False
+    escape_next = False
+    for idx, char in enumerate(candidate[start:]):
+        if escape_next:
+            escape_next = False
+            continue
+        if char == "\\":
+            escape_next = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return candidate[start : start + idx + 1]
+    return None
 
 
 _RUBRIC_PROMPT_TEMPLATE: str = """You are an evaluator grading an AI response.
@@ -204,25 +246,22 @@ class LLMRubricGrader(Grader):
         if not raw_output or not raw_output.strip():
             raise ValueError("Judge returned empty output")
 
-        # Extract JSON from response
-        json_str = raw_output.strip()
-
-        # Handle potential markdown code blocks
-        if "```json" in json_str:
-            start = json_str.find("```json") + 7
-            end = json_str.find("```", start)
-            if end != -1:
-                json_str = json_str[start:end].strip()
-        elif "```" in json_str:
-            start = json_str.find("```") + 3
-            end = json_str.find("```", start)
-            if end != -1:
-                json_str = json_str[start:end].strip()
+        json_str = _extract_json_candidate(raw_output)
+        if not json_str:
+            raise ValueError("Judge returned empty JSON after extraction")
 
         try:
             data = json.loads(json_str)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Failed to parse judge output as JSON: {e}") from e
+            extracted = _extract_first_json_object(json_str)
+            if extracted is None:
+                raise ValueError(f"Failed to parse judge output as JSON: {e}") from e
+            try:
+                data = json.loads(extracted)
+            except json.JSONDecodeError as extracted_error:
+                raise ValueError(
+                    f"Failed to parse judge output as JSON: {extracted_error}"
+                ) from extracted_error
 
         # Extract score
         score = data.get("score", 0.0)
@@ -308,14 +347,6 @@ class LLMRubricGrader(Grader):
             score, passed, reasoning = self._parse_output(raw_output)
 
             execution_time = time.time() - start_time
-
-            # Build token usage
-            token_usage = TokenUsage()
-            if hasattr(response, "usage") and response.usage:
-                token_usage = TokenUsage(
-                    input=getattr(response.usage, "prompt_tokens", 0) or 0,
-                    output=getattr(response.usage, "completion_tokens", 0) or 0,
-                )
 
             return GraderResult(
                 grader_type=self.name,

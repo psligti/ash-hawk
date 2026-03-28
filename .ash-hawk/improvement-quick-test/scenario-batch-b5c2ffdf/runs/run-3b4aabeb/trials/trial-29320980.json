@@ -1,0 +1,657 @@
+{
+  "trial": {
+    "id": "trial-29320980",
+    "task_id": "python-bugfix-18",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "python-bugfix-18",
+        "description": "Fix bug in Python code - logic-error-inverted",
+        "sut": {
+          "type": "coding_agent",
+          "adapter": "sdk_dawn_kestrel",
+          "config": {
+            "skill": "python-bugfix"
+          }
+        },
+        "inputs": {
+          "prompt": "Fix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n",
+          "repo_fixture": "./"
+        },
+        "tools": {
+          "allowed_tools": [
+            "bash",
+            "read_file",
+            "write_file",
+            "edit_file"
+          ],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 10,
+          "max_tool_calls": 30,
+          "max_tokens": 2000,
+          "max_time_seconds": 120.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "composite",
+            "config": {
+              "mode": "weighted",
+              "weights": [
+                0.7,
+                0.2,
+                0.1
+              ],
+              "graders": [
+                {
+                  "grader_type": "test_runner",
+                  "config": {
+                    "test_path": "test_bug.py",
+                    "pass_threshold": 1.0,
+                    "partial_credit": true,
+                    "timeout_seconds": 60
+                  }
+                },
+                {
+                  "grader_type": "diff_constraints",
+                  "config": {
+                    "max_loc": 10,
+                    "max_files": 1
+                  }
+                },
+                {
+                  "grader_type": "transcript",
+                  "config": {
+                    "max_tool_calls": 15,
+                    "partial_credit": true
+                  }
+                }
+              ]
+            },
+            "weight": 1.0,
+            "required": false,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/18-logic-error-inverted/scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/ash-hawk/evals/python-bugfix/18-logic-error-inverted"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-29320980",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-26T17:28:16.772988+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Fix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\n\n---\n\n## Skill: python-bugfix\n\n# Python Bug Fixing\n\nYou are an expert at fixing Python bugs.\n\n## Guidelines\n\n1. Read the failing test carefully\n2. Identify the bug in the source code\n3. Make minimal changes to fix the bug\n4. Ensure all tests pass\n\n## Common Bug Types\n\n- Off-by-one errors in loops and slices\n- Missing return statements\n- Wrong operators (and vs or, > vs >=)\n- Variable name typos\n- Missing exception handling\n- Incorrect comparisons (is vs ==)\n- Logic inversions\n\n## Process\n\n1. First, run the test to see the failure\n2. Read the source file with the bug\n3. Identify the specific line causing the failure\n4. Make a targeted fix\n5. Verify the test passes"
+          },
+          {
+            "role": "assistant",
+            "content": "I'll help you fix the bug in the Python code. Let me start by examining the test file and source code, then run the tests to see the failure."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"path\": \"test_bug.py\"}, \"error\": \"Tool not available: read\"}, {\"tool\": \"read\", \"input\": {\"path\": \"src/solution.py\"}, \"error\": \"Tool not available: read\"}]"
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"glob\", \"input\": {\"pattern\": \"**/*\"}, \"error\": \"Tool not available: glob\"}]"
+          },
+          {
+            "role": "assistant",
+            "content": "Let me use the correct tools to read the files and run the tests."
+          },
+          {
+            "role": "user",
+            "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"cat test_bug.py\", \"description\": \"Read the test file\"}, \"output\": \"\\n[Stderr]\\ncat: test_bug.py: No such file or directory\\n\", \"title\": \"Read the test file\", \"metadata\": {\"exit_code\": 1, \"description\": \"Read the test file\"}}, {\"tool\": \"bash\", \"input\": {\"command\": \"cat src/solution.py\", \"description\": \"Read the solution file\"}, \"output\": \"\\n[Stderr]\\ncat: src/solution.py: No such file or directory\\n\", \"title\": \"Read the solution file\", \"metadata\": {\"exit_code\": 1, \"description\": \"Read the solution file\"}}]"
+          }
+        ],
+        "tool_calls": [
+          {
+            "tool": "read",
+            "name": "read",
+            "input": {
+              "path": "test_bug.py"
+            },
+            "arguments": {
+              "path": "test_bug.py"
+            },
+            "output": null,
+            "error": "Tool not available: read"
+          },
+          {
+            "tool": "read",
+            "name": "read",
+            "input": {
+              "path": "src/solution.py"
+            },
+            "arguments": {
+              "path": "src/solution.py"
+            },
+            "output": null,
+            "error": "Tool not available: read"
+          },
+          {
+            "tool": "glob",
+            "name": "glob",
+            "input": {
+              "pattern": "**/*"
+            },
+            "arguments": {
+              "pattern": "**/*"
+            },
+            "output": null,
+            "error": "Tool not available: glob"
+          },
+          {
+            "tool": "bash",
+            "name": "bash",
+            "input": {
+              "command": "cat test_bug.py",
+              "description": "Read the test file"
+            },
+            "arguments": {
+              "command": "cat test_bug.py",
+              "description": "Read the test file"
+            },
+            "output": "\n[Stderr]\ncat: test_bug.py: No such file or directory\n"
+          },
+          {
+            "tool": "bash",
+            "name": "bash",
+            "input": {
+              "command": "cat src/solution.py",
+              "description": "Read the solution file"
+            },
+            "arguments": {
+              "command": "cat src/solution.py",
+              "description": "Read the solution file"
+            },
+            "output": "\n[Stderr]\ncat: src/solution.py: No such file or directory\n"
+          }
+        ],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "IterationStarted",
+              "payload": {
+                "max_iterations": 1
+              },
+              "iteration": 1,
+              "session_id": "trial-1774546088461"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "ProposalGenerated",
+              "payload": {
+                "intent": "Fix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\n\n---\n\n## Skill: python-bugfix\n\n# Python Bug Fixing\n\nYou are an expert at fixing Python bugs.\n\n## Guidelines\n\n1. Read the failing test carefully\n2. Identify the bug in the source code\n3. Make minimal changes to fix the bug\n4. Ensure all tests pass\n\n## Common Bug Types\n\n- Off-by-one errors in loops and slices\n- Missing return statements\n- Wrong operators (and vs or, > vs >=)\n- Variable name typos\n- Missing exception handling\n- Incorrect comparisons (is vs ==)\n- Logic inversions\n\n## Process\n\n1. First, run the test to see the failure\n2. Read the source file with the bug\n3. Identify the specific line causing the failure\n4. Make a targeted fix\n5. Verify the test passes",
+                "action_types": [],
+                "risk_level": "RiskLevel.LOW"
+              },
+              "iteration": 1,
+              "session_id": "trial-1774546088461"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "IterationCompleted",
+              "payload": {
+                "duration_ms": 8310.837268829346,
+                "response_length": 65
+              },
+              "iteration": 1,
+              "session_id": "trial-1774546088461"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "RunCompleted",
+              "payload": {
+                "success": true,
+                "error": null
+              },
+              "iteration": 1,
+              "session_id": "trial-1774546088461"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Fix the bug in the provided Python code.\n\nThe code is located at src/solution.py.\nTests are located at test_bug.py.\n\nRun the tests first to see the failure, then fix the bug with minimal changes.\n\n\n---\n\n## Skill: python-bugfix\n\n# Python Bug Fixing\n\nYou are an expert at fixing Python bugs.\n\n## Guidelines\n\n1. Read the failing test carefully\n2. Identify the bug in the source code\n3. Make minimal changes to fix the bug\n4. Ensure all tests pass\n\n## Common Bug Types\n\n- Off-by-one errors in loops and slices\n- Missing return statements\n- Wrong operators (and vs or, > vs >=)\n- Variable name typos\n- Missing exception handling\n- Incorrect comparisons (is vs ==)\n- Logic inversions\n\n## Process\n\n1. First, run the test to see the failure\n2. Read the source file with the bug\n3. Identify the specific line causing the failure\n4. Make a targeted fix\n5. Verify the test passes"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "I'll help you fix the bug in the Python code. Let me start by examining the test file and source code, then run the tests to see the failure."
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"read\", \"input\": {\"path\": \"test_bug.py\"}, \"error\": \"Tool not available: read\"}, {\"tool\": \"read\", \"input\": {\"path\": \"src/solution.py\"}, \"error\": \"Tool not available: read\"}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"glob\", \"input\": {\"pattern\": \"**/*\"}, \"error\": \"Tool not available: glob\"}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "Let me use the correct tools to read the files and run the tests."
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "Tool execution results:\n[{\"tool\": \"bash\", \"input\": {\"command\": \"cat test_bug.py\", \"description\": \"Read the test file\"}, \"output\": \"\\n[Stderr]\\ncat: test_bug.py: No such file or directory\\n\", \"title\": \"Read the test file\", \"metadata\": {\"exit_code\": 1, \"description\": \"Read the test file\"}}, {\"tool\": \"bash\", \"input\": {\"command\": \"cat src/solution.py\", \"description\": \"Read the solution file\"}, \"output\": \"\\n[Stderr]\\ncat: src/solution.py: No such file or directory\\n\", \"title\": \"Read the solution file\", \"metadata\": {\"exit_code\": 1, \"description\": \"Read the solution file\"}}]"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "tool_input": {
+                "path": "test_bug.py"
+              },
+              "allowed": false,
+              "failure_mode": "policy_violation",
+              "reason": "Tool 'read' requires explicit permission"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "RejectionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "tool_input": {
+                "path": "test_bug.py"
+              },
+              "failure_mode": "policy_violation",
+              "reason": "Tool 'read' requires explicit permission"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "tool_input": {
+                "path": "src/solution.py"
+              },
+              "allowed": false,
+              "failure_mode": "policy_violation",
+              "reason": "Tool 'read' requires explicit permission"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "RejectionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "read",
+              "tool_input": {
+                "path": "src/solution.py"
+              },
+              "failure_mode": "policy_violation",
+              "reason": "Tool 'read' requires explicit permission"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "glob",
+              "tool_input": {
+                "pattern": "**/*"
+              },
+              "allowed": false,
+              "failure_mode": "policy_violation",
+              "reason": "Tool 'glob' requires explicit permission"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "RejectionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "glob",
+              "tool_input": {
+                "pattern": "**/*"
+              },
+              "failure_mode": "policy_violation",
+              "reason": "Tool 'glob' requires explicit permission"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "cat test_bug.py",
+                "description": "Read the test file"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "PolicyDecisionEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "tool_input": {
+                "command": "cat src/solution.py",
+                "description": "Read the solution file"
+              },
+              "allowed": true,
+              "failure_mode": null,
+              "reason": null
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "cat test_bug.py",
+                "description": "Read the test file"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {}
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolCallEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "name": "bash",
+              "arguments": {
+                "command": "cat src/solution.py",
+                "description": "Read the solution file"
+              }
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ToolResultEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "tool_name": "bash",
+              "result": {}
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": "/Users/parkersligting/develop/pt/ash-hawk/.ash-hawk/improvement-quick-test/scenario-batch-b5c2ffdf/runs/run-3b4aabeb/artifacts/trial-29320980/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 8.31506085395813,
+        "agent_response": "Let me use the correct tools to read the files and run the tests.",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "composite",
+          "grader_id": null,
+          "score": 0.1,
+          "passed": false,
+          "details": {
+            "mode": "weighted",
+            "threshold": 0.7,
+            "grader_results": [
+              {
+                "grader_type": "test_runner",
+                "grader_id": null,
+                "score": 0.0,
+                "passed": false,
+                "details": {
+                  "command": "pytest test_bug.py -v --tb=short",
+                  "return_code": 4,
+                  "total_tests": 0,
+                  "passed_tests": 0,
+                  "failed_tests": 0,
+                  "skipped_tests": 0,
+                  "pass_ratio": 0.0,
+                  "execution_time_seconds": 0.23527312278747559,
+                  "timed_out": false
+                },
+                "error_message": null,
+                "execution_time_seconds": 0.23549580574035645,
+                "confidence": null,
+                "needs_review": false,
+                "review_reason": null
+              },
+              {
+                "grader_type": "diff_constraints",
+                "grader_id": null,
+                "score": 0.0,
+                "passed": false,
+                "details": {
+                  "diffs_checked": 0,
+                  "changed_files": 0,
+                  "added_lines": 0,
+                  "violations": [
+                    {
+                      "error": "missing_diff"
+                    }
+                  ],
+                  "limits": {
+                    "max_files": 1,
+                    "max_loc": 10
+                  },
+                  "allowed_paths": []
+                },
+                "error_message": null,
+                "execution_time_seconds": 3.910064697265625e-05,
+                "confidence": null,
+                "needs_review": false,
+                "review_reason": null
+              },
+              {
+                "grader_type": "transcript",
+                "grader_id": null,
+                "score": 1.0,
+                "passed": true,
+                "details": {
+                  "metrics": {
+                    "turn_count": 2,
+                    "message_count": 6,
+                    "user_message_count": 4,
+                    "assistant_message_count": 2,
+                    "message_types": {
+                      "user": 4,
+                      "assistant": 2
+                    },
+                    "tool_call_count": 5,
+                    "tool_summary": {
+                      "read": 2,
+                      "glob": 1,
+                      "bash": 2
+                    },
+                    "has_error": false
+                  },
+                  "violations": [],
+                  "warnings": [],
+                  "token_usage": {
+                    "input": 0,
+                    "output": 0,
+                    "reasoning": 0,
+                    "total": 0
+                  },
+                  "duration_seconds": 8.31506085395813,
+                  "tool_call_count": 5,
+                  "cost_usd": 0.0
+                },
+                "error_message": null,
+                "execution_time_seconds": 3.409385681152344e-05,
+                "confidence": null,
+                "needs_review": false,
+                "review_reason": null
+              }
+            ],
+            "weights": [
+              0.7,
+              0.2,
+              0.1
+            ]
+          },
+          "error_message": null,
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.1,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-29320980",
+      "run_id": "run-3b4aabeb",
+      "task_id": "python-bugfix-18",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-26T17:28:08.458593+00:00",
+      "started_at": "2026-03-26T17:28:08.458570+00:00",
+      "completed_at": "2026-03-26T17:28:16.773757+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-29320980",
+    "run_id": "run-3b4aabeb",
+    "task_id": "python-bugfix-18",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-26T17:28:08.458593+00:00",
+    "started_at": "2026-03-26T17:28:08.458570+00:00",
+    "completed_at": "2026-03-26T17:28:16.773757+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

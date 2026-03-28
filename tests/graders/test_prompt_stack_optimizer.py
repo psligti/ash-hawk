@@ -630,7 +630,9 @@ class TestGradeIntegration:
 
 class TestLLMJudgeIntegration:
     @pytest.mark.asyncio
-    async def test_run_llm_judge_missing_subcategories_raises(self, grader, rich_transcript):
+    async def test_run_llm_judge_missing_subcategories_returns_defaults(
+        self, grader, rich_transcript
+    ):
         incomplete_response = {
             "scores": {
                 "tool_selection": {"score": 0.8, "evidence": ["test"], "confidence": 0.9},
@@ -643,11 +645,12 @@ class TestLLMJudgeIntegration:
             mock_llm.complete = AsyncMock(return_value=mock_response)
             mock_client.return_value = mock_llm
 
-            with pytest.raises(ValueError, match="missing"):
-                await grader._run_llm_judge(rich_transcript)
+            results = await grader._run_llm_judge(rich_transcript)
+            assert len(results) == len(REQUIRED_SUBCATEGORIES)
+            assert results["tool_selection"].score == 0.5
 
     @pytest.mark.asyncio
-    async def test_run_llm_judge_invalid_json_raises(self, grader, rich_transcript):
+    async def test_run_llm_judge_invalid_json_returns_defaults(self, grader, rich_transcript):
         with patch.object(grader, "_get_client") as mock_client:
             mock_response = MagicMock()
             mock_response.text = "not valid json"
@@ -655,8 +658,56 @@ class TestLLMJudgeIntegration:
             mock_llm.complete = AsyncMock(return_value=mock_response)
             mock_client.return_value = mock_llm
 
-            with pytest.raises(ValueError, match="Failed to parse"):
-                await grader._run_llm_judge(rich_transcript)
+            results = await grader._run_llm_judge(rich_transcript)
+            assert len(results) == len(REQUIRED_SUBCATEGORIES)
+            assert all(0.0 <= results[sc_id].score <= 1.0 for sc_id in REQUIRED_SUBCATEGORIES)
+
+    @pytest.mark.asyncio
+    async def test_run_llm_judge_empty_string_response_returns_defaults(
+        self, grader, rich_transcript
+    ):
+        with patch.object(grader, "_get_client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.text = ""
+            mock_llm = MagicMock()
+            mock_llm.complete = AsyncMock(return_value=mock_response)
+            mock_client.return_value = mock_llm
+
+            results = await grader._run_llm_judge(rich_transcript)
+            assert len(results) == len(REQUIRED_SUBCATEGORIES)
+            assert results["context_relevance"].score == 0.5
+
+    @pytest.mark.asyncio
+    async def test_run_llm_judge_fenced_json_response_is_parsed(self, grader, rich_transcript):
+        fenced_scores = {
+            "context_relevance": {"score": 0.9, "evidence": ["Focused"], "confidence": 0.8},
+            "information_retention": {
+                "score": 0.8,
+                "evidence": ["Remembered key facts"],
+                "confidence": 0.8,
+            },
+            "context_efficiency": {
+                "score": 0.7,
+                "evidence": ["Mostly concise"],
+                "confidence": 0.8,
+            },
+            "progressive_disclosure": {
+                "score": 0.6,
+                "evidence": ["Some pacing issues"],
+                "confidence": 0.7,
+            },
+        }
+
+        with patch.object(grader, "_get_client") as mock_client:
+            mock_response = MagicMock()
+            mock_response.text = f"```json\n{json.dumps(fenced_scores)}\n```"
+            mock_llm = MagicMock()
+            mock_llm.complete = AsyncMock(return_value=mock_response)
+            mock_client.return_value = mock_llm
+
+            results = await grader._run_llm_judge(rich_transcript)
+            assert len(results) == len(REQUIRED_SUBCATEGORIES)
+            assert results["context_relevance"].score == 0.9
 
     @pytest.mark.asyncio
     async def test_run_llm_judge_success(self, grader, rich_transcript):

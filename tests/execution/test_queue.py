@@ -19,7 +19,7 @@ from ash_hawk.execution.queue import (
     register_llm_queue,
     reset_llm_queue,
 )
-from ash_hawk.types import EvalOutcome, EvalStatus, EvalTranscript
+from ash_hawk.types import EvalOutcome, EvalStatus, EvalTranscript, FailureMode
 
 
 class TestLLMRequestQueue:
@@ -130,6 +130,25 @@ class TestTrialExecutionQueue:
         assert isinstance(results[0], TrialJobResult)
         assert results[0].job_id == "job-1"
         assert results[0].outcome.status == EvalStatus.COMPLETED
+
+    @pytest.mark.asyncio
+    async def test_run_trials_handles_failed_outcome_without_attribute_errors(self) -> None:
+        queue = TrialExecutionQueue(max_workers=1, timeout_seconds=5.0)
+
+        job = TrialJob(job_id="job-fail", task_id="task-fail", task_input={"prompt": "test"})
+
+        async def mock_execute(j: TrialJob) -> tuple[EvalTranscript, EvalOutcome]:
+            del j
+            return EvalTranscript(duration_seconds=0.1), EvalOutcome.failure(
+                failure_mode=FailureMode.AGENT_ERROR,
+                error_message="simulated failure",
+            )
+
+        results = await queue.run_trials([job], mock_execute)
+
+        assert len(results) == 1
+        assert isinstance(results[0], TrialJobResult)
+        assert results[0].outcome.status == EvalStatus.ERROR
 
     @pytest.mark.asyncio
     async def test_run_trials_with_exception(self) -> None:

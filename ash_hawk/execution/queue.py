@@ -15,6 +15,7 @@ from typing import Any, cast
 
 from ash_hawk.types import (
     EvalOutcome,
+    EvalStatus,
     EvalTranscript,
     GraderResult,
     TokenUsage,
@@ -189,7 +190,7 @@ class TrialExecutionQueue:
         self,
         jobs: list[TrialJob],
         execute: Callable[[TrialJob], Awaitable[Any]],
-        on_progress: Callable[[int, int, int], Awaitable[None]] | None = None,
+        on_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
     ) -> list[TrialJobResult | Exception]:
         """Execute trial jobs with throttling.
 
@@ -198,8 +199,9 @@ class TrialExecutionQueue:
             execute: Async function to execute each trial. Can return either
                 (transcript, outcome) tuple or a TrialResult-like object with
                 additional fields.
-            on_progress: Optional callback(completed, total, running_delta) called
-                when trials start (running_delta=+1) and complete (running_delta=-1).
+            on_progress: Optional callback(completed, total, running_delta, status)
+                called when trials start (running_delta=+1, status="running") and
+                complete (running_delta=-1, status="passed"/"failed"/"incomplete").
 
         Returns:
             List of results or exceptions in job order.
@@ -216,9 +218,10 @@ class TrialExecutionQueue:
             nonlocal completed
             async with semaphore:
                 if on_progress:
-                    await on_progress(0, len(jobs), 1)
+                    await on_progress(0, len(jobs), 1, "running")
 
                 started = time.time()
+                status = "incomplete"
                 try:
                     raw_result = await asyncio.wait_for(
                         execute(job),
@@ -226,13 +229,20 @@ class TrialExecutionQueue:
                     )
                     elapsed = time.time() - started
                     results[idx] = self._to_trial_job_result(job, raw_result, elapsed)
+                    job_result = results[idx]
+                    if isinstance(job_result, TrialJobResult):
+                        if job_result.outcome.status == EvalStatus.COMPLETED:
+                            status = "passed"
+                        else:
+                            status = "failed"
                 except Exception as exc:
                     results[idx] = exc
+                    status = "incomplete"
 
                 if on_progress:
                     async with completed_lock:
                         completed += 1
-                    await on_progress(completed, len(jobs), -1)
+                    await on_progress(completed, len(jobs), -1, status)
 
         await asyncio.gather(
             *(run_one(idx, job) for idx, job in enumerate(jobs)),

@@ -1,0 +1,31 @@
+{
+  "agent_name": "strict-task-tracking-workflow",
+  "target_path": "/Users/parkersligting/develop/pt/bolt-merlin/.dawn-kestrel/skills/strict-task-tracking-workflow/SKILL.md",
+  "scenario_paths": [
+    "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_01_happy_path_explicit.scenario.yaml"
+  ],
+  "status": "completed",
+  "iterations": [
+    {
+      "iteration_num": 0,
+      "score_before": 0.25,
+      "score_after": 0.25,
+      "improvement_text": "plan-execute-separation",
+      "applied": false,
+      "timestamp": "2026-03-24T21:05:49.618351+00:00"
+    },
+    {
+      "iteration_num": 1,
+      "score_before": 0.25,
+      "score_after": 0.25,
+      "improvement_text": "blocking-task-initialization",
+      "applied": false,
+      "timestamp": "2026-03-24T21:07:04.460434+00:00"
+    }
+  ],
+  "initial_score": 0.25,
+  "final_score": 0.25,
+  "started_at": "2026-03-24T21:04:49.120220+00:00",
+  "completed_at": "2026-03-24T21:07:04.460650+00:00",
+  "error_message": null
+}

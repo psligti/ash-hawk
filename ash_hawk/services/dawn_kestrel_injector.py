@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +12,7 @@ DAWN_KESTREL_DIR = Path(".dawn-kestrel")
 AGENT_PATH_TEMPLATE = DAWN_KESTREL_DIR / "agents" / "{name}" / "AGENT.md"
 SKILL_PATH_TEMPLATE = DAWN_KESTREL_DIR / "skills" / "{name}" / "SKILL.md"
 TOOL_PATH_TEMPLATE = DAWN_KESTREL_DIR / "tools" / "{name}" / "TOOL.md"
+POLICY_PATH_TEMPLATE = DAWN_KESTREL_DIR / "policies" / "{name}" / "POLICY.md"
 
 if TYPE_CHECKING:
     from dawn_kestrel.agents.context import (
@@ -70,6 +71,9 @@ class DawnKestrelInjector:
     def get_tool_path(self, name: str) -> Path:
         return self._resolve_path(TOOL_PATH_TEMPLATE, name)
 
+    def get_policy_path(self, name: str) -> Path:
+        return self._resolve_path(POLICY_PATH_TEMPLATE, name)
+
     def _resolve_path(self, template: Path, name: str) -> Path:
         return self._project_root / str(template).format(name=name)
 
@@ -117,6 +121,10 @@ class DawnKestrelInjector:
         path = self._resolve_path(TOOL_PATH_TEMPLATE, tool_name)
         return self._read_file(path)
 
+    def get_policy_content(self, policy_name: str) -> str | None:
+        path = self._resolve_path(POLICY_PATH_TEMPLATE, policy_name)
+        return self._read_file(path)
+
     def build_context(
         self,
         agent_id: str,
@@ -149,7 +157,10 @@ class DawnKestrelInjector:
         if use_strategy and self._strategy:
             bundle = self.build_context(agent_id, scenario)
             if bundle:
-                return bundle.inject_into_prompt(base_prompt)
+                injected_prompt = bundle.inject_into_prompt(base_prompt)
+                if isinstance(injected_prompt, str):
+                    return injected_prompt
+                return str(injected_prompt)
 
         sections: list[str] = []
 
@@ -192,6 +203,14 @@ class DawnKestrelInjector:
         logger.info(f"Saved skill content to {path}")
         return path
 
+    def save_policy_content(self, policy_name: str, content: str) -> Path:
+        path = self._resolve_path(POLICY_PATH_TEMPLATE, policy_name)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        self.invalidate_cache(path)
+        logger.info(f"Saved policy content to {path}")
+        return path
+
     def delete_skill_content(self, skill_name: str) -> bool:
         """Delete a skill directory and its contents.
 
@@ -217,6 +236,36 @@ class DawnKestrelInjector:
         self.invalidate_cache(path)
         logger.info(f"Saved tool content to {path}")
         return path
+
+    def delete_agent_content(self, agent_name: str) -> bool:
+        path = self._resolve_path(AGENT_PATH_TEMPLATE, agent_name)
+        agent_dir = path.parent
+        if agent_dir.exists() and agent_dir.is_dir():
+            shutil.rmtree(agent_dir)
+            self.invalidate_cache(path)
+            logger.info(f"Deleted agent directory: {agent_dir}")
+            return True
+        return False
+
+    def delete_tool_content(self, tool_name: str) -> bool:
+        path = self._resolve_path(TOOL_PATH_TEMPLATE, tool_name)
+        tool_dir = path.parent
+        if tool_dir.exists() and tool_dir.is_dir():
+            shutil.rmtree(tool_dir)
+            self.invalidate_cache(path)
+            logger.info(f"Deleted tool directory: {tool_dir}")
+            return True
+        return False
+
+    def delete_policy_content(self, policy_name: str) -> bool:
+        path = self._resolve_path(POLICY_PATH_TEMPLATE, policy_name)
+        policy_dir = path.parent
+        if policy_dir.exists() and policy_dir.is_dir():
+            shutil.rmtree(policy_dir)
+            self.invalidate_cache(path)
+            logger.info(f"Deleted policy directory: {policy_dir}")
+            return True
+        return False
 
     def discover_skill_name(self, scenario_tools: list[str] | None = None) -> str | None:
         if self._current_skill_name is not None:
@@ -255,4 +304,5 @@ __all__ = [
     "AGENT_PATH_TEMPLATE",
     "SKILL_PATH_TEMPLATE",
     "TOOL_PATH_TEMPLATE",
+    "POLICY_PATH_TEMPLATE",
 ]

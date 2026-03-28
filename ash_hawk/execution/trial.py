@@ -351,12 +351,33 @@ class TrialExecutor:
         task: EvalTask,
     ) -> list[GraderResult]:
         registry = get_default_registry()
-        results: list[GraderResult] = []
 
-        for spec in task.grader_specs:
-            results.append(await self._run_grader_spec(trial, transcript, spec, registry, task))
+        coros = [
+            self._run_grader_spec(trial, transcript, spec, registry, task)
+            for spec in task.grader_specs
+        ]
 
-        return results
+        if not coros:
+            return []
+
+        results = await asyncio.gather(*coros, return_exceptions=True)
+
+        processed: list[GraderResult] = []
+        for i, result in enumerate(results):
+            if isinstance(result, BaseException):
+                spec = task.grader_specs[i]
+                processed.append(
+                    GraderResult(
+                        grader_type=spec.grader_type,
+                        score=0.0,
+                        passed=False,
+                        error_message=f"Grader raised exception: {result}",
+                    )
+                )
+            else:
+                processed.append(result)
+
+        return processed
 
     async def _run_grader_spec(
         self,

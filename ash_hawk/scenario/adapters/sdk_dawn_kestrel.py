@@ -7,6 +7,12 @@ from typing import Any, Callable, Coroutine, TypeVar
 
 from ash_hawk.agents import DawnKestrelAgentRunner
 from ash_hawk.policy import PolicyEnforcer
+from ash_hawk.scenario.models import (
+    ScenarioAdapterResult,
+    ScenarioMessage,
+    ScenarioTraceEvent,
+    parse_scenario_tool_call,
+)
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
     EVENT_TYPE_TOOL_CALL,
@@ -115,14 +121,7 @@ class SdkDawnKestrelAdapter:
         workdir: Path,
         tooling_harness: Any,
         budgets: dict[str, Any],
-    ) -> tuple[
-        str | dict[str, Any] | None,
-        list[dict[str, Any]],
-        dict[str, Any],
-        Any,
-        list[dict[str, Any]],
-        list[dict[str, Any]],
-    ]:
+    ) -> ScenarioAdapterResult:
         trace_events: list[dict[str, Any]] = []
         artifacts: dict[str, Any] = {}
 
@@ -280,13 +279,17 @@ class SdkDawnKestrelAdapter:
         if final_output is None:
             final_output = transcript.error_trace
 
-        return (
-            final_output,
-            trace_events,
-            artifacts,
-            outcome,
-            transcript.messages,
-            transcript.tool_calls,
+        return ScenarioAdapterResult(
+            final_output=final_output,
+            trace_events=[ScenarioTraceEvent.model_validate(event) for event in trace_events],
+            artifacts=artifacts,
+            outcome=outcome,
+            messages=[ScenarioMessage.model_validate(message) for message in transcript.messages],
+            tool_calls=[
+                parsed
+                for tool_call in transcript.tool_calls
+                if (parsed := parse_scenario_tool_call(tool_call)) is not None
+            ],
         )
 
 

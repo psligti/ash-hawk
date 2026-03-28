@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from ash_hawk.scenario.adapters.sdk_dawn_kestrel import SdkDawnKestrelAdapter
+from ash_hawk.scenario.models import JSONValue, ScenarioAdapterResult
 
 
 class BoltMerlinScenarioAdapter(SdkDawnKestrelAdapter):
@@ -11,18 +11,11 @@ class BoltMerlinScenarioAdapter(SdkDawnKestrelAdapter):
 
     def run_scenario(
         self,
-        scenario: dict[str, Any],
+        scenario: dict[str, JSONValue],
         workdir: Path,
-        tooling_harness: Any,
-        budgets: dict[str, Any],
-    ) -> tuple[
-        str | dict[str, Any] | None,
-        list[dict[str, Any]],
-        dict[str, Any],
-        Any,
-        list[dict[str, Any]],
-        list[dict[str, Any]],
-    ]:
+        tooling_harness: dict[str, object],
+        budgets: dict[str, JSONValue],
+    ) -> ScenarioAdapterResult:
         scenario_copy = dict(scenario)
         sut_raw = scenario_copy.get("sut", {})
         sut = dict(sut_raw) if isinstance(sut_raw, dict) else {}

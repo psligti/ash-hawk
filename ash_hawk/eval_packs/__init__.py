@@ -15,7 +15,7 @@ from ash_hawk.eval_packs.packs import (
     ToolEvalPack,
 )
 from ash_hawk.eval_packs.registry import PackRegistry, get_pack_registry
-from ash_hawk.eval_packs.vox_jay_pack import VoxJayEvalPack
+from ash_hawk.eval_packs.vox_jay_pack import PromoterScoringEvalPack, VoxJayEvalPack
 
 __all__ = [
     "EvalPack",
@@ -28,6 +28,7 @@ __all__ = [
     "IronRookEvalPack",
     "BoltMerlinEvalPack",
     "VoxJayEvalPack",
+    "PromoterScoringEvalPack",
     "PackRegistry",
     "get_pack_registry",
 ]

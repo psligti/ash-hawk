@@ -12,12 +12,14 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from rich.console import Console
 
+from ash_hawk.auto_research.convergence import ConvergenceDetector
 from ash_hawk.auto_research.llm import extract_skill_name, generate_improvement
 from ash_hawk.auto_research.types import (
+    ConvergenceResult,
     CycleResult,
     CycleStatus,
     IterationResult,
@@ -30,7 +32,10 @@ from ash_hawk.services.dawn_kestrel_injector import (
     DAWN_KESTREL_DIR,
     DawnKestrelInjector,
 )
-from ash_hawk.types import EvalTrial, GraderSpec
+from ash_hawk.types import EvalTranscript, EvalTrial, GraderSpec
+
+if TYPE_CHECKING:
+    from dawn_kestrel.agents.context import BaseContextStrategy
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -94,6 +99,19 @@ def _format_elapsed(elapsed: float) -> str:
     return f"{elapsed:.1f}s"
 
 
+def _format_activity_glyphs(completed: int, running: int, throbber_char: str) -> str:
+    completed_dots = "." * max(0, min(completed, 5))
+    running_glyphs = throbber_char * max(0, min(running, 5))
+    overflow = ""
+
+    if running > 5:
+        overflow = f"+{running - 5}"
+    elif completed > 5:
+        overflow = f"+{completed - 5}"
+
+    return f"{completed_dots}{running_glyphs}{overflow}"
+
+
 @asynccontextmanager
 async def progress_indicator(
     message: str = "", tracker: ProgressTracker | None = None
@@ -115,9 +133,11 @@ async def progress_indicator(
             elapsed = time.time() - start_time
             time_str = _format_elapsed(elapsed)
 
-            throbbers = THROBBER_CHARS[throbber_idx] * min(tracker.running, 5)
-            if tracker.running > 5:
-                throbbers += f"+{tracker.running - 5}"
+            throbbers = _format_activity_glyphs(
+                completed=tracker.current,
+                running=tracker.running,
+                throbber_char=THROBBER_CHARS[throbber_idx],
+            )
 
             progress_str = tracker.display
             line = f"\r  {message} {throbbers} {progress_str} [{time_str}]  "
@@ -205,6 +225,12 @@ POLICY_SEARCH_DIRS = [
     Path(".claude/policies"),
 ]
 
+POLICY_SEARCH_DIRS = [
+    DAWN_KESTREL_DIR / "policies",
+    Path(".opencode/policies"),
+    Path(".claude/policies"),
+]
+
 
 def _create_llm_client() -> Any:
     try:
@@ -239,6 +265,7 @@ def _discover_improvement_target(
     scenarios: list[Path],
     project_root: Path | None,
     strategy: Any = None,
+    target_types: list[TargetType] | None = None,
 ) -> ImprovementTarget | None:
     if not scenarios:
         return None
@@ -252,28 +279,172 @@ def _discover_improvement_target(
         return None
 
     injector = DawnKestrelInjector(project_root=resolved_root, strategy=strategy)
+    allowed_types = target_types or [
+        TargetType.SKILL,
+        TargetType.TOOL,
+        TargetType.POLICY,
+        TargetType.AGENT,
+    ]
 
-    skill_target = _find_skill_file(resolved_root)
-    if skill_target:
-        skill_name = _infer_name_from_path(skill_target)
-        injector.current_skill_name = skill_name
-        return ImprovementTarget(
-            target_type=TargetType.SKILL,
-            name=skill_name,
-            discovered_path=skill_target,
-            injector=injector,
-        )
+    if TargetType.SKILL in allowed_types:
+        skill_target = _find_skill_file(resolved_root)
+        if skill_target:
+            skill_name = _infer_name_from_path(skill_target)
+            injector.current_skill_name = skill_name
+            return ImprovementTarget(
+                target_type=TargetType.SKILL,
+                name=skill_name,
+                discovered_path=skill_target,
+                injector=injector,
+            )
 
-    tool_target = _find_primary_tool(resolved_root, first_scenario.tools.allowed_tools)
-    if tool_target:
-        tool_name = _infer_name_from_path(tool_target)
-        return ImprovementTarget(
-            target_type=TargetType.TOOL,
-            name=tool_name,
-            discovered_path=tool_target,
-            injector=injector,
-        )
+    if TargetType.TOOL in allowed_types:
+        tool_target = _find_primary_tool(resolved_root, first_scenario.tools.allowed_tools)
+        if tool_target:
+            tool_name = _infer_name_from_path(tool_target)
+            return ImprovementTarget(
+                target_type=TargetType.TOOL,
+                name=tool_name,
+                discovered_path=tool_target,
+                injector=injector,
+            )
 
+    if TargetType.POLICY in allowed_types:
+        policy_target = _find_policy_file(resolved_root)
+        if policy_target:
+            policy_name = _infer_name_from_path(policy_target)
+            return ImprovementTarget(
+                target_type=TargetType.POLICY,
+                name=policy_name,
+                discovered_path=policy_target,
+                injector=injector,
+            )
+
+    if TargetType.AGENT in allowed_types:
+        agent_target = _find_agent_file(resolved_root)
+        if agent_target:
+            agent_name = _infer_name_from_path(agent_target)
+            return ImprovementTarget(
+                target_type=TargetType.AGENT,
+                name=agent_name,
+                discovered_path=agent_target,
+                injector=injector,
+            )
+
+    return None
+
+
+def _discover_all_improvement_targets(
+    scenarios: list[Path],
+    project_root: Path | None,
+    strategy: Any = None,
+    target_types: list[TargetType] | None = None,
+) -> list[ImprovementTarget]:
+    if not scenarios:
+        return []
+
+    first_scenario = load_scenario(scenarios[0])
+    scenario_root = scenarios[0].parent
+
+    resolved_root = project_root or _find_project_root(scenario_root)
+    if resolved_root is None:
+        logger.warning("Could not find project root")
+        return []
+
+    allowed_types = target_types or [
+        TargetType.SKILL,
+        TargetType.TOOL,
+        TargetType.POLICY,
+        TargetType.AGENT,
+    ]
+    targets: list[ImprovementTarget] = []
+
+    if TargetType.SKILL in allowed_types:
+        skill_target = _find_skill_file(resolved_root)
+        if skill_target:
+            skill_name = _infer_name_from_path(skill_target)
+            injector = DawnKestrelInjector(project_root=resolved_root, strategy=strategy)
+            injector.current_skill_name = skill_name
+            targets.append(
+                ImprovementTarget(
+                    target_type=TargetType.SKILL,
+                    name=skill_name,
+                    discovered_path=skill_target,
+                    injector=injector,
+                )
+            )
+
+    if TargetType.TOOL in allowed_types:
+        tool_target = _find_primary_tool(resolved_root, first_scenario.tools.allowed_tools)
+        if tool_target:
+            tool_name = _infer_name_from_path(tool_target)
+            injector = DawnKestrelInjector(project_root=resolved_root, strategy=strategy)
+            targets.append(
+                ImprovementTarget(
+                    target_type=TargetType.TOOL,
+                    name=tool_name,
+                    discovered_path=tool_target,
+                    injector=injector,
+                )
+            )
+
+    if TargetType.POLICY in allowed_types:
+        policy_target = _find_policy_file(resolved_root)
+        if policy_target:
+            policy_name = _infer_name_from_path(policy_target)
+            injector = DawnKestrelInjector(project_root=resolved_root, strategy=strategy)
+            targets.append(
+                ImprovementTarget(
+                    target_type=TargetType.POLICY,
+                    name=policy_name,
+                    discovered_path=policy_target,
+                    injector=injector,
+                )
+            )
+
+    if TargetType.AGENT in allowed_types:
+        agent_target = _find_agent_file(resolved_root)
+        if agent_target:
+            agent_name = _infer_name_from_path(agent_target)
+            injector = DawnKestrelInjector(project_root=resolved_root, strategy=strategy)
+            targets.append(
+                ImprovementTarget(
+                    target_type=TargetType.AGENT,
+                    name=agent_name,
+                    discovered_path=agent_target,
+                    injector=injector,
+                )
+            )
+
+    return targets
+
+
+def _find_policy_file(project_root: Path) -> Path | None:
+    for search_dir in POLICY_SEARCH_DIRS:
+        policies_path = project_root / search_dir
+        if policies_path.exists() and policies_path.is_dir():
+            for policy_dir in policies_path.iterdir():
+                if policy_dir.is_dir():
+                    policy_file = policy_dir / "POLICY.md"
+                    if policy_file.exists():
+                        return policy_file
+    return None
+
+
+def _find_agent_file(project_root: Path) -> Path | None:
+    agents_dirs = [
+        DAWN_KESTREL_DIR / "agents",
+        Path(".opencode/agents"),
+        Path(".claude/agents"),
+    ]
+    for search_dir in agents_dirs:
+        agents_path = project_root / search_dir
+        if agents_path.exists() and agents_path.is_dir():
+            for agent_dir in agents_path.iterdir():
+                if agent_dir.is_dir():
+                    agent_file = agent_dir / "AGENT.md"
+                    if agent_file.exists():
+                        return agent_file
     return None
 
 
@@ -489,10 +660,13 @@ async def run_cycle(
     llm_client: Any = None,
     project_root: Path | None = None,
     strategy_name: str | None = None,
+    scenario_timeout_seconds: float | None = None,
     use_policy_adaptation: bool = False,
     explicit_targets: list[Path] | None = None,
     heldout_scenarios: list[Path] | None = None,
     guardrail_config: GuardrailConfig | None = None,
+    target_types: list[TargetType] | None = None,
+    improve_all_targets: bool = False,
 ) -> CycleResult:
     if llm_client is None:
         llm_client = _create_llm_client()
@@ -535,10 +709,20 @@ async def run_cycle(
             logger.warning("Context strategy not available, using file-based behavior")
 
     target: ImprovementTarget | None = None
+    all_targets: list[ImprovementTarget] = []
+
     if explicit_targets:
         target = _create_target_from_path(explicit_targets[0], project_root or Path.cwd(), strategy)
-    if target is None:
-        target = _discover_improvement_target(scenarios, project_root, strategy)
+    elif improve_all_targets:
+        all_targets = _discover_all_improvement_targets(
+            scenarios, project_root, strategy, target_types
+        )
+        if all_targets:
+            target = all_targets[0]
+            console.print(f"[dim]Discovered {len(all_targets)} targets for improvement[/dim]")
+    else:
+        target = _discover_improvement_target(scenarios, project_root, strategy, target_types)
+
     if target is None:
         return CycleResult(
             agent_name="unknown",
@@ -578,7 +762,10 @@ async def run_cycle(
             "Baseline eval", tracker=ProgressTracker(total=len(scenarios), label="scenarios")
         ) as tracker:
             score, transcripts_raw, category_scores = await _run_evaluation(
-                scenarios, storage, injector=target.injector
+                scenarios,
+                storage,
+                injector=target.injector,
+                scenario_timeout_seconds=scenario_timeout_seconds,
             )
             tracker.current = len(scenarios)
         result.initial_score = score
@@ -596,7 +783,10 @@ async def run_cycle(
                 tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
             ) as tracker:
                 heldout_score, _, _ = await _run_evaluation(
-                    heldout_scenarios, storage / "heldout", injector=target.injector
+                    heldout_scenarios,
+                    storage / "heldout",
+                    injector=target.injector,
+                    scenario_timeout_seconds=scenario_timeout_seconds,
                 )
                 tracker.current = len(heldout_scenarios)
             console.print(f"  [dim]Held-out baseline: {heldout_score:.3f}[/dim]")
@@ -625,6 +815,7 @@ async def run_cycle(
                 consecutive_failures=consecutive_failures,
                 existing_skills=existing_skills,
                 category_scores=category_scores,
+                scenario_timeout_seconds=scenario_timeout_seconds,
             )
             result.iterations.append(iter_result)
             current_score = iter_result.score_after
@@ -649,7 +840,10 @@ async def run_cycle(
                     tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
                 ) as tracker:
                     heldout_score, _, _ = await _run_evaluation(
-                        heldout_scenarios, storage / "heldout", injector=target.injector
+                        heldout_scenarios,
+                        storage / "heldout",
+                        injector=target.injector,
+                        scenario_timeout_seconds=scenario_timeout_seconds,
                     )
                     tracker.current = len(heldout_scenarios)
                 console.print(f"  [dim]Held-out: {heldout_score:.3f}[/dim]")
@@ -667,8 +861,10 @@ async def run_cycle(
                 console.print("  [yellow]⚠ Max reverts reached[/yellow]")
                 break
 
-            if _check_convergence(result.iterations):
-                console.print("  [green]✓ Converged[/green]")
+            convergence = _check_convergence_result(result.iterations)
+            if convergence.converged:
+                reason = convergence.reason.value if convergence.reason else "unknown"
+                console.print(f"  [green]✓ Converged ({reason})[/green]")
                 break
         result.status = CycleStatus.COMPLETED
         result.final_score = current_score
@@ -702,6 +898,7 @@ async def _run_iteration(
     consecutive_failures: int = 0,
     existing_skills: list[str] | None = None,
     category_scores: dict[str, float] | None = None,
+    scenario_timeout_seconds: float | None = None,
 ) -> IterationResult:
     original_target = target
     original_content = target.read_content()
@@ -716,7 +913,11 @@ async def _run_iteration(
     if transcripts is None:
         async with progress_indicator("Eval for transcripts"):
             _, transcripts, _ = await _run_evaluation(
-                scenarios, storage, show_failure_patterns=False, injector=target.injector
+                scenarios,
+                storage,
+                show_failure_patterns=False,
+                injector=target.injector,
+                scenario_timeout_seconds=scenario_timeout_seconds,
             )
 
     valid_transcripts, error_signals = await _filter_valid_transcripts(transcripts)
@@ -741,6 +942,7 @@ async def _run_iteration(
             existing_skills=existing_skills if target.target_type == TargetType.SKILL else None,
             target_type=target.target_type.value,
             category_scores=category_scores,
+            error_signals=error_signals,
         )
     if not improved:
         console.print("  [yellow]No improvement generated[/yellow]")
@@ -764,7 +966,11 @@ async def _run_iteration(
     new_category_scores: dict[str, float] | None
     async with progress_indicator("Eval proposal"):
         score_after, _, new_category_scores = await _run_evaluation(
-            scenarios, storage, show_failure_patterns=False, injector=new_target.injector
+            scenarios,
+            storage,
+            show_failure_patterns=False,
+            injector=new_target.injector,
+            scenario_timeout_seconds=scenario_timeout_seconds,
         )
     delta = score_after - score_before
     applied = delta >= threshold
@@ -805,6 +1011,7 @@ async def _run_evaluation(
     storage: Path,
     show_failure_patterns: bool = True,
     injector: Any | None = None,
+    scenario_timeout_seconds: float | None = None,
 ) -> tuple[float, list[Any], dict[str, float]]:
     tracker = get_progress_tracker()
 
@@ -823,6 +1030,7 @@ async def _run_evaluation(
             storage_path=storage,
             show_failure_patterns=show_failure_patterns,
             injector=injector,
+            scenario_timeout_seconds=scenario_timeout_seconds,
             grader_config_overrides={"quiet": True},
             on_trial_progress=on_progress,
         )
@@ -853,4 +1061,20 @@ def _check_convergence(
     window: int = 5,
     variance_threshold: float = 0.001,
 ) -> bool:
-    return False  # Convergence detection disabled
+    return _check_convergence_result(
+        iterations,
+        window=window,
+        variance_threshold=variance_threshold,
+    ).converged
+
+
+def _check_convergence_result(
+    iterations: list[IterationResult],
+    window: int = 5,
+    variance_threshold: float = 0.001,
+) -> ConvergenceResult:
+    detector = ConvergenceDetector(
+        window_size=window,
+        variance_threshold=variance_threshold,
+    )
+    return detector.check(iterations)

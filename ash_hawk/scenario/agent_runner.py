@@ -4,16 +4,26 @@ import asyncio
 import json
 import time
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import pydantic as pd
 
 from ash_hawk.policy import PolicyEnforcer
-from ash_hawk.scenario.models import ScenarioV1
+from ash_hawk.scenario.models import (
+    JSONValue,
+    ScenarioAdapterResult,
+    ScenarioMessage,
+    ScenarioToolCall,
+    ScenarioTraceEvent,
+    ScenarioV1,
+    parse_scenario_tool_call,
+)
 from ash_hawk.scenario.registry import ScenarioAdapterRegistry, get_default_adapter_registry
 from ash_hawk.scenario.tooling import ToolingHarness
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
+    EVENT_TYPE_MODEL_MESSAGE,
+    EVENT_TYPE_TOOL_CALL,
     ArtifactEvent,
     ToolCallEvent,
     ToolResultEvent,
@@ -24,25 +34,36 @@ from ash_hawk.types import EvalOutcome, EvalTask, EvalTranscript, FailureMode, T
 class ToolingHarnessRecorder:
     def __init__(self, harness: ToolingHarness) -> None:
         self._harness = harness
-        self.events: list[dict[str, Any]] = []
+        self.events: list[dict[str, JSONValue]] = []
 
     @property
     def harness(self) -> ToolingHarness:
         return self._harness
 
-    def call(self, tool_name: str, tool_input: Any) -> dict[str, Any]:
+    def call(self, tool_name: str, tool_input: object) -> dict[str, JSONValue]:
         call_event = ToolCallEvent.create(
             DEFAULT_TRACE_TS,
             {"name": tool_name, "arguments": tool_input},
         )
-        self.events.append(call_event.model_dump())
+        self.events.append(call_event.model_dump(mode="json"))
         result = self._harness.call(tool_name, tool_input)
         result_event = ToolResultEvent.create(
             DEFAULT_TRACE_TS,
             {"tool_name": tool_name, "result": result},
         )
-        self.events.append(result_event.model_dump())
-        return result
+        self.events.append(result_event.model_dump(mode="json"))
+        if isinstance(result, dict):
+            return {str(key): self._to_json_value(value) for key, value in result.items()}
+        return {"value": self._to_json_value(result)}
+
+    def _to_json_value(self, value: object) -> JSONValue:
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, dict):
+            return {str(key): self._to_json_value(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._to_json_value(item) for item in value]
+        return str(value)
 
 
 class ScenarioAgentRunner:
@@ -51,18 +72,20 @@ class ScenarioAgentRunner:
         adapter_registry: ScenarioAdapterRegistry | None = None,
         tooling_mode: Literal["mock", "record", "replay"] = "record",
         artifacts_root: Path | None = None,
-        injector: Any | None = None,
+        injector: object | None = None,
+        scenario_timeout_seconds: float | None = None,
     ) -> None:
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._tooling_mode = tooling_mode
         self._artifacts_root = artifacts_root
         self._injector = injector
+        self._scenario_timeout_seconds = scenario_timeout_seconds
 
     async def run(
         self,
         task: EvalTask,
         policy_enforcer: PolicyEnforcer,
-        config: dict[str, Any],
+        config: dict[str, object],
     ) -> tuple[EvalTranscript, EvalOutcome]:
         start_time = time.time()
 
@@ -104,36 +127,15 @@ class ScenarioAgentRunner:
             "injector": self._injector,
         }
 
-        adapter_messages: list[dict[str, Any]] = []
-        adapter_tool_calls: list[dict[str, Any]] = []
-        final_output = None
-        trace_events: list[dict[str, Any]] = []
-        artifacts: dict[str, Any] = {}
-        adapter_outcome = None
         try:
-            adapter_result = await asyncio.to_thread(
+            raw_adapter_result = await asyncio.to_thread(
                 adapter.run_scenario,
                 scenario.model_dump(),
                 tooling_root,
                 tooling_context,
                 scenario.budgets.model_dump(),
             )
-            # Adapter returns 4-6 values: (output, events, artifacts, outcome, messages?, tool_calls?)
-            result_len = len(adapter_result)
-            if result_len >= 4:
-                final_output = adapter_result[0]
-                trace_events = adapter_result[1]
-                artifacts = adapter_result[2]
-                adapter_outcome = adapter_result[3]
-            else:
-                # Backward compat for adapters returning 3 values
-                final_output = adapter_result[0]
-                trace_events = adapter_result[1]
-                artifacts = adapter_result[2]
-                adapter_outcome = None
-            if result_len >= 6:
-                adapter_messages = adapter_result[4]
-                adapter_tool_calls = adapter_result[5]
+            adapter_result = self._normalize_adapter_result(raw_adapter_result)
         except Exception as exc:
             return self._failure_transcript(
                 FailureMode.AGENT_ERROR,
@@ -142,35 +144,47 @@ class ScenarioAgentRunner:
                 trace_events=tooling_recorder.events,
             )
 
+        adapter_messages = [message.model_dump(mode="json") for message in adapter_result.messages]
+        adapter_tool_calls = [
+            tool_call.model_dump(mode="json") for tool_call in adapter_result.tool_calls
+        ]
+        normalized_trace_events = [
+            event.model_dump(mode="json") for event in adapter_result.trace_events
+        ]
+        inferred_messages, inferred_tool_calls = self._infer_transcript_content(
+            normalized_trace_events + tooling_recorder.events
+        )
+        if not adapter_messages:
+            adapter_messages = inferred_messages
+        if not adapter_tool_calls:
+            adapter_tool_calls = inferred_tool_calls
+
         # If adapter returned a failure outcome, propagate it
-        if adapter_outcome is not None and adapter_outcome.failure_mode is not None:
+        if adapter_result.outcome.failure_mode is not None:
             duration = time.time() - start_time
-            error_msg = adapter_outcome.error_message or "Agent returned failure"
+            error_msg = adapter_result.outcome.error_message or "Agent returned failure"
             transcript = EvalTranscript(
                 messages=adapter_messages,
                 tool_calls=adapter_tool_calls,
                 error_trace=error_msg,
                 duration_seconds=duration,
-                trace_events=self._normalize_trace_events(trace_events),
+                trace_events=normalized_trace_events + tooling_recorder.events,
             )
-            return transcript, adapter_outcome
+            return transcript, adapter_result.outcome
 
-        artifact_events = self._persist_artifacts(artifacts, config)
-        combined_trace_events = (
-            self._normalize_trace_events(trace_events) + tooling_recorder.events + artifact_events
-        )
+        artifact_events = self._persist_artifacts(adapter_result.artifacts, config)
+        combined_trace_events = normalized_trace_events + tooling_recorder.events + artifact_events
 
         duration = time.time() - start_time
         transcript = EvalTranscript(
             messages=adapter_messages,
             tool_calls=adapter_tool_calls,
-            agent_response=final_output,
+            agent_response=self._normalize_agent_response(adapter_result.final_output),
             duration_seconds=duration,
             trace_events=combined_trace_events,
         )
 
-        # Use adapter outcome if available, otherwise success
-        outcome = adapter_outcome if adapter_outcome is not None else EvalOutcome.success()
+        outcome = adapter_result.outcome
         return transcript, outcome
 
     def _parse_scenario(self, task: EvalTask) -> ScenarioV1:
@@ -193,11 +207,13 @@ class ScenarioAgentRunner:
         scenario: ScenarioV1,
         policy_enforcer: PolicyEnforcer,
     ) -> ToolSurfacePolicy:
-        timeout_seconds = (
-            scenario.budgets.max_time_seconds
-            if scenario.budgets.max_time_seconds is not None
-            else policy_enforcer.policy.timeout_seconds
-        )
+        timeout_seconds = self._scenario_timeout_seconds
+        if timeout_seconds is None:
+            timeout_seconds = (
+                scenario.budgets.max_time_seconds
+                if scenario.budgets.max_time_seconds is not None
+                else policy_enforcer.policy.timeout_seconds
+            )
         return ToolSurfacePolicy(
             allowed_tools=list(scenario.tools.allowed_tools),
             max_tool_calls=scenario.budgets.max_tool_calls,
@@ -208,7 +224,7 @@ class ScenarioAgentRunner:
     def _register_tool_mocks(
         self,
         harness: ToolingHarness,
-        mocks: dict[str, Any],
+        mocks: dict[str, JSONValue],
     ) -> None:
         for tool_name, entries in mocks.items():
             if isinstance(entries, list):
@@ -221,13 +237,15 @@ class ScenarioAgentRunner:
         self,
         harness: ToolingHarness,
         tool_name: str,
-        entry: Any,
+        entry: JSONValue,
     ) -> None:
-        input_value: Any = {}
-        result_value: Any = {}
+        input_value: dict[str, JSONValue] = {}
+        result_value: JSONValue = {}
 
         if isinstance(entry, dict):
-            input_value = entry.get("input", {})
+            maybe_input = entry.get("input", {})
+            if isinstance(maybe_input, dict):
+                input_value = {str(key): value for key, value in maybe_input.items()}
             if "result" in entry:
                 result_value = entry.get("result")
             else:
@@ -240,7 +258,7 @@ class ScenarioAgentRunner:
 
         harness.register_mock(tool_name, input_value, result_value)
 
-    def _apply_fault_injection(self, harness: ToolingHarness, config: dict[str, Any]) -> None:
+    def _apply_fault_injection(self, harness: ToolingHarness, config: dict[str, JSONValue]) -> None:
         timeouts = config.get("timeouts") or config.get("timeout_tools")
         if isinstance(timeouts, dict):
             for tool_name, count in timeouts.items():
@@ -248,21 +266,19 @@ class ScenarioAgentRunner:
                     for _ in range(count):
                         harness.inject_timeout(str(tool_name))
         elif isinstance(timeouts, list):
-            for tool_name in timeouts:
-                harness.inject_timeout(str(tool_name))
+            for timeout_tool in timeouts:
+                harness.inject_timeout(str(timeout_tool))
 
         malformed = config.get("malformed")
         if isinstance(malformed, list):
-            for tool_name in malformed:
-                harness.inject_malformed(str(tool_name))
+            for malformed_tool in malformed:
+                harness.inject_malformed(str(malformed_tool))
 
     def _persist_artifacts(
         self,
-        artifacts: Any,
-        config: dict[str, Any],
-    ) -> list[dict[str, Any]]:
-        if artifacts is None:
-            return []
+        artifacts: dict[str, JSONValue],
+        config: dict[str, object],
+    ) -> list[dict[str, JSONValue]]:
 
         suite_id = str(config.get("suite_id", "unknown-suite"))
         run_id = str(config.get("run_id", "unknown-run"))
@@ -282,26 +298,71 @@ class ScenarioAgentRunner:
         )
         return [event.model_dump()]
 
-    def _normalize_trace_events(self, trace_events: Any) -> list[dict[str, Any]]:
-        if not isinstance(trace_events, list):
-            return []
-
-        normalized: list[dict[str, Any]] = []
+    def _normalize_trace_events(self, trace_events: list[object]) -> list[ScenarioTraceEvent]:
+        normalized: list[ScenarioTraceEvent] = []
         for event in trace_events:
-            if isinstance(event, dict):
+            if isinstance(event, ScenarioTraceEvent):
                 normalized.append(event)
-            elif hasattr(event, "model_dump"):
-                normalized.append(event.model_dump())
-            else:
-                normalized.append({"event": str(event)})
+                continue
+            if isinstance(event, dict):
+                try:
+                    normalized.append(ScenarioTraceEvent.model_validate(event))
+                except pd.ValidationError:
+                    continue
+                continue
+            if hasattr(event, "model_dump"):
+                dumped = event.model_dump(mode="json")
+                if isinstance(dumped, dict):
+                    try:
+                        normalized.append(ScenarioTraceEvent.model_validate(dumped))
+                    except pd.ValidationError:
+                        continue
         return normalized
+
+    def _infer_transcript_content(
+        self,
+        trace_events: list[dict[str, JSONValue]],
+    ) -> tuple[list[dict[str, JSONValue]], list[dict[str, JSONValue]]]:
+        messages: list[dict[str, JSONValue]] = []
+        tool_calls: list[dict[str, JSONValue]] = []
+
+        for event in trace_events:
+            event_type = event.get("event_type")
+            data = event.get("data")
+            if not isinstance(data, dict):
+                continue
+
+            if event_type == EVENT_TYPE_MODEL_MESSAGE:
+                role = data.get("role")
+                content = data.get("content")
+                if isinstance(role, str) and isinstance(content, str):
+                    messages.append({"role": role, "content": content})
+
+            if event_type == EVENT_TYPE_TOOL_CALL:
+                tool_name = data.get("name")
+                if not isinstance(tool_name, str) or not tool_name.strip():
+                    tool_name = data.get("tool")
+                if not isinstance(tool_name, str) or not tool_name.strip():
+                    continue
+
+                arguments = data.get("arguments")
+                if arguments is None:
+                    arguments = data.get("input")
+                if arguments is None:
+                    arguments = {}
+                if not isinstance(arguments, dict):
+                    arguments = {"value": arguments}
+
+                tool_calls.append({"name": tool_name, "arguments": arguments})
+
+        return messages, tool_calls
 
     def _failure_transcript(
         self,
         failure_mode: FailureMode,
         message: str,
         start_time: float,
-        trace_events: list[dict[str, Any]] | None = None,
+        trace_events: list[dict[str, JSONValue]] | None = None,
     ) -> tuple[EvalTranscript, EvalOutcome]:
         duration = time.time() - start_time
         transcript = EvalTranscript(
@@ -311,6 +372,82 @@ class ScenarioAgentRunner:
         )
         outcome = EvalOutcome.failure(failure_mode, message)
         return transcript, outcome
+
+    def _normalize_adapter_result(self, adapter_result: object) -> ScenarioAdapterResult:
+        if isinstance(adapter_result, ScenarioAdapterResult):
+            return adapter_result
+        if not isinstance(adapter_result, tuple):
+            raise ValueError("Adapter must return ScenarioAdapterResult or legacy tuple")
+
+        result_len = len(adapter_result)
+        if result_len < 3:
+            raise ValueError(
+                "Adapter legacy tuple must include at least output, trace_events, artifacts"
+            )
+
+        final_output = self._normalize_agent_response(adapter_result[0])
+        trace_events_raw = adapter_result[1]
+        trace_events = self._normalize_trace_events(
+            trace_events_raw if isinstance(trace_events_raw, list) else []
+        )
+
+        artifacts_raw = adapter_result[2]
+        artifacts: dict[str, JSONValue] = {}
+        if isinstance(artifacts_raw, dict):
+            artifacts = {
+                str(key): self._to_json_value(value) for key, value in artifacts_raw.items()
+            }
+
+        outcome = EvalOutcome.success()
+        if result_len >= 4:
+            outcome_raw = adapter_result[3]
+            if isinstance(outcome_raw, EvalOutcome):
+                outcome = outcome_raw
+            elif isinstance(outcome_raw, dict):
+                outcome = EvalOutcome.model_validate(outcome_raw)
+
+        messages: list[ScenarioMessage] = []
+        if result_len >= 5 and isinstance(adapter_result[4], list):
+            for message_raw in adapter_result[4]:
+                if isinstance(message_raw, dict):
+                    try:
+                        messages.append(ScenarioMessage.model_validate(message_raw))
+                    except pd.ValidationError:
+                        continue
+
+        tool_calls: list[ScenarioToolCall] = []
+        if result_len >= 6 and isinstance(adapter_result[5], list):
+            for tool_call_raw in adapter_result[5]:
+                parsed_tool_call = parse_scenario_tool_call(tool_call_raw)
+                if parsed_tool_call is not None:
+                    tool_calls.append(parsed_tool_call)
+
+        return ScenarioAdapterResult(
+            final_output=final_output,
+            trace_events=trace_events,
+            artifacts=artifacts,
+            outcome=outcome,
+            messages=messages,
+            tool_calls=tool_calls,
+        )
+
+    def _to_json_value(self, value: object) -> JSONValue:
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, dict):
+            return {str(key): self._to_json_value(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._to_json_value(item) for item in value]
+        return str(value)
+
+    def _normalize_agent_response(self, value: object) -> str | dict[str, object] | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value
+        if isinstance(value, dict):
+            return {str(key): item for key, item in value.items()}
+        return str(value)
 
 
 __all__ = ["ScenarioAgentRunner"]

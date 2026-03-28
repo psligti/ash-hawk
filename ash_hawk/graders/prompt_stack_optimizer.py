@@ -985,6 +985,58 @@ class PromptStackOptimizerGrader(Grader):
     # LLM Judge Integration
     # -------------------------------------------------------------------------
 
+    def _extract_json_object(self, raw: str) -> str:
+        text = raw.strip()
+        if not text:
+            return ""
+
+        if "```json" in text:
+            start = text.find("```json") + 7
+            end = text.find("```", start)
+            if end != -1:
+                return text[start:end].strip()
+        if "```" in text:
+            start = text.find("```") + 3
+            end = text.find("```", start)
+            if end != -1:
+                return text[start:end].strip()
+
+        first_brace = text.find("{")
+        last_brace = text.rfind("}")
+        if first_brace != -1 and last_brace != -1 and first_brace < last_brace:
+            return text[first_brace : last_brace + 1].strip()
+
+        return text
+
+    def _parse_category_scores(self, response_text: object, category_id: str) -> dict[str, Any]:
+        if not isinstance(response_text, str):
+            logger.warning(
+                "JSON parse error for %s: non-string response type %s",
+                category_id,
+                type(response_text).__name__,
+            )
+            return {}
+
+        raw = self._extract_json_object(response_text)
+        if not raw:
+            logger.warning("JSON parse error for %s: empty response", category_id)
+            return {}
+
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as e:
+            logger.warning("JSON parse error for %s: %s", category_id, e)
+            return {}
+
+        if not isinstance(parsed, dict):
+            logger.warning(
+                "JSON parse error for %s: expected object, got %s",
+                category_id,
+                type(parsed).__name__,
+            )
+            return {}
+        return parsed
+
     def _get_client(self) -> LLMClient:
         """Get or create the LLM client for judge calls.
 
@@ -1054,25 +1106,7 @@ class PromptStackOptimizerGrader(Grader):
                 messages=[{"role": "user", "content": prompt}],
                 options=options,
             )
-
-            raw = response.text.strip()
-            if "```json" in raw:
-                start = raw.find("```json") + 7
-                end = raw.find("```", start)
-                if end != -1:
-                    raw = raw[start:end].strip()
-            elif "```" in raw:
-                start = raw.find("```") + 3
-                end = raw.find("```", start)
-                if end != -1:
-                    raw = raw[start:end].strip()
-
-            try:
-                data = json.loads(raw)
-            except json.JSONDecodeError as e:
-                logger.warning(f"JSON parse error for {category_id}: {e}")
-                return category_id, {}
-
+            data = self._parse_category_scores(getattr(response, "text", None), category_id)
             return category_id, data
 
         category_ids = ["tool_usage", "reasoning", "context", "completion", "efficiency", "safety"]

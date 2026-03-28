@@ -103,7 +103,7 @@ class EvalRunner:
         storage: StorageBackend,
         trial_executor: TrialExecutor,
         post_run_hook: Any | None = None,
-        on_trial_progress: Callable[[int, int, int], Awaitable[None]] | None = None,
+        on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
     ) -> None:
         self._config = config
         self._storage = storage
