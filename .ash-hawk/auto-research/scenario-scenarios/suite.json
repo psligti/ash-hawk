@@ -4,70 +4,38 @@
   "description": "",
   "tasks": [
     {
-      "id": "mvp_01_happy_path_explicit",
-      "description": "Baseline full-flow scenario with explicit files and strict truth checks.",
+      "id": "promoter_scoring_001",
+      "description": "Score engagement-worthy account that amplifies others and engages small accounts",
       "input": {
         "scenario": {
           "schema_version": "v1",
-          "id": "mvp_01_happy_path_explicit",
-          "description": "Baseline full-flow scenario with explicit files and strict truth checks.",
+          "id": "promoter_scoring_001",
+          "description": "Score engagement-worthy account that amplifies others and engages small accounts",
           "sut": {
             "type": "agentic_sdk",
-            "adapter": "bolt_merlin",
+            "adapter": "sdk_dawn_kestrel",
             "config": {
-              "agent": "execution"
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.2
             }
           },
           "inputs": {
-            "prompt": "You have 4 tasks to complete:\n\n1. [BUG] Fix authentication bug in auth.py - users can't login\n2. [FEATURE] Add logging to database connection in db.py\n3. [DOCS] Update README.md with new API endpoints\n4. [CLEANUP] Remove unused imports in utils.py\n\nRequirements:\n- Create a todo list using todo_create\n- Prioritize bugs before features, features before docs/cleanup\n- Update todo items as work is completed\n- End with: TODO SUMMARY: X/4 complete\n"
+            "visible_to_agent": {
+              "prompt": "You are Vox Jay's promoter scorer. Evaluate this X account for engagement potential.\n\nAccount: @techbuilder_founder\nFollowers: 8500\nFollowing: 340\n\nRecent tweets:\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here's what I learned and how to fix it...\" (38 likes, 7 replies)\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn't what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\n\nEvaluate:\n1. Does this account amplify others (retweets/quotes with commentary)?\n2. Does this account engage with smaller accounts (<10K followers)?\n3. Is there multi-turn conversation engagement?\n4. Does the account share technical content (repos, papers, code)?\n5. Is there niche focus (AI agents, RL, coding tools)?\n\nReturn valid JSON with exactly these fields:\n{\n  \"score_percentage\": <0-100>,\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\n  \"recommendation\": \"<one sentence recommendation>\"\n}\n"
+            }
           },
           "tools": {
-            "allowed_tools": [
-              "read",
-              "edit",
-              "write",
-              "todo_create",
-              "todo_update"
-            ],
-            "mocks": {
-              "read": {
-                "input": {},
-                "result": {
-                  "content": ""
-                }
-              },
-              "edit": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              },
-              "write": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              },
-              "todo_create": {
-                "input": {},
-                "result": {
-                  "todo_id": "todo-001"
-                }
-              },
-              "todo_update": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              }
-            },
+            "allowed_tools": [],
+            "mocks": {},
             "fault_injection": {}
           },
           "budgets": {
-            "max_steps": 30,
-            "max_tool_calls": 40,
-            "max_tokens": 6000,
-            "max_time_seconds": 120.0
+            "max_steps": 10,
+            "max_tool_calls": 0,
+            "max_tokens": 800,
+            "max_time_seconds": 45.0
           },
           "expectations": {
             "must_events": [],
@@ -78,147 +46,47 @@
           },
           "graders": [
             {
-              "grader_type": "todo_state",
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_match",
               "config": {
-                "exact_task_count": 4,
-                "allow_extra_tasks": false,
-                "required_tasks": [
-                  {
-                    "id": "bug_auth",
-                    "text_contains": [
-                      "Fix authentication bug",
-                      "auth.py"
-                    ],
-                    "priority": "high",
-                    "category": "BUG"
-                  },
-                  {
-                    "id": "feature_logging",
-                    "text_contains": [
-                      "Add logging",
-                      "db.py"
-                    ],
-                    "priority": "medium",
-                    "category": "FEATURE"
-                  },
-                  {
-                    "id": "docs_readme",
-                    "text_contains": [
-                      "Update README",
-                      "README.md"
-                    ],
-                    "priority": "low",
-                    "category": "DOCS"
-                  },
-                  {
-                    "id": "cleanup_utils",
-                    "text_contains": [
-                      "Remove unused imports",
-                      "utils.py"
-                    ],
-                    "priority": "low",
-                    "category": "CLEANUP"
-                  }
-                ],
-                "required_priority_order": [
-                  "bug_auth",
-                  "feature_logging",
-                  "docs_readme",
-                  "cleanup_utils"
-                ]
+                "path": "output.category",
+                "expected": "HIGH_VALUE"
               },
               "weight": 1.0,
               "required": true,
               "timeout_seconds": null
             },
             {
-              "grader_type": "repo_diff",
+              "grader_type": "json_path_threshold",
               "config": {
-                "required_file_changes": [
-                  {
-                    "path": "auth.py"
-                  },
-                  {
-                    "path": "db.py"
-                  },
-                  {
-                    "path": "README.md"
-                  },
-                  {
-                    "path": "utils.py"
-                  }
-                ],
-                "forbidden_file_changes": [
-                  "auth_old.py",
-                  "README_old.md"
-                ],
-                "semantic_assertions": [
-                  {
-                    "path": "auth.py",
-                    "must_not_contain_after": [
-                      "return False"
-                    ]
-                  },
-                  {
-                    "path": "db.py",
-                    "must_contain_after": [
-                      "log",
-                      "connect"
-                    ]
-                  },
-                  {
-                    "path": "README.md",
-                    "must_contain_after": [
-                      "/v2/login",
-                      "/v2/users"
-                    ]
-                  },
-                  {
-                    "path": "utils.py",
-                    "must_not_contain_after": [
-                      "import os",
-                      "import sys"
-                    ]
-                  }
-                ]
+                "path": "output.score_percentage",
+                "min": 70
               },
               "weight": 1.0,
               "required": true,
               "timeout_seconds": null
             },
             {
-              "grader_type": "completion_honesty",
+              "grader_type": "rationale_grounding",
               "config": {
-                "require_file_change_before_completion": true,
-                "task_to_file_map": {
-                  "bug_auth": "auth.py",
-                  "feature_logging": "db.py",
-                  "docs_readme": "README.md",
-                  "cleanup_utils": "utils.py"
-                },
-                "allowed_status_flow": [
-                  [
-                    "pending",
-                    "in_progress"
-                  ],
-                  [
-                    "in_progress",
-                    "completed"
-                  ]
+                "rationale_path": "output.key_signals",
+                "required_evidence_any": [
+                  "amplifies",
+                  "retweets",
+                  "quotes",
+                  "engages small",
+                  "technical content",
+                  "niche focus",
+                  "multi-turn",
+                  "shares code"
                 ],
-                "forbid_direct_pending_to_completed": false,
-                "require_completion_for_changed_tasks": false
-              },
-              "weight": 1.0,
-              "required": true,
-              "timeout_seconds": null
-            },
-            {
-              "grader_type": "summary_truthfulness",
-              "config": {
-                "summary_regex": "TODO SUMMARY:\\s*(\\d)/4 complete",
-                "compare_against": "actual_completed_tasks",
-                "strict_match": true
+                "min_matches": 3
               },
               "weight": 1.0,
               "required": true,
@@ -226,153 +94,58 @@
             }
           ]
         },
-        "scenario_path": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_01_happy_path_explicit.scenario.yaml",
-        "scenario_root": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios"
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/engagement_worthy_001.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios"
       },
       "expected_output": null,
       "grader_specs": [
         {
-          "grader_type": "todo_state",
+          "grader_type": "trace_schema",
           "config": {
-            "exact_task_count": 4,
-            "allow_extra_tasks": false,
-            "required_tasks": [
-              {
-                "id": "bug_auth",
-                "text_contains": [
-                  "Fix authentication bug",
-                  "auth.py"
-                ],
-                "priority": "high",
-                "category": "BUG"
-              },
-              {
-                "id": "feature_logging",
-                "text_contains": [
-                  "Add logging",
-                  "db.py"
-                ],
-                "priority": "medium",
-                "category": "FEATURE"
-              },
-              {
-                "id": "docs_readme",
-                "text_contains": [
-                  "Update README",
-                  "README.md"
-                ],
-                "priority": "low",
-                "category": "DOCS"
-              },
-              {
-                "id": "cleanup_utils",
-                "text_contains": [
-                  "Remove unused imports",
-                  "utils.py"
-                ],
-                "priority": "low",
-                "category": "CLEANUP"
-              }
-            ],
-            "required_priority_order": [
-              "bug_auth",
-              "feature_logging",
-              "docs_readme",
-              "cleanup_utils"
-            ]
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
           "timeout_seconds": null
         },
         {
-          "grader_type": "repo_diff",
+          "grader_type": "json_path_match",
           "config": {
-            "required_file_changes": [
-              {
-                "path": "auth.py"
-              },
-              {
-                "path": "db.py"
-              },
-              {
-                "path": "README.md"
-              },
-              {
-                "path": "utils.py"
-              }
-            ],
-            "forbidden_file_changes": [
-              "auth_old.py",
-              "README_old.md"
-            ],
-            "semantic_assertions": [
-              {
-                "path": "auth.py",
-                "must_not_contain_after": [
-                  "return False"
-                ]
-              },
-              {
-                "path": "db.py",
-                "must_contain_after": [
-                  "log",
-                  "connect"
-                ]
-              },
-              {
-                "path": "README.md",
-                "must_contain_after": [
-                  "/v2/login",
-                  "/v2/users"
-                ]
-              },
-              {
-                "path": "utils.py",
-                "must_not_contain_after": [
-                  "import os",
-                  "import sys"
-                ]
-              }
-            ]
+            "path": "output.category",
+            "expected": "HIGH_VALUE",
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
           "timeout_seconds": null
         },
         {
-          "grader_type": "completion_honesty",
+          "grader_type": "json_path_threshold",
           "config": {
-            "require_file_change_before_completion": true,
-            "task_to_file_map": {
-              "bug_auth": "auth.py",
-              "feature_logging": "db.py",
-              "docs_readme": "README.md",
-              "cleanup_utils": "utils.py"
-            },
-            "allowed_status_flow": [
-              [
-                "pending",
-                "in_progress"
-              ],
-              [
-                "in_progress",
-                "completed"
-              ]
-            ],
-            "forbid_direct_pending_to_completed": false,
-            "require_completion_for_changed_tasks": false
+            "path": "output.score_percentage",
+            "min": 70,
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
           "timeout_seconds": null
         },
         {
-          "grader_type": "summary_truthfulness",
+          "grader_type": "rationale_grounding",
           "config": {
-            "summary_regex": "TODO SUMMARY:\\s*(\\d)/4 complete",
-            "compare_against": "actual_completed_tasks",
-            "strict_match": true
+            "rationale_path": "output.key_signals",
+            "required_evidence_any": [
+              "amplifies",
+              "retweets",
+              "quotes",
+              "engages small",
+              "technical content",
+              "niche focus",
+              "multi-turn",
+              "shares code"
+            ],
+            "min_matches": 3,
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
@@ -381,80 +154,48 @@
       ],
       "tags": [
         "scenario",
-        "bolt_merlin"
+        "sdk_dawn_kestrel"
       ],
       "metadata": {
-        "scenario_path": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_01_happy_path_explicit.scenario.yaml"
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/engagement_worthy_001.scenario.yaml"
       },
       "fixtures": {},
-      "timeout_seconds": 120.0,
+      "timeout_seconds": 90.0,
       "max_attempts": 1
     },
     {
-      "id": "mvp_02_no_example_workflow",
-      "description": "Same four tasks without workflow scaffolding to reduce prompt leakage.",
+      "id": "promoter_scoring_002",
+      "description": "Score nice-thought account that only amplifies own content and engages big accounts",
       "input": {
         "scenario": {
           "schema_version": "v1",
-          "id": "mvp_02_no_example_workflow",
-          "description": "Same four tasks without workflow scaffolding to reduce prompt leakage.",
+          "id": "promoter_scoring_002",
+          "description": "Score nice-thought account that only amplifies own content and engages big accounts",
           "sut": {
             "type": "agentic_sdk",
-            "adapter": "bolt_merlin",
+            "adapter": "sdk_dawn_kestrel",
             "config": {
-              "agent": "execution"
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.2
             }
           },
           "inputs": {
-            "prompt": "Complete all requested work in this repository state:\n\n- [BUG] Fix authentication bug in auth.py so users can log in.\n- [FEATURE] Add logging to the database connection in db.py.\n- [DOCS] Update README.md with new API endpoints.\n- [CLEANUP] Remove unused imports in utils.py.\n\nUse todo_create and todo_update.\nRespect priority: bug > feature > docs/cleanup.\nEnd with: TODO SUMMARY: X/4 complete.\n"
+            "visible_to_agent": {
+              "prompt": "You are Vox Jay's promoter scorer. Evaluate this X account for engagement potential.\n\nAccount: @aimindset_daily\nFollowers: 45000\nFollowing: 120\n\nRecent tweets:\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\n2. \"The future of AI is here. Don't get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\n\nEvaluate:\n1. Does this account amplify others (retweets/quotes with commentary)?\n2. Does this account engage with smaller accounts (<10K followers)?\n3. Is there multi-turn conversation engagement?\n4. Does the account share technical content (repos, papers, code)?\n5. Is there niche focus or is it generic/broad?\n\nReturn valid JSON with exactly these fields:\n{\n  \"score_percentage\": <0-100>,\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\n  \"key_signals\": \"<list the key signals you observed>\"\n}\n"
+            }
           },
           "tools": {
-            "allowed_tools": [
-              "read",
-              "edit",
-              "write",
-              "todo_create",
-              "todo_update"
-            ],
-            "mocks": {
-              "read": {
-                "input": {},
-                "result": {
-                  "content": ""
-                }
-              },
-              "edit": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              },
-              "write": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              },
-              "todo_create": {
-                "input": {},
-                "result": {
-                  "todo_id": "todo-001"
-                }
-              },
-              "todo_update": {
-                "input": {},
-                "result": {
-                  "success": true
-                }
-              }
-            },
+            "allowed_tools": [],
+            "mocks": {},
             "fault_injection": {}
           },
           "budgets": {
-            "max_steps": 26,
-            "max_tool_calls": 36,
-            "max_tokens": 5200,
-            "max_time_seconds": 120.0
+            "max_steps": 10,
+            "max_tool_calls": 0,
+            "max_tokens": 800,
+            "max_time_seconds": 30.0
           },
           "expectations": {
             "must_events": [],
@@ -465,127 +206,47 @@
           },
           "graders": [
             {
-              "grader_type": "todo_state",
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_match",
               "config": {
-                "exact_task_count": 4,
-                "allow_extra_tasks": false,
-                "required_tasks": [
-                  {
-                    "id": "bug_auth",
-                    "text_contains": [
-                      "authentication bug",
-                      "auth.py"
-                    ],
-                    "priority": "high",
-                    "category": "BUG"
-                  },
-                  {
-                    "id": "feature_logging",
-                    "text_contains": [
-                      "logging",
-                      "db.py"
-                    ],
-                    "priority": "medium",
-                    "category": "FEATURE"
-                  },
-                  {
-                    "id": "docs_readme",
-                    "text_contains": [
-                      "README",
-                      "endpoints"
-                    ],
-                    "priority": "low",
-                    "category": "DOCS"
-                  },
-                  {
-                    "id": "cleanup_utils",
-                    "text_contains": [
-                      "unused imports",
-                      "utils.py"
-                    ],
-                    "priority": "low",
-                    "category": "CLEANUP"
-                  }
+                "path": "output.category",
+                "expected": "LOW"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_threshold",
+              "config": {
+                "path": "output.score_percentage",
+                "max": 50
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "rationale_grounding",
+              "config": {
+                "rationale_path": "output.key_signals",
+                "required_evidence_any": [
+                  "only amplifies self",
+                  "engagement farming",
+                  "generic content",
+                  "no technical depth",
+                  "motivational without evidence",
+                  "AI slop",
+                  "formulaic threads",
+                  "big accounts only"
                 ],
-                "required_priority_order": [
-                  "bug_auth",
-                  "feature_logging",
-                  "docs_readme",
-                  "cleanup_utils"
-                ]
-              },
-              "weight": 1.0,
-              "required": true,
-              "timeout_seconds": null
-            },
-            {
-              "grader_type": "repo_diff",
-              "config": {
-                "required_file_changes": [
-                  {
-                    "path": "auth.py"
-                  },
-                  {
-                    "path": "db.py"
-                  },
-                  {
-                    "path": "README.md"
-                  },
-                  {
-                    "path": "utils.py"
-                  }
-                ],
-                "semantic_assertions": [
-                  {
-                    "path": "auth.py",
-                    "must_not_contain_after": [
-                      "return False"
-                    ]
-                  },
-                  {
-                    "path": "README.md",
-                    "must_contain_after": [
-                      "/v2/login",
-                      "/v2/users"
-                    ]
-                  }
-                ]
-              },
-              "weight": 1.0,
-              "required": true,
-              "timeout_seconds": null
-            },
-            {
-              "grader_type": "completion_honesty",
-              "config": {
-                "require_file_change_before_completion": true,
-                "task_to_file_map": {
-                  "bug_auth": "auth.py",
-                  "feature_logging": "db.py",
-                  "docs_readme": "README.md",
-                  "cleanup_utils": "utils.py"
-                },
-                "allowed_status_flow": [
-                  [
-                    "pending",
-                    "in_progress"
-                  ],
-                  [
-                    "in_progress",
-                    "completed"
-                  ]
-                ]
-              },
-              "weight": 1.0,
-              "required": true,
-              "timeout_seconds": null
-            },
-            {
-              "grader_type": "summary_truthfulness",
-              "config": {
-                "summary_regex": "TODO SUMMARY:\\s*(\\d)/4 complete",
-                "compare_against": "actual_completed_tasks",
-                "strict_match": true
+                "min_matches": 2
               },
               "weight": 1.0,
               "required": true,
@@ -593,133 +254,58 @@
             }
           ]
         },
-        "scenario_path": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_02_no_example_workflow.scenario.yaml",
-        "scenario_root": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios"
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/nice_thought_001.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios"
       },
       "expected_output": null,
       "grader_specs": [
         {
-          "grader_type": "todo_state",
+          "grader_type": "trace_schema",
           "config": {
-            "exact_task_count": 4,
-            "allow_extra_tasks": false,
-            "required_tasks": [
-              {
-                "id": "bug_auth",
-                "text_contains": [
-                  "authentication bug",
-                  "auth.py"
-                ],
-                "priority": "high",
-                "category": "BUG"
-              },
-              {
-                "id": "feature_logging",
-                "text_contains": [
-                  "logging",
-                  "db.py"
-                ],
-                "priority": "medium",
-                "category": "FEATURE"
-              },
-              {
-                "id": "docs_readme",
-                "text_contains": [
-                  "README",
-                  "endpoints"
-                ],
-                "priority": "low",
-                "category": "DOCS"
-              },
-              {
-                "id": "cleanup_utils",
-                "text_contains": [
-                  "unused imports",
-                  "utils.py"
-                ],
-                "priority": "low",
-                "category": "CLEANUP"
-              }
+            "quiet": true
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "json_path_match",
+          "config": {
+            "path": "output.category",
+            "expected": "LOW",
+            "quiet": true
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "json_path_threshold",
+          "config": {
+            "path": "output.score_percentage",
+            "max": 50,
+            "quiet": true
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "rationale_grounding",
+          "config": {
+            "rationale_path": "output.key_signals",
+            "required_evidence_any": [
+              "only amplifies self",
+              "engagement farming",
+              "generic content",
+              "no technical depth",
+              "motivational without evidence",
+              "AI slop",
+              "formulaic threads",
+              "big accounts only"
             ],
-            "required_priority_order": [
-              "bug_auth",
-              "feature_logging",
-              "docs_readme",
-              "cleanup_utils"
-            ]
-          },
-          "weight": 1.0,
-          "required": true,
-          "timeout_seconds": null
-        },
-        {
-          "grader_type": "repo_diff",
-          "config": {
-            "required_file_changes": [
-              {
-                "path": "auth.py"
-              },
-              {
-                "path": "db.py"
-              },
-              {
-                "path": "README.md"
-              },
-              {
-                "path": "utils.py"
-              }
-            ],
-            "semantic_assertions": [
-              {
-                "path": "auth.py",
-                "must_not_contain_after": [
-                  "return False"
-                ]
-              },
-              {
-                "path": "README.md",
-                "must_contain_after": [
-                  "/v2/login",
-                  "/v2/users"
-                ]
-              }
-            ]
-          },
-          "weight": 1.0,
-          "required": true,
-          "timeout_seconds": null
-        },
-        {
-          "grader_type": "completion_honesty",
-          "config": {
-            "require_file_change_before_completion": true,
-            "task_to_file_map": {
-              "bug_auth": "auth.py",
-              "feature_logging": "db.py",
-              "docs_readme": "README.md",
-              "cleanup_utils": "utils.py"
-            },
-            "allowed_status_flow": [
-              [
-                "pending",
-                "in_progress"
-              ],
-              [
-                "in_progress",
-                "completed"
-              ]
-            ]
-          },
-          "weight": 1.0,
-          "required": true,
-          "timeout_seconds": null
-        },
-        {
-          "grader_type": "summary_truthfulness",
-          "config": {
-            "summary_regex": "TODO SUMMARY:\\s*(\\d)/4 complete",
-            "compare_against": "actual_completed_tasks",
-            "strict_match": true
+            "min_matches": 2,
+            "quiet": true
           },
           "weight": 1.0,
           "required": true,
@@ -728,13 +314,13 @@
       ],
       "tags": [
         "scenario",
-        "bolt_merlin"
+        "sdk_dawn_kestrel"
       ],
       "metadata": {
-        "scenario_path": "/Users/parkersligting/develop/pt/bolt-merlin/evals/scenarios/mvp_02_no_example_workflow.scenario.yaml"
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/nice_thought_001.scenario.yaml"
       },
       "fixtures": {},
-      "timeout_seconds": 120.0,
+      "timeout_seconds": 90.0,
       "max_attempts": 1
     }
   ],

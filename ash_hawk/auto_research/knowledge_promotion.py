@@ -7,6 +7,7 @@ to note-lark via MCP tools.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from dataclasses import asdict, dataclass
@@ -125,7 +126,7 @@ class KnowledgePromoter:
         storage_path = Path(".ash-hawk") / "lessons"
 
         try:
-            local_path = self._save_local(lesson, storage_path)
+            local_path = await self._save_local(lesson, storage_path)
             lesson.promotion_status = PromotionStatus.PROMOTED
             logger.info("Saved lesson %s locally to %s", lesson.lesson_id, local_path)
         except Exception:
@@ -204,7 +205,7 @@ class KnowledgePromoter:
             logger.warning("note-lark MCP not available; skipping promotion")
             return None
 
-    def _save_local(self, lesson: PromotedLesson, storage_path: Path) -> Path:
+    async def _save_local(self, lesson: PromotedLesson, storage_path: Path) -> Path:
         """Save lesson to local .ash-hawk/lessons/ directory.
 
         Args:
@@ -224,9 +225,11 @@ class KnowledgePromoter:
             if isinstance(value, datetime):
                 lesson_data[key] = value.isoformat()
 
-        with open(filepath, "w") as f:
-            json.dump(lesson_data, f, indent=2, default=str)
+        def _write_file() -> None:
+            with open(filepath, "w") as f:
+                json.dump(lesson_data, f, indent=2, default=str)
 
+        await asyncio.to_thread(_write_file)
         return filepath
 
     def _count_consecutive_successes(

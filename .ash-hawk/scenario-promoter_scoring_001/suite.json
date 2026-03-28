@@ -1,0 +1,166 @@
+{
+  "id": "scenario-promoter_scoring_001",
+  "name": "scenario-promoter_scoring_001",
+  "description": "",
+  "tasks": [
+    {
+      "id": "promoter_scoring_001",
+      "description": "Score engagement-worthy account that amplifies others and engages small accounts",
+      "input": {
+        "scenario": {
+          "schema_version": "v1",
+          "id": "promoter_scoring_001",
+          "description": "Score engagement-worthy account that amplifies others and engages small accounts",
+          "sut": {
+            "type": "agentic_sdk",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+              "agent": "vox-jay",
+              "provider": "zai-coding-plan",
+              "model": "glm-4.7",
+              "temperature": 0.2
+            }
+          },
+          "inputs": {
+            "visible_to_agent": {
+              "prompt": "You are Vox Jay's promoter scorer. Evaluate this X account for engagement potential.\n\nAccount: @techbuilder_founder\nFollowers: 8500\nFollowing: 340\n\nRecent tweets:\n1. \"Just shipped a new agent framework that handles tool calling natively. The latency is sub-50ms for multi-step reasoning. github.com/example/framework\" (45 likes, 3 replies)\n2. \"RT @smalldev Building an MCP server in Rust. Impressed by how clean the protocol is - thinking about building something similar for my LLM projects.\" (12 likes, 1 reply)\n3. \"Thread: I spent last week debugging why my agents were getting stuck in loops. Here's what I learned and how to fix it...\" (38 likes, 7 replies)\n4. \"Great question! The key insight is that most agent failures happen when the tool output isn't what you expect. Let me share what worked for us...\" (5 likes, 2 replies)\n5. Quote of @airesearch: \"Hard agree. Our experience has been similar - needed something that actually understands reward structure, not just policy gradients.\" (22 likes, 4 replies)\n\nEvaluate:\n1. Does this account amplify others (retweets/quotes with commentary)?\n2. Does this account engage with smaller accounts (<10K followers)?\n3. Is there multi-turn conversation engagement?\n4. Does the account share technical content (repos, papers, code)?\n5. Is there niche focus (AI agents, RL, coding tools)?\n\nReturn valid JSON with exactly these fields:\n{\n  \"score_percentage\": <0-100>,\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\n  \"key_signals\": [\"<signal1>\", \"<signal2>\", ...],\n  \"recommendation\": \"<one sentence recommendation>\"\n}\n"
+            }
+          },
+          "tools": {
+            "allowed_tools": [],
+            "mocks": {},
+            "fault_injection": {}
+          },
+          "budgets": {
+            "max_steps": 10,
+            "max_tool_calls": 0,
+            "max_tokens": 800,
+            "max_time_seconds": 45.0
+          },
+          "expectations": {
+            "must_events": [],
+            "must_not_events": [],
+            "ordering_rules": [],
+            "diff_assertions": [],
+            "output_assertions": []
+          },
+          "graders": [
+            {
+              "grader_type": "trace_schema",
+              "config": {},
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_match",
+              "config": {
+                "path": "output.category",
+                "expected": "HIGH_VALUE"
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "json_path_threshold",
+              "config": {
+                "path": "output.score_percentage",
+                "min": 70
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            },
+            {
+              "grader_type": "rationale_grounding",
+              "config": {
+                "rationale_path": "output.key_signals",
+                "required_evidence_any": [
+                  "amplifies",
+                  "retweets",
+                  "quotes",
+                  "engages small",
+                  "technical content",
+                  "niche focus",
+                  "multi-turn",
+                  "shares code"
+                ],
+                "min_matches": 3
+              },
+              "weight": 1.0,
+              "required": true,
+              "timeout_seconds": null
+            }
+          ]
+        },
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/engagement_worthy_001.scenario.yaml",
+        "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios"
+      },
+      "expected_output": null,
+      "grader_specs": [
+        {
+          "grader_type": "trace_schema",
+          "config": {},
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "json_path_match",
+          "config": {
+            "path": "output.category",
+            "expected": "HIGH_VALUE"
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "json_path_threshold",
+          "config": {
+            "path": "output.score_percentage",
+            "min": 70
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        },
+        {
+          "grader_type": "rationale_grounding",
+          "config": {
+            "rationale_path": "output.key_signals",
+            "required_evidence_any": [
+              "amplifies",
+              "retweets",
+              "quotes",
+              "engages small",
+              "technical content",
+              "niche focus",
+              "multi-turn",
+              "shares code"
+            ],
+            "min_matches": 3
+          },
+          "weight": 1.0,
+          "required": true,
+          "timeout_seconds": null
+        }
+      ],
+      "tags": [
+        "scenario",
+        "sdk_dawn_kestrel"
+      ],
+      "metadata": {
+        "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/engagement_worthy_001.scenario.yaml"
+      },
+      "fixtures": {},
+      "timeout_seconds": 45.0,
+      "max_attempts": 1
+    }
+  ],
+  "tags": [],
+  "metadata": {},
+  "version": "1.0.0",
+  "agent": null
+}

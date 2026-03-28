@@ -1,0 +1,336 @@
+{
+  "trial": {
+    "id": "trial-db902232",
+    "task_id": "promoter_scoring_002",
+    "status": "completed",
+    "attempt_number": 1,
+    "input_snapshot": {
+      "scenario": {
+        "schema_version": "v1",
+        "id": "promoter_scoring_002",
+        "description": "Score nice-thought account that only amplifies own content and engages big accounts",
+        "sut": {
+          "type": "agentic_sdk",
+          "adapter": "sdk_dawn_kestrel",
+          "config": {
+            "agent": "vox-jay",
+            "provider": "zai-coding-plan",
+            "model": "glm-4.7",
+            "temperature": 0.2
+          }
+        },
+        "inputs": {
+          "visible_to_agent": {
+            "prompt": "You are Vox Jay's promoter scorer. Evaluate this X account for engagement potential.\n\nAccount: @aimindset_daily\nFollowers: 45000\nFollowing: 120\n\nRecent tweets:\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\n2. \"The future of AI is here. Don't get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\n\nEvaluate:\n1. Does this account amplify others (retweets/quotes with commentary)?\n2. Does this account engage with smaller accounts (<10K followers)?\n3. Is there multi-turn conversation engagement?\n4. Does the account share technical content (repos, papers, code)?\n5. Is there niche focus or is it generic/broad?\n\nReturn valid JSON with exactly these fields:\n{\n  \"score_percentage\": <0-100>,\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\n  \"key_signals\": \"<list the key signals you observed>\"\n}\n"
+          }
+        },
+        "tools": {
+          "allowed_tools": [],
+          "mocks": {},
+          "fault_injection": {}
+        },
+        "budgets": {
+          "max_steps": 10,
+          "max_tool_calls": 0,
+          "max_tokens": 800,
+          "max_time_seconds": 30.0
+        },
+        "expectations": {
+          "must_events": [],
+          "must_not_events": [],
+          "ordering_rules": [],
+          "diff_assertions": [],
+          "output_assertions": []
+        },
+        "graders": [
+          {
+            "grader_type": "trace_schema",
+            "config": {},
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "json_path_match",
+            "config": {
+              "path": "output.category",
+              "expected": "LOW"
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "json_path_threshold",
+            "config": {
+              "path": "output.score_percentage",
+              "max": 50
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          },
+          {
+            "grader_type": "rationale_grounding",
+            "config": {
+              "rationale_path": "output.key_signals",
+              "required_evidence_any": [
+                "only amplifies self",
+                "engagement farming",
+                "generic content",
+                "no technical depth",
+                "motivational without evidence",
+                "AI slop",
+                "formulaic threads",
+                "big accounts only"
+              ],
+              "min_matches": 2
+            },
+            "weight": 1.0,
+            "required": true,
+            "timeout_seconds": null
+          }
+        ]
+      },
+      "scenario_path": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios/nice_thought_001.scenario.yaml",
+      "scenario_root": "/Users/parkersligting/develop/pt/vox-jay/evals/promoter_scoring/scenarios"
+    },
+    "task_tags": [],
+    "result": {
+      "trial_id": "trial-db902232",
+      "outcome": {
+        "status": "completed",
+        "failure_mode": null,
+        "error_message": null,
+        "completed_at": "2026-03-28T18:20:03.585629+00:00"
+      },
+      "transcript": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @aimindset_daily\\nFollowers: 45000\\nFollowing: 120\\n\\nRecent tweets:\\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\\n2. \"The future of AI is here. Don\\'t get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus or is it generic/broad?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": \"<list the key signals you observed>\"\\n}\\n'}}"
+          },
+          {
+            "role": "assistant",
+            "content": "```json\n{\n  \"score_percentage\": 25,\n  \"category\": \"LOW\",\n  \"key_signals\": \"Generic 'listicle' content and hype farming (follow bait, RTing Elon), lack of technical substance (no code/papers/repos), broadcast-only communication style with no evidence of replies or multi-turn conversations, broad focus lacking specific niche authority.\"\n}\n```"
+          }
+        ],
+        "tool_calls": [],
+        "trace_events": [
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "IterationStarted",
+              "payload": {
+                "max_iterations": 1
+              },
+              "iteration": 1,
+              "session_id": "trial-1774721967808"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "ProposalGenerated",
+              "payload": {
+                "intent": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @aimindset_daily\\nFollowers: 45000\\nFollowing: 120\\n\\nRecent tweets:\\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\\n2. \"The future of AI is here. Don\\'t get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus or is it generic/broad?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": \"<list the key signals you observed>\"\\n}\\n'}}",
+                "action_types": [],
+                "risk_level": "RiskLevel.LOW"
+              },
+              "iteration": 1,
+              "session_id": "trial-1774721967808"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "IterationCompleted",
+              "payload": {
+                "duration_ms": 35775.66170692444,
+                "response_length": 342
+              },
+              "iteration": 1,
+              "session_id": "trial-1774721967808"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "event_type": "RunCompleted",
+              "payload": {
+                "success": true,
+                "error": null
+              },
+              "iteration": 1,
+              "session_id": "trial-1774721967808"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "user",
+              "content": "{'visible_to_agent': {'prompt': 'You are Vox Jay\\'s promoter scorer. Evaluate this X account for engagement potential.\\n\\nAccount: @aimindset_daily\\nFollowers: 45000\\nFollowing: 120\\n\\nRecent tweets:\\n1. \"10 AI tools that will change your life in 2026: (thread) 1/ ChatGPT - game changer 2/ Claude - revolutionary 3/ Midjourney - disruptive...\" (2500 likes, 450 replies)\\n2. \"The future of AI is here. Don\\'t get left behind. Retweet if you agree.\" (1800 likes, 200 replies)\\n3. \"I just discovered this incredible AI hack that saved me 10 hours this week. Want to know what it is? Follow me for more tips like this.\" (950 likes, 120 replies)\\n4. \"Mind = blown. AI is evolving faster than we thought possible. What a time to be alive!\" (600 likes, 80 replies)\\n5. RT @elonmusk: \"AI will change everything\" (1200 likes, 90 replies)\\n\\nEvaluate:\\n1. Does this account amplify others (retweets/quotes with commentary)?\\n2. Does this account engage with smaller accounts (<10K followers)?\\n3. Is there multi-turn conversation engagement?\\n4. Does the account share technical content (repos, papers, code)?\\n5. Is there niche focus or is it generic/broad?\\n\\nReturn valid JSON with exactly these fields:\\n{\\n  \"score_percentage\": <0-100>,\\n  \"category\": \"HIGH_VALUE|MODERATE|LOW|SKIP\",\\n  \"key_signals\": \"<list the key signals you observed>\"\\n}\\n'}}"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ModelMessageEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"score_percentage\": 25,\n  \"category\": \"LOW\",\n  \"key_signals\": \"Generic 'listicle' content and hype farming (follow bait, RTing Elon), lack of technical substance (no code/papers/repos), broadcast-only communication style with no evidence of replies or multi-turn conversations, broad focus lacking specific niche authority.\"\n}\n```"
+            }
+          },
+          {
+            "schema_version": 1,
+            "event_type": "ArtifactEvent",
+            "ts": "1970-01-01T00:00:00Z",
+            "data": {
+              "path": ".ash-hawk/auto-research/scenario-scenarios/runs/run-424aeee7/artifacts/trial-db902232/artifacts.json",
+              "artifact_key": "artifacts"
+            }
+          }
+        ],
+        "token_usage": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0
+        },
+        "cost_usd": 0.0,
+        "duration_seconds": 35.81048798561096,
+        "agent_response": "```json\n{\n  \"score_percentage\": 25,\n  \"category\": \"LOW\",\n  \"key_signals\": \"Generic 'listicle' content and hype farming (follow bait, RTing Elon), lack of technical substance (no code/papers/repos), broadcast-only communication style with no evidence of replies or multi-turn conversations, broad focus lacking specific niche authority.\"\n}\n```",
+        "error_trace": null
+      },
+      "grader_results": [
+        {
+          "grader_type": "trace_schema",
+          "grader_id": null,
+          "score": 1.0,
+          "passed": true,
+          "details": {
+            "total_events": 7,
+            "failed_events": []
+          },
+          "error_message": null,
+          "execution_time_seconds": 5.412101745605469e-05,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "json_path_match",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: json_path_match",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "json_path_threshold",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: json_path_threshold",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        },
+        {
+          "grader_type": "rationale_grounding",
+          "grader_id": null,
+          "score": 0.0,
+          "passed": false,
+          "details": {},
+          "error_message": "Unknown grader type: rationale_grounding",
+          "execution_time_seconds": null,
+          "confidence": null,
+          "needs_review": false,
+          "review_reason": null
+        }
+      ],
+      "aggregate_score": 0.25,
+      "aggregate_passed": false
+    },
+    "envelope": {
+      "trial_id": "trial-db902232",
+      "run_id": "run-424aeee7",
+      "task_id": "promoter_scoring_002",
+      "attempt_number": 1,
+      "policy_snapshot": {
+        "allowed_tools": [],
+        "denied_tools": [],
+        "default_permission": "ask",
+        "allowed_roots": [],
+        "network_allowed": false,
+        "network_allowlist": [],
+        "max_tool_calls": null,
+        "timeout_seconds": 300.0,
+        "token_budget": null,
+        "cost_budget_usd": null,
+        "max_file_size_bytes": null,
+        "env_vars_allowed": [],
+        "max_tool_depth": 10
+      },
+      "created_at": "2026-03-28T18:19:27.776279+00:00",
+      "started_at": "2026-03-28T18:19:27.776150+00:00",
+      "completed_at": "2026-03-28T18:20:03.586812+00:00"
+    }
+  },
+  "envelope": {
+    "trial_id": "trial-db902232",
+    "run_id": "run-424aeee7",
+    "task_id": "promoter_scoring_002",
+    "attempt_number": 1,
+    "policy_snapshot": {
+      "allowed_tools": [],
+      "denied_tools": [],
+      "default_permission": "ask",
+      "allowed_roots": [],
+      "network_allowed": false,
+      "network_allowlist": [],
+      "max_tool_calls": null,
+      "timeout_seconds": 300.0,
+      "token_budget": null,
+      "cost_budget_usd": null,
+      "max_file_size_bytes": null,
+      "env_vars_allowed": [],
+      "max_tool_depth": 10
+    },
+    "created_at": "2026-03-28T18:19:27.776279+00:00",
+    "started_at": "2026-03-28T18:19:27.776150+00:00",
+    "completed_at": "2026-03-28T18:20:03.586812+00:00"
+  },
+  "policy": {
+    "allowed_tools": [],
+    "denied_tools": [],
+    "default_permission": "ask",
+    "allowed_roots": [],
+    "network_allowed": false,
+    "network_allowlist": [],
+    "max_tool_calls": null,
+    "timeout_seconds": 300.0,
+    "token_budget": null,
+    "cost_budget_usd": null,
+    "max_file_size_bytes": null,
+    "env_vars_allowed": [],
+    "max_tool_depth": 10
+  }
+}

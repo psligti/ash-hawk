@@ -193,12 +193,13 @@ class TestPromoteLesson:
 class TestSaveLocal:
     """Tests for _save_local file persistence."""
 
-    def test_creates_directory_and_writes_json(self, tmp_path: Path) -> None:
+    @pytest.mark.asyncio
+    async def test_creates_directory_and_writes_json(self, tmp_path: Path) -> None:
         promoter = KnowledgePromoter(note_lark_enabled=False)
         lesson = _make_lesson(lesson_id="local-test-1")
         storage = tmp_path / "lessons"
 
-        filepath = promoter._save_local(lesson, storage)
+        filepath = await promoter._save_local(lesson, storage)
 
         assert filepath.exists()
         assert filepath.name == "local-test-1.json"
@@ -207,12 +208,13 @@ class TestSaveLocal:
         assert data["score_delta"] == 0.10
         assert data["target_type"] == "skill"
 
-    def test_serializes_datetime_as_iso(self, tmp_path: Path) -> None:
+    @pytest.mark.asyncio
+    async def test_serializes_datetime_as_iso(self, tmp_path: Path) -> None:
         promoter = KnowledgePromoter(note_lark_enabled=False)
         lesson = _make_lesson()
         storage = tmp_path / "lessons"
 
-        filepath = promoter._save_local(lesson, storage)
+        filepath = await promoter._save_local(lesson, storage)
         data = json.loads(filepath.read_text())
 
         assert isinstance(data["promoted_at"], str)
