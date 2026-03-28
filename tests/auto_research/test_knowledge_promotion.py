@@ -54,6 +54,7 @@ def cycle_result() -> CycleResult:
     return CycleResult(
         agent_name="test-agent",
         target_path="skills/test",
+        scenario_paths=[],
         target_type=TargetType.SKILL,
         initial_score=0.50,
         final_score=0.70,
@@ -306,6 +307,7 @@ class TestBuildNoteBody:
     def test_includes_intent_patterns_when_provided(self) -> None:
         lesson = _make_lesson()
         patterns = IntentPatterns(
+            transcript_count=5,
             inferred_intent="Agent prefers file-based context",
             dominant_tools=["read", "grep"],
         )

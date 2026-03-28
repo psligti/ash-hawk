@@ -13,6 +13,7 @@ from ash_hawk.auto_research.types import (
     CleanupResult,
     CycleResult,
     CycleStatus,
+    EnhancedCycleConfig,
     EnhancedCycleResult,
     IterationResult,
     TargetType,
@@ -121,6 +122,7 @@ class TestSkillCleaner:
         cycle_result = CycleResult(
             agent_name="test-agent",
             target_path=".dawn-kestrel/skills/test-skill",
+            scenario_paths=[],
             target_type=TargetType.SKILL,
         )
         baseline = {"existing-skill"}
@@ -141,6 +143,7 @@ class TestSkillCleaner:
         cycle_result = CycleResult(
             agent_name="test-agent",
             target_path=".dawn-kestrel/skills/test-skill",
+            scenario_paths=[],
             target_type=TargetType.SKILL,
             iterations=[iteration],
         )
@@ -163,6 +166,7 @@ class TestSkillCleaner:
         cycle_result = CycleResult(
             agent_name="test-agent",
             target_path=".dawn-kestrel/skills/test-skill",
+            scenario_paths=[],
             target_type=TargetType.SKILL,
             iterations=[iteration],
         )
@@ -184,6 +188,7 @@ class TestSkillCleaner:
         cycle_result = CycleResult(
             agent_name="test-agent",
             target_path=".dawn-kestrel/skills/test-skill",
+            scenario_paths=[],
             target_type=TargetType.SKILL,
             iterations=[iteration],
         )
@@ -221,6 +226,7 @@ class TestSkillCleaner:
         cycle_result = CycleResult(
             agent_name="test-agent",
             target_path=".dawn-kestrel/skills/test-skill",
+            scenario_paths=[],
             target_type=TargetType.SKILL,
             iterations=[skill_creation_iteration, successful_iteration],
         )
@@ -238,6 +244,7 @@ class TestSkillCleaner:
         )
         enhanced_result = EnhancedCycleResult(
             agent_name="test-agent",
+            config=EnhancedCycleConfig(),
             target_results={},
         )
         result = disabled_cleaner.cleanup_enhanced_result(enhanced_result)

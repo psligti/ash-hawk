@@ -68,6 +68,7 @@ async def test_run_enhanced_cycle_single_target_executes_one_target(
                     target.name: CycleResult(
                         agent_name=target.name,
                         target_path=str(target.discovered_path),
+                        scenario_paths=[str(s) for s in scenarios],
                         status=CycleStatus.COMPLETED,
                         initial_score=0.4,
                         final_score=0.5,

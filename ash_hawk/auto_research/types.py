@@ -162,6 +162,7 @@ class PromotedLesson:
     promotion_status: PromotionStatus = PromotionStatus.PENDING
     note_id: str | None = None
     error_message: str | None = None
+    promoted_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
