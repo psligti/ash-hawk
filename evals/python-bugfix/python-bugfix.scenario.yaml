@@ -3,7 +3,7 @@ id: python-bugfix-base
 description: Base scenario for python bugfix tasks
 
 sut:
-  type: "dawn_kestrel"
+  type: "agentic_sdk"
   adapter: "dawn_kestrel"
   config:
     skill_path: ".dawn-kestrel/skills/python-bugfix.md"
@@ -13,10 +13,10 @@ sut:
 inputs:
   prompt: |
     Fix the bug in the provided Python code.
-    
+
     The code is located at $solution_file.
     Tests are located at $test_file.
-    
+
     Run the tests first to see the failure, then fix the bug with minimal changes.
     Ensure all tests pass after your fix.
 
@@ -30,6 +30,7 @@ tools:
     - "read"
     - "write"
     - "edit"
+    - "grep"
   mocks: {}
   fault_injection: {}
 
