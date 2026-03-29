@@ -8,7 +8,7 @@ import pytest
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.scenario.agent_runner import ScenarioAgentRunner
 from ash_hawk.scenario.registry import ScenarioAdapterRegistry
-from ash_hawk.types import EvalTask, ToolSurfacePolicy
+from ash_hawk.types import EvalTask, ToolPermission, ToolSurfacePolicy
 
 
 @pytest.mark.asyncio
@@ -150,6 +150,8 @@ def test_agent_runner_policy_uses_timeout_override() -> None:
     scenario = runner._parse_scenario(_build_task("mock_adapter"))
     policy = runner._build_policy(scenario, PolicyEnforcer(ToolSurfacePolicy(timeout_seconds=30.0)))
     assert policy.timeout_seconds == 600.0
+    assert policy.default_permission == ToolPermission.ALLOW
+    assert policy.allowed_tools == []
 
 
 def _build_task(adapter_name: str) -> EvalTask:

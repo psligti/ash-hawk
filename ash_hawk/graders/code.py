@@ -338,6 +338,12 @@ class StringMatchGrader(Grader):
             return self._regex_match(actual, expected, partial_credit)
         elif mode == "fuzzy":
             return self._fuzzy_match(actual, expected, min_similarity, partial_credit)
+        elif mode == "contains":
+            # expected should be a list of substrings to find
+            contains_list = config.get("contains", [])
+            if isinstance(contains_list, str):
+                contains_list = [contains_list]
+            return self._contains_match(actual, contains_list, partial_credit)
         else:
             return GraderResult(
                 grader_type=self.name,
@@ -471,6 +477,39 @@ class StringMatchGrader(Grader):
                 "similarity": round(similarity, 4),
                 "min_similarity": min_similarity,
                 "match_blocks": len(matcher.get_matching_blocks()),
+            },
+        )
+
+    def _contains_match(
+        self,
+        actual: str,
+        expected: list[str],
+        partial_credit: bool,
+    ) -> GraderResult:
+        """Check if all expected substrings are present in actual."""
+        if isinstance(expected, str):
+            expected = [expected]
+
+        actual_lower = actual.lower()
+        found = [substr for substr in expected if substr.lower() in actual_lower]
+        missing = [substr for substr in expected if substr.lower() not in actual_lower]
+        score = len(found) / len(expected) if expected else 1.0
+
+        if partial_credit:
+            final_score = score
+        else:
+            final_score = 1.0 if score == 1.0 else 0.0
+
+        return GraderResult(
+            grader_type=self.name,
+            score=final_score,
+            passed=score == 1.0,
+            details={
+                "mode": "contains",
+                "found": found,
+                "missing": missing,
+                "total_expected": len(expected),
+                "total_found": len(found),
             },
         )
 

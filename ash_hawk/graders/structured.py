@@ -73,11 +73,17 @@ class SchemaGrader(Grader):
         Returns:
             Parsed dict or None if parsing fails
         """
+        import re
+
         if isinstance(response, dict):
             return response
         if isinstance(response, str):
+            cleaned = response.strip()
+            if cleaned.startswith("```"):
+                cleaned = re.sub(r"^```(?:json|yaml)?\s*\n?", "", cleaned)
+                cleaned = re.sub(r"\n?```\s*$", "", cleaned)
             try:
-                return json.loads(response)
+                return json.loads(cleaned.strip())
             except json.JSONDecodeError:
                 return None
         return None

@@ -68,31 +68,29 @@ def test_sdk_adapter_produces_policy_decision_events():
         mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
         MockRunner.return_value = mock_runner_instance
 
-        final_output, trace_events, artifacts, _, messages, tool_calls = adapter.run_scenario(
-            scenario, workdir, tooling_harness, budgets
-        )
+        result = adapter.run_scenario(scenario, workdir, tooling_harness, budgets)
 
     # Verify final output
-    assert final_output == "Done"
+    assert result.final_output == "Done"
 
     # Verify artifacts are empty
-    assert artifacts == {}
+    assert result.artifacts == {}
 
     # Verify tool was called
     assert len(tool_calls_log) == 1
     assert tool_calls_log[0][0] == "bash"
 
     # Verify trace events contain PolicyDecisionEvent
-    policy_events = [e for e in trace_events if e["event_type"] == "PolicyDecisionEvent"]
+    policy_events = [e for e in result.trace_events if e.event_type == "PolicyDecisionEvent"]
     assert len(policy_events) >= 1
 
     # Verify the policy decision event has expected structure
     policy_event = policy_events[0]
-    assert policy_event["data"]["tool_name"] == "bash"
-    assert policy_event["data"]["allowed"] is True
+    assert policy_event.data["tool_name"] == "bash"
+    assert policy_event.data["allowed"] is True
 
     # Verify no RejectionEvent since tool was allowed
-    rejection_events = [e for e in trace_events if e["event_type"] == "RejectionEvent"]
+    rejection_events = [e for e in result.trace_events if e.event_type == "RejectionEvent"]
     assert len(rejection_events) == 0
 
 
@@ -156,35 +154,33 @@ def test_sdk_adapter_produces_rejection_events_for_denied_tools():
         mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
         MockRunner.return_value = mock_runner_instance
 
-        final_output, trace_events, artifacts, _, messages, tool_calls = adapter.run_scenario(
-            scenario, workdir, tooling_harness, budgets
-        )
+        result = adapter.run_scenario(scenario, workdir, tooling_harness, budgets)
 
     # Verify final output
-    assert final_output == "Attempted denied tool"
+    assert result.final_output == "Attempted denied tool"
 
     # Verify artifacts are empty
-    assert artifacts == {}
+    assert result.artifacts == {}
 
     # Verify tool was NOT called since it was denied
     assert len(tool_calls_log) == 0
 
     # Verify trace events contain PolicyDecisionEvent
-    policy_events = [e for e in trace_events if e["event_type"] == "PolicyDecisionEvent"]
+    policy_events = [e for e in result.trace_events if e.event_type == "PolicyDecisionEvent"]
     assert len(policy_events) >= 1
 
     # Verify the policy decision event shows tool was denied
     policy_event = policy_events[0]
-    assert policy_event["data"]["tool_name"] == "dangerous_tool"
-    assert policy_event["data"]["allowed"] is False
+    assert policy_event.data["tool_name"] == "dangerous_tool"
+    assert policy_event.data["allowed"] is False
 
     # Verify RejectionEvent was created
-    rejection_events = [e for e in trace_events if e["event_type"] == "RejectionEvent"]
+    rejection_events = [e for e in result.trace_events if e.event_type == "RejectionEvent"]
     assert len(rejection_events) == 1
 
     # Verify the rejection event has expected structure
     rejection_event = rejection_events[0]
-    assert rejection_event["data"]["tool_name"] == "dangerous_tool"
+    assert rejection_event.data["tool_name"] == "dangerous_tool"
 
 
 def test_sdk_adapter_no_tool_calls_no_policy_events():
@@ -235,19 +231,17 @@ def test_sdk_adapter_no_tool_calls_no_policy_events():
         mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
         MockRunner.return_value = mock_runner_instance
 
-        final_output, trace_events, artifacts, _, messages, tool_calls = adapter.run_scenario(
-            scenario, workdir, tooling_harness, budgets
-        )
+        result = adapter.run_scenario(scenario, workdir, tooling_harness, budgets)
 
     # Verify final output
-    assert final_output == "Direct response"
+    assert result.final_output == "Direct response"
 
     # Verify no PolicyDecisionEvents were created
-    policy_events = [e for e in trace_events if e["event_type"] == "PolicyDecisionEvent"]
+    policy_events = [e for e in result.trace_events if e.event_type == "PolicyDecisionEvent"]
     assert len(policy_events) == 0
 
     # Verify no RejectionEvents were created
-    rejection_events = [e for e in trace_events if e["event_type"] == "RejectionEvent"]
+    rejection_events = [e for e in result.trace_events if e.event_type == "RejectionEvent"]
     assert len(rejection_events) == 0
 
 
@@ -315,13 +309,11 @@ def test_sdk_adapter_does_not_duplicate_policy_events_from_transcript():
         mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
         mock_runner.return_value = mock_runner_instance
 
-        _, trace_events, _, _, _, _ = adapter.run_scenario(
-            scenario, workdir, tooling_harness, budgets
-        )
+        result = adapter.run_scenario(scenario, workdir, tooling_harness, budgets)
 
-    policy_events = [e for e in trace_events if e["event_type"] == "PolicyDecisionEvent"]
+    policy_events = [e for e in result.trace_events if e.event_type == "PolicyDecisionEvent"]
     assert len(policy_events) == 1
-    assert policy_events[0]["data"]["tool_name"] == "bash"
+    assert policy_events[0].data["tool_name"] == "bash"
     assert len(tool_calls_log) == 1
 
 

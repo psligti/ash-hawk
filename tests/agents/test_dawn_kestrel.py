@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from ash_hawk.agents import DawnKestrelAgentRunner
+from ash_hawk.agents import dawn_kestrel as dawn_kestrel_module
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.types import (
     EvalOutcome,
@@ -475,7 +476,11 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
             "execute_bash": MagicMock(),
         }
 
-        filtered = runner._create_filtered_registry(policy_enforcer, mock_registry)
+        filtered = runner._create_filtered_registry(
+            policy_enforcer,
+            mock_registry,
+            use_policy_filters=True,
+        )
 
         assert isinstance(filtered.tools, dict)
 
@@ -499,7 +504,11 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
             "dawn_kestrel.tools.permission_filter.ToolPermissionFilter",
             LegacyToolPermissionFilter,
         ):
-            runner._create_filtered_registry(policy_enforcer, mock_registry)
+            runner._create_filtered_registry(
+                policy_enforcer,
+                mock_registry,
+                use_policy_filters=True,
+            )
 
         assert captured["allowlist"] == ["read*", "write*"]
         assert captured["denylist"] == ["*bash*"]
@@ -523,7 +532,11 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
             "dawn_kestrel.tools.permission_filter.ToolPermissionFilter",
             PermissionsOnlyToolPermissionFilter,
         ):
-            runner._create_filtered_registry(policy_enforcer, mock_registry)
+            runner._create_filtered_registry(
+                policy_enforcer,
+                mock_registry,
+                use_policy_filters=True,
+            )
 
         permissions = captured["permissions"]
         assert isinstance(permissions, list)
@@ -554,15 +567,20 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
         mock_client.complete = AsyncMock(return_value=MockResponse())
 
         captured_enforcer = None
+        captured_use_policy_filters = None
 
         def capture_enforcer(
             pe,
             base_registry=None,
             allowed_tools_override=None,
             denied_tools_override=None,
+            use_policy_filters=False,
         ):
             nonlocal captured_enforcer
+            nonlocal captured_use_policy_filters
+            del allowed_tools_override, denied_tools_override
             captured_enforcer = pe
+            captured_use_policy_filters = use_policy_filters
             mock_result = MagicMock()
             mock_result.tools = {}
             mock_result.get_all = AsyncMock(return_value={})
@@ -577,19 +595,20 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
                 )
 
         assert captured_enforcer is enforcer
+        assert captured_use_policy_filters is False
 
     @pytest.mark.asyncio
-    async def test_run_ignores_empty_policy_snapshot_allowed_tools_override(self, sample_policy):
+    async def test_run_ignores_policy_snapshot_tool_overrides(self, sample_policy):
         runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
         enforcer = PolicyEnforcer(sample_policy)
         task = EvalTask(
             id="task-003",
-            description="Task with empty policy snapshot override",
+            description="Task with policy snapshot override",
             input={
                 "prompt": "Do the thing",
                 "policy_snapshot": {
-                    "allowed_tools": [],
-                    "denied_tools": [],
+                    "allowed_tools": ["read"],
+                    "denied_tools": ["bash"],
                 },
             },
         )
@@ -612,15 +631,20 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
             base_registry=None,
             allowed_tools_override=None,
             denied_tools_override=None,
+            use_policy_filters=False,
         ):
             del base_registry
             nonlocal captured_allowed, captured_denied
+            nonlocal captured_use_policy_filters
             captured_allowed = allowed_tools_override
             captured_denied = denied_tools_override
+            captured_use_policy_filters = use_policy_filters
             mock_result = MagicMock()
             mock_result.tools = {}
             mock_result.get_all = AsyncMock(return_value={})
             return mock_result
+
+        captured_use_policy_filters: bool | None = None
 
         with patch.object(runner, "_get_client", return_value=mock_client):
             with patch.object(runner, "_create_filtered_registry", side_effect=capture_overrides):
@@ -628,6 +652,62 @@ class TestDawnKestrelAgentRunnerPolicyIntegration:
 
         assert captured_allowed is None
         assert captured_denied is None
+        assert captured_use_policy_filters is False
+
+    @pytest.mark.asyncio
+    async def test_run_ignores_enforce_tool_policy_config(self, sample_task, sample_policy):
+        runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
+        enforcer = PolicyEnforcer(sample_policy)
+
+        class MockResponse:
+            text = "Test"
+            messages = []
+            tool_calls = []
+            usage = None
+            cost = 0.0
+
+        mock_client = MagicMock()
+        mock_client.complete = AsyncMock(return_value=MockResponse())
+
+        captured_use_policy_filters: bool | None = None
+
+        def capture_filter_flag(
+            _policy_enforcer,
+            base_registry=None,
+            allowed_tools_override=None,
+            denied_tools_override=None,
+            use_policy_filters=False,
+        ):
+            del base_registry, allowed_tools_override, denied_tools_override
+            nonlocal captured_use_policy_filters
+            captured_use_policy_filters = use_policy_filters
+            mock_result = MagicMock()
+            mock_result.tools = {}
+            mock_result.get_all = AsyncMock(return_value={})
+            return mock_result
+
+        with patch.object(runner, "_get_client", return_value=mock_client):
+            with patch.object(runner, "_create_filtered_registry", side_effect=capture_filter_flag):
+                await runner.run(
+                    task=sample_task,
+                    policy_enforcer=enforcer,
+                    config={"enforce_tool_policy": True},
+                )
+
+        assert captured_use_policy_filters is False
+
+    def test_ensure_eval_command_allowlist_adds_rg(self) -> None:
+        class FakeSecurityModule:
+            ALLOWED_SHELL_COMMANDS = {"git", "grep"}
+
+        with patch.object(
+            dawn_kestrel_module.importlib,
+            "import_module",
+            return_value=FakeSecurityModule,
+        ):
+            dawn_kestrel_module._ensure_eval_command_allowlist()
+
+        assert "rg" in FakeSecurityModule.ALLOWED_SHELL_COMMANDS
 
 
 class TestDawnKestrelAgentRunnerMCPIntegration:
