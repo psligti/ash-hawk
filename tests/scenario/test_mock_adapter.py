@@ -24,16 +24,12 @@ def test_mock_adapter_basic():
     tooling_harness = ToolingHarness(mode="mock", root=workdir)
     budgets = {}
 
-    final_output, trace_events, artifacts, _ = adapter.run_scenario(
-        scenario, workdir, tooling_harness, budgets
-    )
+    result = adapter.run_scenario(scenario, workdir, tooling_harness, budgets)
 
-    # Verify final output
-    assert final_output == "OK"
+    assert result.final_output == "OK"
+    assert result.artifacts == {}
 
-    # Verify artifacts are empty
-    assert artifacts == {}
-
+    trace_events = [e.model_dump() for e in result.trace_events]
     # Verify trace events contain expected events
     assert len(trace_events) >= 3  # At least user message, tool call/result, final message
 

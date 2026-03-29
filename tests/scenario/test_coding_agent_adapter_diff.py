@@ -29,17 +29,18 @@ def test_coding_agent_subprocess_adapter_diff_and_verify() -> None:
         "budgets": {},
     }
 
-    final_output, trace_events, artifacts, _ = adapter.run_scenario(
+    result = adapter.run_scenario(
         scenario=scenario,
         workdir=repo_root,
         tooling_harness={},
         budgets={},
     )
 
-    assert final_output == ""
-    assert set(artifacts.keys()) == {"diff.patch", "stdout.txt", "stderr.txt"}
-    assert "version=2" in artifacts["diff.patch"]
+    assert result.final_output == ""
+    assert set(result.artifacts.keys()) == {"diff.patch", "stdout.txt", "stderr.txt"}
+    assert "version=2" in result.artifacts["diff.patch"]
 
+    trace_events = [e.model_dump() for e in result.trace_events]
     diff_events = [e for e in trace_events if e.get("event_type") == "DiffEvent"]
     assert diff_events
     assert diff_events[0]["data"]["changed_files"] == 1
@@ -50,7 +51,7 @@ def test_coding_agent_subprocess_adapter_diff_and_verify() -> None:
 
     assert any(call["data"]["input"]["command"] == command for call in tool_calls)
     assert any(call["data"]["input"]["command"] == verify_command for call in tool_calls)
-    assert any(result["data"]["result"]["exit_code"] == 0 for result in tool_results)
+    assert any(res["data"]["result"]["exit_code"] == 0 for res in tool_results)
 
     artifact_events = [e for e in trace_events if e.get("event_type") == "ArtifactEvent"]
     artifact_keys = {event["data"]["artifact_key"] for event in artifact_events}
