@@ -34,6 +34,7 @@ from ash_hawk.graders.judge_normalizer import (
     NormalizedJudgeOutput,
     normalize_judge_output,
 )
+from ash_hawk.graders.llm_boolean import LLMBooleanJudgeGrader
 from ash_hawk.graders.prompt_stack_optimizer import (
     PromptStackOptimizerConfig,
     PromptStackOptimizerGrader,
@@ -91,4 +92,12 @@ __all__ = [
     # Prompt stack optimizer
     "PromptStackOptimizerGrader",
     "PromptStackOptimizerConfig",
+    "LLMBooleanJudgeGrader",
+    "AISlopGrader",
+    "VoiceGrader",
+    "SoulGrader",
+    "LLMReplyGrader",
+    "EngagementGrader",
+    "TechnicalGrader",
+    "SafetyGrader",
 ]

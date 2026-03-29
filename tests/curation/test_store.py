@@ -11,8 +11,8 @@ from ash_hawk.curation.store import LessonStore
 
 
 @pytest.fixture
-def store() -> LessonStore:
-    return LessonStore()
+def store(tmp_path) -> LessonStore:
+    return LessonStore(storage_path=tmp_path / "lessons")
 
 
 @pytest.fixture

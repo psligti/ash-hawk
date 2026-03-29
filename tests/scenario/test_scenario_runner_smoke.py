@@ -88,8 +88,11 @@ def test_scenario_runner_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="Detected empty transcripts; aborting scenario run"):
-        run_scenarios([str(scenario_path)])
+    summary = run_scenarios([str(scenario_path)])
+    assert summary.trials
+    trial = summary.trials[0]
+    assert trial.result is not None
+    assert trial.result.transcript.tool_calls
 
 
 def test_scenario_runner_overrides_task_timeout_from_constructor(tmp_path: Path) -> None:

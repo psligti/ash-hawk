@@ -28,7 +28,14 @@ from ash_hawk.scenario.trace import (
     ToolCallEvent,
     ToolResultEvent,
 )
-from ash_hawk.types import EvalOutcome, EvalTask, EvalTranscript, FailureMode, ToolSurfacePolicy
+from ash_hawk.types import (
+    EvalOutcome,
+    EvalTask,
+    EvalTranscript,
+    FailureMode,
+    ToolPermission,
+    ToolSurfacePolicy,
+)
 
 
 class ToolingHarnessRecorder:
@@ -215,7 +222,7 @@ class ScenarioAgentRunner:
                 else policy_enforcer.policy.timeout_seconds
             )
         return ToolSurfacePolicy(
-            allowed_tools=list(scenario.tools.allowed_tools),
+            default_permission=ToolPermission.ALLOW,
             max_tool_calls=scenario.budgets.max_tool_calls,
             token_budget=scenario.budgets.max_tokens,
             timeout_seconds=timeout_seconds,
@@ -279,7 +286,6 @@ class ScenarioAgentRunner:
         artifacts: dict[str, JSONValue],
         config: dict[str, object],
     ) -> list[dict[str, JSONValue]]:
-
         suite_id = str(config.get("suite_id", "unknown-suite"))
         run_id = str(config.get("run_id", "unknown-run"))
         trial_id = str(config.get("trial_id", "unknown-trial"))

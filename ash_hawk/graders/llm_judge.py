@@ -316,6 +316,7 @@ class JudgeConfig(pd.BaseModel):
         default=None,
         description="Expected output constraints (e.g., must_contain keywords) for evaluation",
     )
+    quiet: bool = pd.Field(default=False, description="Suppress verbose output during judging")
 
     model_config = pd.ConfigDict(extra="forbid")
 

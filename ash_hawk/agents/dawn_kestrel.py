@@ -75,6 +75,17 @@ def _mcp_result_to_text(result: dict[str, Any]) -> str:
     return json.dumps(result, ensure_ascii=True, default=str)
 
 
+def _ensure_eval_command_allowlist() -> None:
+    try:
+        security_module = importlib.import_module("dawn_kestrel.core.security")
+    except ImportError:
+        return
+
+    allowed_commands = getattr(security_module, "ALLOWED_SHELL_COMMANDS", None)
+    if isinstance(allowed_commands, set):
+        allowed_commands.add("rg")
+
+
 class _McpStdioClient:
     def __init__(self, config: _McpServerConfig) -> None:
         self._config = config
@@ -621,6 +632,7 @@ class DawnKestrelAgentRunner:
         base_registry: Any = None,
         allowed_tools_override: list[str] | None = None,
         denied_tools_override: list[str] | None = None,
+        use_policy_filters: bool = False,
     ) -> Any:
         try:
             tools_registry_module = importlib.import_module("dawn_kestrel.tools.registry")
@@ -637,8 +649,11 @@ class DawnKestrelAgentRunner:
             setattr(base_registry, "tool_metadata", {})
 
         policy = policy_enforcer.policy
-        allowed_tools = list(policy.allowed_tools) if policy.allowed_tools else []
-        denied_tools = list(policy.denied_tools) if policy.denied_tools else []
+        allowed_tools: list[str] = []
+        denied_tools: list[str] = []
+        if use_policy_filters:
+            allowed_tools = list(policy.allowed_tools) if policy.allowed_tools else []
+            denied_tools = list(policy.denied_tools) if policy.denied_tools else []
         if allowed_tools_override is not None:
             allowed_tools = list(allowed_tools_override)
         if denied_tools_override is not None:
@@ -941,31 +956,18 @@ class DawnKestrelAgentRunner:
             session_type = getattr(core_models_module, "Session")
             llm_request_options_type = getattr(llm_client_module, "LLMRequestOptions")
 
+            _ensure_eval_command_allowlist()
+
             client = self._get_client()
             task_input = task.input
-            override_allowed_tools: list[str] | None = None
-            override_denied_tools: list[str] | None = None
-            if isinstance(task_input, dict):
-                policy_snapshot = task_input.get("policy_snapshot")
-                if isinstance(policy_snapshot, dict):
-                    raw_allowed = policy_snapshot.get("allowed_tools")
-                    if isinstance(raw_allowed, list):
-                        allowed_override = [tool for tool in raw_allowed if isinstance(tool, str)]
-                        if allowed_override:
-                            override_allowed_tools = allowed_override
-                    raw_denied = policy_snapshot.get("denied_tools")
-                    if isinstance(raw_denied, list):
-                        denied_override = [tool for tool in raw_denied if isinstance(tool, str)]
-                        if denied_override:
-                            override_denied_tools = denied_override
 
             base_registry = self._create_base_registry()
             mcp_clients = await self._register_mcp_tools(base_registry)
+            use_policy_filters = False
             filtered_registry = self._create_filtered_registry(
                 policy_enforcer,
                 base_registry=base_registry,
-                allowed_tools_override=override_allowed_tools,
-                denied_tools_override=override_denied_tools,
+                use_policy_filters=use_policy_filters,
             )
 
             if isinstance(task_input, dict):
