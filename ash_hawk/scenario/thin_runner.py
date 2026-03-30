@@ -141,6 +141,14 @@ class ThinScenarioRunner:
             workdir=self.workdir,
         )
 
+        if not result.outcome.success:
+            logger.warning(
+                "Agent run failed (outcome: %s), skipping grading for scenario '%s'",
+                result.outcome.error or result.outcome.message,
+                scenario.id,
+            )
+            return ThinGradedResult(run_result=result, grader_results=[])
+
         if not scenario.graders:
             return ThinGradedResult(run_result=result, grader_results=[])
 

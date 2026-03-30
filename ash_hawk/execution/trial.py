@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import logging
 import time
 import traceback
 import uuid
@@ -30,6 +32,8 @@ from ash_hawk.types import (
 if TYPE_CHECKING:
     from ash_hawk.graders.registry import GraderRegistry
     from ash_hawk.storage import StorageBackend
+
+logger = logging.getLogger(__name__)
 
 
 @runtime_checkable
@@ -237,17 +241,24 @@ class TrialExecutor:
             runner_config.setdefault("run_id", run_envelope.run_id)
             runner_config.setdefault("suite_id", run_envelope.suite_id)
 
-            transcript, outcome = await asyncio.wait_for(
-                self._agent_runner.run(resolved_task, policy_enforcer, runner_config),
-                timeout=timeout_seconds,
+            run_task = asyncio.create_task(
+                self._agent_runner.run(resolved_task, policy_enforcer, runner_config)
             )
+            _done, pending = await asyncio.wait({run_task}, timeout=timeout_seconds)
 
-        except TimeoutError:
-            outcome = EvalOutcome.failure(
-                FailureMode.TIMEOUT,
-                f"Trial timed out after {timeout_seconds}s",
-            )
-            transcript = transcript.model_copy(update={"error_trace": "Trial execution timed out"})
+            if pending:
+                run_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await run_task
+                outcome = EvalOutcome.failure(
+                    FailureMode.TIMEOUT,
+                    f"Trial timed out after {timeout_seconds}s",
+                )
+                transcript = transcript.model_copy(
+                    update={"error_trace": "Trial execution timed out"}
+                )
+            else:
+                transcript, outcome = run_task.result()
 
         except asyncio.CancelledError:
             cancelled = True
@@ -294,20 +305,27 @@ class TrialExecutor:
             )
 
             if trial_result.outcome.status == EvalStatus.COMPLETED:
-                grader_results = await self._run_graders(
-                    eval_trial_for_grading, transcript, resolved_task
-                )
-                aggregate_score, aggregate_passed = _aggregate_grader_results(
-                    resolved_task.grader_specs,
-                    grader_results,
-                )
-                trial_result = trial_result.model_copy(
-                    update={
-                        "grader_results": grader_results,
-                        "aggregate_score": aggregate_score,
-                        "aggregate_passed": aggregate_passed,
-                    }
-                )
+                if not transcript.messages and transcript.agent_response is None:
+                    logger.warning(
+                        "Trial %s completed but transcript is empty "
+                        "(no messages, no agent_response), skipping grading",
+                        trial_id,
+                    )
+                else:
+                    grader_results = await self._run_graders(
+                        eval_trial_for_grading, transcript, resolved_task
+                    )
+                    aggregate_score, aggregate_passed = _aggregate_grader_results(
+                        resolved_task.grader_specs,
+                        grader_results,
+                    )
+                    trial_result = trial_result.model_copy(
+                        update={
+                            "grader_results": grader_results,
+                            "aggregate_score": aggregate_score,
+                            "aggregate_passed": aggregate_passed,
+                        }
+                    )
 
             eval_trial = EvalTrial(
                 id=trial_id,
@@ -497,7 +515,7 @@ class TrialExecutor:
             candidate_weights: list[float] = []
             valid_weights = True
             for raw_weight in explicit_weights_raw:
-                if isinstance(raw_weight, (float, int, str)):
+                if isinstance(raw_weight, float | int | str):
                     candidate_weights.append(float(raw_weight))
                 else:
                     valid_weights = False
