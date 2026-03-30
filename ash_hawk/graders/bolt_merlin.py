@@ -117,6 +117,49 @@ class TodoStateGrader(Grader):
 
         return errors
 
+    def _extract_completion_claims(
+        self, tool_calls: list[dict[str, Any]], trace_events: list[dict[str, Any]] | None
+    ) -> dict[str, dict[str, Any]]:
+        claims: dict[str, dict[str, Any]] = {}
+
+        sources = list(tool_calls or [])
+        if trace_events:
+            sources.extend(trace_events)
+
+        for event in sources:
+            name = event.get("name", "")
+            args = event.get("args", {})
+            if not isinstance(args, dict):
+                continue
+
+            if name == "submit_completion_claim" or name == "todo_completion_claim":
+                todo_id = args.get("todo_id") or args.get("task_id") or args.get("id")
+                if not todo_id:
+                    continue
+                claims[todo_id] = {
+                    "todo_id": todo_id,
+                    "evidence_type": args.get("evidence_type", "unknown"),
+                    "evidence_summary": args.get("evidence_summary", ""),
+                    "evidence_refs": args.get("evidence_refs", []),
+                    "confidence": args.get("confidence", 1.0),
+                }
+
+            data = event.get("data", {})
+            if isinstance(data, dict) and data.get("completion_claims"):
+                for claim in data["completion_claims"]:
+                    if isinstance(claim, dict):
+                        todo_id = claim.get("todo_id")
+                        if todo_id:
+                            claims[todo_id] = {
+                                "todo_id": todo_id,
+                                "evidence_type": claim.get("evidence_type", "unknown"),
+                                "evidence_summary": claim.get("evidence_summary", ""),
+                                "evidence_refs": claim.get("evidence_refs", []),
+                                "confidence": claim.get("confidence", 1.0),
+                            }
+
+        return claims
+
     async def grade(
         self,
         trial: EvalTrial,
@@ -130,6 +173,8 @@ class TodoStateGrader(Grader):
         allow_extra_tasks = config.get("allow_extra_tasks", True)
         required_tasks = config.get("required_tasks", [])
         required_priority_order = config.get("required_priority_order", [])
+        validate_claims = config.get("validate_completion_claims", False)
+        require_evidence_refs = config.get("require_evidence_refs", False)
 
         todos = self._extract_todos_from_tool_calls(effective_transcript.tool_calls or [])
 
@@ -153,6 +198,31 @@ class TodoStateGrader(Grader):
 
         if not allow_extra_tasks and exact_task_count is not None and len(todos) > exact_task_count:
             errors.append(f"Extra tasks not allowed: {len(todos)} > {exact_task_count}")
+
+        if validate_claims:
+            claims = self._extract_completion_claims(
+                effective_transcript.tool_calls or [],
+                getattr(effective_transcript, "trace_events", None),
+            )
+
+            completed_todos = [t for t in todos if t.get("status") == "completed"]
+
+            for todo in completed_todos:
+                todo_id = todo.get("id", "")
+                claim = claims.get(todo_id)
+
+                if not claim:
+                    errors.append(f"Completed todo '{todo_id}' has no completion claim")
+                    continue
+
+                if require_evidence_refs and not claim.get("evidence_refs"):
+                    errors.append(f"Completion claim for '{todo_id}' has no evidence_refs")
+
+                if claim.get("evidence_type") == "inference" and claim.get("confidence", 1.0) < 0.8:
+                    errors.append(
+                        f"Completion claim for '{todo_id}' uses inference with low confidence "
+                        f"({claim.get('confidence')})"
+                    )
 
         return GraderResult(
             grader_type=self.name,
