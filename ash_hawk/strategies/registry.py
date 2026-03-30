@@ -42,6 +42,8 @@ class SubStrategy(StrEnum):
     CONTEXT_RELEVANCE = "context-relevance"
     VOICE_TONE = "voice-tone"
     PLAYBOOK_ADHERENCE = "playbook-adherence"
+    CLASSIFICATION_ACCURACY = "classification-accuracy"
+    FALSE_POSITIVE_RATE = "false-positive-rate"
 
     TOOL_EFFICIENCY = "tool-efficiency"
     TOOL_SELECTION = "tool-selection"
@@ -55,7 +57,7 @@ class SubStrategy(StrEnum):
 
     RUBRIC_PRECISION = "rubric-precision"
     TEST_COVERAGE = "test-coverage"
-    FALSE_POSITIVE_RATE = "false-positive-rate"
+    EVAL_FALSE_POSITIVE_RATE = "eval-false-positive-rate"
 
     EVIDENCE_QUALITY = "evidence-quality"
     TASK_COMPLETION = "task-completion"
@@ -93,7 +95,7 @@ STRATEGY_HIERARCHY: dict[Strategy, list[SubStrategy]] = {
     Strategy.EVAL_QUALITY: [
         SubStrategy.RUBRIC_PRECISION,
         SubStrategy.TEST_COVERAGE,
-        SubStrategy.FALSE_POSITIVE_RATE,
+        SubStrategy.EVAL_FALSE_POSITIVE_RATE,
     ],
     Strategy.AGENT_BEHAVIOR: [
         SubStrategy.EVIDENCE_QUALITY,
