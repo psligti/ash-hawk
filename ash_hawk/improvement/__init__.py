@@ -1,4 +1,4 @@
-"""Improvement module for agent behavior optimization.
+"""Improvement module for proposing and applying unified diffs.
 
 This module provides tools for capturing prompts and data structures
 for the improvement agent, based on the control level hierarchy:
@@ -59,4 +59,6 @@ __all__ = [
     "GuardrailChecker",
     "GuardrailConfig",
     "GuardrailState",
+    "DiffProposal",
+    "ApplyResult",
 ]

@@ -177,7 +177,7 @@ class HTMLReporter:
         if output_path:
             Path(output_path).write_text(html, encoding="utf-8")
 
-        return html
+        return str(html)
 
     def generate_task_report(
         self,
@@ -240,7 +240,7 @@ class HTMLReporter:
         if output_path:
             Path(output_path).write_text(html, encoding="utf-8")
 
-        return html
+        return str(html)
 
     def generate_trial_report(
         self,
@@ -286,7 +286,7 @@ class HTMLReporter:
         if output_path:
             Path(output_path).write_text(html, encoding="utf-8")
 
-        return html
+        return str(html)
 
     def generate_from_summary(
         self,

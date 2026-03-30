@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "ash-hawk"
-version = "0.1.0"
+version = "0.1.1"
 description = "Ash Hawk - Python evaluation harness for AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -93,7 +93,50 @@ module = [
 ]
 ignore_errors = true
 
+# Click decorators lose type information in strict mode — known limitation.
+# https://github.com/pallets/click/issues/2554
+[[tool.mypy.overrides]]
+module = [
+  "ash_hawk.cli.compare",
+  "ash_hawk.cli.fast_eval",
+  "ash_hawk.cli.list",
+  "ash_hawk.cli.main",
+  "ash_hawk.cli.report",
+  "ash_hawk.cli.run",
+  "ash_hawk.cli.scenario",
+  "ash_hawk.cli.calibrate",
+  "ash_hawk.cli.thin",
+  "ash_hawk.auto_research.cli",
+  "ash_hawk.auto_research.enhanced_cli",
+]
+disable_error_code = ["misc"]
+
+[[tool.mypy.overrides]]
+module = [
+  "ash_hawk.config",
+  "ash_hawk.eval_packs.vox_jay_pack",
+  "ash_hawk.reporting.html",
+  "ash_hawk.graders.llm_boolean_specialized",
+  "ash_hawk.graders.llm_boolean",
+  "ash_hawk.experiments.conflict_resolver",
+  "ash_hawk.curation.persistent_store",
+  "ash_hawk.curation.applicability",
+  "ash_hawk.services.lesson_service",
+  "ash_hawk.materialization.git_backend",
+  "ash_hawk.services.async_lesson_service",
+  "ash_hawk.integration.dawn_kestrel_hook",
+  "ash_hawk.integration.rate_limited_queue",
+  "ash_hawk.adapters.artifact_adapter",
+  "ash_hawk.auto_research.enhanced_cycle_runner",
+  "ash_hawk.auto_research.enhanced_cli",
+]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=ash_hawk --cov-report=term-missing"
 asyncio_mode = "auto"
+markers = [
+  "unit: Fast unit tests (no suite execution, mocked agents)",
+  "integration: Slow integration tests (actual suite runs)",
+]

@@ -37,7 +37,15 @@ class TranscriptToArtifactConverter:
             steps=[],
             messages=transcript.messages or [],
             total_duration_ms=int(transcript.duration_seconds * 1000),
-            token_usage=transcript.token_usage,
+            token_usage=(
+                {
+                    "input": transcript.token_usage.input,
+                    "output": transcript.token_usage.output,
+                    "total": transcript.token_usage.total,
+                }
+                if transcript.token_usage
+                else {}
+            ),
             cost_usd=transcript.cost_usd,
             error_message=transcript.error_trace,
             metadata={
@@ -58,14 +66,11 @@ class TranscriptToArtifactConverter:
         for idx, call in enumerate(raw_calls):
             if isinstance(call, dict):
                 record = ToolCallRecord(
-                    call_id=f"tc-{uuid4().hex[:8]}-{idx}",
                     tool_name=call.get("tool", call.get("name", "unknown")),
-                    arguments=call.get("input", call.get("arguments", {})),
-                    result=call.get("output", call.get("result")),
                     outcome="success" if "error" not in call else "failure",
                     error_message=call.get("error"),
-                    started_at=datetime.now(UTC),
-                    completed_at=datetime.now(UTC),
+                    input_args=call.get("input", call.get("arguments", {})),
+                    output=call.get("output", call.get("result")),
                 )
                 records.append(record)
 

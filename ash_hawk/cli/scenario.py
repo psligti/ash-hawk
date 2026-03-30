@@ -100,11 +100,11 @@ def _override_sut_in_place(
             policy=policy,
         )
         if updated != scenario:
-            if temp_dir is None:
-                temp_dir = tempfile.TemporaryDirectory[str]()
             filename = f"{scenario_path.stem}.sut-{uuid.uuid4().hex[:8]}.scenario.yaml"
+            dest = scenario_path.parent / filename
             _write_scenario(dest, updated)
             adjusted_paths.append(str(dest))
+            temp_paths.append(dest)
         else:
             adjusted_paths.append(str(scenario_path))
 

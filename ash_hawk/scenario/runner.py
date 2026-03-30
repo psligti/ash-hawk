@@ -80,8 +80,10 @@ class ScenarioRunner:
         self._scenario_timeout_seconds = scenario_timeout_seconds
         self._grader_config_overrides = grader_config_overrides or {}
         self._on_trial_progress = on_trial_progress
+        resolved_parallelism = parallelism or config.parallelism
         self._config = EvalConfig(
-            parallelism=parallelism or config.parallelism,
+            parallelism=resolved_parallelism,
+            trial_max_workers=resolved_parallelism,
             default_timeout_seconds=config.default_timeout_seconds,
             storage_backend=config.storage_backend,
             storage_path=config.storage_path,

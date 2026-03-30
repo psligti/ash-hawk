@@ -319,6 +319,10 @@ class EvalMcpServerConfig(pd.BaseModel):
 class EvalTask(pd.BaseModel):
     """Single test case for evaluation.
 
+    DEPRECATED: EvalTask is deprecated and will be removed in a future version.
+    Use Scenario (ash_hawk.scenario.models.ScenarioV1) instead, which provides
+    a more flexible format for defining evaluation scenarios.
+
     Supports both simple string inputs and structured payloads for
     coding, conversational, and research tasks.
     """
@@ -372,7 +376,12 @@ class EvalTask(pd.BaseModel):
 
 
 class EvalSuite(pd.BaseModel):
-    """Collection of related evaluation tasks."""
+    """Collection of related evaluation tasks.
+
+    DEPRECATED: EvalSuite is deprecated and will be removed in a future version.
+    Use Scenario (ash_hawk.scenario.models.ScenarioV1) for individual scenarios,
+    or organize scenarios in directories for batch execution.
+    """
 
     id: str = pd.Field(
         description="Unique identifier for this suite",
@@ -659,6 +668,10 @@ class TrialEnvelope(pd.BaseModel):
 
 class EvalTrial(pd.BaseModel):
     """Single attempt at evaluating an agent on a task.
+
+    DEPRECATED: EvalTrial is deprecated and will be removed in a future version.
+    The thin telemetry bridge (ash_hawk.bridge) provides RunResult with
+    TranscriptData and OutcomeData for capturing agent execution results.
 
     Represents one complete trial with all associated metadata,
     transcript, and results.

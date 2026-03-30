@@ -19,6 +19,7 @@ from ash_hawk.execution.queue import (
     LLMRequestQueue,
     TrialExecutionQueue,
     TrialJob,
+    get_llm_queue_sync,
     register_llm_queue,
 )
 from ash_hawk.execution.trial import TrialExecutor
@@ -109,11 +110,15 @@ class EvalRunner:
         self._storage = storage
         self._trial_executor = trial_executor
         self._on_trial_progress = on_trial_progress
-        self._llm_queue = LLMRequestQueue(
-            max_workers=config.llm_max_workers,
-            timeout_seconds=config.llm_timeout_seconds,
-        )
-        register_llm_queue(self._llm_queue)
+        existing_queue = get_llm_queue_sync()
+        if existing_queue is not None:
+            self._llm_queue = existing_queue
+        else:
+            self._llm_queue = LLMRequestQueue(
+                max_workers=config.llm_max_workers,
+                timeout_seconds=config.llm_timeout_seconds,
+            )
+            register_llm_queue(self._llm_queue)
         self._trial_queue = TrialExecutionQueue(
             max_workers=config.trial_max_workers,
             timeout_seconds=config.default_timeout_seconds,

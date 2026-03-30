@@ -28,10 +28,12 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from ash_hawk.execution.queue import LLMRequestQueue
+
 logger = logging.getLogger(__name__)
 
 
-class RateLimitedLLMQueue:
+class RateLimitedLLMQueue(LLMRequestQueue):
     """LLMRequestQueue-compatible adapter with per-provider rate limiting.
 
     Bridges ash-hawk's LLMRequestQueue.execute() interface with dawn-kestrel's
@@ -58,6 +60,7 @@ class RateLimitedLLMQueue:
         max_concurrent: int = 10,
         timeout_seconds: float = 300.0,
     ) -> None:
+        super().__init__(max_workers=max_concurrent, timeout_seconds=timeout_seconds)
         self._providers = [self._normalize_provider(p) for p in (providers or ["anthropic"])]
         self._max_concurrent = max_concurrent
         self._timeout = timeout_seconds
@@ -88,9 +91,10 @@ class RateLimitedLLMQueue:
             current_loop = None
 
         if self._semaphore is None or self._semaphore_loop != current_loop:
-            self._semaphore = asyncio.Semaphore(self._max_concurrent)
+            self._semaphore = asyncio.Lock()
             self._semaphore_loop = current_loop
-        assert self._semaphore is not None
+        if self._semaphore is None:
+            raise RuntimeError("Failed to initialize semaphore")
         return self._semaphore
 
     def _get_tracker(self, provider: str) -> Any:
@@ -159,7 +163,7 @@ class RateLimitedLLMQueue:
         return self._stats.copy()
 
     def _extract_token_usage(self, response: Any) -> Any:
-        from ash_hawk.execution.queue import TokenUsage  # pyright: ignore[reportMissingTypeStubs]
+        from ash_hawk.types import TokenUsage
 
         usage = TokenUsage()
         if hasattr(response, "usage") and response.usage:
@@ -199,11 +203,14 @@ def setup_rate_limiting(
         setup_rate_limiting(providers=["anthropic", "openai"], max_concurrent=10)
         # Now run evals normally - rate limiting is active
     """
-    from ash_hawk.execution import register_llm_queue, reset_llm_queue  # pyright: ignore[reportMissingTypeStubs]
+    from ash_hawk.execution import (  # pyright: ignore[reportMissingTypeStubs]
+        register_llm_queue,
+        reset_llm_queue,
+    )
 
     reset_llm_queue()
     queue = RateLimitedLLMQueue(providers=providers, max_concurrent=max_concurrent)
-    register_llm_queue(queue)  # pyright: ignore[reportArgumentType]
+    register_llm_queue(queue)
     logger.info(f"Rate limiting enabled for providers: {providers or ['anthropic']}")
     return queue
 

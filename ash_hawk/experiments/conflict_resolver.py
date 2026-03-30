@@ -168,7 +168,8 @@ class ConflictResolver:
         # Group conflicts by lesson pairs
         conflict_pairs: dict[tuple[str, str], list[ConflictInfo]] = {}
         for conflict in conflicts:
-            key = tuple(sorted([conflict.lesson_a.lesson_id, conflict.lesson_b.lesson_id]))
+            ids = sorted([conflict.lesson_a.lesson_id, conflict.lesson_b.lesson_id])
+            key = (ids[0], ids[1])
             if key not in conflict_pairs:
                 conflict_pairs[key] = []
             conflict_pairs[key].append(conflict)

@@ -6,6 +6,7 @@ import asyncio
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import click
 from rich.console import Console
@@ -23,9 +24,9 @@ from ash_hawk.execution.queue import LLMRequestQueue, register_llm_queue
 console = Console()
 
 
-def _serialize_result(result: EnhancedCycleResult) -> dict:
+def _serialize_result(result: EnhancedCycleResult) -> dict[str, Any]:
     """Serialize result to JSON-compatible dict."""
-    data = {
+    data: dict[str, Any] = {
         "agent_name": result.agent_name,
         "status": result.status.value if hasattr(result, "status") else "unknown",
         "overall_improvement": result.overall_improvement,
@@ -70,7 +71,7 @@ def _print_result(result: EnhancedCycleResult) -> None:
     for name, cycle_result in result.target_results.items():
         table.add_row(
             name,
-            cycle_result.target_type.value,
+            cycle_result.target_type.value if cycle_result.target_type else "unknown",
             f"{cycle_result.initial_score:.3f}",
             f"{cycle_result.final_score:.3f}",
             f"{cycle_result.improvement_delta:+.3f}",

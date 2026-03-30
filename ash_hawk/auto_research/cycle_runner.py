@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import yaml
 from rich.console import Console
 
 from ash_hawk.auto_research.convergence import ConvergenceDetector
@@ -27,12 +28,12 @@ from ash_hawk.auto_research.types import (
 )
 from ash_hawk.graders.validity import TranscriptValidityGrader
 from ash_hawk.improvement.guardrails import GuardrailChecker, GuardrailConfig
-from ash_hawk.scenario import load_scenario, run_scenarios_async
+from ash_hawk.scenario import run_scenarios_async
 from ash_hawk.services.dawn_kestrel_injector import (
     DAWN_KESTREL_DIR,
     DawnKestrelInjector,
 )
-from ash_hawk.types import EvalTranscript, EvalTrial, GraderSpec
+from ash_hawk.types import EvalTrial, GraderSpec
 
 if TYPE_CHECKING:
     from dawn_kestrel.agents.context import BaseContextStrategy
@@ -41,6 +42,22 @@ logger = logging.getLogger(__name__)
 console = Console()
 
 THROBBER_CHARS = "|/-\\"
+
+_AUTO_RESEARCH_ALLOWED_SCENARIO_KEYS = {
+    "schema_version",
+    "id",
+    "description",
+    "sut",
+    "inputs",
+    "graders",
+}
+
+_AUTO_RESEARCH_DISALLOWED_SCENARIO_KEYS = {
+    "tools",
+    "budget",
+    "budgets",
+    "expectations",
+}
 
 
 class ProgressTracker:
@@ -225,12 +242,6 @@ POLICY_SEARCH_DIRS = [
     Path(".claude/policies"),
 ]
 
-POLICY_SEARCH_DIRS = [
-    DAWN_KESTREL_DIR / "policies",
-    Path(".opencode/policies"),
-    Path(".claude/policies"),
-]
-
 
 def _create_llm_client() -> Any:
     try:
@@ -270,7 +281,6 @@ def _discover_improvement_target(
     if not scenarios:
         return None
 
-    first_scenario = load_scenario(scenarios[0])
     scenario_root = scenarios[0].parent
 
     resolved_root = project_root or _find_project_root(scenario_root)
@@ -299,7 +309,7 @@ def _discover_improvement_target(
             )
 
     if TargetType.TOOL in allowed_types:
-        tool_target = _find_primary_tool(resolved_root, first_scenario.tools.allowed_tools)
+        tool_target = _find_primary_tool(resolved_root)
         if tool_target:
             tool_name = _infer_name_from_path(tool_target)
             return ImprovementTarget(
@@ -343,7 +353,6 @@ def _discover_all_improvement_targets(
     if not scenarios:
         return []
 
-    first_scenario = load_scenario(scenarios[0])
     scenario_root = scenarios[0].parent
 
     resolved_root = project_root or _find_project_root(scenario_root)
@@ -375,7 +384,7 @@ def _discover_all_improvement_targets(
             )
 
     if TargetType.TOOL in allowed_types:
-        tool_target = _find_primary_tool(resolved_root, first_scenario.tools.allowed_tools)
+        tool_target = _find_primary_tool(resolved_root)
         if tool_target:
             tool_name = _infer_name_from_path(tool_target)
             injector = DawnKestrelInjector(project_root=resolved_root, strategy=strategy)
@@ -552,16 +561,12 @@ def _discover_all_agents(project_root: Path) -> list[Path]:
     return agent_files
 
 
-def _find_primary_tool(project_root: Path, allowed_tools: list[str]) -> Path | None:
-    if not allowed_tools:
-        return None
-
-    primary_tool = allowed_tools[0]
+def _find_primary_tool(project_root: Path) -> Path | None:
     for tool_dir in TOOL_SEARCH_DIRS:
         tools_path = project_root / tool_dir
         if tools_path.exists() and tools_path.is_dir():
-            for tool_subdir in tools_path.iterdir():
-                if tool_subdir.is_dir() and tool_subdir.name == primary_tool:
+            for tool_subdir in sorted(tools_path.iterdir()):
+                if tool_subdir.is_dir():
                     tool_file = tool_subdir / "TOOL.md"
                     if tool_file.exists():
                         return tool_file
@@ -667,7 +672,12 @@ async def run_cycle(
     guardrail_config: GuardrailConfig | None = None,
     target_types: list[TargetType] | None = None,
     improve_all_targets: bool = False,
+    use_thin_bridge: bool = False,
+    candidate_target_updates: int = 1,
+    parallelism: int | None = None,
 ) -> CycleResult:
+    _validate_auto_research_scenarios(scenarios)
+
     if llm_client is None:
         llm_client = _create_llm_client()
 
@@ -731,6 +741,14 @@ async def run_cycle(
             status=CycleStatus.ERROR,
             error_message="Could not discover improvement target from scenarios",
         )
+
+    if candidate_target_updates > 1 and not all_targets:
+        all_targets = _discover_all_improvement_targets(
+            scenarios, project_root, strategy, target_types
+        )
+        if target and not any(t.structured_path == target.structured_path for t in all_targets):
+            all_targets = [target, *all_targets]
+
     result = CycleResult(
         agent_name=_infer_agent_name(target),
         target_path=str(target.structured_path),
@@ -750,6 +768,7 @@ async def run_cycle(
         console.print(f"[dim]Held-out: {len(heldout_scenarios)}[/dim]")
     console.print(f"[dim]Iterations: {iterations}[/dim]")
     console.print(f"[dim]Threshold: {threshold}[/dim]")
+    console.print(f"[dim]Candidate target updates: {max(1, candidate_target_updates)}[/dim]")
 
     existing_skills = _load_existing_skill_names(project_root or Path.cwd())
     if existing_skills:
@@ -762,10 +781,13 @@ async def run_cycle(
             "Baseline eval", tracker=ProgressTracker(total=len(scenarios), label="scenarios")
         ) as tracker:
             score, transcripts_raw, category_scores = await _run_evaluation(
-                scenarios,
-                storage,
+                scenarios=scenarios,
+                storage=storage,
                 injector=target.injector,
                 scenario_timeout_seconds=scenario_timeout_seconds,
+                use_thin_bridge=use_thin_bridge,
+                project_root=project_root,
+                parallelism=parallelism,
             )
             tracker.current = len(scenarios)
         result.initial_score = score
@@ -783,10 +805,13 @@ async def run_cycle(
                 tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
             ) as tracker:
                 heldout_score, _, _ = await _run_evaluation(
-                    heldout_scenarios,
-                    storage / "heldout",
+                    scenarios=heldout_scenarios,
+                    storage=storage / "heldout",
                     injector=target.injector,
                     scenario_timeout_seconds=scenario_timeout_seconds,
+                    use_thin_bridge=use_thin_bridge,
+                    project_root=project_root,
+                    parallelism=parallelism,
                 )
                 tracker.current = len(heldout_scenarios)
             console.print(f"  [dim]Held-out baseline: {heldout_score:.3f}[/dim]")
@@ -816,6 +841,11 @@ async def run_cycle(
                 existing_skills=existing_skills,
                 category_scores=category_scores,
                 scenario_timeout_seconds=scenario_timeout_seconds,
+                use_thin_bridge=use_thin_bridge,
+                project_root=project_root,
+                candidate_targets=all_targets if candidate_target_updates > 1 else None,
+                max_candidate_updates=max(1, candidate_target_updates),
+                parallelism=parallelism,
             )
             result.iterations.append(iter_result)
             current_score = iter_result.score_after
@@ -840,10 +870,13 @@ async def run_cycle(
                     tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
                 ) as tracker:
                     heldout_score, _, _ = await _run_evaluation(
-                        heldout_scenarios,
-                        storage / "heldout",
+                        scenarios=heldout_scenarios,
+                        storage=storage / "heldout",
                         injector=target.injector,
                         scenario_timeout_seconds=scenario_timeout_seconds,
+                        use_thin_bridge=use_thin_bridge,
+                        project_root=project_root,
+                        parallelism=parallelism,
                     )
                     tracker.current = len(heldout_scenarios)
                 console.print(f"  [dim]Held-out: {heldout_score:.3f}[/dim]")
@@ -885,6 +918,70 @@ async def run_cycle(
     return result
 
 
+def _validate_auto_research_scenarios(scenarios: list[Path]) -> None:
+    for scenario_path in scenarios:
+        _validate_auto_research_scenario(scenario_path)
+
+
+def _validate_auto_research_scenario(scenario_path: Path) -> None:
+    content = scenario_path.read_text(encoding="utf-8")
+    loaded = yaml.safe_load(content)
+
+    if not isinstance(loaded, dict):
+        raise ValueError(f"Auto-research scenario must be a YAML mapping: {scenario_path}")
+
+    missing_required = sorted(
+        key for key in _AUTO_RESEARCH_ALLOWED_SCENARIO_KEYS if key not in loaded
+    )
+    if missing_required:
+        missing = ", ".join(missing_required)
+        raise ValueError(
+            f"Auto-research scenario missing required top-level keys ({missing}) in {scenario_path}."
+        )
+
+    disallowed = sorted(key for key in _AUTO_RESEARCH_DISALLOWED_SCENARIO_KEYS if key in loaded)
+    if disallowed:
+        disallowed_keys = ", ".join(disallowed)
+        raise ValueError(
+            f"Auto-research scenario has disallowed top-level keys ({disallowed_keys}) in "
+            f"{scenario_path}. Keep scenario minimal and focused on intent + graders."
+        )
+
+    inputs = loaded.get("inputs")
+    if not isinstance(inputs, dict):
+        raise ValueError(f"Auto-research scenario inputs must be a mapping in {scenario_path}.")
+
+    intent = inputs.get("intent")
+    if not isinstance(intent, str) or not intent.strip():
+        raise ValueError(
+            f"Auto-research scenario must include inputs.intent describing execution intent in {scenario_path}."
+        )
+
+    graders = loaded.get("graders")
+    if not isinstance(graders, list) or not graders:
+        raise ValueError(
+            f"Auto-research scenario must define at least one grader in {scenario_path}."
+        )
+
+    for index, grader in enumerate(graders):
+        if not isinstance(grader, dict):
+            raise ValueError(
+                f"Auto-research scenario grader #{index + 1} must be a mapping in {scenario_path}."
+            )
+
+        grader_type = grader.get("grader_type")
+        if not isinstance(grader_type, str) or not grader_type.strip():
+            raise ValueError(
+                f"Auto-research scenario grader #{index + 1} must include grader_type in {scenario_path}."
+            )
+
+        config = grader.get("config")
+        if not isinstance(config, dict):
+            raise ValueError(
+                f"Auto-research scenario grader #{index + 1} must include config mapping in {scenario_path}."
+            )
+
+
 async def _run_iteration(
     iteration_num: int,
     target: ImprovementTarget,
@@ -899,7 +996,34 @@ async def _run_iteration(
     existing_skills: list[str] | None = None,
     category_scores: dict[str, float] | None = None,
     scenario_timeout_seconds: float | None = None,
+    use_thin_bridge: bool = False,
+    project_root: Path | None = None,
+    candidate_targets: list[ImprovementTarget] | None = None,
+    max_candidate_updates: int = 1,
+    parallelism: int | None = None,
 ) -> IterationResult:
+    if candidate_targets and max_candidate_updates > 1:
+        return await _run_iteration_hill_climb(
+            iteration_num=iteration_num,
+            target=target,
+            candidate_targets=candidate_targets,
+            max_candidate_updates=max_candidate_updates,
+            scenarios=scenarios,
+            storage=storage,
+            llm_client=llm_client,
+            score_before=score_before,
+            cached_transcripts=cached_transcripts,
+            threshold=threshold,
+            failed_proposals=failed_proposals,
+            consecutive_failures=consecutive_failures,
+            existing_skills=existing_skills,
+            category_scores=category_scores,
+            scenario_timeout_seconds=scenario_timeout_seconds,
+            use_thin_bridge=use_thin_bridge,
+            project_root=project_root,
+            parallelism=parallelism,
+        )
+
     original_target = target
     original_content = target.read_content()
     if not original_content:
@@ -913,11 +1037,14 @@ async def _run_iteration(
     if transcripts is None:
         async with progress_indicator("Eval for transcripts"):
             _, transcripts, _ = await _run_evaluation(
-                scenarios,
-                storage,
+                scenarios=scenarios,
+                storage=storage,
                 show_failure_patterns=False,
                 injector=target.injector,
                 scenario_timeout_seconds=scenario_timeout_seconds,
+                use_thin_bridge=use_thin_bridge,
+                project_root=project_root,
+                parallelism=parallelism,
             )
 
     valid_transcripts, error_signals = await _filter_valid_transcripts(transcripts)
@@ -966,11 +1093,14 @@ async def _run_iteration(
     new_category_scores: dict[str, float] | None
     async with progress_indicator("Eval proposal"):
         score_after, _, new_category_scores = await _run_evaluation(
-            scenarios,
-            storage,
+            scenarios=scenarios,
+            storage=storage,
             show_failure_patterns=False,
             injector=new_target.injector,
             scenario_timeout_seconds=scenario_timeout_seconds,
+            use_thin_bridge=use_thin_bridge,
+            project_root=project_root,
+            parallelism=parallelism,
         )
     delta = score_after - score_before
     applied = delta >= threshold
@@ -1006,13 +1136,202 @@ async def _run_iteration(
     )
 
 
+@dataclass
+class _CandidateOutcome:
+    target: ImprovementTarget
+    improved_content: str
+    score_after: float
+    delta: float
+    improvement_text: str
+    category_scores: dict[str, float] | None
+
+
+def _dedupe_candidates(
+    base_target: ImprovementTarget,
+    candidates: list[ImprovementTarget],
+    limit: int,
+) -> list[ImprovementTarget]:
+    seen: set[Path] = set()
+    ordered: list[ImprovementTarget] = []
+
+    for candidate in [base_target, *candidates]:
+        key = candidate.structured_path
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(candidate)
+        if len(ordered) >= limit:
+            break
+
+    return ordered
+
+
+async def _run_iteration_hill_climb(
+    iteration_num: int,
+    target: ImprovementTarget,
+    candidate_targets: list[ImprovementTarget],
+    max_candidate_updates: int,
+    scenarios: list[Path],
+    storage: Path,
+    llm_client: Any,
+    score_before: float,
+    cached_transcripts: list[Any] | None,
+    threshold: float,
+    failed_proposals: list[str] | None = None,
+    consecutive_failures: int = 0,
+    existing_skills: list[str] | None = None,
+    category_scores: dict[str, float] | None = None,
+    scenario_timeout_seconds: float | None = None,
+    use_thin_bridge: bool = False,
+    project_root: Path | None = None,
+    parallelism: int | None = None,
+) -> IterationResult:
+    transcripts = cached_transcripts
+    if transcripts is None:
+        async with progress_indicator("Eval for transcripts"):
+            _, transcripts, _ = await _run_evaluation(
+                scenarios=scenarios,
+                storage=storage,
+                show_failure_patterns=False,
+                injector=target.injector,
+                scenario_timeout_seconds=scenario_timeout_seconds,
+                use_thin_bridge=use_thin_bridge,
+                project_root=project_root,
+                parallelism=parallelism,
+            )
+
+    valid_transcripts, error_signals = await _filter_valid_transcripts(transcripts)
+    if error_signals:
+        console.print(f"  [dim]Filtered {len(error_signals)} invalid transcripts[/dim]")
+    if not valid_transcripts:
+        console.print("  [yellow]No valid transcripts, skipping improvement[/yellow]")
+        return IterationResult(
+            iteration_num=iteration_num,
+            score_before=score_before,
+            score_after=score_before,
+        )
+
+    candidates = _dedupe_candidates(target, candidate_targets, max_candidate_updates)
+    console.print(f"  [dim]Evaluating {len(candidates)} candidate target updates[/dim]")
+
+    outcomes: list[_CandidateOutcome] = []
+
+    for candidate in candidates:
+        original_content = candidate.read_content()
+        if not original_content:
+            continue
+
+        async with progress_indicator(f"LLM generate ({candidate.name})"):
+            improved = await generate_improvement(
+                llm_client,
+                original_content,
+                valid_transcripts,
+                failed_proposals,
+                consecutive_failures,
+                existing_skills=existing_skills
+                if candidate.target_type == TargetType.SKILL
+                else None,
+                target_type=candidate.target_type.value,
+                category_scores=category_scores,
+                error_signals=error_signals,
+            )
+
+        if not improved:
+            continue
+
+        candidate.save_content(improved)
+
+        async with progress_indicator(f"Eval proposal ({candidate.name})"):
+            score_after, _, candidate_category_scores = await _run_evaluation(
+                scenarios=scenarios,
+                storage=storage,
+                show_failure_patterns=False,
+                injector=candidate.injector,
+                scenario_timeout_seconds=scenario_timeout_seconds,
+                use_thin_bridge=use_thin_bridge,
+                project_root=project_root,
+                parallelism=parallelism,
+            )
+
+        candidate.save_content(original_content)
+
+        delta = score_after - score_before
+        improvement_text = improved.split("\n")[0][:80] if improved else ""
+        outcomes.append(
+            _CandidateOutcome(
+                target=candidate,
+                improved_content=improved,
+                score_after=score_after,
+                delta=delta,
+                improvement_text=improvement_text,
+                category_scores=candidate_category_scores,
+            )
+        )
+
+    if not outcomes:
+        console.print("  [yellow]No candidate improvements generated[/yellow]")
+        return IterationResult(
+            iteration_num=iteration_num,
+            score_before=score_before,
+            score_after=score_before,
+        )
+
+    best = max(outcomes, key=lambda outcome: (outcome.delta, outcome.score_after))
+    applied = best.delta >= threshold
+
+    artifacts_dir = storage / "iterations"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    artifact_path = (
+        artifacts_dir
+        / f"iter_{iteration_num:03d}_{best.target.name}_{'kept' if applied else 'reverted'}.md"
+    )
+    artifact_path.write_text(best.improved_content)
+
+    console.print(f"  [cyan]Best candidate:[/cyan] {best.target.name}")
+    console.print(f"  [dim]Artifact: {artifact_path}[/dim]")
+
+    if applied:
+        saved_path = best.target.save_content(best.improved_content)
+        console.print(f"  [dim]Saved to: {saved_path}[/dim]")
+        return IterationResult(
+            iteration_num=iteration_num,
+            score_before=score_before,
+            score_after=best.score_after,
+            improvement_text=best.improvement_text,
+            applied=True,
+            category_scores=best.category_scores,
+        )
+
+    return IterationResult(
+        iteration_num=iteration_num,
+        score_before=score_before,
+        score_after=score_before,
+        improvement_text=best.improvement_text,
+        applied=False,
+        category_scores=None,
+    )
+
+
 async def _run_evaluation(
     scenarios: list[Path],
     storage: Path,
     show_failure_patterns: bool = True,
     injector: Any | None = None,
     scenario_timeout_seconds: float | None = None,
+    use_thin_bridge: bool = False,
+    project_root: Path | None = None,
+    parallelism: int | None = None,
 ) -> tuple[float, list[Any], dict[str, float]]:
+    if use_thin_bridge:
+        return await _run_thin_evaluation(
+            scenarios=scenarios,
+            storage=storage,
+            show_failure_patterns=show_failure_patterns,
+            scenario_timeout_seconds=scenario_timeout_seconds,
+            project_root=project_root,
+            parallelism=parallelism,
+        )
+
     tracker = get_progress_tracker()
 
     async def on_progress(completed: int, total: int, running_delta: int, status: str) -> None:
@@ -1033,6 +1352,7 @@ async def _run_evaluation(
             scenario_timeout_seconds=scenario_timeout_seconds,
             grader_config_overrides={"quiet": True},
             on_trial_progress=on_progress,
+            parallelism=parallelism,
         )
         transcripts = []
         category_scores: dict[str, float] = {}
@@ -1054,6 +1374,98 @@ async def _run_evaluation(
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
         return 0.0, [], {}
+
+
+async def _run_thin_evaluation(
+    scenarios: list[Path],
+    storage: Path,
+    show_failure_patterns: bool = True,
+    scenario_timeout_seconds: float | None = None,
+    project_root: Path | None = None,
+    parallelism: int | None = None,
+) -> tuple[float, list[Any], dict[str, float]]:
+    from ash_hawk.scenario.loader import load_scenario
+    from ash_hawk.scenario.thin_runner import ThinScenarioRunner
+
+    tracker = get_progress_tracker()
+    workdir = project_root or Path.cwd()
+
+    runner = ThinScenarioRunner(
+        workdir=workdir,
+        max_iterations=10,
+    )
+
+    total = len(scenarios)
+    if tracker:
+        tracker.set_total(total)
+
+    max_concurrent = parallelism or 4
+    semaphore = asyncio.Semaphore(max_concurrent)
+    category_scores_lock = asyncio.Lock()
+    category_scores: dict[str, float] = {}
+
+    async def _run_one(scenario_path: Path) -> tuple[float, Any]:
+        """Run a single scenario and return (score, transcript) or (0.0, None)."""
+        async with semaphore:
+            if tracker:
+                await tracker.start_one()
+            try:
+                scenario = load_scenario(scenario_path)
+                if scenario.graders:
+                    graded_result = await runner.run_with_grading(scenario, scenario_path)
+                    result = graded_result.run_result
+                    score = graded_result.aggregate_score
+
+                    for grader_result in graded_result.grader_results:
+                        cat_summary = grader_result.details.get("category_summary")
+                        if isinstance(cat_summary, dict):
+                            async with category_scores_lock:
+                                for cat_id, cat_score in cat_summary.items():
+                                    if not isinstance(cat_id, str):
+                                        continue
+                                    if not isinstance(cat_score, float | int):
+                                        continue
+                                    if cat_id not in category_scores:
+                                        category_scores[cat_id] = float(cat_score)
+                                    else:
+                                        category_scores[cat_id] = (
+                                            category_scores[cat_id] + float(cat_score)
+                                        ) / 2
+                else:
+                    result = await runner.run_scenario(scenario, scenario_path)
+                    score = 1.0 if result.outcome.success else 0.0
+
+                if tracker:
+                    await tracker.increment()
+
+                return score, result.transcript.to_eval_transcript()
+
+            except Exception as e:
+                logger.error(f"Thin evaluation failed for {scenario_path}: {e}")
+                if tracker:
+                    await tracker.increment()
+                return 0.0, None
+
+    results = await asyncio.gather(
+        *(_run_one(p) for p in scenarios),
+        return_exceptions=False,
+    )
+
+    scores: list[float] = []
+    transcripts: list[Any] = []
+    for score, transcript in results:
+        scores.append(score)
+        if transcript is not None:
+            transcripts.append(transcript)
+
+    mean_score = sum(scores) / len(scores) if scores else 0.0
+
+    if show_failure_patterns:
+        failed_count = sum(1 for s in scores if s < 0.5)
+        if failed_count > 0:
+            console.print(f"  [dim]Thin bridge: {failed_count}/{total} scenarios failed[/dim]")
+
+    return mean_score, transcripts, category_scores
 
 
 def _check_convergence(

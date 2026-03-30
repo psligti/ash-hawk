@@ -38,7 +38,7 @@ class ArtifactAdapter:
 
         tool_calls: list[ToolCallRecord] = []
         steps: list[StepRecord] = []
-        messages: list[dict] = []
+        messages: list[dict[str, Any]] = []
         total_duration_ms = 0
         token_usage: dict[str, int] = {}
         cost_usd: float | None = None
@@ -102,7 +102,7 @@ class ArtifactAdapter:
     ]:
         tool_calls: list[ToolCallRecord] = []
         steps: list[StepRecord] = []
-        messages: list[dict] = []
+        messages: list[dict[str, Any]] = []
         total_duration_ms = 0
         token_usage: dict[str, int] = {}
         cost_usd: float | None = None
@@ -149,7 +149,9 @@ class ArtifactAdapter:
                 "input": transcript.token_usage.input,
                 "output": transcript.token_usage.output,
                 "reasoning": transcript.token_usage.reasoning,
-                "total": transcript.token_usage.total,
+                "total": transcript.token_usage.input
+                + transcript.token_usage.output
+                + transcript.token_usage.reasoning,
             }
 
             cost_usd = transcript.cost_usd

@@ -1,14 +1,32 @@
-"""Lesson store for persisting curated lessons."""
+"""Lesson store for persisting curated lessons.
+
+DEPRECATED: The lesson store is deprecated and will be removed in a future version.
+Use the new improvement module (ash_hawk.improvement) which applies unified diffs
+directly to agent source files instead of storing intermediate lesson JSON.
+
+Migration:
+- Replace LessonStore with DiffApplier from ash_hawk.improvement
+- Lessons are now applied as unified diffs to .dawn-kestrel/agents/{name}/*.md
+- Use ImproverAgent to generate diffs from failed grades
+"""
 
 from __future__ import annotations
 
 import fcntl
 import json
+import warnings
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
 from ash_hawk.contracts import CuratedLesson
+
+warnings.warn(
+    "LessonStore is deprecated. Use ash_hawk.improvement.DiffApplier instead. "
+    "Improvements now apply directly as unified diffs to agent source files.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class LessonStore:
