@@ -667,6 +667,7 @@ async def run_cycle(
     guardrail_config: GuardrailConfig | None = None,
     target_types: list[TargetType] | None = None,
     improve_all_targets: bool = False,
+    use_thin_bridge: bool = False,
 ) -> CycleResult:
     if llm_client is None:
         llm_client = _create_llm_client()
@@ -762,10 +763,12 @@ async def run_cycle(
             "Baseline eval", tracker=ProgressTracker(total=len(scenarios), label="scenarios")
         ) as tracker:
             score, transcripts_raw, category_scores = await _run_evaluation(
-                scenarios,
-                storage,
+                scenarios=scenarios,
+                storage=storage,
                 injector=target.injector,
                 scenario_timeout_seconds=scenario_timeout_seconds,
+                use_thin_bridge=use_thin_bridge,
+                project_root=project_root,
             )
             tracker.current = len(scenarios)
         result.initial_score = score
@@ -783,10 +786,12 @@ async def run_cycle(
                 tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
             ) as tracker:
                 heldout_score, _, _ = await _run_evaluation(
-                    heldout_scenarios,
-                    storage / "heldout",
+                    scenarios=heldout_scenarios,
+                    storage=storage / "heldout",
                     injector=target.injector,
                     scenario_timeout_seconds=scenario_timeout_seconds,
+                    use_thin_bridge=use_thin_bridge,
+                    project_root=project_root,
                 )
                 tracker.current = len(heldout_scenarios)
             console.print(f"  [dim]Held-out baseline: {heldout_score:.3f}[/dim]")
@@ -816,6 +821,8 @@ async def run_cycle(
                 existing_skills=existing_skills,
                 category_scores=category_scores,
                 scenario_timeout_seconds=scenario_timeout_seconds,
+                use_thin_bridge=use_thin_bridge,
+                project_root=project_root,
             )
             result.iterations.append(iter_result)
             current_score = iter_result.score_after
@@ -840,10 +847,12 @@ async def run_cycle(
                     tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
                 ) as tracker:
                     heldout_score, _, _ = await _run_evaluation(
-                        heldout_scenarios,
-                        storage / "heldout",
+                        scenarios=heldout_scenarios,
+                        storage=storage / "heldout",
                         injector=target.injector,
                         scenario_timeout_seconds=scenario_timeout_seconds,
+                        use_thin_bridge=use_thin_bridge,
+                        project_root=project_root,
                     )
                     tracker.current = len(heldout_scenarios)
                 console.print(f"  [dim]Held-out: {heldout_score:.3f}[/dim]")
@@ -891,7 +900,7 @@ async def _run_iteration(
     scenarios: list[Path],
     storage: Path,
     llm_client: Any,
-    score_before: float,
+    initial_score: float,
     cached_transcripts: list[Any] | None,
     threshold: float,
     failed_proposals: list[str] | None = None,
@@ -899,25 +908,29 @@ async def _run_iteration(
     existing_skills: list[str] | None = None,
     category_scores: dict[str, float] | None = None,
     scenario_timeout_seconds: float | None = None,
+    use_thin_bridge: bool = False,
+    project_root: Path | None = None,
 ) -> IterationResult:
     original_target = target
-    original_content = target.read_content()
-    if not original_content:
-        console.print("  [yellow]No current content to improve[/yellow]")
-        return IterationResult(
-            iteration_num=iteration_num,
-            score_before=score_before,
-            score_after=score_before,
-        )
+        original_content = target.read_content()
+        if not original_content:
+            console.print("  [yellow]No current content to improve[/yellow]")
+            return IterationResult(
+                iteration_num=iteration_num,
+                score_before=initial_score,
+                score_after=initial_score,
+            )
     transcripts = cached_transcripts
     if transcripts is None:
         async with progress_indicator("Eval for transcripts"):
             _, transcripts, _ = await _run_evaluation(
-                scenarios,
-                storage,
+                scenarios=scenarios,
+                storage=storage,
                 show_failure_patterns=False,
                 injector=target.injector,
                 scenario_timeout_seconds=scenario_timeout_seconds,
+                use_thin_bridge=use_thin_bridge,
+                project_root=project_root,
             )
 
     valid_transcripts, error_signals = await _filter_valid_transcripts(transcripts)
@@ -966,11 +979,13 @@ async def _run_iteration(
     new_category_scores: dict[str, float] | None
     async with progress_indicator("Eval proposal"):
         score_after, _, new_category_scores = await _run_evaluation(
-            scenarios,
-            storage,
+            scenarios=scenarios,
+            storage=storage,
             show_failure_patterns=False,
             injector=new_target.injector,
             scenario_timeout_seconds=scenario_timeout_seconds,
+            use_thin_bridge=use_thin_bridge,
+            project_root=project_root,
         )
     delta = score_after - score_before
     applied = delta >= threshold
@@ -1012,7 +1027,18 @@ async def _run_evaluation(
     show_failure_patterns: bool = True,
     injector: Any | None = None,
     scenario_timeout_seconds: float | None = None,
+    use_thin_bridge: bool = False,
+    project_root: Path | None = None,
 ) -> tuple[float, list[Any], dict[str, float]]:
+    if use_thin_bridge:
+        return await _run_thin_evaluation(
+            scenarios=scenarios,
+            storage=storage,
+            show_failure_patterns=show_failure_patterns,
+            scenario_timeout_seconds=scenario_timeout_seconds,
+            project_root=project_root,
+        )
+
     tracker = get_progress_tracker()
 
     async def on_progress(completed: int, total: int, running_delta: int, status: str) -> None:
@@ -1054,6 +1080,73 @@ async def _run_evaluation(
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
         return 0.0, [], {}
+
+
+async def _run_thin_evaluation(
+    scenarios: list[Path],
+    storage: Path,
+    show_failure_patterns: bool = True,
+    scenario_timeout_seconds: float | None = None,
+    project_root: Path | None = None,
+) -> tuple[float, list[Any], dict[str, float]]:
+    from ash_hawk.scenario.loader import load_scenario
+    from ash_hawk.scenario.thin_runner import ThinScenarioRunner
+    from ash_hawk.types import EvalTranscript
+
+    tracker = get_progress_tracker()
+    workdir = project_root or Path.cwd()
+
+    runner = ThinScenarioRunner(
+        workdir=workdir,
+        max_iterations=10,
+    )
+
+    transcripts: list[Any] = []
+    scores: list[float] = []
+    category_scores: dict[str, float] = {}
+
+    total = len(scenarios)
+    if tracker:
+        tracker.set_total(total)
+
+    for idx, scenario_path in enumerate(scenarios):
+        try:
+            if tracker:
+                await tracker.start_one()
+
+            scenario = load_scenario(scenario_path)
+            result = await runner.run_scenario(scenario, scenario_path)
+
+            if tracker:
+                await tracker.increment()
+
+            transcript = EvalTranscript(
+                messages=result.transcript.messages,
+                tool_calls=result.transcript.tool_calls,
+                token_usage=result.transcript.token_usage,
+                duration_seconds=result.transcript.duration_seconds,
+                agent_response=result.transcript.agent_response,
+                error_trace=result.transcript.error_trace,
+            )
+            transcripts.append(transcript)
+
+            score = 1.0 if result.outcome.success else 0.0
+            scores.append(score)
+
+        except Exception as e:
+            logger.error(f"Thin evaluation failed for {scenario_path}: {e}")
+            if tracker:
+                await tracker.increment()
+            scores.append(0.0)
+
+    mean_score = sum(scores) / len(scores) if scores else 0.0
+
+    if show_failure_patterns:
+        failed_count = sum(1 for s in scores if s < 0.5)
+        if failed_count > 0:
+            console.print(f"  [dim]Thin bridge: {failed_count}/{total} scenarios failed[/dim]")
+
+    return mean_score, transcripts, category_scores
 
 
 def _check_convergence(
