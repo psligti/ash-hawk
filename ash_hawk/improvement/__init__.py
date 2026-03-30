@@ -1,38 +1,13 @@
-"""Improvement module for proposing and applying unified diffs.
-
-This module provides tools for capturing prompts and data structures
-for the improvement agent, based on the control level hierarchy:
-
-    Agent (highest) > Skill (medium) > Tool (lowest)
+"""Improvement module for agent improvement via guardrails and fixture splitting.
 
 Key Components:
     - PromptCapture: Save agent, skill, and tool prompts to .dawn-kestrel/
-    - ControlLevel: Enum for improvement target hierarchy
-    - Finding: Dataclass for review findings
-    - ReviewMetrics: Dataclass for aggregate metrics
-
-The improvement agent (ash_hawk.agents.ImprovementAgentRunner) uses
-the prompt at ash_hawk/prompts/improvement/target_selection.md to
-make agentic decisions about where improvements should happen.
-
-Storage Structure:
-    .dawn-kestrel/
-    ├── agent.md              # Agent system prompt
-    ├── skills/
-    │   └── {skill_name}.md   # Skill definitions
-    └── tools/
-        └── {tool_name}.md    # Tool descriptions
+    - GuardrailChecker: Safety limits for improvement cycles
+    - FixtureSplitter: Split eval tasks with fixture handling
 """
 
 from __future__ import annotations
 
-from ash_hawk.improvement.decision_engine import (
-    CONTROL_LEVEL_TO_LESSON_TYPE,
-    CONTROL_LEVEL_TO_STRATEGY,
-    ControlLevel,
-    Finding,
-    ReviewMetrics,
-)
 from ash_hawk.improvement.fixture_splitter import FixtureSplit, FixtureSplitter
 from ash_hawk.improvement.guardrails import (
     GuardrailChecker,
@@ -46,19 +21,12 @@ from ash_hawk.improvement.prompt_capture import (
 )
 
 __all__ = [
-    "ControlLevel",
-    "Finding",
-    "ReviewMetrics",
     "CapturedPrompt",
-    "PromptCapture",
     "DEFAULT_DAWN_KESTREL_DIR",
-    "CONTROL_LEVEL_TO_LESSON_TYPE",
-    "CONTROL_LEVEL_TO_STRATEGY",
     "FixtureSplit",
     "FixtureSplitter",
     "GuardrailChecker",
     "GuardrailConfig",
     "GuardrailState",
-    "DiffProposal",
-    "ApplyResult",
+    "PromptCapture",
 ]

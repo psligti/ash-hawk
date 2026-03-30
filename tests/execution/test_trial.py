@@ -4,7 +4,6 @@ import asyncio
 
 import pytest
 
-from ash_hawk.events import AHEvents, Event, bus
 from ash_hawk.execution import AgentRunner, TrialExecutor
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.storage import StorageBackend, StoredTrial
@@ -390,87 +389,6 @@ class TestTrialExecutorExceptions:
         assert result.transcript.error_trace is not None
         assert "RuntimeError" in result.transcript.error_trace
         assert "Detailed error" in result.transcript.error_trace
-
-
-class TestTrialExecutorEvents:
-    """Test TrialExecutor event publishing."""
-
-    @pytest.mark.asyncio
-    async def test_trial_started_event_published(self, executor, sample_task, sample_run_envelope):
-        received_events = []
-
-        async def handler(event: Event):
-            received_events.append(event)
-
-        unsubscribe = await bus.subscribe(AHEvents.TRIAL_STARTED, handler)
-
-        await executor.execute(
-            task=sample_task,
-            agent_config={},
-            run_envelope=sample_run_envelope,
-        )
-
-        await unsubscribe()
-        await bus.clear_subscriptions(AHEvents.TRIAL_STARTED)
-
-        started_events = [e for e in received_events if e.name == AHEvents.TRIAL_STARTED]
-        assert len(started_events) >= 1
-        assert started_events[0].data["task_id"] == sample_task.id
-
-    @pytest.mark.asyncio
-    async def test_trial_completed_event_published_on_success(
-        self, executor, sample_task, sample_run_envelope
-    ):
-        received_events = []
-
-        async def handler(event: Event):
-            received_events.append(event)
-
-        unsubscribe = await bus.subscribe(AHEvents.TRIAL_COMPLETED, handler)
-
-        await executor.execute(
-            task=sample_task,
-            agent_config={},
-            run_envelope=sample_run_envelope,
-        )
-
-        await unsubscribe()
-        await bus.clear_subscriptions(AHEvents.TRIAL_COMPLETED)
-
-        completed_events = [e for e in received_events if e.name == AHEvents.TRIAL_COMPLETED]
-        assert len(completed_events) >= 1
-        assert completed_events[0].data["task_id"] == sample_task.id
-
-    @pytest.mark.asyncio
-    async def test_trial_failed_event_published_on_error(
-        self, mock_storage, sample_policy, sample_task, sample_run_envelope
-    ):
-        async def failing_runner(
-            task: EvalTask, enforcer: PolicyEnforcer, config: dict
-        ) -> tuple[EvalTranscript, EvalOutcome]:
-            raise Exception("Test failure")
-
-        executor = TrialExecutor(mock_storage, sample_policy, agent_runner=failing_runner)
-
-        received_events = []
-
-        async def handler(event: Event):
-            received_events.append(event)
-
-        unsubscribe = await bus.subscribe(AHEvents.TRIAL_FAILED, handler)
-
-        await executor.execute(
-            task=sample_task,
-            agent_config={},
-            run_envelope=sample_run_envelope,
-        )
-
-        await unsubscribe()
-        await bus.clear_subscriptions(AHEvents.TRIAL_FAILED)
-
-        failed_events = [e for e in received_events if e.name == AHEvents.TRIAL_FAILED]
-        assert len(failed_events) >= 1
-        assert failed_events[0].data["failure_mode"] == FailureMode.AGENT_ERROR.value
 
 
 class TestTrialExecutorPolicyIntegration:

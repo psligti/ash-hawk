@@ -25,8 +25,6 @@ from rich.table import Table
 
 from ash_hawk.config import get_config
 from ash_hawk.execution import EvalRunner, FixtureResolver, TrialExecutor
-from ash_hawk.execution.fast_eval import FastEvalRunner
-from ash_hawk.reporting.fast_eval_report import render_fast_eval_table
 from ash_hawk.storage import FileStorage
 from ash_hawk.types import (
     EvalAgentConfig,
@@ -119,26 +117,6 @@ def _create_run_envelope(suite: EvalSuite, agent_config: dict[str, Any]) -> RunE
     default=None,
     help="Optional file path for loading agent runner class",
 )
-@click.option(
-    "--lessons",
-    is_flag=True,
-    default=False,
-    help="Enable lesson injection from curated improvements",
-)
-@click.option(
-    "--strategy",
-    "-S",
-    type=str,
-    default=None,
-    help="Filter lessons by strategy (e.g., policy-quality, tool-quality)",
-)
-@click.option(
-    "--sub-strategy",
-    "-ss",
-    type=str,
-    default=None,
-    help="Filter lessons by sub-strategy (e.g., tool-efficiency, error-recovery)",
-)
 def run(
     suite: str,
     parallelism: int | None,
@@ -148,9 +126,6 @@ def run(
     provider: str | None,
     agent_class: str | None,
     agent_location: str | None,
-    lessons: bool,
-    strategy: str | None,
-    sub_strategy: str | None,
 ) -> None:
     _run_suite(
         suite,
@@ -161,9 +136,6 @@ def run(
         provider,
         agent_class,
         agent_location,
-        lessons,
-        strategy,
-        sub_strategy,
     )
 
 
@@ -176,9 +148,6 @@ def _run_suite(
     provider: str | None,
     agent_class: str | None,
     agent_location: str | None,
-    lessons: bool = False,
-    strategy: str | None = None,
-    sub_strategy: str | None = None,
 ) -> None:
     asyncio.run(
         _run_suite_async(
@@ -190,9 +159,6 @@ def _run_suite(
             provider,
             agent_class,
             agent_location,
-            lessons,
-            strategy,
-            sub_strategy,
         )
     )
 
@@ -206,9 +172,6 @@ async def _run_suite_async(
     provider: str | None,
     agent_class: str | None,
     agent_location: str | None,
-    lessons: bool = False,
-    strategy: str | None = None,
-    sub_strategy: str | None = None,
 ) -> None:
     suite_file = Path(suite_path)
     if not suite_file.exists():
@@ -224,33 +187,6 @@ async def _run_suite_async(
     loader = ConftestLoader(search_root=suite_file.parent)
     conftest = loader.load_for_suite(suite_file)
     suite_data = apply_conftest_to_suite(suite_data or {}, conftest)
-
-    if "evals" in suite_data and "tasks" not in suite_data:
-        try:
-            fast_suite = FastEvalSuite.model_validate(suite_data)
-        except Exception as e:
-            console.print(f"[red]Error parsing fast eval suite:[/red] {e}")
-            raise SystemExit(1)
-
-        if provider is not None:
-            fast_suite.provider = provider
-        if model is not None:
-            fast_suite.model = model
-        if parallelism is not None:
-            fast_suite.parallelism = parallelism
-
-        console.print()
-        console.print(f"[bold cyan]Fast Eval Suite:[/bold cyan] {fast_suite.name}")
-        console.print(f"[dim]ID: {fast_suite.id} | Evals: {len(fast_suite.evals)}[/dim]")
-        console.print()
-
-        fast_runner = FastEvalRunner(suite=fast_suite, parallelism=parallelism)
-        fast_result = await fast_runner.run_suite()
-        render_fast_eval_table(console, fast_result)
-
-        if fast_result.failed_evals > 0:
-            raise SystemExit(1)
-        return
 
     try:
         suite = EvalSuite.model_validate(suite_data)
@@ -297,24 +233,11 @@ async def _run_suite_async(
     agent_runner = _build_agent_runner(agent_config, suite_file)
 
     if hasattr(agent_runner, "set_lesson_injector"):
-        from ash_hawk.services import DawnKestrelInjector, LessonInjector
+        from ash_hawk.services import DawnKestrelInjector
 
         dk_injector = DawnKestrelInjector(project_root=suite_file.parent.resolve())
         agent_runner.set_lesson_injector(dk_injector)
-
-        if lessons:
-            db_injector = LessonInjector(
-                strategy_filter=strategy,
-                sub_strategy_filter=sub_strategy,
-            )
-            agent_runner.set_lesson_injector(db_injector)
-            console.print("[dim]Lesson injection enabled (database)[/dim]")
-            if strategy:
-                console.print(f"[dim]Strategy filter: {strategy}[/dim]")
-            if sub_strategy:
-                console.print(f"[dim]Sub-strategy filter: {sub_strategy}[/dim]")
-        else:
-            console.print("[dim]Dawn-Kestrel file injection enabled[/dim]")
+        console.print("[dim]Dawn-Kestrel file injection enabled[/dim]")
 
     trial_executor = TrialExecutor(
         storage_backend, policy, agent_runner=agent_runner, fixture_resolver=fixture_resolver

@@ -15,7 +15,6 @@ from rich.console import Console
 from ash_hawk.auto_research.cycle_runner import run_cycle
 from ash_hawk.auto_research.types import CycleResult
 from ash_hawk.config import get_config
-from ash_hawk.execution.queue import LLMRequestQueue, register_llm_queue
 
 console = Console()
 
@@ -165,24 +164,6 @@ def run(
         ash-hawk auto-research run -s evals/*.yaml --rate-limit --providers anthropic openai
     """
     config = get_config()
-
-    queue: Any
-    if rate_limit:
-        from ash_hawk.integration.rate_limited_queue import RateLimitedLLMQueue
-
-        queue = RateLimitedLLMQueue(
-            providers=list(providers),
-            max_concurrent=max_concurrent,
-            timeout_seconds=config.auto_research_llm_timeout_seconds,
-        )
-        console.print(f"[dim]Rate limiting enabled for: {', '.join(providers)}[/dim]")
-        console.print(f"[dim]Max concurrent: {max_concurrent}[/dim]")
-    else:
-        queue = LLMRequestQueue(
-            max_workers=config.llm_max_workers,
-            timeout_seconds=config.auto_research_llm_timeout_seconds,
-        )
-    register_llm_queue(cast(LLMRequestQueue, queue))
 
     scenarios = list(scenario)
     storage = Path(".ash-hawk/auto-research")

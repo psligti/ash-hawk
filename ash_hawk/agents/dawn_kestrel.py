@@ -19,7 +19,6 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
 
-from ash_hawk.execution.queue import LLMRequest, get_llm_queue_sync
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.scenario.trace import DEFAULT_TRACE_TS
 from ash_hawk.types import (
@@ -322,31 +321,11 @@ class _SinglePassRuntime:
         response: Any | None = None
 
         for iteration in range(max_iterations):
-            llm_queue = get_llm_queue_sync()
-            if llm_queue is not None:
-                request_id = f"{self._trial_id}_llm_{iteration}"
-                request = LLMRequest(
-                    request_id=request_id,
-                    messages=self.conversation,
-                    tools=self._tool_definitions if self._tool_definitions else None,
-                    options=options,
-                )
-
-                async def execute_llm(req: LLMRequest) -> Any:
-                    return await self._client.complete(
-                        messages=req.messages,
-                        tools=req.tools,
-                        options=req.options,
-                    )
-
-                llm_response = await llm_queue.execute(request, execute_llm)
-                response = llm_response.response
-            else:
-                response = await self._client.complete(
-                    messages=self.conversation,
-                    tools=self._tool_definitions if self._tool_definitions else None,
-                    options=options,
-                )
+            response = await self._client.complete(
+                messages=self.conversation,
+                tools=self._tool_definitions if self._tool_definitions else None,
+                options=options,
+            )
 
             model_text = self._runner._extract_agent_response(response)
             if isinstance(model_text, str) and model_text.strip():

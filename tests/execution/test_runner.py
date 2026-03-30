@@ -5,7 +5,6 @@ import asyncio
 import pytest
 
 from ash_hawk.config import EvalConfig
-from ash_hawk.events import AHEvents, Event, bus
 from ash_hawk.execution import EvalRunner, TrialExecutor
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.storage import StoredTrial
@@ -297,53 +296,6 @@ class TestEvalRunnerCancellation:
             await run_task
         except asyncio.CancelledError:
             pass
-
-
-class TestEvalRunnerEvents:
-    @pytest.mark.asyncio
-    async def test_suite_started_event_published(self, runner, sample_suite, sample_run_envelope):
-        received_events = []
-
-        async def handler(event: Event):
-            received_events.append(event)
-
-        unsubscribe = await bus.subscribe(AHEvents.SUITE_STARTED, handler)
-
-        await runner.run_suite(
-            suite=sample_suite,
-            agent_config={},
-            run_envelope=sample_run_envelope,
-        )
-
-        await unsubscribe()
-        await bus.clear_subscriptions(AHEvents.SUITE_STARTED)
-
-        started_events = [e for e in received_events if e.name == AHEvents.SUITE_STARTED]
-        assert len(started_events) >= 1
-        assert started_events[0].data["suite_id"] == sample_suite.id
-
-    @pytest.mark.asyncio
-    async def test_suite_completed_event_published(self, runner, sample_suite, sample_run_envelope):
-        received_events = []
-
-        async def handler(event: Event):
-            received_events.append(event)
-
-        unsubscribe = await bus.subscribe(AHEvents.SUITE_COMPLETED, handler)
-
-        await runner.run_suite(
-            suite=sample_suite,
-            agent_config={},
-            run_envelope=sample_run_envelope,
-        )
-
-        await unsubscribe()
-        await bus.clear_subscriptions(AHEvents.SUITE_COMPLETED)
-
-        completed_events = [e for e in received_events if e.name == AHEvents.SUITE_COMPLETED]
-        assert len(completed_events) >= 1
-        assert completed_events[0].data["suite_id"] == sample_suite.id
-        assert "pass_rate" in completed_events[0].data
 
 
 class TestEvalRunnerMetrics:

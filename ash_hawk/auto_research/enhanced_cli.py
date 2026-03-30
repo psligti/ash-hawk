@@ -19,7 +19,6 @@ from ash_hawk.auto_research.types import (
     EnhancedCycleResult,
 )
 from ash_hawk.config import get_config
-from ash_hawk.execution.queue import LLMRequestQueue, register_llm_queue
 
 console = Console()
 
@@ -218,12 +217,6 @@ def enhanced_run(
         ash-hawk auto-research enhanced-run -s scenarios/*.yaml --no-knowledge-promotion
     """
     config = get_config()
-
-    queue = LLMRequestQueue(
-        max_workers=config.llm_max_workers,
-        timeout_seconds=config.auto_research_llm_timeout_seconds,
-    )
-    register_llm_queue(queue)
 
     scenarios = list(scenario)
     if not scenarios:

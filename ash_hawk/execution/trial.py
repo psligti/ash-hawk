@@ -10,7 +10,6 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
-from ash_hawk.events import AHEvents
 from ash_hawk.execution.fixtures import FixtureResolver
 from ash_hawk.graders.registry import get_default_registry
 from ash_hawk.policy import PolicyEnforcer
@@ -50,10 +49,6 @@ class AgentRunner(Protocol):
         policy_enforcer: PolicyEnforcer,
         config: dict[str, object],
     ) -> tuple[EvalTranscript, EvalOutcome]: ...
-
-
-class _EventPublisher(Protocol):
-    async def publish(self, event_name: str, data: dict[str, object]) -> None: ...
 
 
 class _FunctionRunner:
@@ -214,15 +209,6 @@ class TrialExecutor:
             started_at=started_at,
         )
 
-        from ash_hawk.events import bus
-
-        event_bus = cast(_EventPublisher, bus)
-
-        await event_bus.publish(
-            AHEvents.TRIAL_STARTED,
-            {"trial_id": trial_id, "task_id": task.id, "attempt_number": attempt_number},
-        )
-
         transcript = EvalTranscript()
         outcome: EvalOutcome | None = None
         cancelled = False
@@ -347,28 +333,6 @@ class TrialExecutor:
                 )
             except Exception:
                 pass
-
-            if trial_result.outcome.status == EvalStatus.COMPLETED:
-                await event_bus.publish(
-                    AHEvents.TRIAL_COMPLETED,
-                    {
-                        "trial_id": trial_id,
-                        "task_id": task.id,
-                        "outcome": trial_result.outcome.status.value,
-                    },
-                )
-            else:
-                await event_bus.publish(
-                    AHEvents.TRIAL_FAILED,
-                    {
-                        "trial_id": trial_id,
-                        "task_id": task.id,
-                        "failure_mode": trial_result.outcome.failure_mode.value
-                        if trial_result.outcome.failure_mode
-                        else None,
-                        "error_message": trial_result.outcome.error_message,
-                    },
-                )
 
         if cancelled:
             raise asyncio.CancelledError()
