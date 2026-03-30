@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 from pathlib import Path
 
 import click
@@ -79,21 +80,21 @@ def run_thin(
 
     class CollectingSink(TelemetrySink):
         def __init__(self) -> None:
-            self.events: list[dict] = []
+            self.events: list[dict[str, Any]] = []
 
-        async def on_iteration_start(self, data: dict) -> None:
+        async def on_iteration_start(self, data: dict[str, Any]) -> None:
             self.events.append({"type": "iteration_start", **data})
 
-        async def on_iteration_end(self, data: dict) -> None:
+        async def on_iteration_end(self, data: dict[str, Any]) -> None:
             self.events.append({"type": "iteration_end", **data})
 
-        async def on_action_decision(self, data: dict) -> None:
+        async def on_action_decision(self, data: dict[str, Any]) -> None:
             self.events.append({"type": "action_decision", **data})
 
-        async def on_tool_result(self, data: dict) -> None:
+        async def on_tool_result(self, data: dict[str, Any]) -> None:
             self.events.append({"type": "tool_result", **data})
 
-        async def on_run_complete(self, data: dict) -> None:
+        async def on_run_complete(self, data: dict[str, Any]) -> None:
             self.events.append({"type": "run_complete", **data})
 
     input_text = (

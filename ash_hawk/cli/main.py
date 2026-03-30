@@ -97,6 +97,7 @@ from ash_hawk.cli.list import list_cmd
 from ash_hawk.cli.report import report
 from ash_hawk.cli.run import run
 from ash_hawk.cli.scenario import scenario
+from ash_hawk.cli.thin import thin
 
 cli.add_command(run)
 cli.add_command(list_cmd, name="list")
@@ -105,3 +106,4 @@ cli.add_command(calibrate)
 cli.add_command(scenario)
 cli.add_command(compare_cmd, name="compare")
 cli.add_command(auto_research)
+cli.add_command(thin)
