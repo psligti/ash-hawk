@@ -47,6 +47,39 @@ def _save_cycle_result(result: CycleResult, storage: Path) -> Path:
     return cycle_path
 
 
+def _load_previous_final_score(
+    storage: Path,
+    current_path: Path,
+    *,
+    agent_name: str,
+    target_path: str,
+) -> float | None:
+    cycles_dir = storage / "cycles"
+    if not cycles_dir.exists():
+        return None
+
+    previous_files = sorted(
+        [path for path in cycles_dir.glob("cycle_*.json") if path != current_path],
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    if not previous_files:
+        return None
+
+    for candidate in previous_files:
+        previous_data = json.loads(candidate.read_text())
+        if previous_data.get("agent_name") != agent_name:
+            continue
+        if previous_data.get("target_path") != target_path:
+            continue
+
+        final_score = previous_data.get("final_score")
+        if isinstance(final_score, float | int):
+            return float(final_score)
+
+    return None
+
+
 @click.group(name="auto-research")
 def auto_research() -> None:
     """Auto-research improvement cycle commands."""
@@ -99,6 +132,17 @@ def auto_research() -> None:
     type=float,
     help="Override scenario max_time_seconds for all trials in this run",
 )
+@click.option(
+    "--thin-bridge/--no-thin-bridge",
+    default=True,
+    help="Run scenario evaluations through thin runner bridge (default: enabled)",
+)
+@click.option(
+    "--candidate-target-updates",
+    default=3,
+    type=int,
+    help="How many candidate targets to evaluate per iteration (default: 3)",
+)
 def run(
     scenario: tuple[Path, ...],
     iterations: int,
@@ -107,6 +151,8 @@ def run(
     providers: tuple[str, ...],
     max_concurrent: int,
     scenario_timeout_seconds: float | None,
+    thin_bridge: bool,
+    candidate_target_updates: int,
 ) -> None:
     """Run auto-research improvement cycle.
 
@@ -148,9 +194,20 @@ def run(
             threshold=threshold,
             storage_path=storage,
             scenario_timeout_seconds=scenario_timeout_seconds,
+            use_thin_bridge=thin_bridge,
+            candidate_target_updates=max(1, candidate_target_updates),
+            parallelism=max_concurrent,
         )
 
         cycle_path = _save_cycle_result(result, storage)
+        previous_final_score = _load_previous_final_score(
+            storage,
+            cycle_path,
+            agent_name=result.agent_name,
+            target_path=result.target_path,
+        )
+        kept_count = len(result.applied_iterations)
+        reverted_count = result.total_iterations - kept_count
 
         console.print()
         console.rule("[bold]Final Result[/bold]")
@@ -160,8 +217,18 @@ def run(
         console.print(f"Baseline: {result.initial_score:.3f}")
         console.print(f"Final: {result.final_score:.3f}")
         console.print(f"Improvement: {result.improvement_delta:+.3f}")
+        if previous_final_score is not None:
+            console.print(
+                f"Delta vs previous run: {result.final_score - previous_final_score:+.3f}"
+            )
+        console.print(f"Kept iterations: {kept_count}")
+        console.print(f"Reverted iterations: {reverted_count}")
         console.print(f"[cyan]Cycle results:[/cyan] {cycle_path}")
         console.print(f"[cyan]Iteration artifacts:[/cyan] {storage / 'iterations'}")
+        console.print(
+            "[dim]For parallel multi-target runs: ash-hawk auto-research enhanced-run "
+            "--parallel-targets 4[/dim]"
+        )
 
     asyncio.run(_run())
 

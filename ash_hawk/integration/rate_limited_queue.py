@@ -199,7 +199,10 @@ def setup_rate_limiting(
         setup_rate_limiting(providers=["anthropic", "openai"], max_concurrent=10)
         # Now run evals normally - rate limiting is active
     """
-    from ash_hawk.execution import register_llm_queue, reset_llm_queue  # pyright: ignore[reportMissingTypeStubs]
+    from ash_hawk.execution import (  # pyright: ignore[reportMissingTypeStubs]
+        register_llm_queue,
+        reset_llm_queue,
+    )
 
     reset_llm_queue()
     queue = RateLimitedLLMQueue(providers=providers, max_concurrent=max_concurrent)

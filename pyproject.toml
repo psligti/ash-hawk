@@ -97,3 +97,7 @@ ignore_errors = true
 testpaths = ["tests"]
 addopts = "--cov=ash_hawk --cov-report=term-missing"
 asyncio_mode = "auto"
+markers = [
+  "unit: Fast unit tests (no suite execution, mocked agents)",
+  "integration: Slow integration tests (actual suite runs)",
+]

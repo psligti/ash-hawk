@@ -274,6 +274,8 @@ def improve_thin(
     """
     from ash_hawk.improvement.applier import DiffApplier
     from ash_hawk.improvement.improver_agent import ImprovementContext, ImproverAgent
+    from ash_hawk.scenario.loader import load_scenario
+    from ash_hawk.scenario.thin_runner import ThinScenarioRunner
 
     transcript_file = Path(transcript_path)
     agent_dir = Path(agent_path)
@@ -311,6 +313,7 @@ def improve_thin(
     )
 
     improver = ImproverAgent()
+    baseline_score = _extract_baseline_score(transcript_data)
 
     async def _improve() -> None:
         proposals = await improver.analyze_failures(context)
@@ -320,6 +323,9 @@ def improve_thin(
             return
 
         applier = DiffApplier()
+        updated_targets: list[Path] = []
+        reverted_targets: list[Path] = []
+        apply_failures: list[tuple[Path, str]] = []
 
         for i, proposal in enumerate(proposals, 1):
             console.print(f"\n[cyan]Proposal {i}:[/cyan] {proposal.description}")
@@ -340,12 +346,94 @@ def improve_thin(
 
             if result.success:
                 console.print(f"[green]✓ Applied to {result.file_path}[/green]")
+                updated_targets.append(result.file_path)
                 if result.backup_path:
                     console.print(f"[dim]Backup: {result.backup_path}[/dim]")
             else:
                 console.print(f"[red]✗ Failed: {result.error}[/red]")
+                apply_failures.append((result.file_path, result.error or "unknown error"))
+                if result.backup_path and result.backup_path.exists():
+                    result.file_path.write_text(
+                        result.backup_path.read_text(encoding="utf-8"), encoding="utf-8"
+                    )
+                    reverted_targets.append(result.file_path)
+                    console.print(f"[yellow]↺ Reverted {result.file_path} from backup[/yellow]")
+
+        if not dry_run:
+            _print_file_change_summary(updated_targets, reverted_targets, apply_failures)
+
+            score_after = await _reevaluate_score(Path(scenario_path))
+            _print_score_delta(baseline_score, score_after)
+
+            if score_after is None:
+                console.print(
+                    "[yellow]⚠ Could not compute post-apply score (re-evaluation unavailable).[/yellow]"
+                )
+
+    async def _reevaluate_score(scenario_file: Path) -> float | None:
+        try:
+            scenario = load_scenario(scenario_file)
+            if not scenario.graders:
+                return None
+
+            runner = ThinScenarioRunner(workdir=Path.cwd(), max_iterations=10)
+            graded_result = await runner.run_with_grading(scenario, scenario_file)
+            return float(graded_result.aggregate_score)
+        except Exception as exc:
+            console.print(f"[yellow]Re-evaluation failed:[/yellow] {exc}")
+            return None
 
     asyncio.run(_improve())
+
+
+def _extract_baseline_score(transcript_data: dict[str, Any]) -> float | None:
+    score = transcript_data.get("aggregate_score")
+    if isinstance(score, float | int):
+        return float(score)
+    return None
+
+
+def _print_score_delta(score_before: float | None, score_after: float | None) -> None:
+    console.print()
+    console.rule("[bold]Score Delta[/bold]")
+
+    before_text = f"{score_before:.3f}" if score_before is not None else "n/a"
+    after_text = f"{score_after:.3f}" if score_after is not None else "n/a"
+    console.print(f"Before: {before_text}")
+    console.print(f"After:  {after_text}")
+
+    if score_before is not None and score_after is not None:
+        delta = score_after - score_before
+        color = "green" if delta >= 0 else "red"
+        console.print(f"[{color}]Delta:  {delta:+.3f}[/{color}]")
+
+
+def _print_file_change_summary(
+    updated_targets: list[Path],
+    reverted_targets: list[Path],
+    apply_failures: list[tuple[Path, str]],
+) -> None:
+    console.print()
+    console.rule("[bold]Target File Changes[/bold]")
+
+    if updated_targets:
+        console.print("[green]Updated targets:[/green]")
+        for path in updated_targets:
+            console.print(f"  • {path}")
+    else:
+        console.print("[yellow]Updated targets:[/yellow] none")
+
+    if reverted_targets:
+        console.print("[yellow]Reverted targets:[/yellow]")
+        for path in reverted_targets:
+            console.print(f"  • {path}")
+    else:
+        console.print("[dim]Reverted targets: none[/dim]")
+
+    if apply_failures:
+        console.print("[red]Apply failures:[/red]")
+        for path, error in apply_failures:
+            console.print(f"  • {path}: {error}")
 
 
 __all__ = ["thin", "run_thin", "improve_thin"]

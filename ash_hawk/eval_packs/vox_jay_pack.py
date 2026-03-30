@@ -5,7 +5,6 @@ from __future__ import annotations
 from ash_hawk.eval_packs.base import EvalPack, EvalPackConfig
 from ash_hawk.strategies import Strategy, SubStrategy
 
-
 PromoterScoringEvalPack = EvalPack(
     pack_id="promoter-scoring-eval",
     name="Promoter Scoring Evaluation Pack",

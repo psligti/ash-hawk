@@ -10,9 +10,9 @@ from ash_hawk.services.comparison_service import (
 from ash_hawk.services.dawn_kestrel_injector import (
     AGENT_PATH_TEMPLATE,
     DAWN_KESTREL_DIR,
-    DawnKestrelInjector,
     SKILL_PATH_TEMPLATE,
     TOOL_PATH_TEMPLATE,
+    DawnKestrelInjector,
 )
 from ash_hawk.services.lesson_injector import LessonInjector
 from ash_hawk.services.lesson_service import LessonService

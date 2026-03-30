@@ -1,6 +1,6 @@
 schema_version: "v1"
 id: python-bugfix-base
-description: Base scenario for python bugfix tasks
+description: Minimal auto-research scenario focused on intent and grader-defined success
 
 sut:
   type: "agentic_sdk"
@@ -11,6 +11,9 @@ sut:
     max_time_seconds: 120
 
 inputs:
+  intent: |
+    Repair Python bugfix behavior with minimal edits while preserving existing logic.
+    Success is measured exclusively by grader outcomes.
   prompt: |
     Fix the bug in the provided Python code.
 
@@ -20,37 +23,10 @@ inputs:
     Run the tests first to see the failure, then fix the bug with minimal changes.
     Ensure all tests pass after your fix.
 
-  fixtures:
-    solution_file: ./src/solution.py
-    test_file: ./test_bug.py
-
-tools:
-  allowed_tools:
-    - "bash"
-    - "read"
-    - "write"
-    - "edit"
-    - "grep"
-  mocks: {}
-  fault_injection: {}
-
-budget:
-  max_steps: 5
-  max_tool_calls: 10
-  max_tokens: 2000
-  max_time_seconds: 120.0
-
-expectations:
-  must_events: []
-  must_not_events: []
-  ordering_rules: []
-  diff_assertions: []
-  output_assertions: []
-
 graders:
   - grader_type: "test_runner"
     config:
-      test_path: "$test_file"
+      test_path: "./test_bug.py"
       pass_threshold: 1.0
       partial_credit: true
       timeout_seconds: 30

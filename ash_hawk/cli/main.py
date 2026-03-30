@@ -91,6 +91,7 @@ def init(path: str, name: str, force: bool) -> None:
 
 
 from ash_hawk.auto_research.cli import auto_research
+from ash_hawk.auto_research.enhanced_cli import enhanced_run
 from ash_hawk.cli.calibrate import calibrate
 from ash_hawk.cli.compare import compare_cmd
 from ash_hawk.cli.list import list_cmd
@@ -105,5 +106,6 @@ cli.add_command(report)
 cli.add_command(calibrate)
 cli.add_command(scenario)
 cli.add_command(compare_cmd, name="compare")
+auto_research.add_command(enhanced_run)
 cli.add_command(auto_research)
 cli.add_command(thin)

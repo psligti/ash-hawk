@@ -1,3 +1,9 @@
+"""CLI unit and integration tests.
+
+Run fast tests: pytest -m unit
+Skip integration: pytest -m "not integration"
+"""
+
 import re
 import tempfile
 from pathlib import Path
@@ -15,7 +21,7 @@ def runner():
     return CliRunner()
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def mock_dawn_runner(monkeypatch):
     class FakeDawnKestrelAgentRunner:
         def __init__(self, provider: str, model: str, **kwargs):
@@ -81,6 +87,7 @@ def sample_suite_file(temp_dir):
     return str(suite_path)
 
 
+@pytest.mark.unit
 class TestCliMain:
     def test_cli_version(self, runner):
         result = runner.invoke(cli, ["--version"])
@@ -96,6 +103,7 @@ class TestCliMain:
         assert "report" in result.output
 
 
+@pytest.mark.unit
 class TestCliInit:
     def test_init_creates_file(self, runner, temp_storage):
         output_path = Path(temp_storage) / "new-suite.yaml"
@@ -135,8 +143,36 @@ class TestCliInit:
         assert "id" in data
 
 
+@pytest.mark.unit
+class TestCliReportCIUnit:
+    """Pure unit tests for CI formatting (no suite execution)."""
+
+    def test_format_ci_zero_trials(self):
+        from ash_hawk.cli.report import format_pass_rate_with_ci
+
+        formatted = format_pass_rate_with_ci(pass_rate=0.0, successes=0, total=0)
+        assert "0.0%" in formatted
+
+    def test_format_ci_all_pass(self):
+        from ash_hawk.cli.report import format_pass_rate_with_ci
+
+        formatted = format_pass_rate_with_ci(pass_rate=1.0, successes=10, total=10)
+        assert "100%" in formatted
+        assert "[" in formatted and "]" in formatted
+
+    def test_format_ci_all_fail(self):
+        from ash_hawk.cli.report import format_pass_rate_with_ci
+
+        formatted = format_pass_rate_with_ci(pass_rate=0.0, successes=0, total=10)
+        assert "0.0%" in formatted
+        assert "[" in formatted and "]" in formatted
+
+
+@pytest.mark.integration
 class TestCliRun:
-    def test_run_uses_suite_agent_default(self, runner, sample_suite_file, temp_storage):
+    def test_run_uses_suite_agent_default(
+        self, runner, sample_suite_file, temp_storage, mock_dawn_runner
+    ):
         result = runner.invoke(
             cli,
             [
@@ -149,7 +185,7 @@ class TestCliRun:
         assert result.exit_code == 0
         assert "Suite:" in result.output
 
-    def test_run_suite_basic(self, runner, sample_suite_file, temp_storage):
+    def test_run_suite_basic(self, runner, sample_suite_file, temp_storage, mock_dawn_runner):
         result = runner.invoke(
             cli,
             [
@@ -163,7 +199,9 @@ class TestCliRun:
         )
         assert result.exit_code == 0
 
-    def test_cli_agent_overrides_suite_agent_default(self, runner, sample_suite_file, temp_storage):
+    def test_cli_agent_overrides_suite_agent_default(
+        self, runner, sample_suite_file, temp_storage, mock_dawn_runner
+    ):
         result = runner.invoke(
             cli,
             ["run", sample_suite_file, "--storage", temp_storage, "--agent", "general"],
@@ -245,7 +283,7 @@ class TestCliRun:
         assert "No agent configured" in result.output
         assert "Suite:" in result.output
 
-    def test_run_with_parallelism(self, runner, sample_suite_file, temp_storage):
+    def test_run_with_parallelism(self, runner, sample_suite_file, temp_storage, mock_dawn_runner):
         result = runner.invoke(
             cli,
             [
@@ -321,6 +359,7 @@ class TestCliRun:
             ]
         }
 
+    @pytest.mark.unit
     def test_run_nonexistent_suite(self, runner, temp_storage):
         result = runner.invoke(
             cli,
@@ -328,7 +367,7 @@ class TestCliRun:
         )
         assert result.exit_code != 0
 
-    def test_run_creates_storage(self, runner, sample_suite_file, temp_storage):
+    def test_run_creates_storage(self, runner, sample_suite_file, temp_storage, mock_dawn_runner):
         storage_path = Path(temp_storage) / "new-storage"
         result = runner.invoke(
             cli,
@@ -338,13 +377,15 @@ class TestCliRun:
         assert storage_path.exists()
 
 
+@pytest.mark.integration
 class TestCliList:
+    @pytest.mark.unit
     def test_list_suites_empty(self, runner, temp_storage):
         result = runner.invoke(cli, ["list", "--storage", temp_storage])
         assert result.exit_code == 0
         assert "No suites found" in result.output
 
-    def test_list_suites_with_data(self, runner, sample_suite_file, temp_storage):
+    def test_list_suites_with_data(self, runner, sample_suite_file, temp_storage, mock_dawn_runner):
         runner.invoke(
             cli, ["run", sample_suite_file, "--storage", temp_storage, "--agent", "build"]
         )
@@ -352,7 +393,7 @@ class TestCliList:
         assert result.exit_code == 0
         assert "test-suite" in result.output
 
-    def test_list_runs(self, runner, sample_suite_file, temp_storage):
+    def test_list_runs(self, runner, sample_suite_file, temp_storage, mock_dawn_runner):
         runner.invoke(
             cli, ["run", sample_suite_file, "--storage", temp_storage, "--agent", "build"]
         )
@@ -360,7 +401,9 @@ class TestCliList:
         assert result.exit_code == 0
 
 
+@pytest.mark.integration
 class TestCliReport:
+    @pytest.mark.unit
     def test_report_nonexistent_run(self, runner, temp_storage):
         result = runner.invoke(
             cli,
@@ -368,7 +411,7 @@ class TestCliReport:
         )
         assert result.exit_code == 1
 
-    def test_report_after_run(self, runner, sample_suite_file, temp_storage):
+    def test_report_after_run(self, runner, sample_suite_file, temp_storage, mock_dawn_runner):
         run_result = runner.invoke(
             cli,
             ["run", sample_suite_file, "--storage", temp_storage, "--agent", "build"],
@@ -388,7 +431,7 @@ class TestCliReport:
         assert result.exit_code == 0
         assert "Run Report" in result.output
 
-    def test_report_verbose(self, runner, sample_suite_file, temp_storage):
+    def test_report_verbose(self, runner, sample_suite_file, temp_storage, mock_dawn_runner):
         run_result = runner.invoke(
             cli,
             ["run", sample_suite_file, "--storage", temp_storage, "--agent", "build"],
@@ -409,13 +452,11 @@ class TestCliReport:
         assert "Trial Details" in result.output
 
 
+@pytest.mark.integration
 class TestCliReportCI:
-    """Tests for confidence interval display in report command."""
-
     def test_report_shows_confidence_interval_for_pass_rate(
-        self, runner, sample_suite_file, temp_storage
+        self, runner, sample_suite_file, temp_storage, mock_dawn_runner
     ):
-        """Report should display 95% CI with pass rate, e.g., '100% [34%-100%]'."""
         run_result = runner.invoke(
             cli,
             ["run", sample_suite_file, "--storage", temp_storage, "--agent", "build"],
@@ -433,41 +474,14 @@ class TestCliReportCI:
             ["report", run_id, "--storage", temp_storage],
         )
         assert result.exit_code == 0
-        # CI should be displayed as [lower%-upper%] after the pass rate
         assert re.search(r"\d+\.\d% \[\d+%-\d+%\]", result.output), (
             f"Expected CI format in output, got: {result.output}"
         )
 
-    def test_report_ci_edge_case_zero_trials(self, runner, temp_storage, temp_dir):
-        """Report with 0 completed trials should handle CI gracefully."""
-        from ash_hawk.cli.report import format_pass_rate_with_ci
 
-        # 0 trials should not crash and should show reasonable bounds
-        formatted = format_pass_rate_with_ci(pass_rate=0.0, successes=0, total=0)
-        # When 0 trials, we can't compute meaningful CI - should show pass rate only
-        assert "0.0%" in formatted
-
-    def test_report_ci_edge_case_all_pass(self, runner, temp_storage):
-        """Report with 100% pass rate should show asymmetric CI."""
-        from ash_hawk.cli.report import format_pass_rate_with_ci
-
-        # 10/10 pass should show CI that extends below 100%
-        formatted = format_pass_rate_with_ci(pass_rate=1.0, successes=10, total=10)
-        assert "100%" in formatted
-        assert "[" in formatted and "]" in formatted
-
-    def test_report_ci_edge_case_all_fail(self, runner, temp_storage):
-        """Report with 0% pass rate should show asymmetric CI."""
-        from ash_hawk.cli.report import format_pass_rate_with_ci
-
-        # 0/10 pass should show CI that extends above 0%
-        formatted = format_pass_rate_with_ci(pass_rate=0.0, successes=0, total=10)
-        assert "0.0%" in formatted
-        assert "[" in formatted and "]" in formatted
-
-
+@pytest.mark.integration
 class TestCliIntegration:
-    def test_full_workflow(self, runner, temp_dir):
+    def test_full_workflow(self, runner, temp_dir, mock_dawn_runner):
         storage_path = Path(temp_dir) / "storage"
         storage_path.mkdir()
 
