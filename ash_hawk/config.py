@@ -6,9 +6,9 @@ import os
 from pathlib import Path
 from typing import Literal
 
-import pydantic_settings
 from pydantic import Field, field_validator
 from pydantic_settings import (
+    BaseSettings,
     DotEnvSettingsSource,
     EnvSettingsSource,
     PydanticBaseSettingsSource,
@@ -27,7 +27,7 @@ __all__ = [
 StorageBackend = Literal["file", "sqlite", "postgres", "s3"]
 
 
-class EvalConfig(pydantic_settings.BaseSettings):
+class EvalConfig(BaseSettings):
     """Configuration for Ash Hawk evaluation harness."""
 
     parallelism: int = Field(
@@ -137,7 +137,7 @@ class EvalConfig(pydantic_settings.BaseSettings):
     @classmethod
     def settings_customise_sources(
         cls,
-        settings_cls: type[pydantic_settings.BaseSettings],
+        settings_cls: type[BaseSettings],
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
@@ -199,10 +199,10 @@ def _app_base_dirs(kind: str) -> Path:
     return base / APP_DIR_NAME
 
 
-def _dotenv_paths(settings_cls: type[pydantic_settings.BaseSettings]) -> tuple[Path | str, ...]:
+def _dotenv_paths(settings_cls: type[BaseSettings]) -> tuple[Path | str, ...]:
     explicit_env_files = settings_cls.model_config.get("env_file")
     if explicit_env_files is not None:
-        if isinstance(explicit_env_files, (str, Path)):
+        if isinstance(explicit_env_files, str | Path):
             return (explicit_env_files,)
         return tuple(explicit_env_files)
 

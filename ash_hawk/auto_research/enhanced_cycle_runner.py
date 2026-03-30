@@ -147,7 +147,7 @@ async def run_enhanced_cycle(
                 result.intent_patterns = await intent_analyzer.analyze_transcripts(
                     baseline_transcripts
                 )
-                if result.intent_patterns:
+                if result.intent_patterns and result.intent_patterns.inferred_intent:
                     console.print(
                         f"[dim]Inferred intent: {result.intent_patterns.inferred_intent[:100]}...[/dim]"
                     )
@@ -223,7 +223,7 @@ async def run_enhanced_cycle(
                         all_iterations=cycle_result.iterations,
                         cycle_result=cycle_result,
                     )
-                    if should_promote:
+                    if should_promote and cycle_result.target_type is not None:
                         lesson = PromotedLesson(
                             lesson_id=f"{target_name}_{iteration.iteration_num}",
                             source_experiment=target_name,

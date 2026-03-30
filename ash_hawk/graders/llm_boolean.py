@@ -142,7 +142,7 @@ class LLMBooleanJudgeGrader(Grader):
         if len(content) > self._config.context_max_chars:
             content = content[: self._config.context_max_chars] + "\n...[truncated]"
 
-        return content
+        return str(content)
 
     def _parse_boolean_response(self, response: str, num_questions: int) -> list[bool]:
         """Parse LLM response into boolean list."""

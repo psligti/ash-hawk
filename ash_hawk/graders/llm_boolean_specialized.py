@@ -219,7 +219,7 @@ class BaseBooleanGrader(Grader):
         if len(content) > max_chars:
             content = content[:max_chars] + "\n...[truncated]"
 
-        return content
+        return str(content)
 
     def _parse_boolean_response(self, response: str, num_questions: int) -> list[bool]:
         response = response.strip().lower()
