@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -35,7 +34,6 @@ class ImproverAgent:
         self,
         context: ImprovementContext,
     ) -> list[DiffProposal]:
-        failed_checks: list[dict[str, Any]] = []
         failed_grades = context.failed_grades
 
         if not failed_grades:
@@ -108,16 +106,19 @@ class ImproverAgent:
         if not agent_dir.exists():
             return []
 
+        safe_name = grader_name.replace("/", "_").replace("\\", "_").replace("..", "_")
+
         candidates: list[Path] = [
             agent_dir / "AGENT.md",
             agent_dir / "agent.md",
-            agent_dir / "skills" / f"{grader_name}.md",
-            agent_dir / "tools" / f"{grader_name}.md",
-            agent_dir / "policies" / f"{grader_name}.md",
+            agent_dir / "skills" / f"{safe_name}.md",
+            agent_dir / "tools" / f"{safe_name}.md",
+            agent_dir / "policies" / f"{safe_name}.md",
             agent_dir / "policy.md",
         ]
 
-        return [p for p in candidates if p.exists()]
+        resolved_dir = agent_dir.resolve()
+        return [p for p in candidates if p.exists() and p.resolve().is_relative_to(resolved_dir)]
 
     async def _generate_improvements(
         self,
@@ -155,17 +156,14 @@ class ImproverAgent:
     ) -> str:
         return f"""You are an AI agent improvement system. Analyze the following feedback from a failed evaluation and propose improvements to the agent file.
 
-## Context
-- Agent: {context.agent_files_dir.name}
-- File: {file_path.name}
-- Failed feedback: {feedback}
+<agent>{context.agent_files_dir.name}</agent>
+<file>{file_path.name}</file>
+<feedback>{feedback}</feedback>
 
-## Original Content
-```
+<original_content>
 {original_content}
-```
+</original_content>
 
-## Task
 Propose specific, actionable improvements to the content above that address the feedback. Focus on:
 1. Concrete changes to instructions or prompts
 2. New patterns or examples to follow

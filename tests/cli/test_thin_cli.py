@@ -78,6 +78,7 @@ def test_thin_improve_reports_updated_targets_and_score_delta(
     monkeypatch.setattr("ash_hawk.improvement.applier.DiffApplier", _FakeApplier)
     monkeypatch.setattr("ash_hawk.scenario.loader.load_scenario", lambda _: _FakeScenario())
     monkeypatch.setattr("ash_hawk.scenario.thin_runner.ThinScenarioRunner", _FakeThinRunner)
+    monkeypatch.setattr("ash_hawk.cli.thin.ThinScenarioRunner", _FakeThinRunner)
 
     result = CliRunner().invoke(
         cli,
@@ -160,6 +161,7 @@ def test_thin_improve_reports_reverted_target_on_apply_failure(
             raise RuntimeError("should not be called")
 
     monkeypatch.setattr("ash_hawk.scenario.thin_runner.ThinScenarioRunner", _FakeThinRunner)
+    monkeypatch.setattr("ash_hawk.cli.thin.ThinScenarioRunner", _FakeThinRunner)
 
     result = CliRunner().invoke(
         cli,

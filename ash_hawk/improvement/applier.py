@@ -104,6 +104,27 @@ class DiffApplier:
             old_count = hunk.get("old_count", 0)
             new_lines = hunk.get("lines", [])
 
+            if old_start < 0 or old_start > len(result_lines):
+                raise ValueError(
+                    f"Hunk start {old_start + 1} out of range (file has {len(result_lines)} lines)"
+                )
+
+            old_pos = old_start
+            for line in new_lines:
+                if line.startswith(" "):
+                    if old_pos >= len(result_lines):
+                        raise ValueError(f"Context line at index {old_pos} exceeds file length")
+                    expected = line[1:]
+                    actual = result_lines[old_pos]
+                    if actual.rstrip("\r\n") != expected.rstrip("\r\n"):
+                        raise ValueError(
+                            f"Context mismatch at line {old_pos + 1}: "
+                            f"expected {expected!r}, got {actual!r}"
+                        )
+                    old_pos += 1
+                elif line.startswith("-"):
+                    old_pos += 1
+
             replacement: list[str] = []
             for line in new_lines:
                 if line.startswith("+"):
