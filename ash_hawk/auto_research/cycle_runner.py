@@ -1329,6 +1329,7 @@ async def _run_evaluation(
             show_failure_patterns=show_failure_patterns,
             scenario_timeout_seconds=scenario_timeout_seconds,
             project_root=project_root,
+            parallelism=parallelism,
         )
 
     tracker = get_progress_tracker()
@@ -1381,6 +1382,7 @@ async def _run_thin_evaluation(
     show_failure_patterns: bool = True,
     scenario_timeout_seconds: float | None = None,
     project_root: Path | None = None,
+    parallelism: int | None = None,
 ) -> tuple[float, list[Any], dict[str, float]]:
     from ash_hawk.scenario.loader import load_scenario
     from ash_hawk.scenario.thin_runner import ThinScenarioRunner
@@ -1393,55 +1395,68 @@ async def _run_thin_evaluation(
         max_iterations=10,
     )
 
-    transcripts: list[Any] = []
-    scores: list[float] = []
-    category_scores: dict[str, float] = {}
-
     total = len(scenarios)
     if tracker:
         tracker.set_total(total)
 
-    for scenario_path in scenarios:
-        try:
+    max_concurrent = parallelism or 4
+    semaphore = asyncio.Semaphore(max_concurrent)
+    category_scores_lock = asyncio.Lock()
+    category_scores: dict[str, float] = {}
+
+    async def _run_one(scenario_path: Path) -> tuple[float, Any]:
+        """Run a single scenario and return (score, transcript) or (0.0, None)."""
+        async with semaphore:
             if tracker:
                 await tracker.start_one()
+            try:
+                scenario = load_scenario(scenario_path)
+                if scenario.graders:
+                    graded_result = await runner.run_with_grading(scenario, scenario_path)
+                    result = graded_result.run_result
+                    score = graded_result.aggregate_score
 
-            scenario = load_scenario(scenario_path)
-            if scenario.graders:
-                graded_result = await runner.run_with_grading(scenario, scenario_path)
-                result = graded_result.run_result
-                score = graded_result.aggregate_score
+                    for grader_result in graded_result.grader_results:
+                        cat_summary = grader_result.details.get("category_summary")
+                        if isinstance(cat_summary, dict):
+                            async with category_scores_lock:
+                                for cat_id, cat_score in cat_summary.items():
+                                    if not isinstance(cat_id, str):
+                                        continue
+                                    if not isinstance(cat_score, float | int):
+                                        continue
+                                    if cat_id not in category_scores:
+                                        category_scores[cat_id] = float(cat_score)
+                                    else:
+                                        category_scores[cat_id] = (
+                                            category_scores[cat_id] + float(cat_score)
+                                        ) / 2
+                else:
+                    result = await runner.run_scenario(scenario, scenario_path)
+                    score = 1.0 if result.outcome.success else 0.0
 
-                for grader_result in graded_result.grader_results:
-                    cat_summary = grader_result.details.get("category_summary")
-                    if isinstance(cat_summary, dict):
-                        for cat_id, cat_score in cat_summary.items():
-                            if not isinstance(cat_id, str):
-                                continue
-                            if not isinstance(cat_score, float | int):
-                                continue
-                            if cat_id not in category_scores:
-                                category_scores[cat_id] = float(cat_score)
-                            else:
-                                category_scores[cat_id] = (
-                                    category_scores[cat_id] + float(cat_score)
-                                ) / 2
-            else:
-                result = await runner.run_scenario(scenario, scenario_path)
-                score = 1.0 if result.outcome.success else 0.0
+                if tracker:
+                    await tracker.increment()
 
-            if tracker:
-                await tracker.increment()
+                return score, result.transcript.to_eval_transcript()
 
-            transcript = result.transcript.to_eval_transcript()
+            except Exception as e:
+                logger.error(f"Thin evaluation failed for {scenario_path}: {e}")
+                if tracker:
+                    await tracker.increment()
+                return 0.0, None
+
+    results = await asyncio.gather(
+        *(_run_one(p) for p in scenarios),
+        return_exceptions=False,
+    )
+
+    scores: list[float] = []
+    transcripts: list[Any] = []
+    for score, transcript in results:
+        scores.append(score)
+        if transcript is not None:
             transcripts.append(transcript)
-            scores.append(score)
-
-        except Exception as e:
-            logger.error(f"Thin evaluation failed for {scenario_path}: {e}")
-            if tracker:
-                await tracker.increment()
-            scores.append(0.0)
 
     mean_score = sum(scores) / len(scores) if scores else 0.0
 
