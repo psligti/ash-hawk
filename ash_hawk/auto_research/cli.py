@@ -193,6 +193,8 @@ def run(
         console.print()
         console.rule("[bold]Final Result[/bold]")
         console.print(f"Status: {result.status.value}")
+        if result.error_message:
+            console.print(f"[red]Error: {result.error_message}[/red]")
         console.print(f"Target: {result.target_path}")
         console.print(f"Iterations: {result.total_iterations}")
         console.print(f"Baseline: {result.initial_score:.3f}")

@@ -580,6 +580,17 @@ def _infer_name_from_path(path: Path) -> str:
     return stem
 
 
+def _scenario_label(scenarios: list[Path]) -> str:
+    if not scenarios:
+        return ""
+    if len(scenarios) == 1:
+        return scenarios[0].stem
+    names = sorted({s.stem for s in scenarios})
+    if len(names) <= 3:
+        return ", ".join(names)
+    return f"{names[0]} +{len(names) - 1} more"
+
+
 def _infer_agent_name(target: Path | ImprovementTarget) -> str:
     if isinstance(target, ImprovementTarget):
         return target.name
@@ -776,9 +787,13 @@ async def run_cycle(
 
     guardrail_checker = GuardrailChecker(guardrail_config)
 
+    current_score = 0.0
+    scenario_label = _scenario_label(scenarios)
+
     try:
         async with progress_indicator(
-            "Baseline eval", tracker=ProgressTracker(total=len(scenarios), label="scenarios")
+            f"Baseline eval ({scenario_label})",
+            tracker=ProgressTracker(total=len(scenarios), label="scenarios"),
         ) as tracker:
             score, transcripts_raw, category_scores = await _run_evaluation(
                 scenarios=scenarios,
@@ -866,7 +881,7 @@ async def run_cycle(
 
             if heldout_scenarios and iter_result.applied:
                 async with progress_indicator(
-                    "Held-out eval",
+                    f"Held-out eval ({scenario_label})",
                     tracker=ProgressTracker(total=len(heldout_scenarios), label="scenarios"),
                 ) as tracker:
                     heldout_score, _, _ = await _run_evaluation(
@@ -913,8 +928,14 @@ async def run_cycle(
         logger.error(f"Cycle failed: {e}")
         result.status = CycleStatus.ERROR
         result.error_message = str(e)
+        result.final_score = current_score
         result.completed_at = datetime.now(UTC)
-        raise
+        console.print()
+        console.rule("[bold]Cycle Error[/bold]")
+        console.print(f"[red]Error: {e}[/red]")
+        console.print(f"[dim]Iterations completed: {result.total_iterations}[/dim]")
+        console.print(f"[dim]Baseline: {result.initial_score:.3f}[/dim]")
+        console.print(f"[dim]Final: {result.final_score:.3f}[/dim]")
     return result
 
 
@@ -1035,7 +1056,7 @@ async def _run_iteration(
         )
     transcripts = cached_transcripts
     if transcripts is None:
-        async with progress_indicator("Eval for transcripts"):
+        async with progress_indicator(f"Eval for transcripts ({_scenario_label(scenarios)})"):
             _, transcripts, _ = await _run_evaluation(
                 scenarios=scenarios,
                 storage=storage,
@@ -1091,7 +1112,7 @@ async def _run_iteration(
             new_target.injector.current_skill_name = target_name
     saved_path = new_target.save_content(improved)
     new_category_scores: dict[str, float] | None
-    async with progress_indicator("Eval proposal"):
+    async with progress_indicator(f"Eval proposal ({_scenario_label(scenarios)})"):
         score_after, _, new_category_scores = await _run_evaluation(
             scenarios=scenarios,
             storage=storage,
@@ -1188,7 +1209,7 @@ async def _run_iteration_hill_climb(
 ) -> IterationResult:
     transcripts = cached_transcripts
     if transcripts is None:
-        async with progress_indicator("Eval for transcripts"):
+        async with progress_indicator(f"Eval for transcripts ({_scenario_label(scenarios)})"):
             _, transcripts, _ = await _run_evaluation(
                 scenarios=scenarios,
                 storage=storage,

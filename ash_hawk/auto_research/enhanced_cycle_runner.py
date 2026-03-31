@@ -272,7 +272,6 @@ async def run_enhanced_cycle(
         logger.error(f"Enhanced cycle failed: {e}")
         result.status = CycleStatus.ERROR
         result.error_message = str(e)
-        raise
 
     finally:
         result.completed_at = datetime.now(UTC)
