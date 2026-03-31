@@ -73,14 +73,13 @@ def test_mock_adapter_with_expectations():
     tooling_harness = ToolingHarness(mode="mock", root=workdir)
     budgets = {}
 
-    final_output, trace_events, artifacts, _ = adapter.run_scenario(
-        scenario, workdir, tooling_harness, budgets
-    )
+    result = adapter.run_scenario(scenario, workdir, tooling_harness, budgets)
 
     # Verify final output
-    assert final_output == "OK"
+    assert result.final_output == "OK"
 
     # Check for VerificationEvent
+    trace_events = [e.model_dump() for e in result.trace_events]
     verification_events = [e for e in trace_events if e["event_type"] == "VerificationEvent"]
     assert len(verification_events) == 1
     assert verification_events[0]["data"]["pass"] is True
@@ -103,14 +102,13 @@ def test_mock_adapter_without_bash():
     tooling_harness = ToolingHarness(mode="mock", root=workdir)
     budgets = {}
 
-    final_output, trace_events, artifacts, _ = adapter.run_scenario(
-        scenario, workdir, tooling_harness, budgets
-    )
+    result = adapter.run_scenario(scenario, workdir, tooling_harness, budgets)
 
     # Verify final output
-    assert final_output == "OK"
+    assert result.final_output == "OK"
 
     # Check that no tool events are emitted
+    trace_events = [e.model_dump() for e in result.trace_events]
     tool_call_events = [e for e in trace_events if e["event_type"] == "ToolCallEvent"]
     tool_result_events = [e for e in trace_events if e["event_type"] == "ToolResultEvent"]
 
@@ -157,13 +155,12 @@ def test_mock_adapter_with_extra_mock_tool_calls():
         {"items": []},
     )
 
-    final_output, trace_events, artifacts, _ = adapter.run_scenario(
-        scenario, workdir, tooling_harness, {}
-    )
+    result = adapter.run_scenario(scenario, workdir, tooling_harness, {})
 
-    assert final_output == "OK"
-    assert artifacts == {}
+    assert result.final_output == "OK"
+    assert result.artifacts == {}
 
+    trace_events = [e.model_dump() for e in result.trace_events]
     tool_call_events = [e for e in trace_events if e["event_type"] == "ToolCallEvent"]
     tool_result_events = [e for e in trace_events if e["event_type"] == "ToolResultEvent"]
     assert len(tool_call_events) == 1
