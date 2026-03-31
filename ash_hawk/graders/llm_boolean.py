@@ -117,7 +117,18 @@ class LLMBooleanJudgeGrader(Grader):
             from dawn_kestrel.llm.client import LLMClient
 
             settings = get_settings()
-            self._client = LLMClient(settings=settings)
+
+            provider = self._config.judge_provider or settings.get_default_provider().value
+            model = self._config.judge_model or settings.get_default_model(provider)
+
+            api_key_secret = settings.get_api_key_for_provider(provider)
+            api_key = api_key_secret.get_secret_value() if api_key_secret else None
+
+            self._client = LLMClient(
+                provider_id=provider,
+                model=model,
+                api_key=api_key,
+            )
         return self._client
 
     def _extract_content(self, transcript: EvalTranscript, trial: EvalTrial) -> str:
@@ -205,18 +216,21 @@ class LLMBooleanJudgeGrader(Grader):
         try:
             client = self._get_client()
 
-            response = await client.chat(
-                messages=[
-                    {"role": "system", "content": _BOOLEAN_SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                model=self._config.judge_model,
-                provider=self._config.judge_provider,
+            from dawn_kestrel.llm.client import LLMRequestOptions
+
+            options = LLMRequestOptions(
                 temperature=self._config.temperature,
                 max_tokens=self._config.max_tokens,
             )
 
-            if not response or not response.content:
+            messages = [
+                {"role": "system", "content": _BOOLEAN_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ]
+
+            response = await client.complete(messages=messages, options=options)
+
+            if not response or not response.text:
                 return GraderResult(
                     grader_type=self.name,
                     score=0.0,
@@ -224,7 +238,7 @@ class LLMBooleanJudgeGrader(Grader):
                     error_message="Empty response from LLM",
                 )
 
-            raw_response = response.content
+            raw_response = response.text
             results = self._parse_boolean_response(raw_response, len(questions))
             true_count = sum(results)
             total_count = len(results)

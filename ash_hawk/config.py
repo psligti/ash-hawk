@@ -24,7 +24,7 @@ __all__ = [
     "reload_config",
 ]
 
-StorageBackend = Literal["file", "sqlite", "postgres", "s3"]
+StorageBackend = Literal["file", "sqlite"]
 
 
 class EvalConfig(BaseSettings):
@@ -91,7 +91,7 @@ class EvalConfig(BaseSettings):
 
     storage_backend: StorageBackend = Field(
         default="file",
-        description="Storage backend: file, sqlite, postgres, or s3",
+        description="Storage backend: file or sqlite",
     )
 
     storage_path: str = Field(
@@ -128,7 +128,7 @@ class EvalConfig(BaseSettings):
     @field_validator("storage_backend", mode="before")
     @classmethod
     def validate_storage_backend(cls, v: str) -> str:
-        valid_backends = {"file", "sqlite", "postgres", "s3"}
+        valid_backends = {"file", "sqlite"}
         lower_v = v.lower()
         if lower_v not in valid_backends:
             raise ValueError(f"storage_backend must be one of {valid_backends}, got {v}")

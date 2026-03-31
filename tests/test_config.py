@@ -56,7 +56,7 @@ class TestEvalConfig:
             EvalConfig(log_level="INVALID")
 
     def test_storage_backend_validation(self):
-        for backend in ["file", "sqlite", "postgres", "s3"]:
+        for backend in ["file", "sqlite"]:
             config = EvalConfig(storage_backend=backend)
             assert config.storage_backend == backend
 

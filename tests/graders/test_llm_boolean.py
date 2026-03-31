@@ -182,10 +182,10 @@ class TestLLMBooleanJudgeGrader:
         )
 
         mock_response = MagicMock()
-        mock_response.content = "true\ntrue"
+        mock_response.text = "true\ntrue"
 
         mock_client = MagicMock()
-        mock_client.chat = AsyncMock(return_value=mock_response)
+        mock_client.complete = AsyncMock(return_value=mock_response)
         grader._client = mock_client
 
         transcript = make_transcript(agent_response="Test content")
@@ -208,10 +208,10 @@ class TestLLMBooleanJudgeGrader:
         )
 
         mock_response = MagicMock()
-        mock_response.content = "true\nfalse"
+        mock_response.text = "true\nfalse"
 
         mock_client = MagicMock()
-        mock_client.chat = AsyncMock(return_value=mock_response)
+        mock_client.complete = AsyncMock(return_value=mock_response)
         grader._client = mock_client
 
         transcript = make_transcript(agent_response="Test content")
@@ -234,10 +234,10 @@ class TestLLMBooleanJudgeGrader:
         )
 
         mock_response = MagicMock()
-        mock_response.content = "false\ntrue"
+        mock_response.text = "false\ntrue"
 
         mock_client = MagicMock()
-        mock_client.chat = AsyncMock(return_value=mock_response)
+        mock_client.complete = AsyncMock(return_value=mock_response)
         grader._client = mock_client
 
         transcript = make_transcript(agent_response="Test content")
@@ -254,10 +254,10 @@ class TestLLMBooleanJudgeGrader:
         grader = LLMBooleanJudgeGrader(config={"questions": ["Instance question?"]})
 
         mock_response = MagicMock()
-        mock_response.content = "true"
+        mock_response.text = "true"
 
         mock_client = MagicMock()
-        mock_client.chat = AsyncMock(return_value=mock_response)
+        mock_client.complete = AsyncMock(return_value=mock_response)
         grader._client = mock_client
 
         transcript = make_transcript(agent_response="Test content")
@@ -269,7 +269,7 @@ class TestLLMBooleanJudgeGrader:
 
         result = await grader.grade(trial, transcript, spec)
 
-        mock_client.chat.assert_called_once()
+        mock_client.complete.assert_called_once()
         assert result.details["questions"] == ["Spec question?"]
 
 
@@ -288,10 +288,10 @@ class TestLLMBooleanJudgeGraderIntegration:
         )
 
         mock_response = MagicMock()
-        mock_response.content = "false\nfalse\ntrue"
+        mock_response.text = "false\nfalse\ntrue"
 
         mock_client = MagicMock()
-        mock_client.chat = AsyncMock(return_value=mock_response)
+        mock_client.complete = AsyncMock(return_value=mock_response)
         grader._client = mock_client
 
         transcript = make_transcript(
@@ -312,10 +312,10 @@ class TestLLMBooleanJudgeGraderIntegration:
         grader = LLMBooleanJudgeGrader(config={"questions": ["Test question?"]})
 
         mock_response = MagicMock()
-        mock_response.content = ""
+        mock_response.text = ""
 
         mock_client = MagicMock()
-        mock_client.chat = AsyncMock(return_value=mock_response)
+        mock_client.complete = AsyncMock(return_value=mock_response)
         grader._client = mock_client
 
         transcript = make_transcript(agent_response="Test content")

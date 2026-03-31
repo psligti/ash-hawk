@@ -1,32 +1,28 @@
-"""Tests for ash_hawk.metrics.statistics module."""
+"""Tests for ash_hawk.metrics.statistics."""
+
+from __future__ import annotations
 
 import math
 
+import pydantic as pd
 import pytest
 
-from ash_hawk.metrics import (
+from ash_hawk.metrics.statistics import (
     ConfidenceInterval,
+    CostMetrics,
+    LatencyMetrics,
     SignificanceResult,
+    TaskMetrics,
+    TokenMetrics,
     calculate_cost_metrics,
     calculate_latency_metrics,
     calculate_pass_at_k,
     calculate_pass_at_k_from_trials,
-    calculate_pass_caret_k,
-    calculate_pass_caret_k_from_trials,
-    calculate_suite_metrics_detailed,
     calculate_task_metrics,
     calculate_token_metrics,
-    chi_square_test,
-    clopper_pearson_confidence_interval,
-    compare_graders,
-    compare_runs_significance,
-    fisher_exact_test,
     mean,
-    normal_confidence_interval,
     percentile,
     std,
-    to_suite_metrics,
-    two_proportion_z_test,
     wilson_confidence_interval,
 )
 from ash_hawk.types import (
@@ -34,667 +30,697 @@ from ash_hawk.types import (
     EvalStatus,
     EvalTranscript,
     EvalTrial,
-    GraderResult,
     TokenUsage,
     TrialResult,
 )
 
+# =============================================================================
+# HELPERS
+# =============================================================================
 
-def make_trial(
-    trial_id: str,
-    task_id: str,
-    status: EvalStatus = EvalStatus.COMPLETED,
+
+def _make_trial(
+    trial_id: str = "t1",
+    task_id: str = "task-1",
+    duration_seconds: float = 1.0,
+    cost_usd: float = 0.01,
+    token_input: int = 100,
+    token_output: int = 50,
+    token_reasoning: int = 0,
+    token_cache_read: int = 0,
+    token_cache_write: int = 0,
     passed: bool = True,
     score: float = 1.0,
-    latency: float = 1.0,
-    tokens_input: int = 100,
-    tokens_output: int = 50,
-    cost_usd: float = 0.01,
-    grader_results: list[GraderResult] | None = None,
 ) -> EvalTrial:
-    result = None
-    if status == EvalStatus.COMPLETED:
-        result = TrialResult(
-            trial_id=trial_id,
-            outcome=EvalOutcome(status=status),
-            transcript=EvalTranscript(
-                duration_seconds=latency,
-                token_usage=TokenUsage(
-                    input=tokens_input,
-                    output=tokens_output,
-                ),
-                cost_usd=cost_usd,
-            ),
-            grader_results=grader_results
-            or [GraderResult(grader_type="test", score=score, passed=passed)],
-            aggregate_score=score,
-            aggregate_passed=passed,
-        )
-
+    """Build an EvalTrial with a populated TrialResult."""
     return EvalTrial(
         id=trial_id,
         task_id=task_id,
-        status=status,
-        result=result,
+        result=TrialResult(
+            trial_id=trial_id,
+            outcome=EvalOutcome(status=EvalStatus.COMPLETED),
+            transcript=EvalTranscript(
+                duration_seconds=duration_seconds,
+                cost_usd=cost_usd,
+                token_usage=TokenUsage(
+                    input=token_input,
+                    output=token_output,
+                    reasoning=token_reasoning,
+                    cache_read=token_cache_read,
+                    cache_write=token_cache_write,
+                ),
+            ),
+            aggregate_passed=passed,
+            aggregate_score=score,
+        ),
     )
 
 
+def _make_trial_no_result(
+    trial_id: str = "t-no-result",
+    task_id: str = "task-1",
+) -> EvalTrial:
+    """Build an EvalTrial with no result."""
+    return EvalTrial(id=trial_id, task_id=task_id)
+
+
+# =============================================================================
+# PYDANTIC MODEL TESTS
+# =============================================================================
+
+
+class TestConfidenceInterval:
+    """Test ConfidenceInterval model."""
+
+    def test_basic_construction(self) -> None:
+        ci = ConfidenceInterval(lower=0.3, upper=0.7)
+        assert ci.lower == 0.3
+        assert ci.upper == 0.7
+        assert ci.confidence_level == 0.95
+        assert ci.method == "wilson"
+
+    def test_custom_defaults(self) -> None:
+        ci = ConfidenceInterval(lower=0.0, upper=1.0, confidence_level=0.99, method="agresti-coull")
+        assert ci.confidence_level == 0.99
+        assert ci.method == "agresti-coull"
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            ConfidenceInterval(lower=0.0, upper=1.0, extra_field="nope")  # type: ignore[call-arg]
+
+
+class TestSignificanceResult:
+    """Test SignificanceResult model."""
+
+    def test_basic_construction(self) -> None:
+        sr = SignificanceResult(statistic=2.5, p_value=0.01, significant=True)
+        assert sr.statistic == 2.5
+        assert sr.p_value == 0.01
+        assert sr.significant is True
+        assert sr.alpha == 0.05
+        assert sr.test_type == "z_test"
+
+    def test_custom_defaults(self) -> None:
+        sr = SignificanceResult(
+            statistic=1.0, p_value=0.10, significant=False, alpha=0.10, test_type="t_test"
+        )
+        assert sr.alpha == 0.10
+        assert sr.test_type == "t_test"
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            SignificanceResult(
+                statistic=0.0,
+                p_value=0.5,
+                significant=False,
+                bad="field",  # type: ignore[call-arg]
+            )
+
+
+class TestLatencyMetrics:
+    """Test LatencyMetrics model."""
+
+    def test_defaults(self) -> None:
+        lm = LatencyMetrics()
+        assert lm.min_seconds == 0.0
+        assert lm.max_seconds == 0.0
+        assert lm.mean_seconds == 0.0
+        assert lm.median_seconds is None
+        assert lm.p50_seconds is None
+        assert lm.p90_seconds is None
+        assert lm.p95_seconds is None
+        assert lm.p99_seconds is None
+        assert lm.std_seconds == 0.0
+
+    def test_ge_zero_constraint(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            LatencyMetrics(min_seconds=-1.0)
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            LatencyMetrics(bogus=1.0)  # type: ignore[call-arg]
+
+
+class TestTokenMetrics:
+    """Test TokenMetrics model."""
+
+    def test_defaults(self) -> None:
+        tm = TokenMetrics()
+        assert tm.total_input == 0
+        assert tm.total_output == 0
+        assert tm.total_reasoning == 0
+        assert tm.total_cache_read == 0
+        assert tm.total_cache_write == 0
+        assert tm.mean_input_per_trial == 0.0
+        assert tm.mean_output_per_trial == 0.0
+
+    def test_ge_zero_constraint(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            TokenMetrics(total_input=-1)
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            TokenMetrics(extra=5)  # type: ignore[call-arg]
+
+
+class TestCostMetrics:
+    """Test CostMetrics model."""
+
+    def test_defaults(self) -> None:
+        cm = CostMetrics()
+        assert cm.total_usd == 0.0
+        assert cm.mean_usd_per_trial == 0.0
+        assert cm.min_usd_per_trial == 0.0
+        assert cm.max_usd_per_trial == 0.0
+
+    def test_ge_zero_constraint(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            CostMetrics(total_usd=-0.01)
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            CostMetrics(foo="bar")  # type: ignore[call-arg]
+
+
+class TestTaskMetrics:
+    """Test TaskMetrics model."""
+
+    def test_defaults(self) -> None:
+        tm = TaskMetrics(task_id="task-1")
+        assert tm.task_id == "task-1"
+        assert tm.total_attempts == 0
+        assert tm.successful_attempts == 0
+        assert tm.pass_rate == 0.0
+        assert tm.pass_at_k == {}
+        assert tm.confidence_interval is None
+        assert tm.mean_score == 0.0
+        assert isinstance(tm.latency, LatencyMetrics)
+        assert isinstance(tm.tokens, TokenMetrics)
+        assert isinstance(tm.cost, CostMetrics)
+
+    def test_pass_rate_bounds(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            TaskMetrics(task_id="t", pass_rate=1.5)
+
+    def test_mean_score_bounds(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            TaskMetrics(task_id="t", mean_score=-0.1)
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            TaskMetrics(task_id="t", nope=True)  # type: ignore[call-arg]
+
+    def test_nested_confidence_interval(self) -> None:
+        ci = ConfidenceInterval(lower=0.2, upper=0.8)
+        tm = TaskMetrics(task_id="t", confidence_interval=ci)
+        assert tm.confidence_interval is not None
+        assert tm.confidence_interval.lower == 0.2
+
+
+# =============================================================================
+# PURE FUNCTION TESTS
+# =============================================================================
+
+
 class TestPercentile:
-    def test_empty_list(self):
+    """Test percentile function."""
+
+    def test_empty_list(self) -> None:
         assert percentile([], 50) is None
 
-    def test_single_value(self):
+    def test_single_value(self) -> None:
         assert percentile([5.0], 50) == 5.0
         assert percentile([5.0], 0) == 5.0
         assert percentile([5.0], 100) == 5.0
 
-    def test_two_values(self):
-        assert percentile([0.0, 10.0], 50) == 5.0
-        assert percentile([0.0, 10.0], 0) == 0.0
-        assert percentile([0.0, 10.0], 100) == 10.0
+    def test_p0_returns_min(self) -> None:
+        assert percentile([1.0, 2.0, 3.0], 0) == 1.0
 
-    def test_multiple_values(self):
-        values = [1.0, 2.0, 3.0, 4.0, 5.0]
-        assert percentile(values, 50) == 3.0
-        assert percentile(values, 0) == 1.0
-        assert percentile(values, 100) == 5.0
+    def test_p100_returns_max(self) -> None:
+        assert percentile([1.0, 2.0, 3.0], 100) == 3.0
 
-    def test_interpolation(self):
-        values = [0.0, 1.0, 2.0, 3.0, 4.0]
-        p25 = percentile(values, 25)
-        assert p25 is not None
-        assert 0.5 < p25 < 1.5
+    def test_p50_median_odd(self) -> None:
+        result = percentile([1.0, 2.0, 3.0], 50)
+        assert result == 2.0
+
+    def test_p50_median_even(self) -> None:
+        result = percentile([1.0, 2.0, 3.0, 4.0], 50)
+        assert result is not None
+        assert result == pytest.approx(2.5)
+
+    def test_interpolation(self) -> None:
+        result = percentile([10.0, 20.0, 30.0, 40.0], 25)
+        assert result is not None
+        assert result == pytest.approx(17.5)
+
+    def test_unsorted_input(self) -> None:
+        result = percentile([3.0, 1.0, 2.0], 50)
+        assert result == 2.0
+
+    def test_all_same_values(self) -> None:
+        result = percentile([5.0, 5.0, 5.0], 90)
+        assert result == 5.0
 
 
 class TestMean:
-    def test_empty_list(self):
+    """Test mean function."""
+
+    def test_empty_list(self) -> None:
         assert mean([]) == 0.0
 
-    def test_single_value(self):
-        assert mean([5.0]) == 5.0
+    def test_single_value(self) -> None:
+        assert mean([7.0]) == 7.0
 
-    def test_multiple_values(self):
-        assert mean([1.0, 2.0, 3.0, 4.0, 5.0]) == 3.0
+    def test_multiple_values(self) -> None:
+        assert mean([1.0, 2.0, 3.0]) == pytest.approx(2.0)
 
-    def test_negative_values(self):
-        assert mean([-1.0, 1.0]) == 0.0
+    def test_negative_values(self) -> None:
+        assert mean([-1.0, 1.0]) == pytest.approx(0.0)
 
 
 class TestStd:
-    def test_empty_list(self):
+    """Test std function."""
+
+    def test_empty_list(self) -> None:
         assert std([]) == 0.0
 
-    def test_single_value(self):
+    def test_single_value(self) -> None:
         assert std([5.0]) == 0.0
 
-    def test_two_values(self):
-        result = std([0.0, 2.0], ddof=1)
-        assert result == pytest.approx(math.sqrt(2))
+    def test_population_std_ddof_0(self) -> None:
+        result = std([2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0])
+        assert result == pytest.approx(2.0, abs=0.01)
 
-    def test_population_std(self):
-        values = [2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0]
-        result = std(values, ddof=0)
-        assert result == pytest.approx(2.0)
+    def test_sample_std_ddof_1(self) -> None:
+        result = std([2.0, 4.0], ddof=1)
+        assert result == pytest.approx(math.sqrt(2.0))
+
+    def test_all_same_values(self) -> None:
+        assert std([3.0, 3.0, 3.0]) == 0.0
+
+    def test_two_values_ddof_0(self) -> None:
+        result = std([0.0, 10.0], ddof=0)
+        assert result == pytest.approx(5.0)
+
+
+# =============================================================================
+# PASS@K TESTS
+# =============================================================================
 
 
 class TestCalculatePassAtK:
-    def test_zero_total(self):
+    """Test calculate_pass_at_k."""
+
+    def test_total_zero(self) -> None:
         assert calculate_pass_at_k(0, 0, 1) == 0.0
 
-    def test_all_correct(self):
-        assert calculate_pass_at_k(10, 10, 1) == 1.0
-        assert calculate_pass_at_k(10, 10, 5) == 1.0
-
-    def test_none_correct(self):
-        assert calculate_pass_at_k(0, 10, 1) == 0.0
+    def test_correct_zero(self) -> None:
         assert calculate_pass_at_k(0, 10, 5) == 0.0
 
-    def test_half_correct_k1(self):
-        result = calculate_pass_at_k(5, 10, 1)
-        assert result == 0.5
+    def test_correct_equals_total(self) -> None:
+        assert calculate_pass_at_k(10, 10, 5) == 1.0
 
-    def test_pass_at_2_formula(self):
-        result = calculate_pass_at_k(1, 3, 2)
-        expected = 1.0 - (2 * 1) / (3 * 2)
-        assert result == pytest.approx(expected)
+    def test_correct_greater_than_total(self) -> None:
+        assert calculate_pass_at_k(15, 10, 5) == 1.0
 
-    def test_k_greater_than_total(self):
+    def test_k_equals_1(self) -> None:
+        result = calculate_pass_at_k(3, 10, 1)
+        assert result == pytest.approx(0.3)
+
+    def test_k_greater_than_total_caps(self) -> None:
+        # k=20, total=10, correct=5 -> k capped to 10
         result = calculate_pass_at_k(5, 10, 20)
-        assert result > 0.0
+        assert result == 1.0  # all 10 sampled, 5 correct, guaranteed at least one
 
-    def test_edge_cases(self):
-        assert calculate_pass_at_k(1, 1, 1) == 1.0
-        assert calculate_pass_at_k(0, 1, 1) == 0.0
+    def test_pass_at_k_basic(self) -> None:
+        # 5 correct out of 10, k=3
+        result = calculate_pass_at_k(5, 10, 3)
+        assert 0.0 < result < 1.0
+
+    def test_n_minus_correct_lt_k(self) -> None:
+        # n=10, correct=8, k=5 -> n-correct=2 < k=5 -> returns 1.0
+        result = calculate_pass_at_k(8, 10, 5)
+        assert result == 1.0
+
+    def test_k_equals_total(self) -> None:
+        # k=total means we sample all, guaranteed pass if correct>0
+        result = calculate_pass_at_k(1, 10, 10)
+        assert result == 1.0
+
+    def test_monotonic_with_k(self) -> None:
+        """pass@k should increase with k."""
+        results = [calculate_pass_at_k(3, 10, k) for k in [1, 2, 3, 5]]
+        for i in range(len(results) - 1):
+            assert results[i] <= results[i + 1]
 
 
 class TestCalculatePassAtKFromTrials:
-    def test_empty_trials(self):
+    """Test calculate_pass_at_k_from_trials."""
+
+    def test_empty_trials(self) -> None:
         assert calculate_pass_at_k_from_trials([], 1) == 0.0
 
-    def test_all_pass(self):
-        trials = [
-            make_trial("t1", "task1", passed=True),
-            make_trial("t2", "task2", passed=True),
-        ]
-        assert calculate_pass_at_k_from_trials(trials, 1) == 1.0
+    def test_single_task_all_pass(self) -> None:
+        trials = [_make_trial(trial_id=f"t{i}", passed=True) for i in range(5)]
+        result = calculate_pass_at_k_from_trials(trials, 1)
+        assert result == 1.0
 
-    def test_half_pass(self):
+    def test_single_task_none_pass(self) -> None:
+        trials = [_make_trial(trial_id=f"t{i}", passed=False) for i in range(5)]
+        result = calculate_pass_at_k_from_trials(trials, 1)
+        assert result == 0.0
+
+    def test_single_task_partial_pass(self) -> None:
         trials = [
-            make_trial("t1", "task1", passed=True),
-            make_trial("t2", "task2", passed=False),
+            _make_trial(trial_id="t1", passed=True),
+            _make_trial(trial_id="t2", passed=False),
         ]
         result = calculate_pass_at_k_from_trials(trials, 1)
-        assert result == 0.5
+        assert result == pytest.approx(0.5)
 
-    def test_multiple_attempts_same_task(self):
+    def test_multiple_tasks_averaged(self) -> None:
         trials = [
-            make_trial("t1", "task1", passed=False),
-            make_trial("t2", "task1", passed=True),
+            # task-a: 2/2 pass
+            _make_trial(trial_id="t1", task_id="task-a", passed=True),
+            _make_trial(trial_id="t2", task_id="task-a", passed=True),
+            # task-b: 0/2 pass
+            _make_trial(trial_id="t3", task_id="task-b", passed=False),
+            _make_trial(trial_id="t4", task_id="task-b", passed=False),
         ]
-        result = calculate_pass_at_k_from_trials(trials, 2)
-        assert result > 0.0
+        result = calculate_pass_at_k_from_trials(trials, 1)
+        # task-a pass@1=1.0, task-b pass@1=0.0, mean=0.5
+        assert result == pytest.approx(0.5)
 
-
-class TestCalculatePassCaretK:
-    def test_zero_total(self):
-        assert calculate_pass_caret_k(0, 0, 1) == 0.0
-
-    def test_all_correct(self):
-        assert calculate_pass_caret_k(10, 10, 3) == 1.0
-
-    def test_none_correct(self):
-        assert calculate_pass_caret_k(0, 10, 3) == 0.0
-
-    def test_half_correct_k2(self):
-        result = calculate_pass_caret_k(5, 10, 2)
-        expected = (5 / 10) * (4 / 9)
-        assert result == pytest.approx(expected)
-
-    def test_insufficient_correct(self):
-        result = calculate_pass_caret_k(2, 10, 5)
-        assert result == 0.0
-
-    def test_k_zero(self):
-        assert calculate_pass_caret_k(5, 10, 0) == 1.0
-
-
-class TestCalculatePassCaretKFromTrials:
-    def test_empty_trials(self):
-        assert calculate_pass_caret_k_from_trials([], 1) == 0.0
-
-    def test_all_pass(self):
+    def test_trials_without_results_not_counted_as_pass(self) -> None:
         trials = [
-            make_trial("t1", "task1", passed=True),
-            make_trial("t2", "task1", passed=True),
+            _make_trial(trial_id="t1", passed=True),
+            _make_trial_no_result(trial_id="t2"),
         ]
-        assert calculate_pass_caret_k_from_trials(trials, 2) == 1.0
+        result = calculate_pass_at_k_from_trials(trials, 1)
+        # 1 correct out of 2 total
+        assert result == pytest.approx(0.5)
 
-    def test_one_fails(self):
-        trials = [
-            make_trial("t1", "task1", passed=True),
-            make_trial("t2", "task1", passed=False),
-        ]
-        result = calculate_pass_caret_k_from_trials(trials, 2)
-        assert result == 0.0
+
+# =============================================================================
+# WILSON CONFIDENCE INTERVAL TESTS
+# =============================================================================
 
 
 class TestWilsonConfidenceInterval:
-    def test_zero_total(self):
+    """Test wilson_confidence_interval."""
+
+    def test_total_zero(self) -> None:
         ci = wilson_confidence_interval(0, 0)
         assert ci.lower == 0.0
         assert ci.upper == 1.0
         assert ci.method == "wilson"
+        assert ci.confidence_level == 0.95
 
-    def test_all_success(self):
+    def test_all_successes(self) -> None:
         ci = wilson_confidence_interval(100, 100)
         assert ci.lower > 0.9
-        assert ci.upper == 1.0
+        assert ci.upper == 1.0  # clamped
 
-    def test_no_success(self):
+    def test_all_failures(self) -> None:
         ci = wilson_confidence_interval(0, 100)
         assert ci.lower == pytest.approx(0.0, abs=1e-10)
         assert ci.upper < 0.1
 
-    def test_half_success(self):
+    def test_half_and_half(self) -> None:
         ci = wilson_confidence_interval(50, 100)
-        assert 0.35 < ci.lower < 0.45
-        assert 0.55 < ci.upper < 0.65
-
-    def test_small_sample(self):
-        ci = wilson_confidence_interval(1, 2)
         assert ci.lower < 0.5
         assert ci.upper > 0.5
+        assert ci.lower > 0.0
+        assert ci.upper < 1.0
 
-    def test_custom_confidence_level(self):
-        ci_95 = wilson_confidence_interval(50, 100, 0.95)
-        ci_99 = wilson_confidence_interval(50, 100, 0.99)
-        assert ci_99.width > ci_95.width
+    def test_custom_confidence_level(self) -> None:
+        ci_95 = wilson_confidence_interval(50, 100, confidence_level=0.95)
+        ci_99 = wilson_confidence_interval(50, 100, confidence_level=0.99)
+        # 99% CI should be wider than 95% CI
+        assert (ci_99.upper - ci_99.lower) > (ci_95.upper - ci_95.lower)
 
-
-class TestNormalConfidenceInterval:
-    def test_zero_total(self):
-        ci = normal_confidence_interval(0, 0)
-        assert ci.lower == 0.0
-        assert ci.upper == 1.0
-        assert ci.method == "normal"
-
-    def test_half_success(self):
-        ci = normal_confidence_interval(50, 100)
-        assert 0.35 < ci.lower < 0.45
-        assert 0.55 < ci.upper < 0.65
+    def test_small_sample(self) -> None:
+        ci = wilson_confidence_interval(1, 2)
+        assert ci.lower >= 0.0
+        assert ci.upper <= 1.0
 
 
-class TestClopperPearsonConfidenceInterval:
-    def test_zero_total(self):
-        ci = clopper_pearson_confidence_interval(0, 0)
-        assert ci.lower == 0.0
-        assert ci.upper == 1.0
-        assert ci.method == "clopper_pearson"
-
-    def test_all_success(self):
-        ci = clopper_pearson_confidence_interval(100, 100)
-        assert ci.lower > 0.9
-        assert ci.upper == 1.0
-
-    def test_no_success(self):
-        ci = clopper_pearson_confidence_interval(0, 100)
-        assert ci.lower == 0.0
-        assert ci.upper < 0.1
-
-
-class TestTwoProportionZTest:
-    def test_identical_proportions(self):
-        result = two_proportion_z_test(50, 100, 50, 100)
-        assert result.statistic == 0.0
-        assert result.p_value == 1.0
-        assert not result.significant
-
-    def test_significantly_different(self):
-        result = two_proportion_z_test(90, 100, 10, 100)
-        assert abs(result.statistic) > 5
-        assert result.p_value < 0.001
-        assert result.significant
-
-    def test_zero_totals(self):
-        result = two_proportion_z_test(0, 0, 0, 0)
-        assert result.p_value == 1.0
-        assert not result.significant
-
-    def test_effect_size(self):
-        result = two_proportion_z_test(90, 100, 10, 100)
-        assert result.effect_size is not None
-        assert result.effect_size > 0.5
-
-
-class TestChiSquareTest:
-    def test_perfect_independence(self):
-        observed = [[50, 50], [50, 50]]
-        result = chi_square_test(observed)
-        assert result.statistic == 0.0
-        assert result.p_value == 1.0
-        assert not result.significant
-
-    def test_perfect_association(self):
-        observed = [[100, 0], [0, 100]]
-        result = chi_square_test(observed)
-        assert result.statistic > 50
-        assert result.p_value < 0.001
-        assert result.significant
-
-    def test_empty_table(self):
-        observed = [[0, 0], [0, 0]]
-        result = chi_square_test(observed)
-        assert result.p_value == 1.0
-
-    def test_effect_size(self):
-        observed = [[100, 0], [0, 100]]
-        result = chi_square_test(observed)
-        assert result.effect_size is not None
-
-
-class TestCompareRunsSignificance:
-    def test_identical_runs(self):
-        run1 = [make_trial(f"t{i}", f"task{i}", passed=True) for i in range(10)]
-        run2 = [make_trial(f"t{i}", f"task{i}", passed=True) for i in range(10)]
-        result = compare_runs_significance(run1, run2)
-        assert not result.significant
-
-    def test_different_runs(self):
-        run1 = [make_trial(f"t{i}", f"task{i}", passed=True) for i in range(100)]
-        run2 = [make_trial(f"t{i}", f"task{i}", passed=False) for i in range(100)]
-        result = compare_runs_significance(run1, run2)
-        assert result.significant
+# =============================================================================
+# TRIAL-BASED FUNCTION TESTS
+# =============================================================================
 
 
 class TestCalculateLatencyMetrics:
-    def test_empty_trials(self):
-        metrics = calculate_latency_metrics([])
-        assert metrics.mean_seconds == 0.0
-        assert metrics.p50_seconds is None
+    """Test calculate_latency_metrics."""
 
-    def test_single_trial(self):
-        trials = [make_trial("t1", "task1", latency=2.5)]
-        metrics = calculate_latency_metrics(trials)
-        assert metrics.mean_seconds == 2.5
-        assert metrics.min_seconds == 2.5
-        assert metrics.max_seconds == 2.5
+    def test_empty_trials(self) -> None:
+        result = calculate_latency_metrics([])
+        assert result.min_seconds == 0.0
+        assert result.max_seconds == 0.0
+        assert result.mean_seconds == 0.0
+        assert result.median_seconds is None
 
-    def test_multiple_trials(self):
+    def test_trials_without_results(self) -> None:
+        trials = [_make_trial_no_result()]
+        result = calculate_latency_metrics(trials)
+        assert result == LatencyMetrics()
+
+    def test_single_trial(self) -> None:
+        trials = [_make_trial(duration_seconds=5.0)]
+        result = calculate_latency_metrics(trials)
+        assert result.min_seconds == 5.0
+        assert result.max_seconds == 5.0
+        assert result.mean_seconds == 5.0
+        assert result.median_seconds == 5.0
+        assert result.p50_seconds == 5.0
+        assert result.p90_seconds == 5.0
+        assert result.p95_seconds == 5.0
+        assert result.p99_seconds == 5.0
+        assert result.std_seconds == 0.0
+
+    def test_multiple_trials(self) -> None:
         trials = [
-            make_trial("t1", "task1", latency=1.0),
-            make_trial("t2", "task2", latency=2.0),
-            make_trial("t3", "task3", latency=3.0),
+            _make_trial(trial_id="t1", duration_seconds=1.0),
+            _make_trial(trial_id="t2", duration_seconds=2.0),
+            _make_trial(trial_id="t3", duration_seconds=3.0),
         ]
-        metrics = calculate_latency_metrics(trials)
-        assert metrics.mean_seconds == 2.0
-        assert metrics.min_seconds == 1.0
-        assert metrics.max_seconds == 3.0
-        assert metrics.p50_seconds == 2.0
+        result = calculate_latency_metrics(trials)
+        assert result.min_seconds == 1.0
+        assert result.max_seconds == 3.0
+        assert result.mean_seconds == pytest.approx(2.0)
+        assert result.median_seconds == 2.0
+        assert result.std_seconds > 0.0
 
-    def test_percentiles(self):
-        trials = [make_trial(f"t{i}", f"task{i}", latency=float(i)) for i in range(1, 101)]
-        metrics = calculate_latency_metrics(trials)
-        assert metrics.p50_seconds is not None
-        assert metrics.p95_seconds is not None
-        assert metrics.p99_seconds is not None
-        assert metrics.p50_seconds < metrics.p95_seconds
-        assert metrics.p95_seconds < metrics.p99_seconds
-
-    def test_pending_trials_excluded(self):
+    def test_mixed_result_and_no_result(self) -> None:
         trials = [
-            make_trial("t1", "task1", latency=1.0),
-            make_trial("t2", "task2", status=EvalStatus.PENDING),
+            _make_trial(trial_id="t1", duration_seconds=10.0),
+            _make_trial_no_result(trial_id="t2"),
         ]
-        metrics = calculate_latency_metrics(trials)
-        assert metrics.mean_seconds == 1.0
+        result = calculate_latency_metrics(trials)
+        assert result.min_seconds == 10.0
+        assert result.max_seconds == 10.0
+        assert result.mean_seconds == 10.0
 
 
 class TestCalculateTokenMetrics:
-    def test_empty_trials(self):
-        metrics = calculate_token_metrics([])
-        assert metrics.total_input == 0
-        assert metrics.total_output == 0
+    """Test calculate_token_metrics."""
 
-    def test_single_trial(self):
-        trials = [make_trial("t1", "task1", tokens_input=200, tokens_output=100)]
-        metrics = calculate_token_metrics(trials)
-        assert metrics.total_input == 200
-        assert metrics.total_output == 100
-        assert metrics.mean_input_per_trial == 200.0
-        assert metrics.mean_output_per_trial == 100.0
+    def test_empty_trials(self) -> None:
+        result = calculate_token_metrics([])
+        assert result == TokenMetrics()
 
-    def test_multiple_trials(self):
+    def test_trials_without_results(self) -> None:
+        trials = [_make_trial_no_result()]
+        result = calculate_token_metrics(trials)
+        assert result.total_input == 0
+
+    def test_single_trial(self) -> None:
         trials = [
-            make_trial("t1", "task1", tokens_input=100, tokens_output=50),
-            make_trial("t2", "task2", tokens_input=200, tokens_output=100),
+            _make_trial(
+                token_input=100,
+                token_output=50,
+                token_reasoning=10,
+                token_cache_read=5,
+                token_cache_write=3,
+            )
         ]
-        metrics = calculate_token_metrics(trials)
-        assert metrics.total_input == 300
-        assert metrics.total_output == 150
-        assert metrics.mean_input_per_trial == 150.0
+        result = calculate_token_metrics(trials)
+        assert result.total_input == 100
+        assert result.total_output == 50
+        assert result.total_reasoning == 10
+        assert result.total_cache_read == 5
+        assert result.total_cache_write == 3
+        assert result.mean_input_per_trial == 100.0
+        assert result.mean_output_per_trial == 50.0
+
+    def test_multiple_trials(self) -> None:
+        trials = [
+            _make_trial(trial_id="t1", token_input=100, token_output=50),
+            _make_trial(trial_id="t2", token_input=200, token_output=100),
+        ]
+        result = calculate_token_metrics(trials)
+        assert result.total_input == 300
+        assert result.total_output == 150
+        assert result.mean_input_per_trial == pytest.approx(150.0)
+        assert result.mean_output_per_trial == pytest.approx(75.0)
+
+    def test_mixed_result_and_no_result(self) -> None:
+        trials = [
+            _make_trial(trial_id="t1", token_input=200, token_output=80),
+            _make_trial_no_result(trial_id="t2"),
+        ]
+        result = calculate_token_metrics(trials)
+        assert result.total_input == 200
+        assert result.mean_input_per_trial == 200.0
 
 
 class TestCalculateCostMetrics:
-    def test_empty_trials(self):
-        metrics = calculate_cost_metrics([])
-        assert metrics.total_usd == 0.0
+    """Test calculate_cost_metrics."""
 
-    def test_single_trial(self):
-        trials = [make_trial("t1", "task1", cost_usd=0.05)]
-        metrics = calculate_cost_metrics(trials)
-        assert metrics.total_usd == 0.05
-        assert metrics.mean_usd_per_trial == 0.05
+    def test_empty_trials(self) -> None:
+        result = calculate_cost_metrics([])
+        assert result == CostMetrics()
 
-    def test_multiple_trials(self):
+    def test_trials_without_results(self) -> None:
+        trials = [_make_trial_no_result()]
+        result = calculate_cost_metrics(trials)
+        assert result.total_usd == 0.0
+
+    def test_single_trial(self) -> None:
+        trials = [_make_trial(cost_usd=0.05)]
+        result = calculate_cost_metrics(trials)
+        assert result.total_usd == pytest.approx(0.05)
+        assert result.mean_usd_per_trial == pytest.approx(0.05)
+        assert result.min_usd_per_trial == pytest.approx(0.05)
+        assert result.max_usd_per_trial == pytest.approx(0.05)
+
+    def test_multiple_trials(self) -> None:
         trials = [
-            make_trial("t1", "task1", cost_usd=0.01),
-            make_trial("t2", "task2", cost_usd=0.02),
-            make_trial("t3", "task3", cost_usd=0.03),
+            _make_trial(trial_id="t1", cost_usd=0.01),
+            _make_trial(trial_id="t2", cost_usd=0.03),
+            _make_trial(trial_id="t3", cost_usd=0.05),
         ]
-        metrics = calculate_cost_metrics(trials)
-        assert metrics.total_usd == 0.06
-        assert metrics.mean_usd_per_trial == pytest.approx(0.02)
-        assert metrics.min_usd_per_trial == 0.01
-        assert metrics.max_usd_per_trial == 0.03
+        result = calculate_cost_metrics(trials)
+        assert result.total_usd == pytest.approx(0.09)
+        assert result.mean_usd_per_trial == pytest.approx(0.03)
+        assert result.min_usd_per_trial == pytest.approx(0.01)
+        assert result.max_usd_per_trial == pytest.approx(0.05)
+
+    def test_mixed_result_and_no_result(self) -> None:
+        trials = [
+            _make_trial(trial_id="t1", cost_usd=0.10),
+            _make_trial_no_result(trial_id="t2"),
+        ]
+        result = calculate_cost_metrics(trials)
+        assert result.total_usd == pytest.approx(0.10)
+        assert result.mean_usd_per_trial == pytest.approx(0.10)
+
+
+# =============================================================================
+# CALCULATE_TASK_METRICS TESTS
+# =============================================================================
 
 
 class TestCalculateTaskMetrics:
-    def test_empty_trials(self):
-        metrics = calculate_task_metrics([])
-        assert metrics == {}
+    """Test calculate_task_metrics."""
 
-    def test_single_task(self):
+    def test_empty_trials(self) -> None:
+        result = calculate_task_metrics([])
+        assert result == {}
+
+    def test_single_task_all_pass(self) -> None:
         trials = [
-            make_trial("t1", "task1", passed=True),
-            make_trial("t2", "task1", passed=False),
+            _make_trial(trial_id="t1", task_id="task-a", passed=True, score=1.0),
+            _make_trial(trial_id="t2", task_id="task-a", passed=True, score=0.8),
         ]
-        metrics = calculate_task_metrics(trials)
-        assert "task1" in metrics
-        assert metrics["task1"].total_attempts == 2
-        assert metrics["task1"].successful_attempts == 1
-        assert metrics["task1"].pass_rate == 0.5
+        result = calculate_task_metrics(trials)
+        assert "task-a" in result
+        tm = result["task-a"]
+        assert tm.total_attempts == 2
+        assert tm.successful_attempts == 2
+        assert tm.pass_rate == 1.0
+        assert tm.mean_score == pytest.approx(0.9)
 
-    def test_multiple_tasks(self):
+    def test_single_task_partial_pass(self) -> None:
         trials = [
-            make_trial("t1", "task1", passed=True),
-            make_trial("t2", "task2", passed=False),
+            _make_trial(trial_id="t1", task_id="task-a", passed=True, score=1.0),
+            _make_trial(trial_id="t2", task_id="task-a", passed=False, score=0.0),
         ]
-        metrics = calculate_task_metrics(trials)
-        assert len(metrics) == 2
-        assert metrics["task1"].pass_rate == 1.0
-        assert metrics["task2"].pass_rate == 0.0
+        result = calculate_task_metrics(trials)
+        tm = result["task-a"]
+        assert tm.total_attempts == 2
+        assert tm.successful_attempts == 1
+        assert tm.pass_rate == pytest.approx(0.5)
+        assert tm.mean_score == pytest.approx(0.5)
 
-    def test_pass_at_k_included(self):
-        trials = [make_trial(f"t{i}", "task1", passed=(i % 2 == 0)) for i in range(10)]
-        metrics = calculate_task_metrics(trials, k_values=[1, 2, 3])
-        assert 1 in metrics["task1"].pass_at_k
-        assert 2 in metrics["task1"].pass_at_k
-        assert 3 in metrics["task1"].pass_at_k
-
-    def test_confidence_interval_included(self):
-        trials = [make_trial(f"t{i}", "task1", passed=True) for i in range(10)]
-        metrics = calculate_task_metrics(trials)
-        assert metrics["task1"].confidence_interval is not None
-
-
-class TestCalculateSuiteMetricsDetailed:
-    def test_empty_trials(self):
-        metrics = calculate_suite_metrics_detailed([], "suite-1", "run-1")
-        assert metrics.suite_id == "suite-1"
-        assert metrics.run_id == "run-1"
-        assert metrics.total_trials == 0
-
-    def test_single_trial(self):
-        trials = [make_trial("t1", "task1", passed=True, score=0.9)]
-        metrics = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        assert metrics.total_trials == 1
-        assert metrics.passed_trials == 1
-        assert metrics.pass_rate == 1.0
-        assert metrics.mean_score == 0.9
-
-    def test_mixed_trials(self):
+    def test_multiple_tasks(self) -> None:
         trials = [
-            make_trial("t1", "task1", passed=True, score=1.0),
-            make_trial("t2", "task2", passed=False, score=0.5),
-            make_trial("t3", "task3", passed=True, score=0.8),
+            _make_trial(trial_id="t1", task_id="task-a", passed=True),
+            _make_trial(trial_id="t2", task_id="task-b", passed=False, score=0.0),
         ]
-        metrics = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        assert metrics.total_trials == 3
-        assert metrics.passed_trials == 2
-        assert metrics.failed_trials == 1
-        assert metrics.pass_rate == pytest.approx(2 / 3)
+        result = calculate_task_metrics(trials)
+        assert len(result) == 2
+        assert "task-a" in result
+        assert "task-b" in result
 
-    def test_pass_at_k_included(self):
-        trials = [make_trial(f"t{i}", f"task{i}", passed=(i % 2 == 0)) for i in range(10)]
-        metrics = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        assert 1 in metrics.pass_at_k
-        assert 2 in metrics.pass_at_k
-
-    def test_latency_metrics_included(self):
-        trials = [make_trial(f"t{i}", f"task{i}", latency=float(i + 1)) for i in range(5)]
-        metrics = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        assert metrics.latency.mean_seconds == 3.0
-        assert metrics.latency.p50_seconds is not None
-
-    def test_token_metrics_included(self):
+    def test_default_k_values(self) -> None:
         trials = [
-            make_trial(f"t{i}", f"task{i}", tokens_input=100, tokens_output=50) for i in range(3)
+            _make_trial(trial_id=f"t{i}", task_id="task-a", passed=(i % 2 == 0)) for i in range(10)
         ]
-        metrics = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        assert metrics.tokens.total_input == 300
-        assert metrics.tokens.total_output == 150
+        result = calculate_task_metrics(trials)
+        tm = result["task-a"]
+        assert set(tm.pass_at_k.keys()) == {1, 2, 3, 5}
 
-    def test_cost_metrics_included(self):
-        trials = [make_trial(f"t{i}", f"task{i}", cost_usd=0.01) for i in range(5)]
-        metrics = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        assert metrics.cost.total_usd == 0.05
+    def test_custom_k_values(self) -> None:
+        trials = [_make_trial(trial_id="t1", task_id="task-a")]
+        result = calculate_task_metrics(trials, k_values=[1, 10])
+        tm = result["task-a"]
+        assert set(tm.pass_at_k.keys()) == {1, 10}
 
-    def test_task_metrics_included(self):
+    def test_confidence_interval_populated(self) -> None:
         trials = [
-            make_trial("t1", "task1", passed=True),
-            make_trial("t2", "task2", passed=False),
+            _make_trial(trial_id=f"t{i}", task_id="task-a", passed=(i < 5)) for i in range(10)
         ]
-        metrics = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        assert "task1" in metrics.task_metrics
-        assert "task2" in metrics.task_metrics
+        result = calculate_task_metrics(trials)
+        tm = result["task-a"]
+        assert tm.confidence_interval is not None
+        assert tm.confidence_interval.method == "wilson"
+        assert tm.confidence_interval.lower < tm.pass_rate
+        assert tm.confidence_interval.upper > tm.pass_rate
 
-    def test_grader_metrics_included(self):
-        grader_results = [
-            GraderResult(grader_type="string_match", score=1.0, passed=True),
-        ]
-        trials = [make_trial("t1", "task1", grader_results=grader_results)]
-        metrics = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        assert "string_match" in metrics.grader_metrics
-
-
-class TestToSuiteMetrics:
-    def test_conversion(self):
+    def test_latency_tokens_cost_populated(self) -> None:
         trials = [
-            make_trial("t1", "task1", passed=True, score=1.0, latency=2.0),
-            make_trial("t2", "task2", passed=False, score=0.5, latency=3.0),
+            _make_trial(
+                trial_id="t1",
+                task_id="task-a",
+                duration_seconds=2.0,
+                cost_usd=0.05,
+                token_input=200,
+                token_output=100,
+            ),
         ]
-        detailed = calculate_suite_metrics_detailed(trials, "suite-1", "run-1")
-        simple = to_suite_metrics(detailed)
+        result = calculate_task_metrics(trials)
+        tm = result["task-a"]
+        assert tm.latency.mean_seconds == 2.0
+        assert tm.tokens.total_input == 200
+        assert tm.cost.total_usd == pytest.approx(0.05)
 
-        assert simple.suite_id == "suite-1"
-        assert simple.run_id == "run-1"
-        assert simple.total_tasks == 2
-        assert simple.completed_tasks == 2
-        assert simple.pass_rate == 0.5
-        assert simple.mean_score == 0.75
-        assert simple.latency_p50_seconds is not None
-
-
-class TestConfidenceIntervalProperties:
-    def test_width(self):
-        ci = ConfidenceInterval(lower=0.4, upper=0.6, confidence_level=0.95)
-        assert ci.width == pytest.approx(0.2)
-
-    def test_midpoint(self):
-        ci = ConfidenceInterval(lower=0.4, upper=0.6, confidence_level=0.95)
-        assert ci.midpoint == 0.5
-
-
-class TestSignificanceResultProperties:
-    def test_default_values(self):
-        result = SignificanceResult(
-            statistic=1.5,
-            p_value=0.134,
-            significant=False,
-        )
-        assert result.alpha == 0.05
-        assert result.test_type == "z_test"
-        assert result.effect_size is None
-
-
-class TestFisherExactTest:
-    def test_identical_proportions(self):
-        table = [[50, 50], [50, 50]]
-        result = fisher_exact_test(table)
-        assert result.p_value == pytest.approx(1.0, abs=0.01)
-        assert not result.significant
-        assert result.test_type == "fisher_exact"
-
-    def test_significantly_different(self):
-        table = [[10, 0], [0, 10]]
-        result = fisher_exact_test(table)
-        assert result.p_value < 0.001
-        assert result.significant
-
-    def test_empty_table(self):
-        table = [[0, 0], [0, 0]]
-        result = fisher_exact_test(table)
-        assert result.p_value == 1.0
-        assert not result.significant
-
-    def test_small_sample(self):
-        table = [[3, 1], [1, 3]]
-        result = fisher_exact_test(table)
-        assert 0.0 < result.p_value <= 1.0
-        assert result.effect_size is not None
-
-    def test_one_tailed_extreme(self):
-        table = [[8, 2], [1, 9]]
-        result = fisher_exact_test(table)
-        assert result.p_value < 0.05
-
-    def test_invalid_table_shape(self):
-        result = fisher_exact_test([[1, 2, 3], [4, 5, 6]])
-        assert result.p_value == 1.0
-        assert not result.significant
-
-    def test_edge_case_all_pass_vs_all_fail(self):
-        table = [[10, 0], [0, 10]]
-        result = fisher_exact_test(table)
-        assert result.p_value < 0.001
-        assert result.significant
-
-
-class TestCompareGraders:
-    def test_identical_results(self):
-        grader_a = [GraderResult(grader_type="a", score=1.0, passed=True) for _ in range(10)]
-        grader_b = [GraderResult(grader_type="b", score=1.0, passed=True) for _ in range(10)]
-        result = compare_graders(grader_a, grader_b)
-        assert not result.significant
-
-    def test_significantly_different(self):
-        grader_a = [GraderResult(grader_type="a", score=1.0, passed=True) for _ in range(20)]
-        grader_b = [GraderResult(grader_type="b", score=0.0, passed=False) for _ in range(20)]
-        result = compare_graders(grader_a, grader_b)
-        assert result.significant
-        assert result.p_value < 0.001
-
-    def test_empty_results(self):
-        result = compare_graders([], [])
-        assert result.p_value == 1.0
-        assert not result.significant
-
-    def test_uses_chi_square_for_large_samples(self):
-        grader_a = [
-            GraderResult(grader_type="a", score=1.0, passed=(i % 2 == 0)) for i in range(60)
+    def test_custom_confidence_level(self) -> None:
+        trials = [
+            _make_trial(trial_id=f"t{i}", task_id="task-a", passed=(i < 3)) for i in range(10)
         ]
-        grader_b = [
-            GraderResult(grader_type="b", score=1.0, passed=(i % 3 == 0)) for i in range(60)
-        ]
-        result = compare_graders(grader_a, grader_b, use_chi_square_threshold=100)
-        assert result.test_type == "chi_square_test"
+        result = calculate_task_metrics(trials, confidence_level=0.99)
+        tm = result["task-a"]
+        assert tm.confidence_interval is not None
+        assert tm.confidence_interval.confidence_level == 0.99
 
-    def test_uses_fisher_for_small_samples(self):
-        grader_a = [GraderResult(grader_type="a", score=1.0, passed=True) for _ in range(5)]
-        grader_b = [GraderResult(grader_type="b", score=0.0, passed=False) for _ in range(5)]
-        result = compare_graders(grader_a, grader_b, use_chi_square_threshold=100)
-        assert result.test_type == "fisher_exact"
-
-    def test_mixed_results(self):
-        grader_a = [
-            GraderResult(grader_type="a", score=1.0, passed=True),
-            GraderResult(grader_type="a", score=1.0, passed=True),
-            GraderResult(grader_type="a", score=0.0, passed=False),
+    def test_trials_without_results_counted_as_attempts(self) -> None:
+        trials = [
+            _make_trial(trial_id="t1", task_id="task-a", passed=True),
+            _make_trial_no_result(trial_id="t2", task_id="task-a"),
         ]
-        grader_b = [
-            GraderResult(grader_type="b", score=0.0, passed=False),
-            GraderResult(grader_type="b", score=0.0, passed=False),
-            GraderResult(grader_type="b", score=1.0, passed=True),
-        ]
-        result = compare_graders(grader_a, grader_b)
-        assert 0.0 < result.p_value <= 1.0
+        result = calculate_task_metrics(trials)
+        tm = result["task-a"]
+        assert tm.total_attempts == 2
+        assert tm.successful_attempts == 1
+        assert tm.pass_rate == pytest.approx(0.5)

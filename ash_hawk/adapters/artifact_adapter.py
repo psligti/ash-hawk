@@ -94,7 +94,7 @@ class ArtifactAdapter:
     ) -> tuple[
         list[ToolCallRecord],
         list[StepRecord],
-        list[dict],
+        list[dict[str, Any]],
         int,
         dict[str, int],
         float | None,

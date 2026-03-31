@@ -2,770 +2,828 @@
 
 from __future__ import annotations
 
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
+import pydantic as pd
 import pytest
 
 from ash_hawk.graders.prompt_stack_optimizer import (
+    _SUBCATEGORY_TO_CATEGORY,
     DEFAULT_RUBRIC,
     REQUIRED_SUBCATEGORIES,
-    CategoryEvidence,
-    GrowthOpportunity,
-    MetaMetrics,
-    MutationTarget,
+    CategoryDef,
     PromptStackOptimizerConfig,
     PromptStackOptimizerGrader,
     RubricDef,
-    SubcategoryEvidence,
+    SubcategoryDef,
 )
 from ash_hawk.types import (
     EvalTranscript,
     EvalTrial,
+    FailureMode,
     GraderSpec,
-    TokenUsage,
 )
 
+# =============================================================================
+# Fixtures
+# =============================================================================
+
 
 @pytest.fixture
-def trial():
-    return EvalTrial(id="trial-1", task_id="task-1")
+def trial() -> EvalTrial:
+    return EvalTrial(id="t1", task_id="task1")
 
 
 @pytest.fixture
-def spec():
+def transcript() -> EvalTranscript:
+    return EvalTranscript(
+        messages=[
+            {"role": "user", "content": "Hello, write a function"},
+            {"role": "assistant", "content": "Sure, here is the function:\ndef foo(): pass"},
+        ],
+        tool_calls=[
+            {"name": "bash", "input": {"command": "ls"}, "output": "file1.py\nfile2.py"},
+        ],
+    )
+
+
+@pytest.fixture
+def spec() -> GraderSpec:
     return GraderSpec(grader_type="prompt_stack_optimizer")
 
 
 @pytest.fixture
-def empty_transcript():
-    return EvalTranscript()
-
-
-@pytest.fixture
-def rich_transcript():
-    return EvalTranscript(
-        messages=[
-            {"role": "user", "content": "Fix the bug in auth.py"},
-            {"role": "assistant", "content": "I'll read the file first to understand the issue."},
-            {
-                "role": "assistant",
-                "content": "Let me fix the error. I was wrong about the root cause.",
-            },
-            {"role": "user", "content": "Good, now run the tests."},
-            {"role": "assistant", "content": "Running tests to verify the fix."},
-        ],
-        tool_calls=[
-            {"name": "read_file", "input": {"path": "auth.py"}, "output": "def login():\n    pass"},
-            {"name": "edit_file", "input": {"path": "auth.py", "content": "..."}, "output": "OK"},
-            {
-                "name": "run_tests",
-                "input": {"command": "pytest tests/"},
-                "output": "3 passed",
-            },
-            {
-                "name": "read_file",
-                "input": {"path": "auth.py"},
-                "output": "def login():\n    pass",
-            },
-            {
-                "name": "lint",
-                "input": {"path": "auth.py"},
-                "output": "All checks passed",
-            },
-        ],
-        trace_events=[
-            {"type": "step", "state": "planning"},
-            {"type": "step", "state": "executing"},
-        ],
-        token_usage=TokenUsage(
-            input=5000,
-            output=2000,
-            reasoning=500,
-            cache_read=1000,
-            cache_write=200,
-        ),
-        duration_seconds=12.5,
-    )
-
-
-@pytest.fixture
-def error_transcript():
-    return EvalTranscript(
-        messages=[
-            {"role": "user", "content": "Delete the secrets file"},
-            {"role": "assistant", "content": "I'll try to delete it."},
-        ],
-        tool_calls=[
-            {
-                "name": "delete_file",
-                "input": {"path": "/etc/secrets"},
-                "output": "permission denied: access denied",
-                "is_error": True,
-            },
-            {
-                "name": "read_file",
-                "input": {"path": "config.json"},
-                "output": "error: file not found",
-            },
-            {
-                "name": "read_file",
-                "input": {"path": "config.json"},
-                "output": "error: file not found",
-            },
-        ],
-        trace_events=[
-            {"type": "policy_violation", "policy_violation": True},
-        ],
-        token_usage=TokenUsage(input=1000, output=500),
-        duration_seconds=3.0,
-    )
-
-
-@pytest.fixture
-def grader():
+def grader() -> PromptStackOptimizerGrader:
     return PromptStackOptimizerGrader()
 
 
-@pytest.fixture
-def grader_with_baseline():
-    return PromptStackOptimizerGrader(
-        config=PromptStackOptimizerConfig(
-            baseline_scores={
-                "tool_selection": 0.9,
-                "verification_behavior": 0.8,
-                "policy_adherence": 1.0,
-            },
-        )
-    )
-
-
-def make_mock_llm_response(scores: dict[str, dict] | None = None) -> dict:
-    if scores is None:
-        scores = {
-            sc_id: {"score": 0.7, "evidence": ["Mock evidence"], "confidence": 0.8}
-            for sc_id in REQUIRED_SUBCATEGORIES
+def _make_subcategory_results(score: float = 0.8, confidence: float = 0.9) -> dict[str, dict]:
+    """Build a full subcategory_results dict with uniform scores."""
+    return {
+        sc_id: {
+            "subcategory_id": sc_id,
+            "score": score,
+            "confidence": confidence,
+            "evidence": ["test evidence"],
         }
-    return {"scores": scores}
+        for sc_id in REQUIRED_SUBCATEGORIES
+    }
 
 
-class TestPromptStackOptimizerConfig:
-    def test_defaults(self):
-        config = PromptStackOptimizerConfig()
-        assert config.pass_threshold == 0.6
-        assert config.judge_max_tokens == 4096
-        assert config.judge_temperature == 0.0
+# =============================================================================
+# Pydantic model tests
+# =============================================================================
 
-    def test_custom_config(self):
-        config = PromptStackOptimizerConfig(
-            pass_threshold=0.8,
-            judge_max_tokens=2048,
-            judge_temperature=0.1,
-        )
-        assert config.pass_threshold == 0.8
-        assert config.judge_max_tokens == 2048
-        assert config.judge_temperature == 0.1
 
-    def test_invalid_threshold_too_high(self):
-        with pytest.raises(Exception):
-            PromptStackOptimizerConfig(pass_threshold=1.5)
+class TestSubcategoryDef:
+    """Test SubcategoryDef model."""
 
-    def test_invalid_threshold_too_low(self):
-        with pytest.raises(Exception):
-            PromptStackOptimizerConfig(pass_threshold=-0.1)
+    def test_valid_construction(self) -> None:
+        sc = SubcategoryDef(id="sc1", name="SC One", description="First subcategory")
+        assert sc.id == "sc1"
+        assert sc.name == "SC One"
+        assert sc.weight == 1.0
 
-    def test_extra_fields_forbidden(self):
-        with pytest.raises(Exception):
-            PromptStackOptimizerConfig(unknown_field="value")
+    def test_custom_weight(self) -> None:
+        sc = SubcategoryDef(id="sc1", name="SC", description="desc", weight=0.5)
+        assert sc.weight == 0.5
 
-    def test_dict_init(self):
-        config = PromptStackOptimizerConfig(**{"pass_threshold": 0.75})
-        assert config.pass_threshold == 0.75
+    def test_weight_ge_zero(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            SubcategoryDef(id="sc1", name="SC", description="desc", weight=-0.1)
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            SubcategoryDef(id="sc1", name="SC", description="desc", extra_field="bad")
+
+
+class TestCategoryDef:
+    """Test CategoryDef model."""
+
+    def test_valid_construction(self) -> None:
+        cat = CategoryDef(id="cat1", name="Cat One", description="First category")
+        assert cat.id == "cat1"
+        assert cat.subcategories == []
+
+    def test_with_subcategories(self) -> None:
+        sub = SubcategoryDef(id="s1", name="S1", description="d1")
+        cat = CategoryDef(id="cat1", name="Cat", description="desc", subcategories=[sub])
+        assert len(cat.subcategories) == 1
+        assert cat.subcategories[0].id == "s1"
+
+    def test_weight_ge_zero(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            CategoryDef(id="c1", name="C", description="d", weight=-0.5)
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            CategoryDef(id="c1", name="C", description="d", unknown="x")
 
 
 class TestRubricDef:
-    def test_default_rubric_structure(self):
+    """Test RubricDef model."""
+
+    def test_default_version(self) -> None:
+        r = RubricDef()
+        assert r.version == "1.0.0"
+        assert r.categories == []
+
+    def test_total_subcategories_computed_field(self) -> None:
+        sub1 = SubcategoryDef(id="s1", name="S1", description="d1")
+        sub2 = SubcategoryDef(id="s2", name="S2", description="d2")
+        cat = CategoryDef(id="c1", name="C1", description="d", subcategories=[sub1, sub2])
+        r = RubricDef(categories=[cat])
+        assert r.total_subcategories == 2
+
+    def test_total_subcategories_empty(self) -> None:
+        r = RubricDef()
+        assert r.total_subcategories == 0
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            RubricDef(extra_field="bad")
+
+
+# =============================================================================
+# DEFAULT_RUBRIC structure tests
+# =============================================================================
+
+
+class TestDefaultRubric:
+    """Test the DEFAULT_RUBRIC constant."""
+
+    def test_has_six_categories(self) -> None:
         assert len(DEFAULT_RUBRIC.categories) == 6
+
+    def test_category_ids(self) -> None:
+        ids = [c.id for c in DEFAULT_RUBRIC.categories]
+        assert ids == ["tool_usage", "reasoning", "context", "completion", "efficiency", "safety"]
+
+    def test_total_subcategories_is_25(self) -> None:
         assert DEFAULT_RUBRIC.total_subcategories == 25
+
+    def test_category_weights_sum_to_one(self) -> None:
+        total = sum(c.weight for c in DEFAULT_RUBRIC.categories)
+        assert abs(total - 1.0) < 1e-9
+
+    def test_all_categories_have_subcategories(self) -> None:
+        for cat in DEFAULT_RUBRIC.categories:
+            assert len(cat.subcategories) > 0, f"Category {cat.id} has no subcategories"
+
+    def test_version(self) -> None:
         assert DEFAULT_RUBRIC.version == "1.0.0"
 
-    def test_category_weights_sum(self):
-        total_weight = sum(c.weight for c in DEFAULT_RUBRIC.categories)
-        assert abs(total_weight - 1.0) < 1e-9
 
-    def test_all_categories_have_subcategories(self):
-        for cat in DEFAULT_RUBRIC.categories:
-            assert len(cat.subcategories) > 0
-            assert cat.id
-            assert cat.name
+# =============================================================================
+# REQUIRED_SUBCATEGORIES and mapping tests
+# =============================================================================
 
 
 class TestRequiredSubcategories:
-    def test_all_25_present(self):
+    """Test REQUIRED_SUBCATEGORIES and _SUBCATEGORY_TO_CATEGORY."""
+
+    def test_contains_25_entries(self) -> None:
         assert len(REQUIRED_SUBCATEGORIES) == 25
 
-    def test_all_match_rubric(self):
-        rubric_ids = set()
-        for cat in DEFAULT_RUBRIC.categories:
-            for sub in cat.subcategories:
-                rubric_ids.add(sub.id)
-        assert set(REQUIRED_SUBCATEGORIES) == rubric_ids
+    def test_all_ids_are_strings(self) -> None:
+        for sc_id in REQUIRED_SUBCATEGORIES:
+            assert isinstance(sc_id, str)
 
+    def test_mapping_covers_all_subcategories(self) -> None:
+        assert set(REQUIRED_SUBCATEGORIES) == set(_SUBCATEGORY_TO_CATEGORY.keys())
 
-class TestMetaMetrics:
-    def test_empty_transcript(self, grader, empty_transcript):
-        meta = grader._extract_meta_metrics(empty_transcript)
-        assert meta.total_tokens == 0
-        assert meta.tool_call_count == 0
-        assert meta.message_count == 0
-        assert meta.error_count == 0
-        assert meta.tool_success_rate == 1.0
-        assert meta.reasoning_density == 0.0
+    def test_mapping_points_to_valid_categories(self) -> None:
+        valid_cat_ids = {c.id for c in DEFAULT_RUBRIC.categories}
+        for sc_id, cat_id in _SUBCATEGORY_TO_CATEGORY.items():
+            assert cat_id in valid_cat_ids, f"{sc_id} maps to unknown category {cat_id}"
 
-    def test_rich_transcript(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        assert meta.total_tokens == 7500
-        assert meta.input_tokens == 5000
-        assert meta.output_tokens == 2000
-        assert meta.reasoning_tokens == 500
-        assert meta.tool_call_count == 5
-        assert meta.unique_tools_used == 4
-        assert meta.message_count == 5
-        assert meta.error_count == 0
-        assert meta.tool_success_rate == 1.0
-        assert meta.duration_seconds == 12.5
-        assert meta.tokens_per_tool_call == 1500.0
-        assert meta.reasoning_density == 0.25
-
-    def test_error_transcript(self, grader, error_transcript):
-        meta = grader._extract_meta_metrics(error_transcript)
-        assert meta.error_count >= 2
-        assert meta.tool_success_rate < 1.0
-
-    def test_new_meta_metrics_present(self, grader, rich_transcript):
-        meta = grader._extract_meta_metrics(rich_transcript)
-        assert hasattr(meta, "prompt_efficiency")
-        assert hasattr(meta, "selection_quality")
-        assert hasattr(meta, "exploration")
-        assert hasattr(meta, "layer_hygiene")
-
-    def test_exploration_with_unique_tools(self, grader):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "read_file", "input": {}, "output": "ok"},
-                {"name": "write_file", "input": {}, "output": "ok"},
-                {"name": "run_tests", "input": {}, "output": "ok"},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        assert meta.unique_tools_used == 3
-        assert meta.exploration > 0
-
-    def test_layer_hygiene_with_errors(self, grader):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "tool1", "input": {}, "output": "error: failed", "is_error": True},
-                {"name": "tool2", "input": {}, "output": "ok"},
-            ],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        meta = grader._extract_meta_metrics(transcript)
-        assert meta.error_count >= 1
-        assert meta.layer_hygiene < 1.0
-
-
-class TestScoreComputation:
-    def test_compute_category_scores(self, grader):
-        subcategory_results = {
-            "tool_selection": SubcategoryEvidence(
-                subcategory_id="tool_selection",
-                subcategory_name="Tool Selection",
-                score=0.8,
-                confidence=0.9,
-                evidence=["test"],
-            ),
-            "tool_call_efficiency": SubcategoryEvidence(
-                subcategory_id="tool_call_efficiency",
-                subcategory_name="Call Efficiency",
-                score=0.9,
-                confidence=0.8,
-                evidence=["test"],
-            ),
-            "tool_error_recovery": SubcategoryEvidence(
-                subcategory_id="tool_error_recovery",
-                subcategory_name="Error Recovery",
-                score=0.7,
-                confidence=0.7,
-                evidence=["test"],
-            ),
-            "tool_output_utilization": SubcategoryEvidence(
-                subcategory_id="tool_output_utilization",
-                subcategory_name="Output Utilization",
-                score=0.6,
-                confidence=0.6,
-                evidence=["test"],
-            ),
-        }
-        scores = grader._compute_category_scores(subcategory_results)
-        tool_usage = next(s for s in scores if s.category_id == "tool_usage")
-        assert 0.0 <= tool_usage.score <= 1.0
-
-    def test_compute_overall_score(self, grader):
-        category_scores = [
-            CategoryEvidence(
-                category_id="tool_usage",
-                category_name="Tool Usage",
-                score=0.8,
-                weight=0.2,
-                subcategory_scores=[],
-            ),
-            CategoryEvidence(
-                category_id="reasoning",
-                category_name="Reasoning",
-                score=0.7,
-                weight=0.2,
-                subcategory_scores=[],
-            ),
-        ]
-        overall = grader._compute_overall_score(category_scores)
-        assert 0.0 <= overall <= 1.0
-
-
-class TestGrowthOpportunities:
-    def test_high_scores_no_opportunities(self, grader):
-        high_scores = []
-        for cat in DEFAULT_RUBRIC.categories:
-            sub_scores = []
-            for sub in cat.subcategories:
-                sub_scores.append(
-                    SubcategoryEvidence(
-                        subcategory_id=sub.id,
-                        subcategory_name=sub.name,
-                        score=0.95,
-                        confidence=0.9,
-                        evidence=["Excellent"],
-                    )
-                )
-            high_scores.append(
-                CategoryEvidence(
-                    category_id=cat.id,
-                    category_name=cat.name,
-                    score=0.95,
-                    weight=cat.weight,
-                    subcategory_scores=sub_scores,
-                )
-            )
-        opportunities = grader._identify_growth_opportunities(high_scores)
-        assert len(opportunities) == 0
-
-    def test_low_scores_produce_opportunities(self, grader):
-        low_scores = []
-        for cat in DEFAULT_RUBRIC.categories:
-            sub_scores = []
-            for sub in cat.subcategories:
-                sub_scores.append(
-                    SubcategoryEvidence(
-                        subcategory_id=sub.id,
-                        subcategory_name=sub.name,
-                        score=0.4,
-                        confidence=0.7,
-                        evidence=["Needs improvement"],
-                    )
-                )
-            low_scores.append(
-                CategoryEvidence(
-                    category_id=cat.id,
-                    category_name=cat.name,
-                    score=0.4,
-                    weight=cat.weight,
-                    subcategory_scores=sub_scores,
-                )
-            )
-        opportunities = grader._identify_growth_opportunities(low_scores)
-        assert len(opportunities) > 0
-
-    def test_max_opportunities_respected(self, grader):
-        low_scores = []
-        for cat in DEFAULT_RUBRIC.categories:
-            sub_scores = []
-            for sub in cat.subcategories:
-                sub_scores.append(
-                    SubcategoryEvidence(
-                        subcategory_id=sub.id,
-                        subcategory_name=sub.name,
-                        score=0.3,
-                        confidence=0.7,
-                        evidence=["Needs work"],
-                    )
-                )
-            low_scores.append(
-                CategoryEvidence(
-                    category_id=cat.id,
-                    category_name=cat.name,
-                    score=0.3,
-                    weight=cat.weight,
-                    subcategory_scores=sub_scores,
-                )
-            )
-        opportunities = grader._identify_growth_opportunities(low_scores)
-        assert len(opportunities) <= grader._config.max_growth_opportunities
-
-
-class TestRegressionDetection:
-    def test_no_baseline(self, grader):
-        results = {
-            "tool_selection": SubcategoryEvidence(
-                subcategory_id="tool_selection",
-                subcategory_name="Tool Selection",
-                score=0.5,
-                confidence=0.7,
-                evidence=["test"],
-            )
-        }
-        regressions = grader._detect_regressions(results)
-        assert len(regressions) == 0
-
-    def test_no_regressions(self, grader_with_baseline):
-        results = {
-            "tool_selection": SubcategoryEvidence(
-                subcategory_id="tool_selection",
-                subcategory_name="Tool Selection",
-                score=0.95,
-                confidence=0.9,
-                evidence=["Excellent"],
-            ),
-            "verification_behavior": SubcategoryEvidence(
-                subcategory_id="verification_behavior",
-                subcategory_name="Verification",
-                score=0.9,
-                confidence=0.8,
-                evidence=["Good"],
-            ),
-            "policy_adherence": SubcategoryEvidence(
-                subcategory_id="policy_adherence",
-                subcategory_name="Policy Adherence",
-                score=1.0,
-                confidence=0.9,
-                evidence=["Perfect"],
-            ),
-        }
-        regressions = grader_with_baseline._detect_regressions(results)
-        assert len(regressions) == 0
-
-    def test_regression_detected(self, grader_with_baseline):
-        results = {
-            "tool_selection": SubcategoryEvidence(
-                subcategory_id="tool_selection",
-                subcategory_name="Tool Selection",
-                score=0.5,
-                confidence=0.7,
-                evidence=["Regression"],
-            ),
-            "verification_behavior": SubcategoryEvidence(
-                subcategory_id="verification_behavior",
-                subcategory_name="Verification",
-                score=0.9,
-                confidence=0.8,
-                evidence=["Good"],
-            ),
-        }
-        regressions = grader_with_baseline._detect_regressions(results)
-        assert len(regressions) > 0
-
-
-class TestMutationTargets:
-    def test_empty_opportunities(self, grader):
-        targets = grader._identify_mutation_targets([])
-        assert len(targets) == 0
-
-    def test_targets_from_opportunities(self, grader):
-        opportunities = [
-            GrowthOpportunity(
-                subcategory_id="tool_selection",
-                category_id="tool_usage",
-                current_score=0.5,
-                potential_score=0.9,
-                impact=0.2,
-                suggestion="Improve tool selection",
-            )
-        ]
-        targets = grader._identify_mutation_targets(opportunities)
-        assert len(targets) > 0
-
-    def test_max_targets_respected(self, grader):
-        opportunities = [
-            GrowthOpportunity(
-                subcategory_id=f"sub_{i}",
-                category_id="cat",
-                current_score=0.3,
-                potential_score=0.8,
-                impact=0.1,
-                suggestion=f"Fix {i}",
-            )
-            for i in range(20)
-        ]
-        targets = grader._identify_mutation_targets(opportunities)
-        assert len(targets) <= grader._config.max_mutation_targets
-
-
-class TestGradeIntegration:
-    @pytest.mark.asyncio
-    async def test_grade_empty_transcript(self, grader, trial, empty_transcript, spec):
-        with patch.object(grader, "_run_llm_judge") as mock_judge:
-            mock_judge.return_value = {
-                sc_id: SubcategoryEvidence(
-                    subcategory_id=sc_id,
-                    subcategory_name=sc_id,
-                    score=0.7,
-                    confidence=0.8,
-                    evidence=["Mock"],
-                )
-                for sc_id in REQUIRED_SUBCATEGORIES
-            }
-            result = await grader.grade(trial, empty_transcript, spec)
-            assert result.grader_type == "prompt_stack_optimizer"
-            assert 0.0 <= result.score <= 1.0
-            assert result.execution_time_seconds >= 0
-            assert "rubric_evidence" in result.details
-            assert "meta_metrics" in result.details
-            assert "growth_opportunities" in result.details
-            assert "mutation_targets" in result.details
-
-    @pytest.mark.asyncio
-    async def test_grade_rich_transcript(self, grader, trial, rich_transcript, spec):
-        with patch.object(grader, "_run_llm_judge") as mock_judge:
-            mock_judge.return_value = {
-                sc_id: SubcategoryEvidence(
-                    subcategory_id=sc_id,
-                    subcategory_name=sc_id,
-                    score=0.8,
-                    confidence=0.9,
-                    evidence=["Mock evidence"],
-                )
-                for sc_id in REQUIRED_SUBCATEGORIES
-            }
-            result = await grader.grade(trial, rich_transcript, spec)
-            assert result.grader_type == "prompt_stack_optimizer"
-            assert result.score > 0.0
-
-    @pytest.mark.asyncio
-    async def test_grade_with_spec_config(self, grader, trial, rich_transcript):
-        spec = GraderSpec(
-            grader_type="prompt_stack_optimizer",
-            config={"pass_threshold": 0.9},
-        )
-        with patch.object(grader, "_run_llm_judge") as mock_judge:
-            mock_judge.return_value = {
-                sc_id: SubcategoryEvidence(
-                    subcategory_id=sc_id,
-                    subcategory_name=sc_id,
-                    score=0.85,
-                    confidence=0.8,
-                    evidence=["Mock"],
-                )
-                for sc_id in REQUIRED_SUBCATEGORIES
-            }
-            result = await grader.grade(trial, rich_transcript, spec)
-            assert result.details["pass_threshold"] == 0.9
-
-    @pytest.mark.asyncio
-    async def test_grade_with_regression_baseline(
-        self, grader_with_baseline, trial, rich_transcript, spec
-    ):
-        with patch.object(grader_with_baseline, "_run_llm_judge") as mock_judge:
-            scores = {
-                sc_id: SubcategoryEvidence(
-                    subcategory_id=sc_id,
-                    subcategory_name=sc_id,
-                    score=0.9,
-                    confidence=0.9,
-                    evidence=["Mock"],
-                )
-                for sc_id in REQUIRED_SUBCATEGORIES
-            }
-            scores["tool_selection"] = SubcategoryEvidence(
-                subcategory_id="tool_selection",
-                subcategory_name="Tool Selection",
-                score=0.5,
-                confidence=0.7,
-                evidence=["Regression"],
-            )
-            mock_judge.return_value = scores
-            result = await grader_with_baseline.grade(trial, rich_transcript, spec)
-            regressions = result.details["regressions"]
-            assert isinstance(regressions, list)
-
-    @pytest.mark.asyncio
-    async def test_grade_needs_review_flag(self, grader, trial, spec):
-        transcript = EvalTranscript(
-            tool_calls=[
-                {"name": "tool", "input": {}, "output": "error", "is_error": True},
-            ],
-            messages=[{"role": "assistant", "content": "test"}],
-            token_usage=TokenUsage(input=100, output=50),
-        )
-        with patch.object(grader, "_run_llm_judge") as mock_judge:
-            mock_judge.return_value = {
-                sc_id: SubcategoryEvidence(
-                    subcategory_id=sc_id,
-                    subcategory_name=sc_id,
-                    score=0.7,
-                    confidence=0.3,
-                    evidence=["Low confidence"],
-                )
-                for sc_id in REQUIRED_SUBCATEGORIES
-            }
-            result = await grader.grade(trial, transcript, spec)
-            assert result.needs_review is not None
-
-    @pytest.mark.asyncio
-    async def test_grade_llm_failure_raises(self, grader, trial, rich_transcript, spec):
-        with patch.object(grader, "_run_llm_judge") as mock_judge:
-            mock_judge.side_effect = ValueError("LLM failed")
-            result = await grader.grade(trial, rich_transcript, spec)
-            assert result.error_message is not None
-            assert result.score == 0.0
-
-
-class TestLLMJudgeIntegration:
-    @pytest.mark.asyncio
-    async def test_run_llm_judge_missing_subcategories_returns_defaults(
-        self, grader, rich_transcript
-    ):
-        incomplete_response = {
-            "scores": {
-                "tool_selection": {"score": 0.8, "evidence": ["test"], "confidence": 0.9},
-            }
-        }
-        with patch.object(grader, "_get_client") as mock_client:
-            mock_response = MagicMock()
-            mock_response.text = json.dumps(incomplete_response)
-            mock_llm = MagicMock()
-            mock_llm.complete = AsyncMock(return_value=mock_response)
-            mock_client.return_value = mock_llm
-
-            results = await grader._run_llm_judge(rich_transcript)
-            assert len(results) == len(REQUIRED_SUBCATEGORIES)
-            assert results["tool_selection"].score == 0.5
-
-    @pytest.mark.asyncio
-    async def test_run_llm_judge_invalid_json_returns_defaults(self, grader, rich_transcript):
-        with patch.object(grader, "_get_client") as mock_client:
-            mock_response = MagicMock()
-            mock_response.text = "not valid json"
-            mock_llm = MagicMock()
-            mock_llm.complete = AsyncMock(return_value=mock_response)
-            mock_client.return_value = mock_llm
-
-            results = await grader._run_llm_judge(rich_transcript)
-            assert len(results) == len(REQUIRED_SUBCATEGORIES)
-            assert all(0.0 <= results[sc_id].score <= 1.0 for sc_id in REQUIRED_SUBCATEGORIES)
-
-    @pytest.mark.asyncio
-    async def test_run_llm_judge_empty_string_response_returns_defaults(
-        self, grader, rich_transcript
-    ):
-        with patch.object(grader, "_get_client") as mock_client:
-            mock_response = MagicMock()
-            mock_response.text = ""
-            mock_llm = MagicMock()
-            mock_llm.complete = AsyncMock(return_value=mock_response)
-            mock_client.return_value = mock_llm
-
-            results = await grader._run_llm_judge(rich_transcript)
-            assert len(results) == len(REQUIRED_SUBCATEGORIES)
-            assert results["context_relevance"].score == 0.5
-
-    @pytest.mark.asyncio
-    async def test_run_llm_judge_fenced_json_response_is_parsed(self, grader, rich_transcript):
-        fenced_scores = {
-            "context_relevance": {"score": 0.9, "evidence": ["Focused"], "confidence": 0.8},
-            "information_retention": {
-                "score": 0.8,
-                "evidence": ["Remembered key facts"],
-                "confidence": 0.8,
-            },
-            "context_efficiency": {
-                "score": 0.7,
-                "evidence": ["Mostly concise"],
-                "confidence": 0.8,
-            },
-            "progressive_disclosure": {
-                "score": 0.6,
-                "evidence": ["Some pacing issues"],
-                "confidence": 0.7,
-            },
+    def test_tool_usage_subcategories(self) -> None:
+        tool_subs = [k for k, v in _SUBCATEGORY_TO_CATEGORY.items() if v == "tool_usage"]
+        assert set(tool_subs) == {
+            "tool_selection",
+            "tool_call_efficiency",
+            "tool_error_recovery",
+            "tool_output_utilization",
         }
 
-        with patch.object(grader, "_get_client") as mock_client:
-            mock_response = MagicMock()
-            mock_response.text = f"```json\n{json.dumps(fenced_scores)}\n```"
-            mock_llm = MagicMock()
-            mock_llm.complete = AsyncMock(return_value=mock_response)
-            mock_client.return_value = mock_llm
+    def test_reasoning_subcategories(self) -> None:
+        reason_subs = [k for k, v in _SUBCATEGORY_TO_CATEGORY.items() if v == "reasoning"]
+        assert set(reason_subs) == {
+            "step_decomposition",
+            "evidence_grounding",
+            "error_diagnosis",
+            "self_correction",
+            "reasoning_coherence",
+        }
 
-            results = await grader._run_llm_judge(rich_transcript)
-            assert len(results) == len(REQUIRED_SUBCATEGORIES)
-            assert results["context_relevance"].score == 0.9
 
-    @pytest.mark.asyncio
-    async def test_run_llm_judge_success(self, grader, rich_transcript):
-        full_response = make_mock_llm_response()
-        with patch.object(grader, "_get_client") as mock_client:
-            mock_response = MagicMock()
-            mock_response.text = json.dumps(full_response)
-            mock_llm = MagicMock()
-            mock_llm.complete = AsyncMock(return_value=mock_response)
-            mock_client.return_value = mock_llm
+# =============================================================================
+# PromptStackOptimizerConfig tests
+# =============================================================================
 
-            results = await grader._run_llm_judge(rich_transcript)
-            assert len(results) == 25
-            for sc_id in REQUIRED_SUBCATEGORIES:
-                assert sc_id in results
-                assert 0.0 <= results[sc_id].score <= 1.0
+
+class TestPromptStackOptimizerConfig:
+    """Test PromptStackOptimizerConfig model."""
+
+    def test_default_values(self) -> None:
+        cfg = PromptStackOptimizerConfig()
+        assert cfg.pass_threshold == 0.6
+        assert cfg.judge_model is None
+        assert cfg.judge_provider is None
+        assert cfg.judge_temperature == 0.0
+        assert cfg.judge_max_tokens == 4096
+        assert cfg.rubric.total_subcategories == 25
+
+    def test_custom_pass_threshold(self) -> None:
+        cfg = PromptStackOptimizerConfig(pass_threshold=0.8)
+        assert cfg.pass_threshold == 0.8
+
+    def test_pass_threshold_lower_bound(self) -> None:
+        cfg = PromptStackOptimizerConfig(pass_threshold=0.0)
+        assert cfg.pass_threshold == 0.0
+
+    def test_pass_threshold_upper_bound(self) -> None:
+        cfg = PromptStackOptimizerConfig(pass_threshold=1.0)
+        assert cfg.pass_threshold == 1.0
+
+    def test_pass_threshold_too_low(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            PromptStackOptimizerConfig(pass_threshold=-0.1)
+
+    def test_pass_threshold_too_high(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            PromptStackOptimizerConfig(pass_threshold=1.1)
+
+    def test_extra_forbid(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            PromptStackOptimizerConfig(unknown_field="bad")
+
+    def test_judge_temperature_bounds(self) -> None:
+        cfg = PromptStackOptimizerConfig(judge_temperature=2.0)
+        assert cfg.judge_temperature == 2.0
+        with pytest.raises(pd.ValidationError):
+            PromptStackOptimizerConfig(judge_temperature=2.1)
+
+    def test_judge_max_tokens_ge_one(self) -> None:
+        with pytest.raises(pd.ValidationError):
+            PromptStackOptimizerConfig(judge_max_tokens=0)
+
+
+# =============================================================================
+# Grader name property
+# =============================================================================
 
 
 class TestGraderName:
-    def test_name(self, grader):
+    """Test PromptStackOptimizerGrader.name property."""
+
+    def test_name(self, grader: PromptStackOptimizerGrader) -> None:
         assert grader.name == "prompt_stack_optimizer"
 
 
-class TestModelValidation:
-    def test_subcategory_evidence_bounds(self):
-        with pytest.raises(Exception):
-            SubcategoryEvidence(
-                subcategory_id="test",
-                subcategory_name="Test",
-                score=1.5,
-                confidence=0.5,
-                evidence=["test"],
-            )
+# =============================================================================
+# Constructor tests
+# =============================================================================
 
-    def test_subcategory_evidence_valid(self):
-        ev = SubcategoryEvidence(
-            subcategory_id="test",
-            subcategory_name="Test",
-            score=0.5,
-            confidence=0.5,
-            evidence=["test"],
+
+class TestGraderInit:
+    """Test PromptStackOptimizerGrader __init__."""
+
+    def test_default_config(self) -> None:
+        g = PromptStackOptimizerGrader()
+        assert g._config.pass_threshold == 0.6
+
+    def test_dict_config(self) -> None:
+        g = PromptStackOptimizerGrader(config={"pass_threshold": 0.9})
+        assert g._config.pass_threshold == 0.9
+
+    def test_model_config(self) -> None:
+        cfg = PromptStackOptimizerConfig(pass_threshold=0.75)
+        g = PromptStackOptimizerGrader(config=cfg)
+        assert g._config.pass_threshold == 0.75
+
+    def test_none_config(self) -> None:
+        g = PromptStackOptimizerGrader(config=None)
+        assert g._config.pass_threshold == 0.6
+
+
+# =============================================================================
+# _format_transcript_for_judge tests
+# =============================================================================
+
+
+class TestFormatTranscriptForJudge:
+    """Test _format_transcript_for_judge method."""
+
+    def test_basic_formatting(self, grader: PromptStackOptimizerGrader) -> None:
+        transcript = EvalTranscript(
+            messages=[{"role": "user", "content": "hello"}],
         )
-        assert ev.score == 0.5
+        result = grader._format_transcript_for_judge(transcript)
+        assert "[user]: hello" in result
 
-    def test_growth_opportunity_bounds(self):
-        with pytest.raises(Exception):
-            GrowthOpportunity(
-                subcategory_id="test",
-                category_id="cat",
-                current_score=1.5,
-                potential_score=0.9,
-                impact=0.1,
-                suggestion="test",
-            )
+    def test_last_10_messages_only(self, grader: PromptStackOptimizerGrader) -> None:
+        messages = [{"role": "user", "content": f"msg-{i}"} for i in range(15)]
+        transcript = EvalTranscript(messages=messages)
+        result = grader._format_transcript_for_judge(transcript)
+        # Messages 0-4 should NOT be present, messages 5-14 should be
+        assert "msg-0" not in result
+        assert "msg-4" not in result
+        assert "msg-5" in result
+        assert "msg-14" in result
 
-    def test_meta_metrics_extra_forbidden(self):
-        with pytest.raises(Exception):
-            MetaMetrics(
-                total_tokens=100,
-                unknown_field="value",
-            )
+    def test_last_8_tool_calls_only(self, grader: PromptStackOptimizerGrader) -> None:
+        tool_calls = [{"name": f"tool-{i}", "output": f"output-{i}"} for i in range(12)]
+        transcript = EvalTranscript(tool_calls=tool_calls)
+        result = grader._format_transcript_for_judge(transcript)
+        assert "tool-0" not in result
+        assert "tool-3" not in result
+        assert "tool-4" in result
+        assert "tool-11" in result
+
+    def test_truncation_over_8000_chars(self, grader: PromptStackOptimizerGrader) -> None:
+        long_role = "r" * 300
+        messages = [{"role": long_role, "content": "x" * 600} for _ in range(10)]
+        long_name = "t" * 300
+        tool_calls = [{"name": long_name, "output": "y" * 600} for _ in range(8)]
+        transcript = EvalTranscript(messages=messages, tool_calls=tool_calls)
+        result = grader._format_transcript_for_judge(transcript)
+        assert "...[truncated]" in result
+
+    def test_message_content_truncation_at_500(self, grader: PromptStackOptimizerGrader) -> None:
+        long_msg = "a" * 600
+        transcript = EvalTranscript(
+            messages=[{"role": "user", "content": long_msg}],
+        )
+        result = grader._format_transcript_for_judge(transcript)
+        # Content preview should be 500 chars + "..."
+        assert "..." in result
+
+    def test_tool_output_truncation_at_200(self, grader: PromptStackOptimizerGrader) -> None:
+        long_output = "b" * 300
+        transcript = EvalTranscript(
+            tool_calls=[{"name": "tool1", "output": long_output}],
+        )
+        result = grader._format_transcript_for_judge(transcript)
+        assert "..." in result
+
+    def test_empty_transcript(self, grader: PromptStackOptimizerGrader) -> None:
+        transcript = EvalTranscript()
+        result = grader._format_transcript_for_judge(transcript)
+        assert result == "No transcript context available."
+
+    def test_non_string_content(self, grader: PromptStackOptimizerGrader) -> None:
+        transcript = EvalTranscript(
+            messages=[{"role": "user", "content": {"key": "value"}}],
+        )
+        result = grader._format_transcript_for_judge(transcript)
+        assert "[user]:" in result
+
+    def test_missing_role_key(self, grader: PromptStackOptimizerGrader) -> None:
+        transcript = EvalTranscript(
+            messages=[{"content": "no role"}],
+        )
+        result = grader._format_transcript_for_judge(transcript)
+        assert "[unknown]:" in result
+
+    def test_tool_call_name_from_tool_key(self, grader: PromptStackOptimizerGrader) -> None:
+        transcript = EvalTranscript(
+            tool_calls=[{"tool": "bash_tool", "output": "ok"}],
+        )
+        result = grader._format_transcript_for_judge(transcript)
+        assert "[tool:bash_tool]" in result
+
+
+# =============================================================================
+# _extract_json_object tests
+# =============================================================================
+
+
+class TestExtractJsonObject:
+    """Test _extract_json_object method."""
+
+    def test_raw_json(self, grader: PromptStackOptimizerGrader) -> None:
+        raw = '{"score": 0.8, "evidence": "good"}'
+        result = grader._extract_json_object(raw)
+        assert result == '{"score": 0.8, "evidence": "good"}'
+
+    def test_markdown_json_code_block(self, grader: PromptStackOptimizerGrader) -> None:
+        raw = 'Some text\n```json\n{"score": 0.5}\n```\nMore text'
+        result = grader._extract_json_object(raw)
+        assert result == '{"score": 0.5}'
+
+    def test_plain_code_block(self, grader: PromptStackOptimizerGrader) -> None:
+        raw = 'Some text\n```\n{"score": 0.3}\n```\nMore text'
+        result = grader._extract_json_object(raw)
+        assert result == '{"score": 0.3}'
+
+    def test_embedded_json_in_text(self, grader: PromptStackOptimizerGrader) -> None:
+        raw = 'Here is the result: {"score": 0.9} and more text'
+        result = grader._extract_json_object(raw)
+        assert result == '{"score": 0.9}'
+
+    def test_empty_string(self, grader: PromptStackOptimizerGrader) -> None:
+        assert grader._extract_json_object("") == ""
+
+    def test_whitespace_only(self, grader: PromptStackOptimizerGrader) -> None:
+        assert grader._extract_json_object("   ") == ""
+
+    def test_no_json(self, grader: PromptStackOptimizerGrader) -> None:
+        raw = "No JSON here at all"
+        result = grader._extract_json_object(raw)
+        assert result == raw
+
+    def test_nested_braces(self, grader: PromptStackOptimizerGrader) -> None:
+        raw = '{"outer": {"inner": 1}}'
+        result = grader._extract_json_object(raw)
+        assert result == '{"outer": {"inner": 1}}'
+
+
+# =============================================================================
+# _parse_category_scores tests
+# =============================================================================
+
+
+class TestParseCategoryScores:
+    """Test _parse_category_scores method."""
+
+    def test_valid_json_string(self, grader: PromptStackOptimizerGrader) -> None:
+        raw = '{"tool_selection": {"score": 0.8, "evidence": "good", "confidence": 0.9}}'
+        result = grader._parse_category_scores(raw, "tool_usage")
+        assert isinstance(result, dict)
+        assert "tool_selection" in result
+        assert result["tool_selection"]["score"] == 0.8
+
+    def test_invalid_json(self, grader: PromptStackOptimizerGrader) -> None:
+        result = grader._parse_category_scores("not json {{{", "tool_usage")
+        assert result == {}
+
+    def test_non_string_input(self, grader: PromptStackOptimizerGrader) -> None:
+        result = grader._parse_category_scores(12345, "tool_usage")
+        assert result == {}
+
+    def test_none_input(self, grader: PromptStackOptimizerGrader) -> None:
+        result = grader._parse_category_scores(None, "tool_usage")
+        assert result == {}
+
+    def test_empty_string(self, grader: PromptStackOptimizerGrader) -> None:
+        result = grader._parse_category_scores("", "tool_usage")
+        assert result == {}
+
+    def test_json_array_returns_empty(self, grader: PromptStackOptimizerGrader) -> None:
+        result = grader._parse_category_scores("[1, 2, 3]", "tool_usage")
+        assert result == {}
+
+    def test_json_in_code_block(self, grader: PromptStackOptimizerGrader) -> None:
+        raw = '```json\n{"key": "value"}\n```'
+        result = grader._parse_category_scores(raw, "cat1")
+        assert result == {"key": "value"}
+
+
+# =============================================================================
+# _compute_category_scores tests
+# =============================================================================
+
+
+class TestComputeCategoryScores:
+    """Test _compute_category_scores method."""
+
+    def test_uniform_scores(self, grader: PromptStackOptimizerGrader) -> None:
+        sub_results = _make_subcategory_results(score=0.8)
+        cat_scores = grader._compute_category_scores(sub_results)
+        assert len(cat_scores) == 6
+        for cat in cat_scores:
+            assert 0.0 <= cat["score"] <= 1.0
+            assert "category_id" in cat
+            assert "category_name" in cat
+            assert "weight" in cat
+            assert "subcategory_scores" in cat
+
+    def test_score_bounds(self, grader: PromptStackOptimizerGrader) -> None:
+        sub_results = _make_subcategory_results(score=1.0)
+        cat_scores = grader._compute_category_scores(sub_results)
+        for cat in cat_scores:
+            assert cat["score"] <= 1.0
+
+    def test_zero_scores(self, grader: PromptStackOptimizerGrader) -> None:
+        sub_results = _make_subcategory_results(score=0.0)
+        cat_scores = grader._compute_category_scores(sub_results)
+        for cat in cat_scores:
+            assert cat["score"] == 0.0
+
+    def test_weighted_averaging(self) -> None:
+        """Verify weighted average within a category."""
+        # Build a grader with a custom rubric that has known weights
+        sub1 = SubcategoryDef(id="s1", name="S1", description="d1", weight=2.0)
+        sub2 = SubcategoryDef(id="s2", name="S2", description="d2", weight=1.0)
+        cat = CategoryDef(
+            id="cat1", name="Cat1", description="d", weight=1.0, subcategories=[sub1, sub2]
+        )
+        rubric = RubricDef(categories=[cat])
+        cfg = PromptStackOptimizerConfig(rubric=rubric)
+        g = PromptStackOptimizerGrader(config=cfg)
+
+        sub_results = {
+            "s1": {"subcategory_id": "s1", "score": 1.0, "confidence": 0.9, "evidence": ["e"]},
+            "s2": {"subcategory_id": "s2", "score": 0.0, "confidence": 0.9, "evidence": ["e"]},
+        }
+        cat_scores = g._compute_category_scores(sub_results)
+        # Weighted: (1.0 * 2.0 + 0.0 * 1.0) / (2.0 + 1.0) = 2/3
+        expected = round(2.0 / 3.0, 4)
+        assert cat_scores[0]["score"] == expected
+
+    def test_missing_subcategory_results(self, grader: PromptStackOptimizerGrader) -> None:
+        """When subcategory_results is empty, category scores should be 0.0."""
+        cat_scores = grader._compute_category_scores({})
+        for cat in cat_scores:
+            assert cat["score"] == 0.0
+
+
+# =============================================================================
+# _compute_overall_score tests
+# =============================================================================
+
+
+class TestComputeOverallScore:
+    """Test _compute_overall_score method."""
+
+    def test_weighted_average(self, grader: PromptStackOptimizerGrader) -> None:
+        cat_scores = [
+            {"score": 1.0, "weight": 0.5},
+            {"score": 0.0, "weight": 0.5},
+        ]
+        result = grader._compute_overall_score(cat_scores)
+        assert result == 0.5
+
+    def test_empty_list_returns_zero(self, grader: PromptStackOptimizerGrader) -> None:
+        assert grader._compute_overall_score([]) == 0.0
+
+    def test_single_category(self, grader: PromptStackOptimizerGrader) -> None:
+        cat_scores = [{"score": 0.75, "weight": 1.0}]
+        assert grader._compute_overall_score(cat_scores) == 0.75
+
+    def test_unequal_weights(self, grader: PromptStackOptimizerGrader) -> None:
+        cat_scores = [
+            {"score": 1.0, "weight": 3.0},
+            {"score": 0.0, "weight": 1.0},
+        ]
+        result = grader._compute_overall_score(cat_scores)
+        assert result == 0.75
+
+    def test_result_is_rounded(self, grader: PromptStackOptimizerGrader) -> None:
+        cat_scores = [
+            {"score": 1.0, "weight": 1.0},
+            {"score": 0.0, "weight": 2.0},
+        ]
+        result = grader._compute_overall_score(cat_scores)
+        # 1/3 rounded to 4 decimal places
+        assert result == round(1.0 / 3.0, 4)
+
+
+# =============================================================================
+# grade() method tests (mocking _score_all_subcategories)
+# =============================================================================
+
+
+class TestGradeMethod:
+    """Test grade() method with mocked LLM scoring."""
+
+    @pytest.mark.asyncio
+    async def test_grade_returns_grader_result(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        mock_results = _make_subcategory_results(score=0.8, confidence=0.9)
+        with patch.object(
+            grader, "_score_all_subcategories", new_callable=AsyncMock, return_value=mock_results
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert result.grader_type == "prompt_stack_optimizer"
+        assert 0.0 <= result.score <= 1.0
+        assert isinstance(result.passed, bool)
+        assert result.execution_time_seconds is not None
+        assert result.execution_time_seconds >= 0.0
+
+    @pytest.mark.asyncio
+    async def test_grade_passes_above_threshold(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        mock_results = _make_subcategory_results(score=0.9)
+        with patch.object(
+            grader, "_score_all_subcategories", new_callable=AsyncMock, return_value=mock_results
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert result.passed is True
+        assert result.score > 0.6
+
+    @pytest.mark.asyncio
+    async def test_grade_fails_below_threshold(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        mock_results = _make_subcategory_results(score=0.1)
+        with patch.object(
+            grader, "_score_all_subcategories", new_callable=AsyncMock, return_value=mock_results
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert result.passed is False
+        assert result.score < 0.6
+
+    @pytest.mark.asyncio
+    async def test_grade_details_structure(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        mock_results = _make_subcategory_results(score=0.7)
+        with patch.object(
+            grader, "_score_all_subcategories", new_callable=AsyncMock, return_value=mock_results
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert "category_summary" in result.details
+        assert "subcategory_results" in result.details
+        assert "pass_threshold" in result.details
+        assert result.details["pass_threshold"] == 0.6
+
+    @pytest.mark.asyncio
+    async def test_grade_category_summary_has_all_categories(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        mock_results = _make_subcategory_results(score=0.7)
+        with patch.object(
+            grader, "_score_all_subcategories", new_callable=AsyncMock, return_value=mock_results
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        summary = result.details["category_summary"]
+        expected_ids = {"tool_usage", "reasoning", "context", "completion", "efficiency", "safety"}
+        assert set(summary.keys()) == expected_ids
+
+    @pytest.mark.asyncio
+    async def test_grade_confidence_is_average(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        mock_results = _make_subcategory_results(score=0.7, confidence=0.85)
+        with patch.object(
+            grader, "_score_all_subcategories", new_callable=AsyncMock, return_value=mock_results
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert result.confidence == 0.85
+
+    @pytest.mark.asyncio
+    async def test_grade_with_spec_config_override(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+    ) -> None:
+        spec = GraderSpec(
+            grader_type="prompt_stack_optimizer",
+            config={"pass_threshold": 0.95},
+        )
+        mock_results = _make_subcategory_results(score=0.9)
+        with patch.object(
+            grader, "_score_all_subcategories", new_callable=AsyncMock, return_value=mock_results
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        # Score ~0.9 is below threshold 0.95
+        assert result.passed is False
+        assert result.details["pass_threshold"] == 0.95
+
+    @pytest.mark.asyncio
+    async def test_grade_with_invalid_spec_config_uses_defaults(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+    ) -> None:
+        spec = GraderSpec(
+            grader_type="prompt_stack_optimizer",
+            config={"pass_threshold": 5.0},  # out of bounds
+        )
+        mock_results = _make_subcategory_results(score=0.8)
+        with patch.object(
+            grader, "_score_all_subcategories", new_callable=AsyncMock, return_value=mock_results
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        # Should fall back to defaults since 5.0 > 1.0 is invalid
+        assert result.details["pass_threshold"] == 0.6
+
+
+# =============================================================================
+# grade() error handling tests
+# =============================================================================
+
+
+class TestGradeErrorHandling:
+    """Test grade() error handling paths."""
+
+    @pytest.mark.asyncio
+    async def test_import_error(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        with patch.object(
+            grader,
+            "_score_all_subcategories",
+            new_callable=AsyncMock,
+            side_effect=ImportError("No module named 'dawn_kestrel'"),
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert result.score == 0.0
+        assert result.passed is False
+        assert result.error_message is not None
+        assert "Missing dependency" in result.error_message
+        assert result.details["failure_mode"] == FailureMode.JUDGE_ERROR.value
+
+    @pytest.mark.asyncio
+    async def test_value_error(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        with patch.object(
+            grader,
+            "_score_all_subcategories",
+            new_callable=AsyncMock,
+            side_effect=ValueError("Invalid rubric configuration"),
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert result.score == 0.0
+        assert result.passed is False
+        assert result.error_message == "Invalid rubric configuration"
+        assert result.details["failure_mode"] == FailureMode.JUDGE_ERROR.value
+
+    @pytest.mark.asyncio
+    async def test_generic_exception(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        with patch.object(
+            grader,
+            "_score_all_subcategories",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("Unexpected error"),
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert result.score == 0.0
+        assert result.passed is False
+        assert result.error_message == "Unexpected error"
+        assert result.details["failure_mode"] == FailureMode.JUDGE_ERROR.value
+
+    @pytest.mark.asyncio
+    async def test_error_includes_execution_time(
+        self,
+        grader: PromptStackOptimizerGrader,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+    ) -> None:
+        with patch.object(
+            grader,
+            "_score_all_subcategories",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("fail"),
+        ):
+            result = await grader.grade(trial, transcript, spec)
+
+        assert result.execution_time_seconds is not None
+        assert result.execution_time_seconds >= 0.0

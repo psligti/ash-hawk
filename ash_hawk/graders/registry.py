@@ -147,13 +147,6 @@ _default_registry: GraderRegistry | None = None
 
 
 def _register_builtin_graders(registry: GraderRegistry) -> None:
-    from ash_hawk.graders.bolt_merlin import (
-        CompletionHonestyGrader,
-        RepoDiffGrader,
-        SummaryTruthfulnessGrader,
-        TodoStateGrader,
-    )
-    from ash_hawk.graders.cheat_detection import CheatDetectionGrader
     from ash_hawk.graders.code import (
         StaticAnalysisGrader,
         StringMatchGrader,
@@ -162,17 +155,8 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
         TranscriptGrader,
     )
     from ash_hawk.graders.diff_constraints import DiffConstraintsGrader
-    from ash_hawk.graders.human import ManualReviewGrader
     from ash_hawk.graders.llm_boolean import LLMBooleanJudgeGrader
-    from ash_hawk.graders.llm_boolean_specialized import (
-        AISlopGrader,
-        EngagementGrader,
-        LLMReplyGrader,
-        SafetyGrader,
-        SoulGrader,
-        TechnicalGrader,
-        VoiceGrader,
-    )
+    from ash_hawk.graders.llm_boolean_specialized import create_boolean_graders
     from ash_hawk.graders.llm_judge import LLMJudgeGrader
     from ash_hawk.graders.llm_rubric import LLMRubricGrader
     from ash_hawk.graders.prompt_stack_optimizer import PromptStackOptimizerGrader
@@ -196,13 +180,10 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(LLMJudgeGrader())
     registry.register(LLMRubricGrader())
     registry.register(LLMBooleanJudgeGrader())
-    registry.register(AISlopGrader())
-    registry.register(VoiceGrader())
-    registry.register(SoulGrader())
-    registry.register(LLMReplyGrader())
-    registry.register(EngagementGrader())
-    registry.register(TechnicalGrader())
-    registry.register(SafetyGrader())
+
+    for grader in create_boolean_graders():
+        registry.register(grader)
+
     registry.register(SchemaGrader())
     registry.register(FormatGrader())
     registry.register(ToolUsageGrader())
@@ -214,12 +195,6 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(EvidenceRequiredGrader())
     registry.register(OrderingGrader())
     registry.register(DiffConstraintsGrader())
-    registry.register(ManualReviewGrader())
-    registry.register(CheatDetectionGrader())
-    registry.register(TodoStateGrader())
-    registry.register(RepoDiffGrader())
-    registry.register(CompletionHonestyGrader())
-    registry.register(SummaryTruthfulnessGrader())
     registry.register(PromptStackOptimizerGrader())
     registry.register(TranscriptValidityGrader())
 

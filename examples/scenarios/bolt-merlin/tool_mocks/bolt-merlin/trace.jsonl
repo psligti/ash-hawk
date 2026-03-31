@@ -1,0 +1,129 @@
+{"tool_name": "format_user_name", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "strip", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "capitalize", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "strip", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "capitalize", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "strip", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "capitalize", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "format_user_name", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "format_user_name", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "__init__", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "str", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "utcnow", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "isoformat", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "utcnow", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "isoformat", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "values", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "sort", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "mark_as_read", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "utcnow", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "isoformat", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "delete_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "up", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "varchar", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "varchar", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "varchar", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "execute", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "print", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "down", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "execute", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "print", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "insert", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "testnotificationservice", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "setup", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "notificationservice", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "test_create_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user123", "type": "info", "message": "You have a new message"}, "normalized_input": "{\"message\":\"You have a new message\",\"type\":\"info\",\"user_id\":\"user123\"}", "result": {}}
+{"tool_name": "assertisnotnone", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertin", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertin", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "test_get_user_notifications", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user1", "type": "info", "message": "Notification 1 for user1"}, "normalized_input": "{\"message\":\"Notification 1 for user1\",\"type\":\"info\",\"user_id\":\"user1\"}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user1", "type": "warning", "message": "Notification 2 for user1"}, "normalized_input": "{\"message\":\"Notification 2 for user1\",\"type\":\"warning\",\"user_id\":\"user1\"}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user2", "type": "error", "message": "Notification 1 for user2"}, "normalized_input": "{\"message\":\"Notification 1 for user2\",\"type\":\"error\",\"user_id\":\"user2\"}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {"user_id": "user1"}, "normalized_input": "{\"user_id\":\"user1\"}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "asserttrue", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {"user_id": "user2"}, "normalized_input": "{\"user_id\":\"user2\"}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "test_mark_notification_as_read", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user123", "type": "info", "message": "Test notification"}, "normalized_input": "{\"message\":\"Test notification\",\"type\":\"info\",\"user_id\":\"user123\"}", "result": {}}
+{"tool_name": "mark_as_read", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "asserttrue", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "test_delete_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user123", "type": "info", "message": "Test notification"}, "normalized_input": "{\"message\":\"Test notification\",\"type\":\"info\",\"user_id\":\"user123\"}", "result": {}}
+{"tool_name": "assertin", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "delete_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "asserttrue", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertnotin", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "test_get_unread_notifications_only", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user1", "type": "info", "message": "Notification 1"}, "normalized_input": "{\"message\":\"Notification 1\",\"type\":\"info\",\"user_id\":\"user1\"}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user1", "type": "info", "message": "Notification 2"}, "normalized_input": "{\"message\":\"Notification 2\",\"type\":\"info\",\"user_id\":\"user1\"}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {"user_id": "user1", "type": "info", "message": "Notification 3"}, "normalized_input": "{\"message\":\"Notification 3\",\"type\":\"info\",\"user_id\":\"user1\"}", "result": {}}
+{"tool_name": "mark_as_read", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {"user_id": "user1"}, "normalized_input": "{\"user_id\":\"user1\"}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "asserttrue", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "main", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "__init__", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "str", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "utcnow", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "isoformat", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "values", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "sort", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "mark_as_read", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "utcnow", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "isoformat", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "delete_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "up", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "varchar", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "varchar", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "varchar", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "execute", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "down", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "execute", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "insert", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "testnotificationservice", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "setup", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "notificationservice", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "test_create_notification_success", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertisnotnone", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "test_get_user_notifications_filters_unread", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "mark_as_read", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "assertequal", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "main", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "__init__", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "create_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "str", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "utcnow", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "isoformat", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "get_user_notifications", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "values", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "sort", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "mark_as_read", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "utcnow", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "isoformat", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "delete_notification", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "up", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "varchar", "tool_input": {}, "normalized_input": "{}", "result": {}}
+{"tool_name": "varchar", "tool_input": {}, "normalized_input": "{}", "result": {}}
