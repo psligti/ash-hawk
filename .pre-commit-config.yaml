@@ -59,6 +59,16 @@ repos:
           - types-PyYAML
           - types-aiofiles
 
+  # Type hygiene: forbid Any/Optional, warn on bare dict
+  - repo: local
+    hooks:
+      - id: type-hygiene
+        name: type hygiene (no Any/Optional, typed dicts)
+        entry: python scripts/check_type_hygiene.py
+        language: python
+        types: [python]
+        pass_filenames: true
+
   # Run tests (fast subset for quick feedback)
   # Skip with: SKIP=pytest git commit
   - repo: local
