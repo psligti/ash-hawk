@@ -25,6 +25,7 @@ from ash_hawk.auto_research.types import (
     ConvergenceResult,
     CycleResult,
     CycleStatus,
+    ImprovementTarget,
     IterationResult,
     TargetType,
 )
@@ -179,51 +180,6 @@ async def progress_indicator(
         final_count = tracker.display
         sys.stdout.write(f"\r  {message} ✓ {final_count} [{time_str}]\n")
         sys.stdout.flush()
-
-
-@dataclass
-class ImprovementTarget:
-    target_type: TargetType
-    name: str
-    discovered_path: Path
-    injector: DawnKestrelInjector
-
-    @property
-    def structured_path(self) -> Path:
-        if self.target_type == TargetType.AGENT:
-            return self.injector.get_agent_path(self.name)
-        if self.target_type == TargetType.SKILL:
-            return self.injector.get_skill_path(self.name)
-        if self.target_type == TargetType.POLICY:
-            return self.injector.get_policy_path(self.name)
-        return self.injector.get_tool_path(self.name)
-
-    def read_content(self) -> str:
-        if self.structured_path.exists():
-            return self.structured_path.read_text(encoding="utf-8")
-        if self.discovered_path.exists():
-            return self.discovered_path.read_text(encoding="utf-8")
-        return ""
-
-    def save_content(self, content: str) -> Path:
-        if self.target_type == TargetType.AGENT:
-            return self.injector.save_agent_content(self.name, content)
-        if self.target_type == TargetType.SKILL:
-            return self.injector.save_skill_content(self.name, content)
-        if self.target_type == TargetType.POLICY:
-            return self.injector.save_policy_content(self.name, content)
-        return self.injector.save_tool_content(self.name, content)
-
-    def delete_content(self) -> bool:
-        if self.target_type == TargetType.SKILL:
-            return self.injector.delete_skill_content(self.name)
-        if self.target_type == TargetType.TOOL:
-            return self.injector.delete_tool_content(self.name)
-        if self.target_type == TargetType.AGENT:
-            return self.injector.delete_agent_content(self.name)
-        if self.target_type == TargetType.POLICY:
-            return self.injector.delete_policy_content(self.name)
-        return False
 
 
 SKILL_SEARCH_DIRS = [
@@ -897,6 +853,22 @@ async def run_cycle(
                     tracker.current = len(heldout_scenarios)
                 console.print(f"  [dim]Held-out: {heldout_score:.3f}[/dim]")
                 guardrail_checker.record_iteration(heldout_score, applied=True)
+                if guardrail_checker.should_stop():
+                    console.print(
+                        f"  [yellow]⚠ Guardrail triggered: {guardrail_checker.stop_reason}[/yellow]"
+                    )
+                    break
+            elif heldout_scenarios and not iter_result.applied:
+                guardrail_checker.record_iteration(
+                    heldout_score or 0.0, applied=False, reverted=True
+                )
+                if guardrail_checker.should_stop():
+                    console.print(
+                        f"  [yellow]⚠ Guardrail triggered: {guardrail_checker.stop_reason}[/yellow]"
+                    )
+                    break
+            elif not heldout_scenarios and not iter_result.applied:
+                guardrail_checker.record_iteration(current_score, applied=False, reverted=True)
                 if guardrail_checker.should_stop():
                     console.print(
                         f"  [yellow]⚠ Guardrail triggered: {guardrail_checker.stop_reason}[/yellow]"

@@ -12,11 +12,10 @@ from ash_hawk.auto_research.target_discovery import (
     POLICY_SEARCH_DIRS,
     SKILL_SEARCH_DIRS,
     TOOL_SEARCH_DIRS,
-    ImprovementTarget,
     TargetDiscovery,
     _compute_low_score_threshold,
 )
-from ash_hawk.auto_research.types import TargetType
+from ash_hawk.auto_research.types import ImprovementTarget, TargetType
 from ash_hawk.services.dawn_kestrel_injector import DawnKestrelInjector
 
 

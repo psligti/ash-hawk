@@ -7,7 +7,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from ash_hawk.services.dawn_kestrel_injector import DawnKestrelInjector
 
 
 class CycleStatus(StrEnum):
@@ -24,6 +28,53 @@ class TargetType(StrEnum):
     SKILL = "skill"
     POLICY = "policy"
     TOOL = "tool"
+
+
+@dataclass
+class ImprovementTarget:
+    target_type: TargetType
+    name: str
+    discovered_path: Path
+    injector: DawnKestrelInjector
+    dependencies: list[str] = field(default_factory=lambda: [])
+    priority: int = 0
+
+    @property
+    def structured_path(self) -> Path:
+        if self.target_type == TargetType.AGENT:
+            return self.injector.get_agent_path(self.name)
+        if self.target_type == TargetType.SKILL:
+            return self.injector.get_skill_path(self.name)
+        if self.target_type == TargetType.POLICY:
+            return self.injector.get_policy_path(self.name)
+        return self.injector.get_tool_path(self.name)
+
+    def read_content(self) -> str:
+        if self.structured_path.exists():
+            return self.structured_path.read_text(encoding="utf-8")
+        if self.discovered_path.exists():
+            return self.discovered_path.read_text(encoding="utf-8")
+        return ""
+
+    def save_content(self, content: str) -> Path:
+        if self.target_type == TargetType.AGENT:
+            return self.injector.save_agent_content(self.name, content)
+        if self.target_type == TargetType.SKILL:
+            return self.injector.save_skill_content(self.name, content)
+        if self.target_type == TargetType.POLICY:
+            return self.injector.save_policy_content(self.name, content)
+        return self.injector.save_tool_content(self.name, content)
+
+    def delete_content(self) -> bool:
+        if self.target_type == TargetType.SKILL:
+            return self.injector.delete_skill_content(self.name)
+        if self.target_type == TargetType.TOOL:
+            return self.injector.delete_tool_content(self.name)
+        if self.target_type == TargetType.AGENT:
+            return self.injector.delete_agent_content(self.name)
+        if self.target_type == TargetType.POLICY:
+            return self.injector.delete_policy_content(self.name)
+        return False
 
 
 class ConvergenceReason(StrEnum):
@@ -371,6 +422,7 @@ __all__ = [
     "MultiTargetResult",
     "PromotedLesson",
     "PromotionStatus",
+    "ImprovementTarget",
     "TargetType",
     "ToolUsagePattern",
 ]

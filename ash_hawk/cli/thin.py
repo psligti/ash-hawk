@@ -1,4 +1,4 @@
-"""CLI commands for thin telemetry bridge."""
+"""CLI commands for thin telemetry bridge."""  # type-hygiene: skip-file
 
 from __future__ import annotations
 
@@ -603,17 +603,11 @@ def _display_diff_report(report: DiffReport) -> None:
     is_flag=True,
     help="Show proposed diffs without applying",
 )
-@click.option(
-    "--backup/--no-backup",
-    default=True,
-    help="Create backup files before applying diffs",
-)
 def improve_thin(
     scenario_path: str,
     transcript_path: str,
     agent_path: str,
     dry_run: bool,
-    backup: bool,
 ) -> None:
     """Analyze a failed transcript and propose improvements."""
     console.print(

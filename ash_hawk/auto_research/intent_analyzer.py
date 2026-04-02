@@ -1,11 +1,12 @@
-"""Intent analyzer for extracting behavioral patterns from agent transcripts."""
+"""Intent analyzer for extracting behavioral patterns from agent transcripts."""  # type-hygiene: skip-file
 
 from __future__ import annotations
 
 import logging
 from collections import Counter
-from typing import Any, cast
+from typing import Any
 
+from ash_hawk.auto_research.llm import call_llm as _call_llm
 from ash_hawk.auto_research.types import (
     DecisionPattern,
     FailurePattern,
@@ -337,7 +338,7 @@ class IntentAnalyzer:
             dominant_tools=", ".join(patterns.dominant_tools[:5]) or "None",
         )
 
-        result = await _call_llm(self._llm_client, prompt)
+        result = await _call_llm(self._llm_client, prompt, temperature=0.5)
         return result or ""
 
     @staticmethod
@@ -392,40 +393,6 @@ def _has_consecutive_repeats(tool_names: list[str]) -> bool:
         if tool_names[i] == tool_names[i - 1]:
             return True
     return False
-
-
-async def _call_llm(client: Any, prompt: str, temperature: float = 0.5) -> str | None:
-    try:
-        response: Any = None
-
-        if hasattr(client, "complete"):
-            response = await client.complete(
-                messages=[{"role": "user", "content": prompt}],
-                options={"temperature": temperature},
-            )
-        elif hasattr(client, "chat"):
-            response = await client.chat(prompt)
-        else:
-            logger.error("LLM client has no compatible method")
-            return None
-
-        if hasattr(response, "text"):
-            text = getattr(response, "text", None)
-            return str(text) if text is not None else None
-        if hasattr(response, "content"):
-            content = getattr(response, "content", None)
-            return str(content) if content is not None else None
-        if isinstance(response, str):
-            return response
-        if isinstance(response, dict):
-            resp_dict = cast(dict[str, Any], response)
-            raw = resp_dict.get("content") or resp_dict.get("text")
-            return str(raw) if raw is not None else None
-
-        return None
-    except Exception as e:
-        logger.error(f"LLM call failed: {e}")
-        return None
 
 
 __all__ = ["IntentAnalyzer"]

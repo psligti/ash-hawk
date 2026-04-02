@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from ash_hawk.auto_research.cycle_runner import (
-    ImprovementTarget,
     TargetType,
     _check_convergence,
     _discover_improvement_target,
@@ -13,7 +12,7 @@ from ash_hawk.auto_research.cycle_runner import (
     _run_iteration,
     run_cycle,
 )
-from ash_hawk.auto_research.types import CycleStatus, IterationResult
+from ash_hawk.auto_research.types import CycleStatus, ImprovementTarget, IterationResult
 from ash_hawk.services.dawn_kestrel_injector import DawnKestrelInjector
 
 

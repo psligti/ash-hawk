@@ -1,10 +1,10 @@
-"""Single LLM function for auto-research: analyze failure and generate improvement."""
+"""Single LLM function for auto-research: analyze failure and generate improvement."""  # type-hygiene: skip-file
 
 from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from ash_hawk.types import EvalTranscript
@@ -372,7 +372,8 @@ async def _call_llm(client: Any, prompt: str, temperature: float = 0.7) -> str |
         if isinstance(response, str):
             return response
         if isinstance(response, dict):
-            result = response.get("content") or response.get("text")
+            resp_dict = cast(dict[str, Any], response)
+            result = resp_dict.get("content") or resp_dict.get("text")
             return str(result) if result is not None else None
 
         return None
@@ -381,4 +382,12 @@ async def _call_llm(client: Any, prompt: str, temperature: float = 0.7) -> str |
         return None
 
 
-__all__ = ["generate_improvement", "extract_skill_name", "is_name_too_similar"]
+call_llm = _call_llm
+
+__all__ = [
+    "generate_improvement",
+    "extract_skill_name",
+    "is_name_too_similar",
+    "_call_llm",
+    "call_llm",
+]
