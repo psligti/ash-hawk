@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 _console = Console()
 
 THROBBER_CHARS = ".+/"
+SPINNER_CHARS = "+/"
 
 
 def _format_elapsed(elapsed: float) -> str:
@@ -49,33 +50,70 @@ def _format_elapsed(elapsed: float) -> str:
     return f"{elapsed:.1f}s"
 
 
+class ScenarioProgressTracker:
+    def __init__(self, total: int, scenario_names: list[str] | None = None) -> None:
+        self.total = total
+        self.scenario_names = scenario_names or []
+        self.completed_ok: int = 0
+        self.completed_error: int = 0
+        self.running: int = 0
+        self._current_task_id: str = ""
+
+    def on_started(self, task_id: str = "") -> None:
+        self.running += 1
+        self._current_task_id = task_id
+
+    def on_completed(self, task_id: str, score: float | None = None) -> None:
+        self.running = max(0, self.running - 1)
+        if score is not None and score >= 0:
+            self.completed_ok += 1
+        else:
+            self.completed_error += 1
+
+    def render_glyphs(self, spinner_idx: int) -> str:
+        parts: list[str] = []
+        parts.extend(["."] * self.completed_ok)
+        parts.extend(["-"] * self.completed_error)
+        parts.extend([SPINNER_CHARS[spinner_idx % len(SPINNER_CHARS)]] * self.running)
+        remaining = self.total - self.completed_ok - self.completed_error - self.running
+        parts.extend(["·"] * remaining)
+        return "".join(parts)
+
+
 @asynccontextmanager
-async def progress_indicator(message: str = "") -> AsyncIterator[None]:
+async def progress_indicator(
+    message: str = "",
+    tracker: ScenarioProgressTracker | None = None,
+) -> AsyncIterator[ScenarioProgressTracker | None]:
     from rich.live import Live
     from rich.text import Text
 
     start_time = time.time()
-    throbber_idx = 0
+    spinner_idx = 0
 
     def _render() -> Text:
-        nonlocal throbber_idx
+        nonlocal spinner_idx
         elapsed = time.time() - start_time
         time_str = _format_elapsed(elapsed)
-        char = THROBBER_CHARS[throbber_idx]
+
+        if tracker is not None:
+            glyphs = tracker.render_glyphs(spinner_idx)
+            return Text(f"  {message} {glyphs} [{time_str}]", style="dim cyan")
+        char = THROBBER_CHARS[spinner_idx % len(THROBBER_CHARS)]
         return Text(f"  {message} {char} [{time_str}]", style="dim cyan")
 
     with Live(_render(), console=_console, transient=True, refresh_per_second=4) as live:
 
         async def _tick() -> None:
-            nonlocal throbber_idx
+            nonlocal spinner_idx
             while True:
                 await asyncio.sleep(0.25)
-                throbber_idx = (throbber_idx + 1) % len(THROBBER_CHARS)
+                spinner_idx += 1
                 live.update(_render())
 
         tick_task = asyncio.create_task(_tick())
         try:
-            yield
+            yield tracker
         finally:
             tick_task.cancel()
             try:
@@ -83,7 +121,11 @@ async def progress_indicator(message: str = "") -> AsyncIterator[None]:
             except asyncio.CancelledError:
                 pass
             elapsed = time.time() - start_time
-            _console.print(f"[dim]  {message} done [{_format_elapsed(elapsed)}][/dim]")
+            if tracker is not None:
+                glyphs = tracker.render_glyphs(spinner_idx)
+                _console.print(f"[dim]  {message} done [{_format_elapsed(elapsed)}] {glyphs}[/dim]")
+            else:
+                _console.print(f"[dim]  {message} done [{_format_elapsed(elapsed)}][/dim]")
 
 
 @dataclass
@@ -393,13 +435,35 @@ class ResearchLoop:
         if not scenarios:
             return self._build_snapshot(0.0, {}, [], {}, iteration)
 
+        scenario_names = [p.stem for p in scenarios]
+        tracker = ScenarioProgressTracker(
+            total=len(scenarios),
+            scenario_names=scenario_names,
+        )
+
+        async def _on_trial_progress(
+            completed: int, running: int, _total: int, _task_id: str
+        ) -> None:
+            tracker.running = running
+            tracker.completed_ok = completed - tracker.completed_error
+
         try:
-            async with progress_indicator(f"Iter {iteration + 1}: Evaluating"):
+            async with progress_indicator(f"Iter {iteration + 1}: Evaluating", tracker=tracker):
                 summary = await run_scenarios_async(
                     paths=[str(p) for p in scenarios],
                     storage_path=self._storage_path,
                     show_failure_patterns=False,
+                    on_trial_progress=_on_trial_progress,
                 )
+                tracker.completed_ok = 0
+                tracker.completed_error = 0
+                tracker.running = 0
+                for trial in summary.trials:
+                    if trial.result is not None:
+                        if trial.status == "error":
+                            tracker.completed_error += 1
+                        else:
+                            tracker.completed_ok += 1
         except Exception as exc:
             logger.warning(
                 "Iteration %d evaluation failed: %s — skipping diagnosis", iteration, exc

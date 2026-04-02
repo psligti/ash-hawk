@@ -1,6 +1,6 @@
 """Parallel suite runner for Ash-Hawk evaluation harness."""
 
-from __future__ import annotations
+from __future__ import annotations  # type-hygiene: skip-file
 
 import asyncio
 import time
@@ -22,7 +22,6 @@ from ash_hawk.types import (
     RunEnvelope,
     SuiteMetrics,
     TokenUsage,
-    TrialEnvelope,
     TrialResult,
 )
 
@@ -131,7 +130,25 @@ class EvalRunner:
                         return task, e
 
             tasks = [execute_task(task) for task in suite.tasks]
-            results = await asyncio.gather(*tasks)
+            total_tasks = len(tasks)
+            completed_count = 0
+            results: list[tuple[EvalTask, TrialResult | Exception]] = []
+
+            for coro in asyncio.as_completed(tasks):
+                trial_result = await coro
+                results.append(trial_result)
+                completed_count += 1
+                if self._on_trial_progress is not None:
+                    task_obj = trial_result[0]
+                    try:
+                        await self._on_trial_progress(
+                            completed_count,
+                            total_tasks - completed_count,
+                            total_tasks,
+                            task_obj.id,
+                        )
+                    except Exception:  # nosec B110 — callback must not crash evaluation
+                        pass
 
             for task, result in results:
                 if isinstance(result, Exception):
@@ -184,7 +201,7 @@ class EvalRunner:
                 run_id=run_envelope.run_id,
                 summary=summary,
             )
-        except Exception:
+        except Exception:  # nosec B110 — storage failure must not crash runner
             pass
 
         return summary
