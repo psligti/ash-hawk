@@ -6,6 +6,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Sequence, cast
 
+from rich.console import Console
+
 from ash_hawk.auto_research.types import IterationResult
 from ash_hawk.research.diagnosis import DiagnosisEngine, DiagnosisReport
 from ash_hawk.research.strategy_promoter import (
@@ -25,6 +27,7 @@ from ash_hawk.research.uncertainty import UncertaintyModel
 from ash_hawk.scenario import run_scenarios_async
 
 logger = logging.getLogger(__name__)
+_console = Console()
 
 
 @dataclass
@@ -107,6 +110,7 @@ class ResearchLoop:
         result.uncertainty_before = self._uncertainty.uncertainty_level
 
         for i in range(self._config.iterations):
+            _console.print(f"[cyan]Research iteration {i + 1}/{self._config.iterations}[/cyan]")
             if self._diagnosis_count >= self._config.max_diagnoses_per_run:
                 logger.info("LLM budget exhausted, stopping research loop")
                 break
@@ -115,19 +119,39 @@ class ResearchLoop:
             if diagnosis is None:
                 continue
 
+            evaluation = self._latest_eval
+            if evaluation:
+                _console.print(
+                    f"[dim]  Score: {evaluation.mean_score:.3f} | "
+                    f"delta: {evaluation.score_delta:+.3f}[/dim]"
+                )
+
+            cause_categories = (
+                ", ".join([category.value for category in diagnosis.cause_categories]) or "unknown"
+            )
+            _console.print(
+                "[dim]  Diagnosis: "
+                f"{cause_categories} | action: {diagnosis.recommended_action} | "
+                f"uncertainty: {diagnosis.uncertainty_level:.3f}[/dim]"
+            )
+
             self._uncertainty.update_from_diagnosis(diagnosis)
 
             decision = self._decide(diagnosis, i)
             result.decisions.append(decision)
 
+            _console.print(f"[dim]  Decision: {decision.action.value}[/dim]")
+
             await self._execute_decision(decision, scenarios, project_root, i, diagnosis, result)
 
             if i > 0 and i % self._config.d_step_interval == 0 and project_root:
                 new_targets = self._target_registry.discover_targets(project_root)
+                _console.print(f"[dim]  Discovered {len(new_targets)} new targets[/dim]")
                 logger.info("Discovered %d new targets", len(new_targets))
 
             if i > 0 and i % self._config.prune_interval == 0:
                 pruned = self._target_registry.prune_low_correlation()
+                _console.print(f"[dim]  Pruned {len(pruned)} low-correlation targets[/dim]")
                 if pruned:
                     logger.info("Pruned %d low-correlation targets", len(pruned))
 
@@ -239,17 +263,24 @@ class ResearchLoop:
         promoted: list[PromotedStrategy] = []
         if decision.action == ResearchAction.PROMOTE:
             promoted = await self._execute_promote()
+            _console.print(f"[green]  Promoted {len(promoted)} strategies[/green]")
         elif decision.action == ResearchAction.OBSERVE:
+            _console.print(
+                f"[yellow]  Observing (uncertainty > {self._config.uncertainty_threshold})[/yellow]"
+            )
             logger.info("Iteration %d: observe (high uncertainty)", iteration)
         elif decision.action == ResearchAction.EXPERIMENT:
+            _console.print("[cyan]  Experimenting (competing hypotheses)[/cyan]")
             logger.info("Iteration %d: experiment (competing hypotheses)", iteration)
         elif decision.action == ResearchAction.FIX:
             if self._config.human_approval_required:
+                _console.print("[yellow]  Fix requires human approval[/yellow]")
                 logger.info(
                     "Iteration %d: fix requires human approval (skipping in auto mode)",
                     iteration,
                 )
             else:
+                _console.print("[green]  Fixing[/green]")
                 logger.info("Iteration %d: fix (applying mutation)", iteration)
 
         if promoted:

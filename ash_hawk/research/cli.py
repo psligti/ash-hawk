@@ -3,6 +3,7 @@ from __future__ import (
 )  # type-hygiene: skip-file  # mypy: misc (untyped click decorators)
 
 import asyncio
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,43 @@ if TYPE_CHECKING:
     from ash_hawk.research.types import ResearchLoopResult
 
 console = Console()
+logger = logging.getLogger(__name__)
+
+
+def _create_llm_client() -> object | None:
+    try:
+        import importlib
+
+        from ash_hawk.config import get_config
+
+        settings_module = importlib.import_module("dawn_kestrel.core.settings")
+        llm_module = importlib.import_module("dawn_kestrel.llm.client")
+
+        get_settings = getattr(settings_module, "get_settings", None)
+        llm_client_factory = getattr(llm_module, "LLMClient", None)
+        if get_settings is None or llm_client_factory is None:
+            logger.warning("dawn_kestrel settings or LLM client unavailable")
+            return None
+
+        settings = get_settings()
+        account = settings.get_default_account()
+
+        if not account or not account.api_key:
+            logger.warning("No default account or API key configured")
+            return None
+
+        config = get_config()
+        return llm_client_factory(
+            provider_id=account.provider_id,
+            model=account.model,
+            api_key=account.api_key.get_secret_value(),
+            timeout_seconds=config.auto_research_llm_timeout_seconds,
+            max_retries=config.auto_research_llm_max_retries,
+            use_queue=config.llm_use_queue,
+        )
+    except ImportError as exc:
+        logger.warning(f"dawn_kestrel not available: {exc}")
+        return None
 
 
 @click.group(name="research")
@@ -92,7 +130,13 @@ def run(
     )
 
     async def _run() -> ResearchLoopResult:
-        loop = ResearchLoop(config=config, storage_path=storage_path)
+        console.print("[cyan]Running Research Supervisor...[/cyan]")
+        llm_client = _create_llm_client()
+        if llm_client is None:
+            console.print("[yellow]No LLM client available — diagnoses will be limited[/yellow]")
+        else:
+            console.print("[cyan]Creating LLM client...[/cyan]")
+        loop = ResearchLoop(config=config, llm_client=llm_client, storage_path=storage_path)
         return await loop.run(scenarios=scenarios, project_root=project_root)
 
     result = asyncio.run(_run())
