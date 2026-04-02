@@ -454,6 +454,31 @@ async def run_enhanced_cycle(
             else:
                 console.print("[dim]Cleanup: no low-value skills found[/dim]")
 
+        if config.enable_research_loop:
+            console.print("\n[cyan]Running research supervisor phase...[/cyan]")
+            from ash_hawk.research.research_loop import ResearchLoop
+            from ash_hawk.research.types import ResearchLoopConfig as RLConfig
+
+            research_config = RLConfig(
+                iterations=min(10, config.iterations_per_target // 5),
+            )
+            research_storage = storage / "research-loop"
+            rl = ResearchLoop(
+                config=research_config,
+                llm_client=llm_client,
+                storage_path=research_storage,
+            )
+            research_result = await rl.run(
+                scenarios=scenarios,
+                project_root=project_root,
+            )
+            result.research_result = research_result
+            console.print(
+                f"[dim]Research: {research_result.total_decisions} decisions, "
+                f"uncertainty {research_result.uncertainty_before:.3f} -> "
+                f"{research_result.uncertainty_after:.3f}[/dim]"
+            )
+
         result.status = CycleStatus.COMPLETED if not result.converged else CycleStatus.CONVERGED
 
     except Exception as e:

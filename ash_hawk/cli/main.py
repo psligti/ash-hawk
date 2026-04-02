@@ -1,7 +1,4 @@
-from pathlib import Path
-
 import click
-import yaml
 from rich.console import Console
 from rich.text import Text
 
@@ -32,7 +29,9 @@ def cli(ctx: click.Context, version: bool) -> None:
 from ash_hawk.auto_research.cli import auto_research
 from ash_hawk.cli.run import run
 from ash_hawk.cli.thin import thin
+from ash_hawk.research.cli import research as research_cmd
 
 cli.add_command(run)
 cli.add_command(auto_research, name="improve")
 cli.add_command(thin)
+cli.add_command(research_cmd)

@@ -109,7 +109,8 @@ module = [
   "ash_hawk.graders.llm_boolean_specialized",
   "ash_hawk.graders.llm_boolean",
   "ash_hawk.auto_research.enhanced_cycle_runner",
-  "ash_hawk.auto_research.enhanced_cli",
+   "ash_hawk.auto_research.enhanced_cli",
+   "ash_hawk.research.cli",
 ]
 ignore_errors = true
 

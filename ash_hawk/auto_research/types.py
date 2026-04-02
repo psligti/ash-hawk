@@ -317,6 +317,7 @@ class EnhancedCycleConfig:
     convergence_window: int = 5
     convergence_variance_threshold: float = 0.001
     project_name: str = "ash-hawk"
+    enable_research_loop: bool = False
 
 
 @dataclass
@@ -357,6 +358,7 @@ class EnhancedCycleResult:
     promoted_lessons: list[PromotedLesson] = field(default_factory=list)
     lever_result: Any = None
     cleanup_result: Any = None
+    research_result: Any = None
     overall_improvement: float = 0.0
     converged: bool = False
     convergence_reason: str | None = None
