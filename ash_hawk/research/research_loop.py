@@ -33,8 +33,8 @@ from ash_hawk.scenario import run_scenarios_async
 logger = logging.getLogger(__name__)
 _console = Console()
 
-THROBBER_CHARS = ".+/"
-SPINNER_CHARS = "+/"
+THROBBER_CHARS = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+SPINNER_CHARS = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
 
 def _format_elapsed(elapsed: float) -> str:
