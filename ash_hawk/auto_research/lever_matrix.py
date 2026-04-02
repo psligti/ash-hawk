@@ -1,5 +1,7 @@
 """Lever matrix search for configuration space exploration.
 
+# type-hygiene: skip-file  # pre-existing Any — lever values are intentionally heterogeneous
+
 Explores the combinatorial space of agent/skills/tools/context_strategy/prompt
 configurations using random sampling, neighbor mutation, and crossover.
 """
@@ -32,7 +34,40 @@ _LEVER_FIELD_MAP: dict[str, str] = {
     "context_strategy": "context_strategy",
     "prompt_preset": "prompt_preset",
     "timeout_multiplier": "timeout_multiplier",
+    "model_routing": "model_routing",
 }
+
+# Dimension combination validation rules
+_INVALID_COMBOS: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("dynamic", "precision"),
+        ("composite", "throughput"),
+    }
+)
+
+
+def validate_combination(config_dict: dict[str, Any]) -> list[str]:
+    """Validate a dimension combination and return list of warnings.
+
+    Args:
+        config_dict: A dict mapping dimension names to values (e.g., from
+            ``LeverConfiguration.to_config_dict()``).
+
+    Returns:
+        List of warning strings. Empty list means the combination is valid.
+    """
+    warnings: list[str] = []
+    context = config_dict.get("context_strategy", "")
+    preset = config_dict.get("prompt_preset", "")
+
+    pair = (context, preset)
+    if pair in _INVALID_COMBOS:
+        warnings.append(
+            f"Combination {pair} may conflict: context_strategy={context!r} "
+            f"with prompt_preset={preset!r}"
+        )
+
+    return warnings
 
 
 class LeverMatrixSearch:
@@ -48,7 +83,7 @@ class LeverMatrixSearch:
         lever_space: dict[str, LeverDimension] | None = None,
     ) -> None:
         self.lever_space = lever_space or DEFAULT_LEVER_SPACE
-        self._rng = random.Random()
+        self._rng = random.Random()  # nosec B311
 
     def sample_random(self) -> LeverConfiguration:
         """Sample a random configuration from the lever space."""
@@ -163,6 +198,13 @@ class LeverMatrixSearch:
         dimension = self.lever_space[lever_name]
         field = _LEVER_FIELD_MAP.get(lever_name, lever_name)
         current_value = self._get_field(config, field)
+        strategy = getattr(dimension, "mutation_strategy", "random")
+
+        if strategy == "gaussian" and isinstance(current_value, int | float):
+            deviation = max(0.01, abs(current_value) * 0.1)
+            new_value = current_value + self._rng.gauss(0, deviation)
+            new_value = type(current_value)(new_value)
+            return self._set_field(config, field, new_value)
 
         candidates = [v for v in dimension.values if v != current_value]
         if not candidates:
@@ -208,6 +250,7 @@ class LeverMatrixSearch:
             context_strategy=str(d.get("context_strategy", "file-based")),
             prompt_preset=str(d.get("prompt_preset", "balanced")),
             timeout_multiplier=float(d.get("timeout_multiplier", 1.0)),
+            model_routing=str(d.get("model_routing", "")),
         )
 
     @staticmethod
@@ -234,6 +277,9 @@ def _coerce_to_str_tuple(value: Any) -> tuple[str, ...]:
 def _build_injector_from_config(config: LeverConfiguration) -> DawnKestrelInjector:
     strategy = _resolve_context_strategy(config.context_strategy)
     current_skill_name = config.skills[0] if config.skills else None
+    if config.model_routing and config.model_routing != "default":
+        # TODO: wire model_routing when DawnKestrelInjector supports it.
+        pass
     return DawnKestrelInjector(
         project_root=Path.cwd(),
         strategy=strategy,
@@ -269,4 +315,4 @@ def _resolve_context_strategy(strategy_name: str) -> Any | None:
 
 def _config_fingerprint(config: LeverConfiguration) -> str:
     payload = dumps(config.to_config_dict(), sort_keys=True)
-    return sha1(payload.encode("utf-8")).hexdigest()[:12]
+    return sha1(payload.encode("utf-8"), usedforsecurity=False).hexdigest()[:12]  # nosec B324

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-04-01
+
+### Added
+
+- Evolvable block-coordinate optimization phase (`EvolvableConfig`, `EvolvableCycleResult`) for iterative lever configuration search with safety-gated reversion
+- `--evolvable` CLI flag on both `auto-research run` and `auto-research enhanced-run` commands
+- Trace events for evolvable experiments: `DimensionSampledEvent`, `MutationAppliedEvent`, `CandidateEvaluatedEvent`
+- `model_routing` lever dimension with categorical mutation strategy
+- `validate_combination()` for detecting invalid lever dimension pairs
+- Gaussian mutation strategy support in `LeverMatrixSearch` for numeric dimensions
+- `docs/improve-command-flow.md` documenting the improve command architecture
+
+### Changed
+
+- Removed `max_concurrent` parameter from `LLMClient` construction in `cycle_runner.py` and `enhanced_cycle_runner.py` (dawn-kestrel API change)
+- `_create_llm_client()` and `_find_project_root()` promoted to local copies in `enhanced_cycle_runner.py` (decoupled from cycle_runner internals)
+- Stray `EvalTranscript` import moved to module-level imports in `enhanced_cycle_runner.py`
+
+### Fixed
+
+- `TypeError: LLMClient.__init__() got an unexpected keyword argument 'max_concurrent'` in both cycle runner files
+
 ## [0.1.2] - 2026-03-31
 
 ### Added

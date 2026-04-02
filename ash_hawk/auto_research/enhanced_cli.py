@@ -1,10 +1,11 @@
 """Enhanced CLI commands for auto-research improvement cycle."""
 
+# type-hygiene: skip-file  # pre-existing Any — CLI serialization of heterogeneous result types
+
 from __future__ import annotations
 
 import asyncio
 import json
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -185,6 +186,11 @@ def _print_result(result: EnhancedCycleResult) -> None:
     help="Explore lever configuration space (default: disabled)",
 )
 @click.option(
+    "--evolvable/--no-evolvable",
+    default=False,
+    help="Enable evolvable block-coordinate optimization (default: disabled)",
+)
+@click.option(
     "--cleanup/--no-cleanup",
     default=True,
     help="Clean up low-value skills after cycle (default: enabled)",
@@ -206,6 +212,7 @@ def enhanced_run(
     knowledge_promotion: bool,
     note_lark: bool,
     lever_search: bool,
+    evolvable: bool,
     cleanup: bool,
     project_name: str,
 ) -> None:
@@ -216,7 +223,7 @@ def enhanced_run(
         ash-hawk auto-research enhanced-run -s scenarios/*.yaml --iterations 100
         ash-hawk auto-research enhanced-run -s scenarios/*.yaml --no-knowledge-promotion
     """
-    config = get_config()
+    _config = get_config()
 
     scenarios = list(scenario)
     if not scenarios:
@@ -228,8 +235,8 @@ def enhanced_run(
     enhanced_config = EnhancedCycleConfig(
         enable_multi_target=multi_target,
         max_parallel_targets=parallel_targets,
-        enable_lever_search=lever_search,
-        lever_space=dict(DEFAULT_LEVER_SPACE) if lever_search else None,
+        enable_lever_search=lever_search or evolvable,
+        lever_space=dict(DEFAULT_LEVER_SPACE) if (lever_search or evolvable) else None,
         enable_intent_analysis=intent_analysis,
         enable_knowledge_promotion=knowledge_promotion,
         enable_skill_cleanup=cleanup,

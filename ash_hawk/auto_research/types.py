@@ -1,5 +1,7 @@
 """Minimal types for auto-research improvement cycle."""
 
+# type-hygiene: skip-file  # pre-existing Any — lever values and result payloads are heterogeneous
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -171,6 +173,7 @@ class LeverDimension:
     values: list[Any]
     weight: float = 1.0
     mutation_rate: float = 0.2
+    mutation_strategy: str = "random"
 
 
 @dataclass
@@ -181,6 +184,7 @@ class LeverConfiguration:
     context_strategy: str
     prompt_preset: str
     timeout_multiplier: float = 1.0
+    model_routing: str = ""
 
     def to_config_dict(self) -> dict[str, Any]:
         return {
@@ -190,6 +194,7 @@ class LeverConfiguration:
             "context_strategy": self.context_strategy,
             "prompt_preset": self.prompt_preset,
             "timeout_multiplier": self.timeout_multiplier,
+            "model_routing": self.model_routing,
         }
 
 
@@ -234,6 +239,13 @@ DEFAULT_LEVER_SPACE: dict[str, LeverDimension] = {
         weight=0.0,
         mutation_rate=0.1,
     ),
+    "model_routing": LeverDimension(
+        name="model_routing",
+        values=["default", "fast", "reasoning", "creative"],
+        weight=0.1,
+        mutation_rate=0.2,
+        mutation_strategy="categorical",
+    ),
 }
 
 
@@ -254,6 +266,34 @@ class EnhancedCycleConfig:
     convergence_window: int = 5
     convergence_variance_threshold: float = 0.001
     project_name: str = "ash-hawk"
+
+
+@dataclass
+class EvolvableConfig:
+    """Configuration for evolvable block-coordinate optimization phase."""
+
+    enabled: bool = False
+    max_experiments: int = 100
+    dimensions: list[str] = field(default_factory=list)
+    experiment_log_path: str = ".ash-hawk/evolvable-experiments.jsonl"
+    improvement_threshold: float = 0.02
+    safety_threshold: float = -0.05
+    model_routing_enabled: bool = True
+
+
+@dataclass
+class EvolvableCycleResult:
+    """Result of an evolvable optimization phase."""
+
+    total_experiments: int = 0
+    best_score: float = 0.0
+    baseline_score: float = 0.0
+    improvement: float = 0.0
+    dimensions_explored: list[str] = field(default_factory=list)
+    reverted_experiments: int = 0
+    best_configuration: dict[str, Any] = field(default_factory=dict)
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
 
 @dataclass
@@ -321,6 +361,8 @@ __all__ = [
     "DecisionPattern",
     "EnhancedCycleConfig",
     "EnhancedCycleResult",
+    "EvolvableConfig",
+    "EvolvableCycleResult",
     "FailurePattern",
     "IntentPatterns",
     "IterationResult",

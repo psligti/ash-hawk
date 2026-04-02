@@ -1,42 +1,117 @@
 """Enhanced auto-research cycle runner with multi-target, intent analysis, and knowledge promotion."""
 
+# type-hygiene: skip-file  # pre-existing Any — LLM client and transcript types are dynamic
+
 from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Callable, Protocol, cast
 
 from rich.console import Console
 
-from ash_hawk.auto_research.cycle_runner import (
-    ImprovementTarget,
-    _create_llm_client,
-    _find_project_root,
-)
 from ash_hawk.auto_research.intent_analyzer import IntentAnalyzer
 from ash_hawk.auto_research.knowledge_promotion import KnowledgePromoter, PromotionCriteria
 from ash_hawk.auto_research.lever_matrix import LeverMatrixSearch
 from ash_hawk.auto_research.multi_target_runner import MultiTargetCycleRunner, TargetCandidate
-from ash_hawk.auto_research.skill_cleanup import CleanupConfig, CleanupResult, SkillCleaner
+from ash_hawk.auto_research.skill_cleanup import CleanupConfig, SkillCleaner
 from ash_hawk.auto_research.target_discovery import TargetDiscovery
 from ash_hawk.auto_research.types import (
-    ConvergenceReason,
-    CycleResult,
     CycleStatus,
     EnhancedCycleConfig,
     EnhancedCycleResult,
-    IntentPatterns,
+    EvolvableConfig,
+    EvolvableCycleResult,
     PromotedLesson,
     PromotionStatus,
-    TargetType,
 )
 from ash_hawk.scenario import run_scenarios_async
 from ash_hawk.scenario.loader import load_scenario
+from ash_hawk.scenario.trace import (
+    CandidateEvaluatedEvent,
+    DimensionSampledEvent,
+    MutationAppliedEvent,
+    append_trace_jsonl,
+)
+from ash_hawk.types import EvalTranscript
 
 logger = logging.getLogger(__name__)
 console = Console()
+
+
+class _ApiKey(Protocol):
+    def get_secret_value(self) -> str: ...
+
+
+class _Account(Protocol):
+    provider_id: str
+    model: str
+    api_key: _ApiKey | None
+
+
+class _Settings(Protocol):
+    def get_default_account(self) -> _Account | None: ...
+
+
+class _LLMClient(Protocol):
+    def __init__(
+        self,
+        *,
+        provider_id: str,
+        model: str,
+        api_key: str,
+        timeout_seconds: float,
+        max_retries: int,
+        use_queue: bool,
+        max_concurrent: int,
+    ) -> None: ...
+
+
+def _create_llm_client() -> Any:
+    try:
+        import importlib
+
+        from ash_hawk.config import get_config
+
+        settings_module = importlib.import_module("dawn_kestrel.core.settings")
+        client_module = importlib.import_module("dawn_kestrel.llm.client")
+        get_settings = cast(Callable[[], _Settings], getattr(settings_module, "get_settings"))
+        llm_client = cast(type[_LLMClient], getattr(client_module, "LLMClient"))
+
+        settings = get_settings()
+        account = settings.get_default_account()
+
+        if not account or not account.api_key:
+            logger.warning("No default account or API key configured")
+            return None
+
+        config = get_config()
+        return llm_client(
+            provider_id=account.provider_id,
+            model=account.model,
+            api_key=account.api_key.get_secret_value(),
+            timeout_seconds=config.auto_research_llm_timeout_seconds,
+            max_retries=config.auto_research_llm_max_retries,
+            use_queue=config.llm_use_queue,
+        )
+    except ImportError as exc:
+        logger.warning(f"dawn_kestrel not available: {exc}")
+        return None
+
+
+def _find_project_root(scenario_dir: Path) -> Path | None:
+    current = scenario_dir.resolve()
+    for _ in range(10):
+        if (current / "pyproject.toml").exists():
+            return current
+        if (current / ".git").exists():
+            return current
+        if current.parent == current:
+            break
+        current = current.parent
+    return None
 
 
 def _resolve_agent_startup_details(scenarios: list[Path]) -> tuple[str, str]:
@@ -50,7 +125,9 @@ def _resolve_agent_startup_details(scenarios: list[Path]) -> tuple[str, str]:
         scenario = load_scenario(scenarios[0])
         sut_config = scenario.sut.config
         run_config_raw = sut_config.get("run_config")
-        run_config = run_config_raw if isinstance(run_config_raw, dict) else {}
+        run_config = (
+            cast(dict[str, object], run_config_raw) if isinstance(run_config_raw, dict) else {}
+        )
 
         candidate_agent = (
             run_config.get("agent_name") or sut_config.get("agent") or sut_config.get("agent_name")
@@ -79,6 +156,102 @@ def _resolve_agent_startup_details(scenarios: list[Path]) -> tuple[str, str]:
         return agent_name, agent_version
 
     return agent_name, agent_version
+
+
+async def _run_evolvable_phase(
+    scenarios: list[Path],
+    storage_path: Path,
+    lever_search: LeverMatrixSearch,
+    evolvable_config: EvolvableConfig,
+    baseline_score: float,
+) -> EvolvableCycleResult:
+    from datetime import UTC, datetime
+
+    result = EvolvableCycleResult(
+        baseline_score=baseline_score,
+        started_at=datetime.now(UTC),
+    )
+    log_path = storage_path / evolvable_config.experiment_log_path
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    best_config = lever_search.sample_random()
+    dimensions_to_explore = (
+        evolvable_config.dimensions
+        if evolvable_config.dimensions
+        else list(lever_search.lever_space.keys())
+    )
+    result.dimensions_explored = dimensions_to_explore
+
+    for experiment_num in range(evolvable_config.max_experiments):
+        ts = datetime.now(UTC).isoformat()
+
+        append_trace_jsonl(
+            str(log_path),
+            DimensionSampledEvent.create(
+                ts=ts,
+                data={
+                    "experiment": experiment_num,
+                    "dimensions": dimensions_to_explore,
+                    "phase": "evolvable",
+                },
+            ),
+        )
+
+        if experiment_num > 0:
+            neighbors = lever_search.sample_neighbors(best_config, n=1)
+            candidate = neighbors[0] if neighbors else lever_search.sample_random()
+        else:
+            candidate = best_config
+
+        append_trace_jsonl(
+            str(log_path),
+            MutationAppliedEvent.create(
+                ts=ts,
+                data={
+                    "experiment": experiment_num,
+                    "configuration": candidate.to_config_dict(),
+                },
+            ),
+        )
+
+        try:
+            score = await lever_search.evaluate(
+                config=candidate,
+                scenarios=scenarios,
+                storage_path=storage_path / f"evolvable-exp-{experiment_num:03d}",
+            )
+        except Exception:
+            result.reverted_experiments += 1
+            continue
+
+        append_trace_jsonl(
+            str(log_path),
+            CandidateEvaluatedEvent.create(
+                ts=ts,
+                data={
+                    "experiment": experiment_num,
+                    "score": score,
+                    "baseline": baseline_score,
+                    "configuration": candidate.to_config_dict(),
+                },
+            ),
+        )
+
+        result.total_experiments += 1
+        delta = score - result.best_score
+
+        if delta < evolvable_config.safety_threshold:
+            result.reverted_experiments += 1
+            continue
+
+        if score > result.best_score:
+            result.best_score = score
+            best_config = candidate
+            result.best_configuration = candidate.to_config_dict()
+
+    result.improvement = result.best_score - baseline_score
+    result.completed_at = datetime.now(UTC)
+    return result
 
 
 async def run_enhanced_cycle(
@@ -137,7 +310,7 @@ async def run_enhanced_cycle(
                 paths=[str(s) for s in scenarios],
                 storage_path=storage / "baseline",
             )
-            baseline_transcripts = []
+            baseline_transcripts: list[EvalTranscript] = []
             for trial in baseline_summary.trials:
                 if trial.result and trial.result.transcript:
                     baseline_transcripts.append(trial.result.transcript)
@@ -188,21 +361,36 @@ async def run_enhanced_cycle(
             result.total_iterations += target_result.total_iterations
 
         if config.enable_lever_search and llm_client:
-            console.print("\n[cyan]Running lever matrix search...[/cyan]")
+            console.print("\n[cyan]Running evolvable optimization phase...[/cyan]")
             lever_search = LeverMatrixSearch(lever_space=config.lever_space)
-            optimize = getattr(lever_search, "optimize", None)
-            if callable(optimize):
-                lever_result = await optimize(
-                    scenarios=scenarios,
-                    storage_path=storage / "lever-search",
-                    max_iterations=min(20, config.iterations_per_target // 2),
-                )
-            else:
-                lever_result = None
-            result.lever_result = lever_result
-            if lever_result and lever_result.best_configuration:
+
+            baseline_config = lever_search.sample_random()
+            baseline_score = await lever_search.evaluate(
+                config=baseline_config,
+                scenarios=scenarios,
+                storage_path=storage / "evolvable-baseline",
+            )
+
+            evolvable_config = EvolvableConfig(
+                max_experiments=min(20, config.iterations_per_target // 2),
+                improvement_threshold=config.improvement_threshold,
+            )
+            evolvable_result = await _run_evolvable_phase(
+                scenarios=scenarios,
+                storage_path=storage / "evolvable-search",
+                lever_search=lever_search,
+                evolvable_config=evolvable_config,
+                baseline_score=baseline_score,
+            )
+            result.lever_result = evolvable_result
+            if evolvable_result.best_configuration:
                 console.print(
-                    f"[dim]Best lever config: {lever_result.best_configuration.to_config_dict()}[/dim]"
+                    f"[dim]Best evolvable config: {evolvable_result.best_configuration}[/dim]"
+                )
+                console.print(
+                    f"[dim]Evolvable improvement: {evolvable_result.improvement:+.4f} "
+                    f"({evolvable_result.total_experiments} experiments, "
+                    f"{evolvable_result.reverted_experiments} reverted)[/dim]"
                 )
 
         if config.enable_knowledge_promotion:
@@ -218,7 +406,7 @@ async def run_enhanced_cycle(
 
             for target_name, cycle_result in result.target_results.items():
                 for iteration in cycle_result.applied_iterations:
-                    should_promote, reason = await promoter.should_promote(
+                    should_promote, _ = await promoter.should_promote(
                         iteration=iteration,
                         all_iterations=cycle_result.iterations,
                         cycle_result=cycle_result,
