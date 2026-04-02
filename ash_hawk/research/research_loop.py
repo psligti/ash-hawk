@@ -2,7 +2,6 @@ from __future__ import annotations  # type-hygiene: skip-file
 
 import asyncio
 import logging
-import sys
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -52,36 +51,39 @@ def _format_elapsed(elapsed: float) -> str:
 
 @asynccontextmanager
 async def progress_indicator(message: str = "") -> AsyncIterator[None]:
+    from rich.live import Live
+    from rich.text import Text
+
     start_time = time.time()
     throbber_idx = 0
-    display_task: asyncio.Task[None] | None = None
 
-    async def _display() -> None:
+    def _render() -> Text:
         nonlocal throbber_idx
-        while True:
-            await asyncio.sleep(0.15)
-            throbber_idx = (throbber_idx + 1) % len(THROBBER_CHARS)
-            elapsed = time.time() - start_time
-            time_str = _format_elapsed(elapsed)
-            char = THROBBER_CHARS[throbber_idx]
-            line = f"\r  {message} {char} [{time_str}]  "
-            sys.stdout.write(line)
-            sys.stdout.flush()
-
-    try:
-        display_task = asyncio.create_task(_display())
-        yield
-    finally:
-        if display_task is not None:
-            display_task.cancel()
-            try:
-                await display_task
-            except asyncio.CancelledError:
-                pass
         elapsed = time.time() - start_time
         time_str = _format_elapsed(elapsed)
-        sys.stdout.write(f"\r  {message} done [{time_str}]\n")
-        sys.stdout.flush()
+        char = THROBBER_CHARS[throbber_idx]
+        return Text(f"  {message} {char} [{time_str}]", style="dim cyan")
+
+    with Live(_render(), console=_console, transient=True, refresh_per_second=4) as live:
+
+        async def _tick() -> None:
+            nonlocal throbber_idx
+            while True:
+                await asyncio.sleep(0.25)
+                throbber_idx = (throbber_idx + 1) % len(THROBBER_CHARS)
+                live.update(_render())
+
+        tick_task = asyncio.create_task(_tick())
+        try:
+            yield
+        finally:
+            tick_task.cancel()
+            try:
+                await tick_task
+            except asyncio.CancelledError:
+                pass
+            elapsed = time.time() - start_time
+            _console.print(f"[dim]  {message} done [{_format_elapsed(elapsed)}][/dim]")
 
 
 @dataclass
@@ -184,10 +186,15 @@ class ResearchLoop:
             cause_categories = (
                 ", ".join([category.value for category in diagnosis.cause_categories]) or "unknown"
             )
+            hypothesis_summary = ""
+            if diagnosis.hypotheses:
+                top = max(diagnosis.hypotheses, key=lambda h: h.confidence)
+                short = top.description[:80] + ("..." if len(top.description) > 80 else "")
+                hypothesis_summary = f" | hypothesis: {short}"
             _console.print(
-                "[dim]  Diagnosis: "
-                f"{cause_categories} | action: {diagnosis.recommended_action} | "
-                f"uncertainty: {diagnosis.uncertainty_level:.3f}[/dim]"
+                f"[dim]  Causes: {cause_categories} | "
+                f"LLM action: {diagnosis.recommended_action} | "
+                f"uncertainty: {diagnosis.uncertainty_level:.3f}{hypothesis_summary}[/dim]"
             )
 
             self._uncertainty.update_from_diagnosis(diagnosis)
@@ -195,7 +202,10 @@ class ResearchLoop:
             decision = self._decide(diagnosis, i)
             result.decisions.append(decision)
 
-            _console.print(f"[dim]  Decision: {decision.action.value}[/dim]")
+            _console.print(
+                f"[dim]  Decision: {decision.action.value} "
+                f"(confidence: {decision.confidence:.3f})[/dim]"
+            )
 
             await self._execute_decision(decision, scenarios, project_root, i, diagnosis, result)
 
@@ -241,11 +251,18 @@ class ResearchLoop:
 
     def _decide(self, diagnosis: DiagnosisReport, iteration: int) -> ResearchDecision:
         """Decide next action based on diagnosis and uncertainty state."""
-        if self._uncertainty.should_observe_before_fixing(self._config.uncertainty_threshold):
+        effective_uncertainty = max(
+            diagnosis.uncertainty_level,
+            self._uncertainty.uncertainty_level,
+        )
+
+        if effective_uncertainty > self._config.uncertainty_threshold:
             action = ResearchAction.OBSERVE
         elif diagnosis.recommended_action == "promote":
             action = ResearchAction.PROMOTE
         elif self._has_competing_hypotheses():
+            action = ResearchAction.EXPERIMENT
+        elif diagnosis.recommended_action == "experiment" and effective_uncertainty > 0.3:
             action = ResearchAction.EXPERIMENT
         else:
             action = ResearchAction.FIX
@@ -260,8 +277,8 @@ class ResearchLoop:
             action=action,
             rationale=diagnosis.recommended_action,
             target=target,
-            expected_info_gain=1.0 - self._uncertainty.uncertainty_level,
-            confidence=1.0 - diagnosis.uncertainty_level,
+            expected_info_gain=effective_uncertainty,
+            confidence=1.0 - effective_uncertainty,
         )
 
     def _has_competing_hypotheses(self) -> bool:
@@ -337,8 +354,11 @@ class ResearchLoop:
                     iteration,
                 )
             else:
-                _console.print("[green]  Fixing[/green]")
-                logger.info("Iteration %d: fix (applying mutation)", iteration)
+                target_msg = f" → {decision.target}" if decision.target else ""
+                _console.print(
+                    f"[green]  Fix recommended{target_msg} (advisory — no auto-mutation)[/green]"
+                )
+                logger.info("Iteration %d: fix recommended (advisory)", iteration)
 
         if promoted:
             result.strategies_promoted.extend([strategy.name for strategy in promoted])

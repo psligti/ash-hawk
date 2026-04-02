@@ -289,6 +289,9 @@ def _parse_cause_category(value: object) -> CauseCategory:
         return value
     if isinstance(value, str):
         normalized = value.strip().lower()
+        # Normalize spaces, hyphens, and mixed separators to underscores
+        # so "prompt quality" / "prompt-quality" → "prompt_quality"
+        normalized = re.sub(r"[\s\-]+", "_", normalized)
         for category in CauseCategory:
             if category.value == normalized:
                 return category
