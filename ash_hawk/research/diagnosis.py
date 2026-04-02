@@ -284,6 +284,34 @@ def _parse_hypothesis(item: dict[str, object]) -> CompetingHypothesis | None:
     )
 
 
+_CAUSE_ALIASES: dict[str, CauseCategory] = {
+    "prompt": CauseCategory.PROMPT_QUALITY,
+    "prompt_engineering": CauseCategory.PROMPT_QUALITY,
+    "prompting": CauseCategory.PROMPT_QUALITY,
+    "instruction_quality": CauseCategory.PROMPT_QUALITY,
+    "tool_usage": CauseCategory.TOOL_MISUSE,
+    "tool_error": CauseCategory.TOOL_MISUSE,
+    "tool_selection": CauseCategory.TOOL_MISUSE,
+    "incorrect_tool": CauseCategory.TOOL_MISUSE,
+    "context_limit": CauseCategory.CONTEXT_OVERFLOW,
+    "context_window": CauseCategory.CONTEXT_OVERFLOW,
+    "token_limit": CauseCategory.CONTEXT_OVERFLOW,
+    "context_length": CauseCategory.CONTEXT_OVERFLOW,
+    "delegation_error": CauseCategory.DELEGATION_FAILURE,
+    "delegation_issue": CauseCategory.DELEGATION_FAILURE,
+    "sub_agent_failure": CauseCategory.DELEGATION_FAILURE,
+    "agent_delegation": CauseCategory.DELEGATION_FAILURE,
+    "orchestration_error": CauseCategory.ORCHESTRATION_BRANCH,
+    "orchestration_issue": CauseCategory.ORCHESTRATION_BRANCH,
+    "planning_failure": CauseCategory.ORCHESTRATION_BRANCH,
+    "branching_error": CauseCategory.ORCHESTRATION_BRANCH,
+    "timeout": CauseCategory.TIMEOUT_MISALLOCATION,
+    "timeout_error": CauseCategory.TIMEOUT_MISALLOCATION,
+    "time_management": CauseCategory.TIMEOUT_MISALLOCATION,
+    "resource_allocation": CauseCategory.TIMEOUT_MISALLOCATION,
+}
+
+
 def _parse_cause_category(value: object) -> CauseCategory:
     if isinstance(value, CauseCategory):
         return value
@@ -292,9 +320,19 @@ def _parse_cause_category(value: object) -> CauseCategory:
         # Normalize spaces, hyphens, and mixed separators to underscores
         # so "prompt quality" / "prompt-quality" → "prompt_quality"
         normalized = re.sub(r"[\s\-]+", "_", normalized)
+
         for category in CauseCategory:
             if category.value == normalized:
                 return category
+
+        if normalized in _CAUSE_ALIASES:
+            return _CAUSE_ALIASES[normalized]
+
+        for alias, category in _CAUSE_ALIASES.items():
+            if alias in normalized or normalized in alias:
+                return category
+
+        logger.debug("Unknown cause category from LLM: %r (normalized: %r)", value, normalized)
     return CauseCategory.UNKNOWN
 
 

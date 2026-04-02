@@ -171,8 +171,7 @@ class ResearchLoop:
                 logger.info("LLM budget exhausted, stopping research loop")
                 break
 
-            async with progress_indicator(f"Iter {i + 1}: Evaluating scenarios"):
-                diagnosis = await self._diagnose(scenarios, i)
+            diagnosis = await self._diagnose(scenarios, i)
             if diagnosis is None:
                 continue
 
@@ -395,11 +394,12 @@ class ResearchLoop:
             return self._build_snapshot(0.0, {}, [], {}, iteration)
 
         try:
-            summary = await run_scenarios_async(
-                paths=[str(p) for p in scenarios],
-                storage_path=self._storage_path,
-                show_failure_patterns=False,
-            )
+            async with progress_indicator(f"Iter {iteration + 1}: Evaluating"):
+                summary = await run_scenarios_async(
+                    paths=[str(p) for p in scenarios],
+                    storage_path=self._storage_path,
+                    show_failure_patterns=False,
+                )
         except Exception as exc:
             logger.warning(
                 "Iteration %d evaluation failed: %s — skipping diagnosis", iteration, exc
