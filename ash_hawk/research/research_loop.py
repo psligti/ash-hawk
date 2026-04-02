@@ -1,21 +1,41 @@
-from __future__ import annotations
+from __future__ import annotations  # type-hygiene: skip-file
 
 import logging
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, Sequence, cast
 
+from ash_hawk.auto_research.types import IterationResult
 from ash_hawk.research.diagnosis import DiagnosisEngine, DiagnosisReport
-from ash_hawk.research.strategy_promoter import StrategyPromoter
-from ash_hawk.research.target_registry import TargetRegistry
+from ash_hawk.research.strategy_promoter import (
+    PromotedStrategy,
+    StrategyPattern,
+    StrategyPromoter,
+)
+from ash_hawk.research.target_registry import TargetEntry, TargetRegistry
 from ash_hawk.research.types import (
     ResearchAction,
     ResearchDecision,
     ResearchLoopConfig,
     ResearchLoopResult,
+    TargetSurface,
 )
 from ash_hawk.research.uncertainty import UncertaintyModel
+from ash_hawk.scenario import run_scenarios_async
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class EvaluationSnapshot:
+    mean_score: float
+    eval_results: dict[str, float]
+    trace_events: list[dict[str, str | int | float | bool | list[str]]]
+    scores: dict[str, float]
+    category_scores: dict[str, float]
+    previous_score: float
+    score_delta: float
 
 
 class ResearchLoop:
@@ -44,6 +64,9 @@ class ResearchLoop:
             storage_path=storage_path / "strategies" if storage_path else None,
         )
         self._diagnosis_count = 0
+        self._score_history: list[float] = []
+        self._iteration_results: list[IterationResult] = []
+        self._latest_eval: EvaluationSnapshot | None = None
 
     async def run(
         self,
@@ -97,7 +120,7 @@ class ResearchLoop:
             decision = self._decide(diagnosis, i)
             result.decisions.append(decision)
 
-            await self._execute_decision(decision, scenarios, project_root, i)
+            await self._execute_decision(decision, scenarios, project_root, i, diagnosis, result)
 
             if i > 0 and i % self._config.d_step_interval == 0 and project_root:
                 new_targets = self._target_registry.discover_targets(project_root)
@@ -120,12 +143,18 @@ class ResearchLoop:
         """Run diagnosis. Returns None if budget exhausted or no data."""
         if self._diagnosis_count >= self._config.max_diagnoses_per_run:
             return None
+
+        evaluation = await self._evaluate_scenarios(scenarios, iteration)
+        if evaluation is None:
+            return None
+
+        self._latest_eval = evaluation
         self._diagnosis_count += 1
 
         report = await self._diagnosis_engine.diagnose(
-            eval_results={},
-            trace_events=[],
-            scores={"iteration": float(iteration)},
+            eval_results=evaluation.eval_results,
+            trace_events=evaluation.trace_events,
+            scores=evaluation.scores,
             experiment_log_path=None,
         )
         return report
@@ -141,10 +170,16 @@ class ResearchLoop:
         else:
             action = ResearchAction.FIX
 
+        target: str | None = None
+        if action is not ResearchAction.OBSERVE:
+            active_targets = self._target_registry.get_active_targets()
+            if active_targets:
+                target = active_targets[0].name
+
         return ResearchDecision(
             action=action,
             rationale=diagnosis.recommended_action,
-            target=None,
+            target=target,
             expected_info_gain=1.0 - self._uncertainty.uncertainty_level,
             confidence=1.0 - diagnosis.uncertainty_level,
         )
@@ -159,10 +194,51 @@ class ResearchLoop:
         scenarios: list[Path],
         project_root: Path | None,
         iteration: int,
+        diagnosis: DiagnosisReport,
+        result: ResearchLoopResult,
     ) -> None:
         """Execute the decided action."""
+        evaluation = self._latest_eval
+        score_delta = evaluation.score_delta if evaluation else 0.0
+        score_before = evaluation.previous_score if evaluation else 0.0
+        score_after = evaluation.mean_score if evaluation else 0.0
+
+        improvement_text = self._summarize_diagnosis(diagnosis)
+        self._iteration_results.append(
+            IterationResult(
+                iteration_num=iteration,
+                score_before=score_before,
+                score_after=score_after,
+                improvement_text=improvement_text,
+                applied=decision.action is not ResearchAction.OBSERVE,
+                category_scores=evaluation.category_scores if evaluation else None,
+            )
+        )
+
+        if decision.target:
+            self._target_registry.register(
+                TargetEntry(
+                    name=decision.target,
+                    surface=TargetSurface.PROMPT,
+                    description="Research loop target",
+                )
+            )
+            if decision.action is not ResearchAction.OBSERVE:
+                self._target_registry.update_correlation(decision.target, score_delta)
+
+        if score_delta < self._config.safety_threshold:
+            logger.warning(
+                "Iteration %d score regression %.3f below safety threshold",
+                iteration,
+                score_delta,
+            )
+
+        if not diagnosis.hypotheses and self._uncertainty.uncertainty_level >= 1.0:
+            logger.warning("Uncertainty stayed at 1.0 — no hypotheses left, observe only")
+
+        promoted: list[PromotedStrategy] = []
         if decision.action == ResearchAction.PROMOTE:
-            await self._execute_promote()
+            promoted = await self._execute_promote()
         elif decision.action == ResearchAction.OBSERVE:
             logger.info("Iteration %d: observe (high uncertainty)", iteration)
         elif decision.action == ResearchAction.EXPERIMENT:
@@ -176,15 +252,151 @@ class ResearchLoop:
             else:
                 logger.info("Iteration %d: fix (applying mutation)", iteration)
 
-    async def _execute_promote(self) -> None:
+        if promoted:
+            result.strategies_promoted.extend([strategy.name for strategy in promoted])
+            logger.info("Promoted %d new strategies", len(promoted))
+            await self._save_state()
+
+    async def _execute_promote(self) -> list[PromotedStrategy]:
         """Check for patterns to promote."""
-        patterns = self._strategy_promoter.detect_patterns([])
-        for pattern in patterns:
+        patterns = self._strategy_promoter.detect_patterns(self._iteration_results)
+        candidates: dict[str, StrategyPattern] = {
+            pattern.pattern_id: pattern for pattern in patterns
+        }
+        for pattern in self._strategy_promoter.get_candidate_patterns():
+            candidates.setdefault(pattern.pattern_id, pattern)
+
+        promoted: list[PromotedStrategy] = []
+        for pattern in candidates.values():
             if self._strategy_promoter.should_promote(pattern):
-                await self._strategy_promoter.promote(pattern)
+                promoted.append(await self._strategy_promoter.promote(pattern))
+        return promoted
 
     async def _save_state(self) -> None:
         """Save all persistent state."""
         await self._uncertainty.save()
         await self._target_registry.save()
         await self._strategy_promoter.save()
+
+    async def _evaluate_scenarios(
+        self,
+        scenarios: list[Path],
+        iteration: int,
+    ) -> EvaluationSnapshot | None:
+        if not scenarios:
+            return self._build_snapshot(0.0, {}, [], {}, iteration)
+
+        try:
+            summary = await run_scenarios_async(
+                paths=[str(p) for p in scenarios],
+                storage_path=self._storage_path,
+                show_failure_patterns=False,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Iteration %d evaluation failed: %s — skipping diagnosis", iteration, exc
+            )
+            return None
+
+        eval_results: dict[str, float] = {}
+        trace_events: list[dict[str, str | int | float | bool | list[str]]] = []
+        category_scores: dict[str, float] = {}
+
+        for trial in summary.trials:
+            result = trial.result
+            if result is None:
+                continue
+            eval_results[trial.task_id] = float(result.aggregate_score)
+            trace_events.extend(self._normalize_trace_events(result.transcript.trace_events))
+            category_scores = self._merge_category_scores(category_scores, result.grader_results)
+
+        mean_score = float(summary.metrics.mean_score)
+        return self._build_snapshot(
+            mean_score, eval_results, trace_events, category_scores, iteration
+        )
+
+    def _build_snapshot(
+        self,
+        mean_score: float,
+        eval_results: dict[str, float],
+        trace_events: list[dict[str, str | int | float | bool | list[str]]],
+        category_scores: dict[str, float],
+        iteration: int,
+    ) -> EvaluationSnapshot:
+        if not eval_results:
+            eval_results["mean_score"] = mean_score
+        eval_results.setdefault("score", mean_score)
+        eval_results.setdefault("mean_score", mean_score)
+
+        previous_score = self._score_history[-1] if self._score_history else mean_score
+        score_delta = mean_score - previous_score if self._score_history else 0.0
+        self._score_history.append(mean_score)
+
+        scores = {
+            "iteration": float(iteration),
+            "mean_score": mean_score,
+            "score": mean_score,
+            "previous_score": previous_score,
+            "score_delta": score_delta,
+        }
+
+        return EvaluationSnapshot(
+            mean_score=mean_score,
+            eval_results=eval_results,
+            trace_events=trace_events,
+            scores=scores,
+            category_scores=category_scores,
+            previous_score=previous_score,
+            score_delta=score_delta,
+        )
+
+    @staticmethod
+    def _normalize_trace_events(
+        trace_events: Sequence[dict[str, Any]],
+    ) -> list[dict[str, str | int | float | bool | list[str]]]:
+        normalized: list[dict[str, str | int | float | bool | list[str]]] = []
+        for event in trace_events:
+            cleaned: dict[str, str | int | float | bool | list[str]] = {}
+            for key, value in event.items():
+                if isinstance(value, str | int | float | bool):
+                    cleaned[str(key)] = value
+                elif isinstance(value, list):
+                    values = [item for item in cast(list[object], value) if isinstance(item, str)]
+                    if values:
+                        cleaned[str(key)] = values
+            if cleaned:
+                normalized.append(cleaned)
+        return normalized
+
+    @staticmethod
+    def _merge_category_scores(
+        category_scores: dict[str, float],
+        grader_results: Sequence[object],
+    ) -> dict[str, float]:
+        for grader_result in grader_results:
+            details = getattr(grader_result, "details", None)
+            if not isinstance(details, dict):
+                continue
+            details_dict = cast(dict[str, Any], details)
+            summary = details_dict.get("category_summary")
+            if not isinstance(summary, dict):
+                continue
+            summary_dict = cast(dict[str, Any], summary)
+            for cat_id, cat_score in summary_dict.items():
+                if not isinstance(cat_score, int | float):
+                    continue
+                if cat_id in category_scores:
+                    category_scores[cat_id] = (category_scores[cat_id] + float(cat_score)) / 2
+                else:
+                    category_scores[cat_id] = float(cat_score)
+        return category_scores
+
+    @staticmethod
+    def _summarize_diagnosis(diagnosis: DiagnosisReport) -> str:
+        if diagnosis.hypotheses:
+            top = max(diagnosis.hypotheses, key=lambda h: h.confidence)
+            if top.description:
+                return top.description
+        if diagnosis.primary_hypothesis:
+            return diagnosis.primary_hypothesis
+        return diagnosis.recommended_action or "observe"
