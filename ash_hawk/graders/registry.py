@@ -1,3 +1,4 @@
+# type-hygiene: skip-file  # entry point loading requires Any for dynamic grader resolution
 """Grader registry for managing and discovering graders.
 
 This module provides a registry for graders that supports:
@@ -155,6 +156,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
         TranscriptGrader,
     )
     from ash_hawk.graders.diff_constraints import DiffConstraintsGrader
+    from ash_hawk.graders.emotional import EmotionalGrader
     from ash_hawk.graders.llm_boolean import LLMBooleanJudgeGrader
     from ash_hawk.graders.llm_boolean_specialized import create_boolean_graders
     from ash_hawk.graders.llm_judge import LLMJudgeGrader
@@ -197,6 +199,7 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(DiffConstraintsGrader())
     registry.register(PromptStackOptimizerGrader())
     registry.register(TranscriptValidityGrader())
+    registry.register(EmotionalGrader())
 
 
 def get_default_registry() -> GraderRegistry:
