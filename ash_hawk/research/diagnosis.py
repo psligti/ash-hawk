@@ -60,6 +60,7 @@ class DiagnosisEngine:
         trace_events: list[dict[str, str | int | float | bool | list[str]]],
         scores: dict[str, float],
         experiment_log_path: Path | None = None,
+        grader_details: dict[str, Any] | None = None,
     ) -> DiagnosisReport:
         if not eval_results:
             return _fallback_diagnosis("unknown")
@@ -67,7 +68,13 @@ class DiagnosisEngine:
         if self._llm_client is None:
             return _fallback_diagnosis("unknown")
 
-        prompt = _build_prompt(eval_results, trace_events, scores, experiment_log_path)
+        prompt = _build_prompt(
+            eval_results,
+            trace_events,
+            scores,
+            experiment_log_path,
+            grader_details,
+        )
         response = await _call_llm(self._llm_client, prompt)
         if response is None:
             return _fallback_diagnosis("unknown")
@@ -146,11 +153,13 @@ def _build_prompt(
     trace_events: list[dict[str, str | int | float | bool | list[str]]],
     scores: dict[str, float],
     experiment_log_path: Path | None,
+    grader_details: dict[str, Any] | None,
 ) -> str:
     eval_summary = _summarize_eval_results(eval_results)
     score_summary = _summarize_scores(scores)
     trace_summary = _summarize_trace_events(trace_events)
     log_path = f"Experiment log path: {experiment_log_path}" if experiment_log_path else ""
+    grader_summary = _summarize_grader_details(grader_details)
 
     schema = (
         '{"hypotheses":[{"cause_category":"...","description":"...",'
@@ -163,6 +172,7 @@ def _build_prompt(
         "\n\nEvaluation results:\n"
         f"{eval_summary}\n\nScore summary:\n{score_summary}\n\nTrace events:\n"
         f"{trace_summary}\n"
+        f"{grader_summary}"
         f"{log_path}"
     )
 
@@ -181,6 +191,38 @@ def _summarize_scores(scores: dict[str, float]) -> str:
         return "No score summary available."
     lines = [f"- {name}: {score:.3f}" for name, score in list(scores.items())[:10]]
     return "\n".join(lines)
+
+
+def _summarize_grader_details(grader_details: dict[str, Any] | None) -> str:
+    if not grader_details:
+        return ""
+
+    lines: list[str] = []
+    trajectory = grader_details.get("emotion_trajectory")
+    if trajectory is None:
+        trajectory = grader_details.get("step_emotions")
+    if trajectory is not None:
+        lines.append(f"- Emotion trajectory: {_format_grader_value(trajectory)}")
+
+    inflection_points = grader_details.get("inflection_points")
+    if inflection_points is not None:
+        lines.append(f"- Inflection points: {_format_grader_value(inflection_points)}")
+
+    if not lines:
+        return ""
+
+    return "\nGrader details:\n" + "\n".join(lines) + "\n"
+
+
+def _format_grader_value(value: object) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, int | float | bool):
+        return str(value)
+    try:
+        return json.dumps(value)
+    except TypeError:
+        return str(value)
 
 
 def _summarize_trace_events(

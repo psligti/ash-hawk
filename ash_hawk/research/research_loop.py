@@ -137,6 +137,7 @@ class EvaluationSnapshot:
     category_scores: dict[str, float]
     previous_score: float
     score_delta: float
+    grader_details: dict[str, Any] | None
 
 
 class ResearchLoop:
@@ -287,6 +288,7 @@ class ResearchLoop:
                 trace_events=evaluation.trace_events,
                 scores=evaluation.scores,
                 experiment_log_path=None,
+                grader_details=evaluation.grader_details,
             )
         return report
 
@@ -433,7 +435,7 @@ class ResearchLoop:
         iteration: int,
     ) -> EvaluationSnapshot | None:
         if not scenarios:
-            return self._build_snapshot(0.0, {}, [], {}, iteration)
+            return self._build_snapshot(0.0, {}, [], {}, None, iteration)
 
         scenario_names = [p.stem for p in scenarios]
         tracker = ScenarioProgressTracker(
@@ -473,6 +475,7 @@ class ResearchLoop:
         eval_results: dict[str, float] = {}
         trace_events: list[dict[str, str | int | float | bool | list[str]]] = []
         category_scores: dict[str, float] = {}
+        grader_details: dict[str, Any] | None = None
 
         for trial in summary.trials:
             result = trial.result
@@ -481,10 +484,17 @@ class ResearchLoop:
             eval_results[trial.task_id] = float(result.aggregate_score)
             trace_events.extend(self._normalize_trace_events(result.transcript.trace_events))
             category_scores = self._merge_category_scores(category_scores, result.grader_results)
+            if grader_details is None:
+                grader_details = self._extract_emotional_details(result.grader_results)
 
         mean_score = float(summary.metrics.mean_score)
         return self._build_snapshot(
-            mean_score, eval_results, trace_events, category_scores, iteration
+            mean_score,
+            eval_results,
+            trace_events,
+            category_scores,
+            grader_details,
+            iteration,
         )
 
     def _build_snapshot(
@@ -493,6 +503,7 @@ class ResearchLoop:
         eval_results: dict[str, float],
         trace_events: list[dict[str, str | int | float | bool | list[str]]],
         category_scores: dict[str, float],
+        grader_details: dict[str, Any] | None,
         iteration: int,
     ) -> EvaluationSnapshot:
         if not eval_results:
@@ -520,6 +531,7 @@ class ResearchLoop:
             category_scores=category_scores,
             previous_score=previous_score,
             score_delta=score_delta,
+            grader_details=grader_details,
         )
 
     @staticmethod
@@ -562,6 +574,19 @@ class ResearchLoop:
                 else:
                     category_scores[cat_id] = float(cat_score)
         return category_scores
+
+    @staticmethod
+    def _extract_emotional_details(
+        grader_results: Sequence[object],
+    ) -> dict[str, Any] | None:
+        for grader_result in grader_results:
+            grader_type = getattr(grader_result, "grader_type", None)
+            if grader_type != "emotional":
+                continue
+            details = getattr(grader_result, "details", None)
+            if isinstance(details, dict):
+                return cast(dict[str, Any], details)
+        return None
 
     @staticmethod
     def _summarize_diagnosis(diagnosis: DiagnosisReport) -> str:
