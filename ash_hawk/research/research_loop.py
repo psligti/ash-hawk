@@ -1,6 +1,11 @@
 from __future__ import annotations  # type-hygiene: skip-file
 
+import asyncio
 import logging
+import sys
+import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -28,6 +33,55 @@ from ash_hawk.scenario import run_scenarios_async
 
 logger = logging.getLogger(__name__)
 _console = Console()
+
+THROBBER_CHARS = ".+/"
+
+
+def _format_elapsed(elapsed: float) -> str:
+    if elapsed >= 3600:
+        hours = int(elapsed // 3600)
+        mins = int((elapsed % 3600) // 60)
+        secs = int(elapsed % 60)
+        return f"{hours}h{mins}m{secs}s"
+    if elapsed >= 60:
+        mins = int(elapsed // 60)
+        secs = int(elapsed % 60)
+        return f"{mins}m{secs}s"
+    return f"{elapsed:.1f}s"
+
+
+@asynccontextmanager
+async def progress_indicator(message: str = "") -> AsyncIterator[None]:
+    start_time = time.time()
+    throbber_idx = 0
+    display_task: asyncio.Task[None] | None = None
+
+    async def _display() -> None:
+        nonlocal throbber_idx
+        while True:
+            await asyncio.sleep(0.15)
+            throbber_idx = (throbber_idx + 1) % len(THROBBER_CHARS)
+            elapsed = time.time() - start_time
+            time_str = _format_elapsed(elapsed)
+            char = THROBBER_CHARS[throbber_idx]
+            line = f"\r  {message} {char} [{time_str}]  "
+            sys.stdout.write(line)
+            sys.stdout.flush()
+
+    try:
+        display_task = asyncio.create_task(_display())
+        yield
+    finally:
+        if display_task is not None:
+            display_task.cancel()
+            try:
+                await display_task
+            except asyncio.CancelledError:
+                pass
+        elapsed = time.time() - start_time
+        time_str = _format_elapsed(elapsed)
+        sys.stdout.write(f"\r  {message} done [{time_str}]\n")
+        sys.stdout.flush()
 
 
 @dataclass
@@ -115,7 +169,8 @@ class ResearchLoop:
                 logger.info("LLM budget exhausted, stopping research loop")
                 break
 
-            diagnosis = await self._diagnose(scenarios, i)
+            async with progress_indicator(f"Iter {i + 1}: Evaluating scenarios"):
+                diagnosis = await self._diagnose(scenarios, i)
             if diagnosis is None:
                 continue
 
@@ -175,12 +230,13 @@ class ResearchLoop:
         self._latest_eval = evaluation
         self._diagnosis_count += 1
 
-        report = await self._diagnosis_engine.diagnose(
-            eval_results=evaluation.eval_results,
-            trace_events=evaluation.trace_events,
-            scores=evaluation.scores,
-            experiment_log_path=None,
-        )
+        async with progress_indicator(f"Iter {iteration + 1}: Diagnosing"):
+            report = await self._diagnosis_engine.diagnose(
+                eval_results=evaluation.eval_results,
+                trace_events=evaluation.trace_events,
+                scores=evaluation.scores,
+                experiment_log_path=None,
+            )
         return report
 
     def _decide(self, diagnosis: DiagnosisReport, iteration: int) -> ResearchDecision:
@@ -262,7 +318,8 @@ class ResearchLoop:
 
         promoted: list[PromotedStrategy] = []
         if decision.action == ResearchAction.PROMOTE:
-            promoted = await self._execute_promote()
+            async with progress_indicator("Promoting strategies"):
+                promoted = await self._execute_promote()
             _console.print(f"[green]  Promoted {len(promoted)} strategies[/green]")
         elif decision.action == ResearchAction.OBSERVE:
             _console.print(
