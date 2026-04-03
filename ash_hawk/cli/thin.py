@@ -114,6 +114,7 @@ def run_thin(
         max_iterations=max_iterations,
         variant=variant,
         storage_root=effective_storage,
+        agent_override_path=Path(agent_path) if agent_path else None,
     )
 
     async def _run() -> None:

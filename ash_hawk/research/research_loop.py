@@ -450,6 +450,11 @@ class ResearchLoop:
             tracker.completed_ok = completed - tracker.completed_error
 
         try:
+            logger.info(
+                "Research iter %d: _evaluate_scenarios started with %d scenarios",
+                iteration,
+                len(scenarios),
+            )
             async with progress_indicator(f"Iter {iteration + 1}: Evaluating", tracker=tracker):
                 summary = await run_scenarios_async(
                     paths=[str(p) for p in scenarios],
