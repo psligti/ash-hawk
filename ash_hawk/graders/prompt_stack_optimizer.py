@@ -299,6 +299,12 @@ class PromptStackOptimizerConfig(pd.BaseModel):
     judge_max_tokens: int = pd.Field(
         default=4096, ge=1, description="Max tokens for LLM judge response"
     )
+    max_growth_opportunities: int = pd.Field(
+        default=3, ge=0, description="Maximum growth opportunities to report"
+    )
+    max_mutation_targets: int = pd.Field(
+        default=2, ge=0, description="Maximum mutation targets to suggest"
+    )
 
     model_config = pd.ConfigDict(extra="forbid")
 
