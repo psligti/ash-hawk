@@ -108,9 +108,11 @@ class LLMBooleanJudgeGrader(Grader):
                 eval_config = get_config()
                 timeout_seconds = eval_config.auto_research_llm_timeout_seconds
                 max_retries = eval_config.auto_research_llm_max_retries
+                use_queue = eval_config.llm_use_queue
             except Exception:
                 timeout_seconds = 300.0
                 max_retries = 3
+                use_queue = False
 
             self._client = LLMClient(
                 provider_id=provider,
@@ -118,7 +120,7 @@ class LLMBooleanJudgeGrader(Grader):
                 api_key=api_key,
                 timeout_seconds=timeout_seconds,
                 max_retries=max_retries,
-                use_queue=False,
+                use_queue=use_queue,
             )
         return self._client
 
