@@ -26,18 +26,32 @@ from ash_hawk.types import EvalTask, ToolSurfacePolicy
 _T = TypeVar("_T")
 
 
+def _run_coroutine_sync(coro: Coroutine[Any, Any, _T]) -> _T:
+    loop = asyncio.new_event_loop()
+    try:
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
+    finally:
+        try:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        except Exception:
+            pass
+        asyncio.set_event_loop(None)
+        loop.close()
+
+
 def _run_async(func: Callable[..., Coroutine[Any, Any, _T]], *args: Any, **kwargs: Any) -> _T:
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        return asyncio.run(func(*args, **kwargs))
+        return _run_coroutine_sync(func(*args, **kwargs))
 
     result_container: dict[str, _T] = {}
     error_container: dict[str, BaseException] = {}
 
     def _runner() -> None:
         try:
-            result_container["result"] = asyncio.run(func(*args, **kwargs))
+            result_container["result"] = _run_coroutine_sync(func(*args, **kwargs))
         except BaseException as exc:
             error_container["error"] = exc
 

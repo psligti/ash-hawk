@@ -813,3 +813,109 @@ class TestDawnKestrelAgentRunnerMCPIntegration:
         assert client_instance.started is True
         assert client_instance.closed is True
         assert client_instance.calls == [("notes_search", {"query": "prefs"})]
+
+
+class TestTextToolCallParsingSmoke:
+    def test_extract_text_tool_calls_skips_logging_noise(self) -> None:
+        runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
+
+        text = (
+            'logging.info("db connected")\n'
+            'todo_update(item="task-1", status="completed")\n'
+            'read(filePath="auth.py")\n'
+        )
+
+        calls = runner._extract_text_tool_calls(text)
+
+        assert all(call["tool"] != "info" for call in calls)
+        assert any(call["tool"] == "todo_update" for call in calls)
+        assert any(
+            call["tool"] == "read" and call["input"].get("filePath") == "auth.py" for call in calls
+        )
+
+    def test_coerce_todo_alias_calls_create_and_update(self) -> None:
+        runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
+        trial_id = "trial-smoke"
+
+        created = runner._coerce_todo_alias_call(
+            trial_id=trial_id,
+            alias_name="todo_create",
+            alias_input={"tasks": ["task a", "task b"]},
+        )
+        assert "todos" in created
+        assert len(created["todos"]) == 2
+        assert created["todos"][0]["state"] == "pending"
+
+        updated = runner._coerce_todo_alias_call(
+            trial_id=trial_id,
+            alias_name="todo_update",
+            alias_input={"item": "task a", "status": "in_progress"},
+        )
+        assert updated["todos"][0]["state"] == "in_progress"
+
+    def test_extract_text_tool_calls_ignores_unknown_underscore_names(self) -> None:
+        runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
+
+        text = 'validate_password("hunter2")\nread(filePath="auth.py")\n'
+
+        calls = runner._extract_text_tool_calls(text)
+
+        assert all(call["tool"] != "validate_password" for call in calls)
+        assert any(call["tool"] == "read" for call in calls)
+
+    @pytest.mark.asyncio
+    async def test_execute_tool_calls_uses_todo_alias_only_with_todowrite(self) -> None:
+        runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
+
+        class FakeToolContext:
+            def __init__(self, **kwargs):
+                self.kwargs = kwargs
+
+        class FakeResult:
+            def __init__(self) -> None:
+                self.output = "ok"
+                self.title = "done"
+                self.metadata = {}
+
+        class FakeTool:
+            def __init__(self) -> None:
+                self.last_input: dict[str, Any] | None = None
+
+            async def execute(self, args: dict[str, Any], ctx: Any) -> FakeResult:
+                del ctx
+                self.last_input = args
+                return FakeResult()
+
+        class FakeRegistry:
+            def __init__(self, tools: dict[str, Any]) -> None:
+                self._tools = tools
+
+            def get(self, name: str) -> Any | None:
+                return self._tools.get(name)
+
+        todo_update_tool = FakeTool()
+        registry = FakeRegistry({"todo_update": todo_update_tool})
+
+        fake_tools_module = MagicMock()
+        fake_tools_module.ToolContext = FakeToolContext
+
+        with patch.object(
+            dawn_kestrel_module.importlib,
+            "import_module",
+            return_value=fake_tools_module,
+        ):
+            executed = await runner._execute_tool_calls(
+                tool_calls=[
+                    {
+                        "tool": "todo_update",
+                        "input": {"item": "task a", "status": "completed"},
+                    }
+                ],
+                filtered_registry=registry,
+                config={"workdir": "."},
+                trial_id="trial-1",
+            )
+
+        assert len(executed) == 1
+        assert "error" not in executed[0]
+        assert todo_update_tool.last_input == {"item": "task a", "status": "completed"}
