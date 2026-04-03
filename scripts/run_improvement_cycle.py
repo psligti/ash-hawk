@@ -53,7 +53,7 @@ async def main():
         explicit_targets=[project_root / ".dawn-kestrel" / "skills" / "python-bugfix.md"],
     )
 
-    print(f"\n=== Cycle Complete ===")
+    print("\n=== Cycle Complete ===")
     print(f"Status: {result.status.value}")
     print(f"Iterations: {result.total_iterations}")
     print(f"Initial score: {result.initial_score:.3f}")

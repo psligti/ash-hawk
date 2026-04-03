@@ -118,6 +118,7 @@ class LLMBooleanJudgeGrader(Grader):
                 api_key=api_key,
                 timeout_seconds=timeout_seconds,
                 max_retries=max_retries,
+                use_queue=False,
             )
         return self._client
 

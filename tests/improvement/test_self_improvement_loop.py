@@ -1,20 +1,19 @@
 """Integration tests for self-improvement loop."""
 
 from __future__ import annotations
+
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from ash_hawk.auto_research.cycle_runner import run_cycle
 from ash_hawk.improvement.fixture_splitter import FixtureSplit, FixtureSplitter
 from ash_hawk.improvement.guardrails import (
     GuardrailChecker,
     GuardrailConfig,
     GuardrailState,
 )
-
-
-from ash_hawk.auto_research.cycle_runner import run_cycle
 
 
 class TestSelfImprovementLoopIntegration:

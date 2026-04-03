@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 if not hasattr(datetime, "UTC"):
-    setattr(datetime, "UTC", datetime.timezone.utc)
+    setattr(datetime, "UTC", datetime.UTC)
 
 if not hasattr(enum, "StrEnum"):
 
