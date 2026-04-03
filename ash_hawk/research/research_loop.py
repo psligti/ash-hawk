@@ -1,7 +1,6 @@
 from __future__ import annotations  # type-hygiene: skip-file
 
 import asyncio
-import json
 import logging
 import time
 from collections.abc import AsyncIterator
@@ -424,35 +423,32 @@ class ResearchLoop:
         if self._pending_revert is not None:
             await self._revert_pending()
 
-        from ash_hawk.auto_research.cycle_runner import _discover_improvement_target
         from ash_hawk.auto_research.llm import generate_improvement
         from ash_hawk.auto_research.target_discovery import TargetDiscovery
 
+        discovery = TargetDiscovery(self._project_root)
+        discovered = discovery.discover_all_targets()
+        if not discovered:
+            _console.print("[yellow]  Fix skipped: no targets on disk[/yellow]")
+            logger.info("Iteration %d: fix skipped — no targets on disk", iteration)
+            return
+
         target_name = decision.target
         if target_name:
-            discovery = TargetDiscovery(self._project_root)
-            discovered = discovery.discover_all_targets()
             match = next((t for t in discovered if t.name == target_name), None)
         else:
             match = None
 
         if match is None:
+            # No specific target or target not found — pick best from registry or first available
             active_targets = self._target_registry.get_active_targets()
-            if not active_targets:
-                _console.print("[yellow]  Fix skipped: no targets available[/yellow]")
-                logger.info("Iteration %d: fix skipped — no targets", iteration)
-                return
-            best = active_targets[0]
-            discovery = TargetDiscovery(self._project_root)
-            discovered = discovery.discover_all_targets()
-            match = next((t for t in discovered if t.name == best.name), None)
+            if active_targets:
+                best = active_targets[0]
+                match = next((t for t in discovered if t.name == best.name), None)
+
             if match is None:
-                target_msg = f" → {best.name}" if best.name else ""
-                _console.print(f"[yellow]  Fix skipped: target not found{target_msg}[/yellow]")
-                logger.info(
-                    "Iteration %d: fix skipped — target %s not on disk", iteration, best.name
-                )
-                return
+                # Fallback: pick the first discovered target
+                match = discovered[0]
 
         original_content = match.read_content()
         if not original_content:
