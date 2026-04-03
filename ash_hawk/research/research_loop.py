@@ -139,6 +139,7 @@ class EvaluationSnapshot:
     previous_score: float
     score_delta: float
     grader_details: dict[str, Any] | None
+    transcripts: list[EvalTranscript] | None = None
 
 
 class ResearchLoop:
@@ -457,7 +458,9 @@ class ResearchLoop:
             return
 
         evaluation = self._latest_eval
-        transcripts: list[EvalTranscript] = []
+        transcripts: list[EvalTranscript] = (
+            evaluation.transcripts if evaluation and evaluation.transcripts else []
+        )
         category_scores = evaluation.category_scores if evaluation else None
 
         async with progress_indicator(f"Fix → {match.name}"):
@@ -537,7 +540,7 @@ class ResearchLoop:
         iteration: int,
     ) -> EvaluationSnapshot | None:
         if not scenarios:
-            return self._build_snapshot(0.0, {}, [], {}, None, iteration)
+            return self._build_snapshot(0.0, {}, [], {}, None, iteration, [])
 
         scenario_names = [p.stem for p in scenarios]
         tracker = ScenarioProgressTracker(
@@ -583,6 +586,7 @@ class ResearchLoop:
         trace_events: list[dict[str, str | int | float | bool | list[str]]] = []
         category_scores: dict[str, float] = {}
         grader_details: dict[str, Any] | None = None
+        transcripts: list[EvalTranscript] = []
 
         for trial in summary.trials:
             result = trial.result
@@ -593,6 +597,7 @@ class ResearchLoop:
             category_scores = self._merge_category_scores(category_scores, result.grader_results)
             if grader_details is None:
                 grader_details = self._extract_emotional_details(result.grader_results)
+            transcripts.append(result.transcript)
 
         mean_score = float(summary.metrics.mean_score)
         return self._build_snapshot(
@@ -602,6 +607,7 @@ class ResearchLoop:
             category_scores,
             grader_details,
             iteration,
+            transcripts,
         )
 
     def _build_snapshot(
@@ -612,6 +618,7 @@ class ResearchLoop:
         category_scores: dict[str, float],
         grader_details: dict[str, Any] | None,
         iteration: int,
+        transcripts: list[EvalTranscript] | None = None,
     ) -> EvaluationSnapshot:
         if not eval_results:
             eval_results["mean_score"] = mean_score
@@ -639,6 +646,7 @@ class ResearchLoop:
             previous_score=previous_score,
             score_delta=score_delta,
             grader_details=grader_details,
+            transcripts=transcripts or [],
         )
 
     @staticmethod
