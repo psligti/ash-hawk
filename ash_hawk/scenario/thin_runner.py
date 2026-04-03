@@ -99,17 +99,33 @@ class ThinScenarioRunner:
         max_iterations: int = 10,
         variant: str = "",
         storage_root: Path | None = None,
+        agent_override_path: Path | None = None,
     ) -> None:
         self.workdir = workdir or Path.cwd()
         self.max_iterations = max_iterations
         self.variant = variant
         self.storage_root = storage_root or self.workdir / _DEFAULT_STORAGE_ROOT
+        self.agent_override_path = agent_override_path
+
+    def _reset_workspace(self, scenario: ScenarioV1) -> None:
+        """Reset workspace files to baseline content from scenario config.
+
+        Writes each entry in scenario.workspace to self.workdir so that
+        every graded run starts from the same clean baseline.
+        """
+        if not scenario.workspace:
+            return
+        for filename, content in scenario.workspace.items():
+            target = self.workdir / filename
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
 
     async def run_scenario(
         self,
         scenario: ScenarioV1,
         scenario_path: Path,
     ) -> RunResult:
+        self._reset_workspace(scenario)
         agent_path = self._resolve_agent_path(scenario)
         input_text = self._build_input(scenario)
 
@@ -160,6 +176,8 @@ class ThinScenarioRunner:
         """
         agent_path = self._resolve_agent_path(scenario)
 
+        self._reset_workspace(scenario)
+
         grader_types = [g.grader_type for g in scenario.graders] if scenario.graders else []
 
         manifest = build_run_manifest(
@@ -199,7 +217,11 @@ class ThinScenarioRunner:
         trial = EvalTrial(
             id=f"trial-{scenario.id}",
             task_id=scenario.id,
-            input_snapshot={},
+            input_snapshot={
+                "workdir": str(self.workdir),
+                "scenario_id": scenario.id,
+                "run_id": manifest.run_id,
+            },
         )
 
         registry = get_default_registry()
@@ -299,6 +321,7 @@ class ThinScenarioRunner:
                     "score": g.score,
                     "error_message": g.error_message,
                     "rationale": getattr(g, "rationale", None),
+                    "details": getattr(g, "details", None),
                 }
                 for g in grader_results
             ]
@@ -377,6 +400,9 @@ class ThinScenarioRunner:
         2. .dawn-kestrel/agents/{adapter_name}
         3. .opencode/agent/{adapter_name}.md
         """
+        if self.agent_override_path is not None:
+            return self.agent_override_path
+
         adapter_name = scenario.sut.adapter
         if adapter_name in {"bolt_merlin", "bolt-merlin"}:
             dawn_root = self.workdir / ".dawn-kestrel"

@@ -146,6 +146,10 @@ class ScenarioV1(pd.BaseModel):
         default_factory=list,
         description="Graders applied to this scenario",
     )
+    workspace: dict[str, str] = pd.Field(
+        default_factory=dict,
+        description="Baseline workspace file contents to reset before each run",
+    )
 
     model_config = pd.ConfigDict(extra="forbid")
 

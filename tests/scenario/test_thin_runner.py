@@ -36,6 +36,16 @@ def _make_scenario(
 
 
 class TestResolveAgentPath:
+    def test_agent_override_path_takes_precedence(self, tmp_path: Path) -> None:
+        override = tmp_path / "override-agent"
+        override.mkdir(parents=True)
+
+        runner = ThinScenarioRunner(workdir=tmp_path, agent_override_path=override)
+        scenario = _make_scenario(adapter="bolt_merlin")
+
+        result = runner._resolve_agent_path(scenario)
+        assert result == override
+
     def test_bolt_merlin_returns_dawn_root(self, tmp_path: Path) -> None:
         dawn_root = tmp_path / ".dawn-kestrel"
         dawn_root.mkdir()
