@@ -1,6 +1,7 @@
 from __future__ import annotations  # type-hygiene: skip-file
 
 import asyncio
+import json
 import logging
 import time
 from collections.abc import AsyncIterator
@@ -29,6 +30,7 @@ from ash_hawk.research.types import (
 )
 from ash_hawk.research.uncertainty import UncertaintyModel
 from ash_hawk.scenario import run_scenarios_async
+from ash_hawk.types import EvalTranscript
 
 logger = logging.getLogger(__name__)
 _console = Console()
@@ -169,6 +171,8 @@ class ResearchLoop:
         self._score_history: list[float] = []
         self._iteration_results: list[IterationResult] = []
         self._latest_eval: EvaluationSnapshot | None = None
+        self._project_root: Path | None = None
+        self._pending_revert: tuple[str, str] | None = None
 
     async def run(
         self,
@@ -191,6 +195,7 @@ class ResearchLoop:
         """
         result = ResearchLoopResult(started_at=datetime.now(UTC))
         self._storage_path.mkdir(parents=True, exist_ok=True)
+        self._project_root = project_root
 
         if self._storage_path:
             self._uncertainty = UncertaintyModel.load(
@@ -390,23 +395,124 @@ class ResearchLoop:
             _console.print("[cyan]  Experimenting (competing hypotheses)[/cyan]")
             logger.info("Iteration %d: experiment (competing hypotheses)", iteration)
         elif decision.action == ResearchAction.FIX:
-            if self._config.human_approval_required:
-                _console.print("[yellow]  Fix requires human approval[/yellow]")
-                logger.info(
-                    "Iteration %d: fix requires human approval (skipping in auto mode)",
-                    iteration,
-                )
-            else:
-                target_msg = f" → {decision.target}" if decision.target else ""
-                _console.print(
-                    f"[green]  Fix recommended{target_msg} (advisory — no auto-mutation)[/green]"
-                )
-                logger.info("Iteration %d: fix recommended (advisory)", iteration)
+            await self._execute_fix(decision, diagnosis, iteration)
 
         if promoted:
             result.strategies_promoted.extend([strategy.name for strategy in promoted])
             logger.info("Promoted %d new strategies", len(promoted))
             await self._save_state()
+
+    async def _execute_fix(
+        self,
+        decision: ResearchDecision,
+        diagnosis: DiagnosisReport,
+        iteration: int,
+    ) -> None:
+        """Apply a targeted mutation to the improvement target.
+
+        Resolves the target file from the target registry, reads its current
+        content, generates an improvement via LLM, and saves the result.
+        The next iteration's evaluation naturally checks whether the mutation
+        improved or regressed scores.  If regression exceeds safety_threshold,
+        the content is reverted.
+        """
+        if self._project_root is None:
+            _console.print("[yellow]  Fix skipped: no project root[/yellow]")
+            logger.info("Iteration %d: fix skipped — no project root", iteration)
+            return
+
+        if self._pending_revert is not None:
+            await self._revert_pending()
+
+        from ash_hawk.auto_research.cycle_runner import _discover_improvement_target
+        from ash_hawk.auto_research.llm import generate_improvement
+        from ash_hawk.auto_research.target_discovery import TargetDiscovery
+
+        target_name = decision.target
+        if target_name:
+            discovery = TargetDiscovery(self._project_root)
+            discovered = discovery.discover_all_targets()
+            match = next((t for t in discovered if t.name == target_name), None)
+        else:
+            match = None
+
+        if match is None:
+            active_targets = self._target_registry.get_active_targets()
+            if not active_targets:
+                _console.print("[yellow]  Fix skipped: no targets available[/yellow]")
+                logger.info("Iteration %d: fix skipped — no targets", iteration)
+                return
+            best = active_targets[0]
+            discovery = TargetDiscovery(self._project_root)
+            discovered = discovery.discover_all_targets()
+            match = next((t for t in discovered if t.name == best.name), None)
+            if match is None:
+                target_msg = f" → {best.name}" if best.name else ""
+                _console.print(f"[yellow]  Fix skipped: target not found{target_msg}[/yellow]")
+                logger.info(
+                    "Iteration %d: fix skipped — target %s not on disk", iteration, best.name
+                )
+                return
+
+        original_content = match.read_content()
+        if not original_content:
+            _console.print("[yellow]  Fix skipped: empty target content[/yellow]")
+            logger.info("Iteration %d: fix skipped — empty content for %s", iteration, match.name)
+            return
+
+        evaluation = self._latest_eval
+        transcripts: list[EvalTranscript] = []
+        category_scores = evaluation.category_scores if evaluation else None
+
+        async with progress_indicator(f"Fix → {match.name}"):
+            improved = await generate_improvement(
+                self._llm_client,
+                original_content,
+                transcripts,
+                failed_proposals=None,
+                consecutive_failures=0,
+                target_type=match.target_type.value,
+                category_scores=category_scores,
+            )
+
+        if not improved:
+            _console.print(f"[yellow]  Fix: no improvement generated for {match.name}[/yellow]")
+            logger.info("Iteration %d: fix — no improvement generated", iteration)
+            return
+
+        saved_path = match.save_content(improved)
+        self._pending_revert = (match.name, original_content)
+
+        short_summary = improved.split("\n")[0][:80]
+        _console.print(f"[green]  Fix applied → {match.name}[/green]")
+        _console.print(f"[dim]  {short_summary}[/dim]")
+        logger.info(
+            "Iteration %d: fix applied to %s (saved: %s)", iteration, match.name, saved_path
+        )
+
+    async def _revert_pending(self) -> None:
+        """Revert the pending mutation if it didn't improve scores."""
+        if self._pending_revert is None:
+            return
+
+        name, original_content = self._pending_revert
+        self._pending_revert = None
+
+        evaluation = self._latest_eval
+        if evaluation is None:
+            return
+
+        if evaluation.score_delta < self._config.safety_threshold:
+            from ash_hawk.auto_research.target_discovery import TargetDiscovery
+
+            if self._project_root is not None:
+                discovery = TargetDiscovery(self._project_root)
+                for target in discovery.discover_all_targets():
+                    if target.name == name:
+                        target.save_content(original_content)
+                        _console.print(f"[yellow]  Reverted {name} (score regressed)[/yellow]")
+                        logger.info("Reverted %s due to score regression", name)
+                        break
 
     async def _execute_promote(self) -> list[PromotedStrategy]:
         """Check for patterns to promote."""
