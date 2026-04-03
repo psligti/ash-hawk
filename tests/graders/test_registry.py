@@ -156,6 +156,17 @@ class TestGraderRegistry:
         registry = get_default_registry()
         assert "trace_quality" in registry.list_graders()
 
+    def test_default_registry_includes_scenario_contract_graders(self):
+        import ash_hawk.graders.registry as reg_module
+
+        reg_module._default_registry = None
+        registry = get_default_registry()
+        grader_names = registry.list_graders()
+        assert "todo_state" in grader_names
+        assert "repo_diff" in grader_names
+        assert "completion_honesty" in grader_names
+        assert "summary_truthfulness" in grader_names
+
     def test_register_overwrites(self):
         """Registering with same name overwrites previous grader."""
         registry = GraderRegistry()

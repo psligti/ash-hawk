@@ -162,6 +162,12 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     from ash_hawk.graders.llm_judge import LLMJudgeGrader
     from ash_hawk.graders.llm_rubric import LLMRubricGrader
     from ash_hawk.graders.prompt_stack_optimizer import PromptStackOptimizerGrader
+    from ash_hawk.graders.scenario_contracts import (
+        CompletionHonestyGrader,
+        RepoDiffGrader,
+        SummaryTruthfulnessGrader,
+        TodoStateGrader,
+    )
     from ash_hawk.graders.structured import FormatGrader, SchemaGrader, ToolUsageGrader
     from ash_hawk.graders.trace_assertions import (
         BudgetComplianceGrader,
@@ -197,6 +203,10 @@ def _register_builtin_graders(registry: GraderRegistry) -> None:
     registry.register(EvidenceRequiredGrader())
     registry.register(OrderingGrader())
     registry.register(DiffConstraintsGrader())
+    registry.register(TodoStateGrader())
+    registry.register(RepoDiffGrader())
+    registry.register(CompletionHonestyGrader())
+    registry.register(SummaryTruthfulnessGrader())
     registry.register(PromptStackOptimizerGrader())
     registry.register(TranscriptValidityGrader())
     registry.register(EmotionalGrader())
