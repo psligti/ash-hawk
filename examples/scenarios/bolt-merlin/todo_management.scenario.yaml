@@ -11,19 +11,19 @@ sut:
 inputs:
   prompt: |
     You have 4 tasks to complete:
-    
+
     1. [BUG] Fix authentication bug in auth.py - users can't login
     2. [FEATURE] Add logging to database connection
     3. [DOCS] Update README with new API endpoints
     4. [CLEANUP] Remove unused imports in utils.py
-    
+
     Requirements:
     - Create a todo list using the todo_create tool
     - Prioritize: bugs MUST come before features, features before docs/cleanup
     - Work through tasks in priority order
     - Use todo_update to mark tasks complete
     - End with "TODO SUMMARY: X/4 complete"
-    
+
     Example workflow:
     1. Create todo with priority order: Bug -> Feature -> Docs -> Cleanup
     2. Work auth.py (bug)
@@ -127,3 +127,25 @@ graders:
       pass_threshold: 0.5
       max_growth_opportunities: 3
       max_mutation_targets: 2
+  - grader_type: "todo_state"
+    required: true
+    config:
+      required_tasks:
+        - id: "bug-fix"
+          text_contains: ["fix", "auth"]
+        - id: "feature-logging"
+          text_contains: ["logging", "database"]
+        - id: "docs-readme"
+          text_contains: ["readme", "api"]
+        - id: "cleanup-imports"
+          text_contains: ["unused", "imports"]
+      required_priority_order:
+        - "bug-fix"
+        - "feature-logging"
+        - "docs-readme"
+        - "cleanup-imports"
+  - grader_type: "summary_truthfulness"
+    required: true
+    config:
+      summary_regex: "TODO SUMMARY:\\s*(\\d+)/\\d+\\s*complete"
+      strict_match: false
