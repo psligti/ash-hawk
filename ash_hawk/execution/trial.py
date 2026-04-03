@@ -213,6 +213,13 @@ class TrialExecutor:
         outcome: EvalOutcome | None = None
         cancelled = False
         timeout_seconds = self._policy.timeout_seconds
+        logger.info(
+            "Trial %s started (run=%s task=%s attempt=%s)",
+            trial_id,
+            run_envelope.run_id,
+            task.id,
+            attempt_number,
+        )
 
         try:
             timeout_seconds = (
@@ -230,12 +237,22 @@ class TrialExecutor:
             run_task = asyncio.create_task(
                 self._agent_runner.run(resolved_task, policy_enforcer, runner_config)
             )
+            logger.info(
+                "Trial %s executing agent runner with timeout=%ss",
+                trial_id,
+                timeout_seconds,
+            )
             _done, pending = await asyncio.wait({run_task}, timeout=timeout_seconds)
 
             if pending:
                 run_task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await run_task
+                logger.warning(
+                    "Trial %s timed out waiting for agent runner after %ss",
+                    trial_id,
+                    timeout_seconds,
+                )
                 outcome = EvalOutcome.failure(
                     FailureMode.TIMEOUT,
                     f"Trial timed out after {timeout_seconds}s",
@@ -245,6 +262,7 @@ class TrialExecutor:
                 )
             else:
                 transcript, outcome = run_task.result()
+                logger.info("Trial %s agent runner completed", trial_id)
 
         except asyncio.CancelledError:
             cancelled = True
@@ -298,8 +316,18 @@ class TrialExecutor:
                         trial_id,
                     )
                 else:
+                    logger.info(
+                        "Trial %s starting grading with %d graders",
+                        trial_id,
+                        len(resolved_task.grader_specs),
+                    )
                     grader_results = await self._run_graders(
                         eval_trial_for_grading, transcript, resolved_task
+                    )
+                    logger.info(
+                        "Trial %s grading completed with %d results",
+                        trial_id,
+                        len(grader_results),
                     )
                     aggregate_score, aggregate_passed = _aggregate_grader_results(
                         resolved_task.grader_specs,
@@ -324,6 +352,7 @@ class TrialExecutor:
             )
 
             try:
+                logger.info("Trial %s saving trial result to storage", trial_id)
                 await self._storage.save_trial(
                     suite_id=run_envelope.suite_id,
                     run_id=run_envelope.run_id,
@@ -331,8 +360,9 @@ class TrialExecutor:
                     envelope=trial_envelope,
                     policy=self._policy,
                 )
+                logger.info("Trial %s storage save complete", trial_id)
             except Exception:
-                pass
+                logger.exception("Trial %s failed to persist storage record", trial_id)
 
         if cancelled:
             raise asyncio.CancelledError()
@@ -347,32 +377,26 @@ class TrialExecutor:
     ) -> list[GraderResult]:
         registry = get_default_registry()
 
-        coros = [
-            self._run_grader_spec(trial, transcript, spec, registry, task)
-            for spec in task.grader_specs
-        ]
-
-        if not coros:
+        if not task.grader_specs:
             return []
 
-        results = await asyncio.gather(*coros, return_exceptions=True)
-
-        processed: list[GraderResult] = []
-        for i, result in enumerate(results):
-            if isinstance(result, BaseException):
-                spec = task.grader_specs[i]
-                processed.append(
+        # Run graders sequentially to avoid rate-limit cascade with shared provider
+        results: list[GraderResult] = []
+        for spec in task.grader_specs:
+            try:
+                result = await self._run_grader_spec(trial, transcript, spec, registry, task)
+                results.append(result)
+            except BaseException as exc:
+                results.append(
                     GraderResult(
                         grader_type=spec.grader_type,
                         score=0.0,
                         passed=False,
-                        error_message=f"Grader raised exception: {result}",
+                        error_message=f"Grader raised exception: {exc}",
                     )
                 )
-            else:
-                processed.append(result)
 
-        return processed
+        return results
 
     async def _run_grader_spec(
         self,
@@ -395,6 +419,12 @@ class TrialExecutor:
             )
 
         started = time.time()
+        logger.info(
+            "Trial %s grader %s started (timeout=%s)",
+            trial.id,
+            spec.grader_type,
+            spec.timeout_seconds,
+        )
 
         # Inject expected_output into spec config for graders that need it (e.g., llm_judge)
         enriched_config = dict(spec.config)
@@ -414,10 +444,38 @@ class TrialExecutor:
                     timeout=enriched_spec.timeout_seconds,
                 )
             else:
-                result = await grader.grade(trial, transcript, enriched_spec)
+                grader_task = asyncio.create_task(grader.grade(trial, transcript, enriched_spec))
+                heartbeat_interval_seconds = 60.0
+                while True:
+                    try:
+                        result = await asyncio.wait_for(
+                            asyncio.shield(grader_task),
+                            timeout=heartbeat_interval_seconds,
+                        )
+                        break
+                    except TimeoutError:
+                        elapsed = time.time() - started
+                        logger.warning(
+                            "Trial %s grader %s still running after %.1fs",
+                            trial.id,
+                            spec.grader_type,
+                            elapsed,
+                        )
             duration = time.time() - started
+            logger.info(
+                "Trial %s grader %s completed in %.2fs",
+                trial.id,
+                spec.grader_type,
+                duration,
+            )
             return result.model_copy(update={"execution_time_seconds": duration})
         except TimeoutError:
+            logger.warning(
+                "Trial %s grader %s timed out after %ss",
+                trial.id,
+                spec.grader_type,
+                spec.timeout_seconds,
+            )
             return GraderResult(
                 grader_type=spec.grader_type,
                 score=0.0,
@@ -426,6 +484,11 @@ class TrialExecutor:
                 execution_time_seconds=time.time() - started,
             )
         except Exception as exc:
+            logger.exception(
+                "Trial %s grader %s failed",
+                trial.id,
+                spec.grader_type,
+            )
             return GraderResult(
                 grader_type=spec.grader_type,
                 score=0.0,
