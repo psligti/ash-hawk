@@ -1,6 +1,5 @@
 """Tests for ash_hawk.graders.llm_boolean module."""
 
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -18,8 +17,8 @@ from ash_hawk.types import (
 
 
 def make_transcript(
-    agent_response: str | dict[str, Any] | None = None,
-    messages: list[dict[str, Any]] | None = None,
+    agent_response: str | dict[str, object] | None = None,
+    messages: list[dict[str, object]] | None = None,
 ) -> EvalTranscript:
     return EvalTranscript(
         messages=messages or [],
@@ -145,6 +144,76 @@ class TestLLMBooleanJudgeGrader:
 
         result = grader._parse_boolean_response("true\ntrue\ntrue\ntrue", 2)
         assert result == [True, True]
+
+    def test_parse_boolean_response_numbered_prefixes(self) -> None:
+        """Regression test: LLM returns '1. true\n2. false\n3. true' format."""
+        grader = LLMBooleanJudgeGrader()
+
+        # Dot prefix (most common)
+        result = grader._parse_boolean_response("1. true\n2. false\n3. true", 3)
+        assert result == [True, False, True]
+
+        # Paren prefix
+        result = grader._parse_boolean_response("1) true\n2) true", 2)
+        assert result == [True, True]
+
+        # Dash prefix
+        result = grader._parse_boolean_response("1- false\n2- true", 2)
+        assert result == [False, True]
+
+        # Colon prefix
+        result = grader._parse_boolean_response("1: true\n2: true\n3: false\n4: true", 4)
+        assert result == [True, True, False, True]
+
+        # Mixed format
+        result = grader._parse_boolean_response("1. true\ntrue\n3. false", 3)
+        assert result == [True, True, False]
+
+    def test_extract_content_filters_tool_execution_results(self) -> None:
+        """Messages starting with 'Tool execution results:' should be filtered."""
+        grader = LLMBooleanJudgeGrader()
+        transcript = make_transcript(
+            messages=[
+                {"role": "user", "content": 'Tool execution results:\n[{"tool": "read"}]'},
+                {"role": "user", "content": "Real message"},
+                {"role": "assistant", "content": "Response"},
+            ]
+        )
+        trial = make_trial()
+
+        content = grader._extract_content(transcript, trial)
+        assert "Tool execution results:" not in content
+        assert "[user]: Real message" in content
+        assert "[assistant]: Response" in content
+
+    def test_extract_content_includes_tool_calls(self) -> None:
+        """Tool calls should be included with truncated input/output."""
+        grader = LLMBooleanJudgeGrader()
+        transcript = EvalTranscript(
+            messages=[],
+            tool_calls=[
+                {
+                    "tool": "edit",
+                    "input": {
+                        "filePath": "/tmp/auth.py",
+                        "oldString": "return False",
+                        "newString": "return True",
+                    },
+                    "output": "Edit applied",
+                },
+                {
+                    "tool": "read",
+                    "input": {"filePath": "/tmp/db.py"},
+                    "output": "file contents here",
+                },
+            ],
+        )
+        trial = make_trial()
+
+        content = grader._extract_content(transcript, trial)
+        assert "[tool_call:edit]" in content
+        assert "[tool_call:read]" in content
+        assert "auth.py" in content
 
     @pytest.mark.asyncio
     async def test_grade_no_questions_error(self) -> None:

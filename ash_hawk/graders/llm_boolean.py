@@ -10,8 +10,10 @@ about transcript content. Designed for fast fitness detection scenarios like:
 
 from __future__ import annotations
 
+import json
 import logging
-from typing import TYPE_CHECKING, Any
+import re
+from typing import TYPE_CHECKING
 
 import pydantic as pd
 
@@ -25,8 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class BooleanJudgeConfig(pd.BaseModel):
-    """Configuration for LLM boolean judge grader."""
-
     questions: list[str] = pd.Field(
         default_factory=list, description="List of yes/no questions to ask about the transcript"
     )
@@ -66,37 +66,17 @@ _BOOLEAN_USER_TEMPLATE = """Content to evaluate:
 Questions (answer true or false for each):
 {questions}"""
 
+_NUMBERED_PREFIX_RE = re.compile(r"^\d+[\.\)\-:]\s*")
+
 
 class LLMBooleanJudgeGrader(Grader):
-    """Grader that uses LLM to answer true/false questions about transcripts.
-
-    Fast fitness detection grader optimized for:
-    - AI slop content detection
-    - Soul alignment verification
-    - Voice/principles checking
-    - LLM-generated content detection
-
-    Config options:
-        questions: List of yes/no questions to evaluate
-        require_all: If True, all must pass; if False, any passing is sufficient
-        context_max_chars: Max transcript context to include
-        judge_model: Specific model for judging
-        judge_provider: Provider for judge model
-        temperature: Temperature for LLM calls (default 0.0)
-        max_tokens: Max response tokens (default 256)
-    """
+    """Grader that uses LLM to answer true/false questions about transcripts."""
 
     def __init__(
         self,
-        config: BooleanJudgeConfig | dict[str, Any] | None = None,
+        config: BooleanJudgeConfig | dict[str, object] | None = None,
         client: LLMClient | None = None,
     ) -> None:
-        """Initialize the boolean judge grader.
-
-        Args:
-            config: Judge configuration
-            client: Optional LLM client (will be created if not provided)
-        """
         if config is None:
             self._config = BooleanJudgeConfig()
         elif isinstance(config, dict):
@@ -107,11 +87,9 @@ class LLMBooleanJudgeGrader(Grader):
 
     @property
     def name(self) -> str:
-        """Return the grader name."""
         return "llm_boolean"
 
     def _get_client(self) -> LLMClient:
-        """Get or create the LLM client."""
         if self._client is None:
             from dawn_kestrel.core.settings import get_settings
             from dawn_kestrel.llm.client import LLMClient
@@ -124,15 +102,26 @@ class LLMBooleanJudgeGrader(Grader):
             api_key_secret = settings.get_api_key_for_provider(provider)
             api_key = api_key_secret.get_secret_value() if api_key_secret else None
 
+            try:
+                from ash_hawk.config import get_config
+
+                eval_config = get_config()
+                timeout_seconds = eval_config.auto_research_llm_timeout_seconds
+                max_retries = eval_config.auto_research_llm_max_retries
+            except Exception:
+                timeout_seconds = 300.0
+                max_retries = 3
+
             self._client = LLMClient(
                 provider_id=provider,
                 model=model,
                 api_key=api_key,
+                timeout_seconds=timeout_seconds,
+                max_retries=max_retries,
             )
         return self._client
 
     def _extract_content(self, transcript: EvalTranscript, trial: EvalTrial) -> str:
-        """Extract content from transcript for evaluation."""
         parts = []
 
         if transcript.agent_response:
@@ -146,7 +135,25 @@ class LLMBooleanJudgeGrader(Grader):
             role = msg.get("role", "")
             content = msg.get("content", "")
             if isinstance(content, str) and content.strip():
+                if "Tool execution results:" in content[:30]:
+                    continue
                 parts.append(f"[{role}]: {content}")
+
+        for tc in transcript.tool_calls:
+            tool_name = tc.get("tool") or tc.get("name", "unknown")
+            tool_input = tc.get("input") or tc.get("arguments", {})
+            tool_output = tc.get("output", "")
+            inp_str = (
+                json.dumps(tool_input, default=str)
+                if isinstance(tool_input, dict)
+                else str(tool_input)
+            )
+            out_str = str(tool_output)
+            if len(inp_str) > 200:
+                inp_str = inp_str[:200] + "..."
+            if len(out_str) > 200:
+                out_str = out_str[:200] + "..."
+            parts.append(f"[tool_call:{tool_name}]: input={inp_str} output={out_str}")
 
         content = "\n\n".join(parts)
 
@@ -156,19 +163,20 @@ class LLMBooleanJudgeGrader(Grader):
         return str(content)
 
     def _parse_boolean_response(self, response: str, num_questions: int) -> list[bool]:
-        """Parse LLM response into boolean list."""
         response = response.strip().lower()
 
-        results = []
+        results: list[bool] = []
 
         for line in response.split("\n"):
             line = line.strip()
             if not line:
                 continue
 
-            if line.startswith("true") or line in ("yes", "1", "y"):
+            cleaned = _NUMBERED_PREFIX_RE.sub("", line).strip()
+
+            if cleaned.startswith("true") or cleaned in ("yes", "1", "y"):
                 results.append(True)
-            elif line.startswith("false") or line in ("no", "0", "n"):
+            elif cleaned.startswith("false") or cleaned in ("no", "0", "n"):
                 results.append(False)
 
         while len(results) < num_questions:
@@ -182,7 +190,6 @@ class LLMBooleanJudgeGrader(Grader):
         transcript: EvalTranscript,
         spec: GraderSpec,
     ) -> GraderResult:
-        """Grade by evaluating boolean questions against transcript content."""
         config = spec.config
 
         questions = config.get("questions", self._config.questions)
@@ -228,6 +235,10 @@ class LLMBooleanJudgeGrader(Grader):
                 {"role": "user", "content": user_prompt},
             ]
 
+            logger.info(
+                "LLMBooleanJudge grader calling client.complete() for %d questions",
+                len(questions),
+            )
             response = await client.complete(messages=messages, options=options)
 
             if not response or not response.text:
