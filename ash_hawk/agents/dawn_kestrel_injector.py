@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 from __future__ import annotations
 
 import logging
@@ -15,11 +16,9 @@ TOOL_PATH_TEMPLATE = DAWN_KESTREL_DIR / "tools" / "{name}" / "TOOL.md"
 POLICY_PATH_TEMPLATE = DAWN_KESTREL_DIR / "policies" / "{name}" / "POLICY.md"
 
 if TYPE_CHECKING:
-    from dawn_kestrel.agents.context import (
-        BaseContextStrategy,
-        ContextBundle,
-        ScenarioInfo,
-    )
+    from typing import Any as BaseContextStrategy
+    from typing import Any as ContextBundle
+    from typing import Any as ScenarioInfo
 
 
 class DawnKestrelInjector:

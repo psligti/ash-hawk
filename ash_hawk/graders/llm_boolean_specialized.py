@@ -225,15 +225,14 @@ class BooleanJudgeGrader(Grader):
 
     def _get_client(self) -> LLMClient:
         if self._client is None:
-            from dawn_kestrel.core.settings import get_settings
-            from dawn_kestrel.llm.client import LLMClient
+            from dawn_kestrel.base.config import get_config_api_key, load_agent_config
+            from dawn_kestrel.provider.llm_client import LLMClient
 
-            settings = get_settings()
-            provider = settings.get_default_provider().value
-            model = settings.get_default_model(provider)
+            dk_config = load_agent_config()
+            provider = dk_config.get("runtime.provider") or "anthropic"
+            model = dk_config.get("runtime.model") or "claude-sonnet-4-20250514"
 
-            api_key_secret = settings.get_api_key_for_provider(provider)
-            api_key = api_key_secret.get_secret_value() if api_key_secret else None
+            api_key = get_config_api_key(provider) or None
 
             self._client = LLMClient(
                 provider_id=provider,
@@ -333,7 +332,7 @@ class BooleanJudgeGrader(Grader):
         try:
             client = self._get_client()
 
-            from dawn_kestrel.llm.client import LLMRequestOptions
+            from dawn_kestrel.provider.llm_client import LLMRequestOptions
 
             options = LLMRequestOptions(
                 temperature=self._config.get("temperature", 0.0),

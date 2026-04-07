@@ -3,6 +3,7 @@ import asyncio
 import hashlib
 import importlib
 import importlib.util
+import os
 import platform
 import sys
 import uuid
@@ -24,6 +25,7 @@ from rich.progress import (
 )
 from rich.table import Table
 
+from ash_hawk.agents.agent_resolver import AgentResolutionError, resolve_agent_path
 from ash_hawk.config import get_config
 from ash_hawk.scenario import EvalRunner, FixtureResolver, TrialExecutor
 from ash_hawk.storage import FileStorage
@@ -321,8 +323,6 @@ async def _resolve_effective_agent_config(
     cli_agent_class: str | None,
     cli_agent_location: str | None,
 ) -> dict[str, Any]:
-    del suite_file
-
     suite_agent = suite.agent or EvalAgentConfig()
 
     resolved_name = _pick_non_empty(cli_agent, suite_agent.name)
@@ -334,47 +334,52 @@ async def _resolve_effective_agent_config(
     if resolved_name is None and resolved_class is None and resolved_location is None:
         raise ValueError("No agent configured. Pass --agent or set suite 'agent' in YAML.")
 
-    agents_registry_module = importlib.import_module("dawn_kestrel.agents.registry")
-    settings_module = importlib.import_module("dawn_kestrel.core.settings")
-    create_agent_registry = cast(
-        Callable[[], Any], getattr(agents_registry_module, "create_agent_registry")
-    )
-    get_settings = cast(Callable[[], Any], getattr(settings_module, "get_settings"))
+    if resolved_name is not None and resolved_location is None:
+        try:
+            resolution = resolve_agent_path(resolved_name, suite_file.parent)
+            resolved_location = str(resolution.path)
+            resolved_name = resolution.name
+        except AgentResolutionError:
+            pass
 
-    settings = get_settings()
-    default_account = settings.get_default_account()
+    # Resolve provider/model from CLI args, suite config, or dawn-kestrel agent_config
+    if resolved_provider is None or resolved_model is None:
+        try:
+            config_module = importlib.import_module("dawn_kestrel.base.config")
+            load_config = getattr(config_module, "load_agent_config")
+            dk_config = load_config()
+        except (ImportError, AttributeError):
+            dk_config = {}
 
-    registry_model: dict[str, Any] | None = None
-    if resolved_name is not None:
-        registry = create_agent_registry()
-        registry_agent = await registry.get_agent(resolved_name)
-        if registry_agent is None and resolved_class is None and resolved_location is None:
-            raise ValueError(f"Agent not found in dawn-kestrel registry: {resolved_name}")
-        if registry_agent is not None:
-            raw_model = getattr(registry_agent, "model", None)
-            if isinstance(raw_model, dict):
-                registry_model = cast(dict[str, Any], raw_model)
+        if resolved_provider is None:
+            cfg_provider = (
+                dk_config.get("runtime.provider")
+                or os.environ.get("DAWN_KESTREL_PROVIDER")
+                or os.environ.get("ASH_HAWK_PROVIDER")
+            )
+            if cfg_provider and cfg_provider.strip():
+                resolved_provider = cfg_provider.strip()
 
-    if resolved_provider is None and registry_model is not None:
-        provider_candidate = registry_model.get("provider") or registry_model.get("provider_id")
-        if isinstance(provider_candidate, str) and provider_candidate.strip() != "":
-            resolved_provider = provider_candidate.strip()
+        if resolved_model is None:
+            cfg_model = (
+                dk_config.get("runtime.model")
+                or os.environ.get("DAWN_KESTREL_MODEL")
+                or os.environ.get("ASH_HAWK_MODEL")
+            )
+            if cfg_model and cfg_model.strip():
+                resolved_model = cfg_model.strip()
 
     if resolved_provider is None:
-        if default_account is not None:
-            resolved_provider = str(default_account.provider_id.value)
-        else:
-            resolved_provider = str(settings.get_default_provider().value)
-
-    if resolved_model is None and registry_model is not None:
-        model_candidate = registry_model.get("model")
-        if isinstance(model_candidate, str) and model_candidate.strip() != "":
-            resolved_model = model_candidate.strip()
+        raise ValueError(
+            "No provider configured. Set --provider, suite 'agent.provider', "
+            "DAWN_KESTREL_PROVIDER, or configure ~/.dawn-kestrel/agent_config.yaml"
+        )
 
     if resolved_model is None:
-        default_model_value = settings.get_default_model(resolved_provider)
-        if isinstance(default_model_value, str) and default_model_value.strip() != "":
-            resolved_model = default_model_value.strip()
+        raise ValueError(
+            "No model configured. Set --model, suite 'agent.model', "
+            "DAWN_KESTREL_MODEL, or configure ~/.dawn-kestrel/agent_config.yaml"
+        )
 
     if resolved_name is not None:
         resolved_identifier = resolved_name

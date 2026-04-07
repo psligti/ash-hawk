@@ -28,6 +28,7 @@ def cli(ctx: click.Context, version: bool) -> None:
 
 import asyncio
 
+from ash_hawk.agents.agent_resolver import AgentResolutionError, resolve_agent_path
 from ash_hawk.cli.run import run
 from ash_hawk.cli.thin import thin
 
@@ -54,10 +55,17 @@ def improve(
 
     from ash_hawk.improve import improve as _improve
 
+    try:
+        resolution = resolve_agent_path(agent, Path("."))
+    except AgentResolutionError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise SystemExit(1)
+
     result = asyncio.run(
         _improve(
             suite_path=suite_path,
-            agent_name=agent,
+            agent_name=resolution.name,
+            agent_path=resolution.path,
             target=target,
             max_iterations=max_iterations,
             trace_dir=Path(trace_dir) if trace_dir else None,

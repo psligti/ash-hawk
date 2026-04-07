@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib
 import json
 import logging
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -45,11 +46,12 @@ class Diagnosis:
 async def diagnose_failures(
     failures: list[EvalTrial],
     trace_dir: Path | None = None,
+    agent_content: dict[str, str] | None = None,
 ) -> list[Diagnosis]:
     diagnoses: list[Diagnosis] = []
     for failure in failures:
         try:
-            diagnosis = await _diagnose_single(failure, trace_dir)
+            diagnosis = await _diagnose_single(failure, trace_dir, agent_content)
             if diagnosis is not None:
                 diagnoses.append(diagnosis)
         except Exception:
@@ -57,7 +59,11 @@ async def diagnose_failures(
     return diagnoses
 
 
-async def _diagnose_single(trial: EvalTrial, trace_dir: Path | None) -> Diagnosis | None:
+async def _diagnose_single(
+    trial: EvalTrial,
+    trace_dir: Path | None,
+    agent_content: dict[str, str] | None = None,
+) -> Diagnosis | None:
     transcript = trial.result.transcript if trial.result else None
     agent_response = ""
     grader_results_str = "[]"
@@ -79,6 +85,21 @@ async def _diagnose_single(trial: EvalTrial, trace_dir: Path | None) -> Diagnosi
         error_trace=error_trace,
     )
 
+    agent_context = ""
+    if agent_content:
+        agent_files_section = "\n\n## Agent Content\n"
+        for key in sorted(agent_content.keys()):
+            if "AGENT.md" in key or "agent.md" in key:
+                agent_files_section += f"\n### {key}\n{agent_content[key][:2000]}\n"
+        skill_count = 0
+        for key in sorted(agent_content.keys()):
+            if "skill" in key.lower() and skill_count < 2:
+                agent_files_section += f"\n### {key}\n{agent_content[key][:1000]}\n"
+                skill_count += 1
+        agent_context = agent_files_section
+
+    prompt = prompt + agent_context
+
     response = await _call_llm(prompt)
     if response is None:
         return None
@@ -88,18 +109,25 @@ async def _diagnose_single(trial: EvalTrial, trace_dir: Path | None) -> Diagnosi
 
 async def _call_llm(prompt: str) -> str | None:
     try:
-        settings_module = importlib.import_module("dawn_kestrel.core.settings")
-        client_module = importlib.import_module("dawn_kestrel.llm.client")
+        config_module = importlib.import_module("dawn_kestrel.base.config")
+        client_module = importlib.import_module("dawn_kestrel.provider.llm_client")
     except ImportError:
         logger.warning("dawn-kestrel not installed, returning stub diagnosis")
         return None
 
     try:
-        settings = settings_module.get_settings()
-        provider = settings.get_default_provider().value
-        model = settings.get_default_model(provider)
-        api_key_secret = settings.get_api_key_for_provider(provider)
-        api_key = api_key_secret.get_secret_value() if api_key_secret else None
+        dk_config = config_module.load_agent_config()
+        provider = (
+            dk_config.get("runtime.provider")
+            or os.environ.get("DAWN_KESTREL_PROVIDER")
+            or "anthropic"
+        )
+        model = (
+            dk_config.get("runtime.model")
+            or os.environ.get("DAWN_KESTREL_MODEL")
+            or "claude-sonnet-4-20250514"
+        )
+        api_key = config_module.get_config_api_key(provider) or None
 
         LLMClient = getattr(client_module, "LLMClient")
         client = LLMClient(provider_id=provider, model=model, api_key=api_key)

@@ -9,6 +9,7 @@ without constructing any execution context.
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import tempfile
 import time
@@ -248,18 +249,18 @@ class DawnKestrelBridge:
     def _resolve_provider_model(self) -> tuple[str, str]:
         import importlib
 
-        settings_module = importlib.import_module("dawn_kestrel.core.settings")
-        settings = settings_module.get_settings()
-        default_account = settings.get_default_account()
+        config_module = importlib.import_module("dawn_kestrel.base.config")
+        dk_config = config_module.load_agent_config()
 
-        if default_account is not None:
-            provider = str(default_account.provider_id.value)
-        else:
-            provider = str(settings.get_default_provider().value)
+        provider = dk_config.get("runtime.provider") or os.environ.get("DAWN_KESTREL_PROVIDER")
+        if not provider:
+            raise ValueError(
+                "No provider configured in agent_config.yaml or DAWN_KESTREL_PROVIDER env"
+            )
 
-        default_model = str(settings.get_default_model(provider)).strip()
+        default_model = dk_config.get("runtime.model") or os.environ.get("DAWN_KESTREL_MODEL")
         if not default_model:
-            raise ValueError(f"Could not resolve default model for provider '{provider}'")
+            raise ValueError("No model configured in agent_config.yaml or DAWN_KESTREL_MODEL env")
 
         return provider, default_model
 

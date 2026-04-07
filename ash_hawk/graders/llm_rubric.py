@@ -188,17 +188,22 @@ class LLMRubricGrader(Grader):
     def _get_client(self) -> LLMClient:
         """Get or create the LLM client."""
         if self._client is None:
-            from dawn_kestrel.core.settings import get_settings
-            from dawn_kestrel.llm.client import LLMClient
+            from dawn_kestrel.base.config import get_config_api_key, load_agent_config
+            from dawn_kestrel.provider.llm_client import LLMClient
 
-            settings = get_settings()
+            dk_config = load_agent_config()
 
             # Use config values or fall back to settings defaults
-            provider = self._config.judge_provider or settings.get_default_provider().value
-            model = self._config.judge_model or settings.get_default_model(provider)
+            provider = (
+                self._config.judge_provider or dk_config.get("runtime.provider") or "anthropic"
+            )
+            model = (
+                self._config.judge_model
+                or dk_config.get("runtime.model")
+                or "claude-sonnet-4-20250514"
+            )
 
-            api_key_secret = settings.get_api_key_for_provider(provider)
-            api_key = api_key_secret.get_secret_value() if api_key_secret else None
+            api_key = get_config_api_key(provider) or None
 
             self._resolved_provider = provider
             self._resolved_model = model
@@ -331,7 +336,7 @@ class LLMRubricGrader(Grader):
             # Run judge
             client = self._get_client()
 
-            from dawn_kestrel.llm.client import LLMRequestOptions
+            from dawn_kestrel.provider.llm_client import LLMRequestOptions
 
             options = LLMRequestOptions(
                 temperature=self._config.temperature,

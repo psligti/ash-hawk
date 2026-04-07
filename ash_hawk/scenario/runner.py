@@ -71,6 +71,7 @@ class ScenarioRunner:
         scenario_timeout_seconds: float | None = None,
         grader_config_overrides: dict[str, Any] | None = None,
         on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
+        agent_path: Path | None = None,
     ) -> None:
         from ash_hawk.storage import FileStorage
 
@@ -87,6 +88,7 @@ class ScenarioRunner:
         self._scenario_timeout_seconds = scenario_timeout_seconds
         self._grader_config_overrides = grader_config_overrides or {}
         self._on_trial_progress = on_trial_progress
+        self._agent_path = agent_path
         resolved_parallelism = parallelism or config.parallelism
         self._config = EvalConfig(
             parallelism=resolved_parallelism,
@@ -132,6 +134,7 @@ class ScenarioRunner:
             artifacts_root=self._storage_root,
             injector=self._injector,
             scenario_timeout_seconds=self._scenario_timeout_seconds,
+            agent_path=self._agent_path,
         )
         trial_executor = TrialExecutor(
             storage=self._storage,
@@ -435,6 +438,7 @@ async def run_scenarios_async(
     scenario_timeout_seconds: float | None = None,
     grader_config_overrides: dict[str, Any] | None = None,
     on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
+    agent_path: Path | None = None,
 ) -> EvalRunSummary:
     runner = ScenarioRunner(
         storage_path=storage_path,
@@ -446,6 +450,7 @@ async def run_scenarios_async(
         scenario_timeout_seconds=scenario_timeout_seconds,
         grader_config_overrides=grader_config_overrides,
         on_trial_progress=on_trial_progress,
+        agent_path=agent_path,
     )
     return await runner.run_paths(paths)
 

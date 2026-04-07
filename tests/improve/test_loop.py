@@ -76,7 +76,9 @@ class TestImprove:
             patch("ash_hawk.improve.loop.diagnose_failures", new_callable=AsyncMock),
         ):
             mock_run.return_value = _make_mock_summary(1.0)
-            result = await improve("suite.yaml", max_iterations=5, output_dir=tmp_path)
+            result = await improve(
+                "suite.yaml", max_iterations=5, output_dir=tmp_path, eval_repeats=1
+            )
 
         assert result.initial_pass_rate == 1.0
         assert result.final_pass_rate == 1.0
@@ -92,9 +94,12 @@ class TestImprove:
         ):
             mock_run.return_value = _make_mock_summary(0.0)
             mock_diag.return_value = []
-            result = await improve("suite.yaml", max_iterations=3, output_dir=tmp_path)
+            result = await improve(
+                "suite.yaml", max_iterations=3, output_dir=tmp_path, eval_repeats=1
+            )
 
-        assert mock_run.call_count == 3
+        # 2 calls per iteration: 1 eval_repeats + 1 failure gathering
+        assert mock_run.call_count == 6
 
     @pytest.mark.asyncio
     async def test_run_eval_failure_continues(self, tmp_path):
@@ -108,7 +113,9 @@ class TestImprove:
             return _make_mock_summary(1.0)
 
         with patch("ash_hawk.improve.loop._run_eval", side_effect=side_effect):
-            result = await improve("suite.yaml", max_iterations=3, output_dir=tmp_path)
+            result = await improve(
+                "suite.yaml", max_iterations=3, output_dir=tmp_path, eval_repeats=1
+            )
 
         assert result.final_pass_rate == 1.0
         assert call_count == 2
@@ -121,7 +128,11 @@ class TestImprove:
         ):
             mock_run.return_value = _make_mock_summary(1.0)
             result = await improve(
-                "suite.yaml", max_iterations=5, trace_dir=Path("/tmp/traces"), output_dir=tmp_path
+                "suite.yaml",
+                max_iterations=5,
+                trace_dir=Path("/tmp/traces"),
+                output_dir=tmp_path,
+                eval_repeats=1,
             )
 
         assert isinstance(result, ImprovementResult)

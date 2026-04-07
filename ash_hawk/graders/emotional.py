@@ -198,17 +198,18 @@ class EmotionalGrader(Grader):
     def _get_llm_client(self) -> Any:
         if self._client is None:
             try:
-                settings_module = importlib.import_module("dawn_kestrel.core.settings")
-                client_module = importlib.import_module("dawn_kestrel.llm.client")
+                settings_module = importlib.import_module("dawn_kestrel.base.config")
+                client_module = importlib.import_module("dawn_kestrel.provider.llm_client")
             except ImportError as exc:
                 raise ImportError("dawn-kestrel is required for emotional grading") from exc
 
-            settings = settings_module.get_settings()
+            dk_config = settings_module.load_agent_config()
             model_config = self._config.model_config_ref
-            provider = model_config.provider or settings.get_default_provider().value
-            model = model_config.model or settings.get_default_model(provider)
-            api_key_secret = settings.get_api_key_for_provider(provider)
-            api_key = api_key_secret.get_secret_value() if api_key_secret else None
+            provider = model_config.provider or dk_config.get("runtime.provider") or "anthropic"
+            model = (
+                model_config.model or dk_config.get("runtime.model") or "claude-sonnet-4-20250514"
+            )
+            api_key = settings_module.get_config_api_key(provider) or None
             self._resolved_provider = provider
             self._resolved_model = model
             llm_client = getattr(client_module, "LLMClient")
