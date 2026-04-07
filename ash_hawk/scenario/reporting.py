@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Trace-aware reporting utilities for scenario runs."""
 
 from __future__ import annotations

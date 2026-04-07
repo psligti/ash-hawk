@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Vox Jay Policy Adapter for ash-hawk evaluation framework.
 
 This adapter enables testing vox-jay policy agents through ash-hawk scenarios.

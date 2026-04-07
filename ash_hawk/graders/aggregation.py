@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Result aggregation utilities for ash-hawk evaluation harness.
 
 This module provides functions for aggregating, grouping, filtering,

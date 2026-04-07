@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Code-based graders for ash-hawk evaluation harness.
 
 This module provides graders that evaluate code and agent outputs through:

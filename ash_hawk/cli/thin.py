@@ -12,8 +12,8 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from ash_hawk.bridge import DiffFieldChange, DiffReport, RunManifest
 from ash_hawk.scenario.thin_runner import ThinScenarioRunner
+from ash_hawk.types import DiffFieldChange, DiffReport, RunManifest
 
 console = Console()
 

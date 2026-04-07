@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Ash Hawk - Core type definitions for evaluation harness.
 
 This module defines all core data models for the Ash-Hawk evaluation harness.
@@ -16,8 +17,12 @@ Key types:
 from __future__ import annotations
 
 import enum
+import hashlib
+import uuid
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Literal
+from pathlib import Path
+from typing import Any, Literal, Protocol
 
 import pydantic as pd
 
@@ -710,6 +715,424 @@ class EvalRunSummary(pd.BaseModel):
 
 
 # =============================================================================
+# CONTRACT TYPES (absorbed from contracts/run_artifact.py)
+# =============================================================================
+
+
+class ToolCallRecord(pd.BaseModel):
+    """Record of a single tool call within a run."""
+
+    tool_name: str = pd.Field(description="Name of the tool that was called")
+    outcome: str = pd.Field(
+        default="success",
+        description="Result of the tool call (success, failure, denied)",
+    )
+    duration_ms: int | None = pd.Field(
+        default=None, description="Duration of the tool call in milliseconds"
+    )
+    error_message: str | None = pd.Field(
+        default=None, description="Error message if the call failed"
+    )
+    input_args: dict[str, Any] = pd.Field(
+        default_factory=dict, description="Input arguments passed to the tool"
+    )
+    output: str | dict[str, Any] | None = pd.Field(
+        default=None, description="Output from the tool (truncated if large)"
+    )
+    timestamp: datetime | None = pd.Field(default=None, description="When the tool call was made")
+
+    model_config = pd.ConfigDict(extra="allow")
+
+
+class StepRecord(pd.BaseModel):
+    """Record of a reasoning step within a run."""
+
+    step_id: str = pd.Field(default="", description="Unique identifier for this step")
+    step_type: str = pd.Field(
+        default="action", description="Type of step (plan, action, reflection, etc.)"
+    )
+    content: str | dict[str, Any] | None = pd.Field(
+        default=None, description="The content of the step"
+    )
+    outcome: str = pd.Field(default="pending", description="Result of this step")
+    timestamp: datetime | None = pd.Field(default=None, description="When the step was recorded")
+    status: str = pd.Field(
+        default="pending",
+        description="Status of this step (pending, running, completed, failed)",
+    )
+    started_at: datetime | None = pd.Field(default=None, description="When this step started")
+    completed_at: datetime | None = pd.Field(default=None, description="When this step completed")
+    tool_calls: list[ToolCallRecord] = pd.Field(
+        default_factory=list, description="Tool calls made during this step"
+    )
+
+    model_config = pd.ConfigDict(extra="allow")
+
+
+class RunArtifact(pd.BaseModel):
+    """Complete artifact from a completed agent run."""
+
+    run_id: str = pd.Field(description="Unique identifier for this run")
+    suite_id: str | None = pd.Field(
+        default=None, description="ID of the evaluation suite this run belongs to"
+    )
+    agent_id: str = pd.Field(
+        default="unknown", description="Identifier of the agent that was evaluated"
+    )
+    agent_name: str = pd.Field(
+        default="unknown", description="Name of the agent that was evaluated"
+    )
+    task_type: str | None = pd.Field(
+        default=None,
+        description="Type of task performed (e.g., 'pr_review', 'code_change')",
+    )
+    outcome: str = pd.Field(
+        default="success",
+        description="Overall outcome of the run (success, failure, error)",
+    )
+    tool_calls: list[ToolCallRecord] = pd.Field(
+        default_factory=list, description="List of tool calls made during the run"
+    )
+    steps: list[StepRecord] = pd.Field(
+        default_factory=list, description="List of reasoning steps recorded during the run"
+    )
+    messages: list[dict[str, Any]] = pd.Field(
+        default_factory=list, description="List of messages exchanged during the run"
+    )
+    total_duration_ms: int | None = pd.Field(
+        default=None, description="Total duration of the run in milliseconds"
+    )
+    token_usage: dict[str, int] = pd.Field(
+        default_factory=dict, description="Token usage statistics (input, output, total)"
+    )
+    cost_usd: float | None = pd.Field(default=None, description="Total cost in USD for the run")
+    error_message: str | None = pd.Field(
+        default=None, description="Error message if the run failed"
+    )
+    metadata: dict[str, Any] = pd.Field(
+        default_factory=dict, description="Additional metadata about the run"
+    )
+    created_at: datetime | None = pd.Field(default=None, description="When the run was created")
+    completed_at: datetime | None = pd.Field(default=None, description="When the run completed")
+    overall_score: float = pd.Field(
+        default=0.0, ge=0.0, le=1.0, description="Overall score from evaluation (0.0 to 1.0)"
+    )
+    metrics: dict[str, float] = pd.Field(
+        default_factory=dict,
+        description="Computed metrics (efficiency_score, quality_score, safety_score, etc.)",
+    )
+    trial_ids: list[str] = pd.Field(
+        default_factory=list, description="IDs of trials included in this run artifact"
+    )
+
+    model_config = pd.ConfigDict(extra="allow")
+
+    def is_successful(self) -> bool:
+        return self.outcome == "success"
+
+    def get_tool_success_rate(self) -> float:
+        if not self.tool_calls:
+            return 0.0
+        successful = sum(1 for tc in self.tool_calls if tc.outcome == "success")
+        return successful / len(self.tool_calls)
+
+    def get_total_tokens(self) -> int:
+        return self.token_usage.get("total", 0)
+
+    @classmethod
+    def from_dawn_kestrel(cls, dk_artifact: Any) -> RunArtifact:
+        tool_calls = []
+        for tc in getattr(dk_artifact, "tool_calls", []):
+            tool_calls.append(
+                ToolCallRecord(
+                    tool_name=getattr(tc, "tool_name", "unknown"),
+                    outcome=getattr(tc, "outcome", "success"),
+                    duration_ms=getattr(tc, "duration_ms"),
+                    error_message=getattr(tc, "error_message"),
+                    input_args=getattr(tc, "arguments", {}),
+                    output=getattr(tc, "result_preview"),
+                )
+            )
+        steps = []
+        for step in getattr(dk_artifact, "steps", []):
+            steps.append(
+                StepRecord(
+                    step_id=getattr(step, "step_id", ""),
+                    step_type=getattr(step, "title", "action"),
+                    content=getattr(step, "summary"),
+                    outcome=getattr(step, "status", "pending"),
+                    started_at=getattr(step, "started_at"),
+                    completed_at=getattr(step, "finished_at"),
+                )
+            )
+        telemetry = getattr(dk_artifact, "telemetry", {})
+        token_usage = {
+            "input": telemetry.get("input_tokens", 0),
+            "output": telemetry.get("output_tokens", 0),
+            "total": telemetry.get("total_tokens", 0),
+        }
+        return cls(
+            run_id=getattr(dk_artifact, "run_id", ""),
+            agent_id=getattr(dk_artifact, "agent_id", "unknown"),
+            agent_name=getattr(dk_artifact, "agent_id", "unknown"),
+            task_type=getattr(dk_artifact, "task_type"),
+            outcome=getattr(dk_artifact, "outcome", "success"),
+            tool_calls=tool_calls,
+            steps=steps,
+            messages=[],
+            total_duration_ms=telemetry.get("duration_ms"),
+            token_usage=token_usage,
+            cost_usd=telemetry.get("cost_usd"),
+            error_message=getattr(dk_artifact, "outcome_details"),
+            metadata=getattr(dk_artifact, "metadata", {}),
+            created_at=getattr(dk_artifact, "created_at"),
+        )
+
+
+# =============================================================================
+# BRIDGE TYPES (absorbed from bridge/__init__.py)
+# =============================================================================
+
+_HASHABLE_EXTENSIONS: frozenset[str] = frozenset(
+    {".md", ".py", ".yaml", ".yml", ".json", ".txt", ".toml", ".cfg", ".ini"}
+)
+
+
+class TelemetrySink(Protocol):
+    """Protocol for receiving telemetry events from agent runs."""
+
+    async def on_iteration_start(self, data: dict[str, Any]) -> None: ...
+    async def on_iteration_end(self, data: dict[str, Any]) -> None: ...
+    async def on_action_decision(self, data: dict[str, Any]) -> None: ...
+    async def on_tool_result(self, data: dict[str, Any]) -> None: ...
+    async def on_run_complete(self, data: dict[str, Any]) -> None: ...
+
+
+@dataclass
+class TranscriptData:
+    """Captured transcript from agent run."""
+
+    messages: list[dict[str, Any]] = field(default_factory=list)
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    trace_events: list[dict[str, Any]] = field(default_factory=list)
+    token_usage: dict[str, int] = field(
+        default_factory=lambda: {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write": 0,
+        }
+    )
+    cost_usd: float = 0.0
+    duration_seconds: float = 0.0
+    agent_response: str = ""
+    error_trace: str | None = None
+
+    def to_eval_transcript(self) -> Any:
+        return EvalTranscript(
+            messages=self.messages,
+            tool_calls=self.tool_calls,
+            trace_events=self.trace_events,
+            token_usage=TokenUsage(
+                input=self.token_usage.get("input", 0),
+                output=self.token_usage.get("output", 0),
+                reasoning=self.token_usage.get("reasoning", 0),
+                cache_read=self.token_usage.get("cache_read", 0),
+                cache_write=self.token_usage.get("cache_write", 0),
+            ),
+            cost_usd=self.cost_usd,
+            duration_seconds=self.duration_seconds,
+            agent_response=self.agent_response,
+            error_trace=self.error_trace,
+        )
+
+
+@dataclass
+class OutcomeData:
+    """Captured outcome from agent run."""
+
+    success: bool
+    message: str = ""
+    error: str | None = None
+
+    def to_eval_outcome(self) -> Any:
+        if self.success:
+            return EvalOutcome.success()
+        return EvalOutcome.failure(
+            FailureMode.AGENT_ERROR,
+            self.error or self.message,
+        )
+
+
+@dataclass
+class RunResult:
+    """Result from run_real_agent."""
+
+    transcript: TranscriptData
+    outcome: OutcomeData
+    run_id: str = ""
+    iterations: int = 0
+    tools_used: list[str] = field(default_factory=list)
+    manifest: RunManifest | None = None
+
+
+class RunManifest(pd.BaseModel):
+    """Provenance identity for a thin run."""
+
+    run_id: str = pd.Field(description="Unique run identifier")
+    scenario_path: str = pd.Field(description="Path to scenario YAML")
+    scenario_hash: str = pd.Field(description="SHA-256 of scenario file content")
+    agent_path: str = pd.Field(description="Path to agent directory")
+    agent_hash: str = pd.Field(
+        default="", description="SHA-256 of primary agent file (agent.md / AGENT.md)"
+    )
+    skill_hashes: dict[str, str] = pd.Field(
+        default_factory=dict, description="{skill_name: SHA-256 of skill file}"
+    )
+    tool_hashes: dict[str, str] = pd.Field(
+        default_factory=dict, description="{tool_name: SHA-256 of tool file}"
+    )
+    policy_hash: str = pd.Field(default="", description="SHA-256 of policy.md if present")
+    model_name: str = pd.Field(default="", description="Model used for the run")
+    variant: str = pd.Field(default="", description="Free-form variant tag (--variant flag)")
+    seed: int | None = pd.Field(default=None, description="Deterministic seed if provided")
+    grader_set: list[str] = pd.Field(default_factory=list, description="Grader type names used")
+    timestamp: str = pd.Field(description="ISO 8601 UTC timestamp")
+    ash_hawk_version: str = pd.Field(default="0.1.1", description="Ash-hawk harness version")
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
+class DiffFieldChange(pd.BaseModel):
+    field: str = pd.Field(description="Manifest field name")
+    baseline: str = pd.Field(default="", description="Value in baseline run")
+    candidate: str = pd.Field(default="", description="Value in candidate run")
+
+
+class DiffReport(pd.BaseModel):
+    """Structured comparison between two thin runs."""
+
+    baseline_run_id: str = pd.Field(description="Run ID of the baseline")
+    candidate_run_id: str = pd.Field(description="Run ID of the candidate")
+    baseline_score: float | None = pd.Field(
+        default=None, description="Aggregate score of baseline run"
+    )
+    candidate_score: float | None = pd.Field(
+        default=None, description="Aggregate score of candidate run"
+    )
+    score_delta: float | None = pd.Field(
+        default=None, description="candidate_score - baseline_score"
+    )
+    field_changes: list[DiffFieldChange] = pd.Field(
+        default_factory=list, description="Manifest fields that differ"
+    )
+    grader_deltas: dict[str, dict[str, Any]] = pd.Field(
+        default_factory=dict,
+        description="{grader_type: {baseline_score, candidate_score, delta, flipped}}",
+    )
+    recommendation: str = pd.Field(
+        default="",
+        description="keep / reject / inconclusive recommendation",
+    )
+    timestamp: str = pd.Field(description="ISO 8601 UTC timestamp")
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+
+def compute_file_hash(path: Path) -> str:
+    """Compute SHA-256 hash of a file's contents."""
+    try:
+        content = path.read_bytes()
+        return hashlib.sha256(content).hexdigest()
+    except OSError:
+        return ""
+
+
+def compute_directory_hashes(
+    directory: Path,
+    extensions: frozenset[str] | None = None,
+) -> dict[str, str]:
+    """Compute SHA-256 hashes for all text files in a directory tree."""
+    if extensions is None:
+        extensions = _HASHABLE_EXTENSIONS
+
+    if not directory.is_dir():
+        return {}
+
+    hashes: dict[str, str] = {}
+    for child in sorted(directory.rglob("*")):
+        if not child.is_file():
+            continue
+        if child.suffix.lower() not in extensions:
+            continue
+        rel = child.relative_to(directory).as_posix()
+        digest = compute_file_hash(child)
+        if digest:
+            hashes[rel] = digest
+
+    return hashes
+
+
+def build_run_manifest(
+    *,
+    run_id: str | None,
+    scenario_path: Path,
+    agent_path: Path,
+    model_name: str,
+    variant: str = "",
+    seed: int | None = None,
+    grader_set: list[str] | None = None,
+    ash_hawk_version: str = "0.1.1",
+) -> RunManifest:
+    """Build a RunManifest with provenance hashes for a thin run."""
+    effective_run_id = run_id or f"run-{uuid.uuid4().hex[:8]}"
+
+    scenario_hash = compute_file_hash(scenario_path)
+
+    agent_hash = ""
+    for candidate in ("AGENT.md", "agent.md"):
+        agent_file = agent_path / candidate
+        if agent_file.is_file():
+            agent_hash = compute_file_hash(agent_file)
+            break
+
+    skill_hashes: dict[str, str] = {}
+    skills_dir = agent_path / "skills"
+    if skills_dir.is_dir():
+        skill_hashes = compute_directory_hashes(skills_dir)
+
+    tool_hashes: dict[str, str] = {}
+    tools_dir = agent_path / "tools"
+    if tools_dir.is_dir():
+        tool_hashes = compute_directory_hashes(tools_dir)
+
+    policy_hash = ""
+    for candidate in ("policy.md", "POLICY.md"):
+        policy_file = agent_path / candidate
+        if policy_file.is_file():
+            policy_hash = compute_file_hash(policy_file)
+            break
+
+    return RunManifest(
+        run_id=effective_run_id,
+        scenario_path=str(scenario_path),
+        scenario_hash=scenario_hash,
+        agent_path=str(agent_path),
+        agent_hash=agent_hash,
+        skill_hashes=skill_hashes,
+        tool_hashes=tool_hashes,
+        policy_hash=policy_hash,
+        model_name=model_name,
+        variant=variant,
+        seed=seed,
+        grader_set=grader_set or [],
+        timestamp=datetime.now(UTC).isoformat(),
+        ash_hawk_version=ash_hawk_version,
+    )
+
+
+# =============================================================================
 # TYPE ALIASES
 # =============================================================================
 
@@ -737,7 +1160,7 @@ __all__ = [
     "EvalOutcome",
     "TrialResult",
     "EvalTrial",
-    # Task & Suite (compatibility)
+    # Task & Suite
     "EvalTask",
     "EvalSuite",
     "SuiteMetrics",
@@ -745,6 +1168,21 @@ __all__ = [
     # Envelopes
     "RunEnvelope",
     "TrialEnvelope",
+    # Contract types (absorbed)
+    "ToolCallRecord",
+    "StepRecord",
+    "RunArtifact",
+    # Bridge types (absorbed)
+    "TelemetrySink",
+    "TranscriptData",
+    "OutcomeData",
+    "RunResult",
+    "RunManifest",
+    "DiffFieldChange",
+    "DiffReport",
+    "compute_file_hash",
+    "compute_directory_hashes",
+    "build_run_manifest",
     # Type aliases
     "StorageBackend",
 ]

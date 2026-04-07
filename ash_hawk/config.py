@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import logging
 import os
 from pathlib import Path
 from typing import Literal
@@ -19,6 +21,7 @@ from ash_hawk.types import ToolSurfacePolicy
 
 __all__ = [
     "EvalConfig",
+    "StructuredFormatter",
     "config",
     "get_config",
     "reload_config",
@@ -223,3 +226,20 @@ def reload_config() -> EvalConfig:
     global config
     config = EvalConfig()
     return config
+
+
+class StructuredFormatter(logging.Formatter):
+    """JSON structured log formatter for Ash Hawk."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        base: dict[str, object] = {
+            "ts": self.formatTime(record),
+            "level": record.levelname,
+            "module": record.module,
+            "msg": record.getMessage(),
+        }
+        if hasattr(record, "trial_id"):
+            base["trial_id"] = record.trial_id
+        if record.exc_info:
+            base["error"] = self.formatException(record.exc_info)
+        return json.dumps(base)

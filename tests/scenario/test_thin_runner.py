@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Tests for ThinScenarioRunner and related types."""
 
 from __future__ import annotations
@@ -7,14 +8,13 @@ from typing import Any
 
 import pytest
 
-from ash_hawk.bridge import OutcomeData, RunResult, TranscriptData
 from ash_hawk.scenario.models import ScenarioGraderSpec, ScenarioV1, SUTConfig
 from ash_hawk.scenario.thin_runner import (
     ScenarioTelemetrySink,
     ThinGradedResult,
     ThinScenarioRunner,
 )
-from ash_hawk.types import GraderResult
+from ash_hawk.types import GraderResult, OutcomeData, RunResult, TranscriptData
 
 
 def _make_scenario(

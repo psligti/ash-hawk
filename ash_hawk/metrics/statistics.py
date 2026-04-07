@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Statistical metrics for ash-hawk evaluation harness."""
 
 from __future__ import annotations

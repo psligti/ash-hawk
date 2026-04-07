@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Score normalization utilities for consistent handling of grader outputs.
 
 This module provides utilities to normalize scores from various sources

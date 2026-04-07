@@ -1,12 +1,12 @@
-"""Tests for ash_hawk.execution.runner module."""
+"""Tests for ash_hawk.scenario.runner module (absorbed from execution/)."""
 
 import asyncio
 
 import pytest
 
 from ash_hawk.config import EvalConfig
-from ash_hawk.execution import EvalRunner, TrialExecutor
 from ash_hawk.policy import PolicyEnforcer
+from ash_hawk.scenario import EvalRunner, TrialExecutor
 from ash_hawk.storage import StoredTrial
 from ash_hawk.types import (
     EvalOutcome,
@@ -408,7 +408,7 @@ class TestEvalRunnerEmptySuite:
 
 class TestResourceTracker:
     def test_init_zero_values(self):
-        from ash_hawk.execution.runner import ResourceTracker
+        from ash_hawk.scenario.runner import ResourceTracker
 
         tracker = ResourceTracker()
         assert tracker.total_tokens.input == 0
@@ -417,7 +417,7 @@ class TestResourceTracker:
 
     @pytest.mark.asyncio
     async def test_add_trial_usage_accumulates(self):
-        from ash_hawk.execution.runner import ResourceTracker
+        from ash_hawk.scenario.runner import ResourceTracker
 
         tracker = ResourceTracker()
 
@@ -440,7 +440,7 @@ class TestResourceTracker:
 
     @pytest.mark.asyncio
     async def test_concurrent_add_trial_usage_is_thread_safe(self):
-        from ash_hawk.execution.runner import ResourceTracker
+        from ash_hawk.scenario.runner import ResourceTracker
 
         tracker = ResourceTracker()
 

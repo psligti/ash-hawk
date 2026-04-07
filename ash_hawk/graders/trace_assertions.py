@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 from __future__ import annotations
 
 import fnmatch

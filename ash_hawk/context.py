@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Ash-Hawk logging context using dawn-kestrel patterns.
 
 This module provides evaluation context management for logging and

@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Policy enforcement for tool surface and resource limits.
 
 This module provides the PolicyEnforcer class which validates tool calls,

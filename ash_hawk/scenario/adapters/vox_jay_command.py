@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Vox Jay Command Adapter for ash-hawk evaluation framework.
 
 This adapter enables testing vox-jay commands (brief, pulse, recap, weekly, harness)

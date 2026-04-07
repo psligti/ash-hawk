@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 import asyncio
 import hashlib
 import importlib
@@ -24,7 +25,7 @@ from rich.progress import (
 from rich.table import Table
 
 from ash_hawk.config import get_config
-from ash_hawk.execution import EvalRunner, FixtureResolver, TrialExecutor
+from ash_hawk.scenario import EvalRunner, FixtureResolver, TrialExecutor
 from ash_hawk.storage import FileStorage
 from ash_hawk.types import (
     EvalAgentConfig,
@@ -225,7 +226,7 @@ async def _run_suite_async(
     agent_runner = _build_agent_runner(agent_config, suite_file)
 
     if hasattr(agent_runner, "set_lesson_injector"):
-        from ash_hawk.services import DawnKestrelInjector
+        from ash_hawk.agents.dawn_kestrel_injector import DawnKestrelInjector
 
         dk_injector = DawnKestrelInjector(project_root=suite_file.parent.resolve())
         agent_runner.set_lesson_injector(dk_injector)

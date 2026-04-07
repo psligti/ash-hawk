@@ -1,0 +1,34 @@
+schema_version: "v1"
+id: "bolt_merlin_eval_pack"
+description: "Analysis eval pack for bolt-merlin — calibration, grader evaluation, threshold optimization"
+target_agent: "bolt-merlin"
+
+scenarios:
+  - scenario: "./calibration-analysis.scenario.yaml"
+    weight: 0.40
+    focus:
+      - "calibration"
+      - "prediction_accuracy"
+      - "disagreement_analysis"
+
+  - scenario: "./grader-evaluation.scenario.yaml"
+    weight: 0.35
+    focus:
+      - "grader_consistency"
+      - "discrimination"
+      - "weakness_patterns"
+
+  - scenario: "./threshold-optimization.scenario.yaml"
+    weight: 0.25
+    focus:
+      - "threshold_sensitivity"
+      - "edge_cases"
+      - "optimization"
+
+global_budgets:
+  max_steps: 40
+  max_tool_calls: 30
+  max_tokens: 8000
+  max_time_seconds: 240.0
+
+pass_threshold: 0.70

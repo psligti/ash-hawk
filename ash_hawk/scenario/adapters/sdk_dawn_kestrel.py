@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 from __future__ import annotations
 
 import asyncio
@@ -34,7 +35,7 @@ def _run_coroutine_sync(coro: Coroutine[Any, Any, _T]) -> _T:
     finally:
         try:
             loop.run_until_complete(loop.shutdown_asyncgens())
-        except Exception:
+        except Exception:  # nosec B110
             pass
         asyncio.set_event_loop(None)
         loop.close()

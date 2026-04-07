@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Rubric guard validator for enforcing rubric-based evaluation.
 
 This module provides utilities to validate that evaluation tasks

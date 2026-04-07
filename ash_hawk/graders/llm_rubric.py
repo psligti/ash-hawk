@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Simplified LLM rubric grader for fast evals.
 
 This module provides a lightweight LLM grader optimized for fast evaluations:

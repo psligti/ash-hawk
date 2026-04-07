@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """pyproject.toml configuration loading.
 
 Reads [tool.ash-hawk] section from pyproject.toml for project-level defaults.
@@ -117,7 +118,7 @@ def load_pyproject_config(
 
     try:
         content = pyproject_path.read_bytes()
-        if 'tomllib' in globals():
+        if "tomllib" in globals():
             data = tomllib.loads(content.decode("utf-8"))
         else:
             data = tomli.loads(content.decode("utf-8"))

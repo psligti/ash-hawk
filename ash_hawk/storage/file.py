@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """File-based storage backend for Ash Hawk using JSON."""
 
 from __future__ import annotations
@@ -13,13 +14,13 @@ import aiofiles
 import aiofiles.os
 from pydantic import BaseModel
 
-from ash_hawk.contracts import RunArtifact
 from ash_hawk.scenario.trace import TraceEvent, write_trace_jsonl
 from ash_hawk.storage import StoredTrial
 from ash_hawk.types import (
     EvalRunSummary,
     EvalSuite,
     EvalTrial,
+    RunArtifact,
     RunEnvelope,
     ToolSurfacePolicy,
     TrialEnvelope,

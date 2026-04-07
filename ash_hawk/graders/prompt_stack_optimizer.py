@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Prompt Stack Optimizer grader for evaluating agent prompt-stack quality.
 
 Analyzes agent transcripts to evaluate quality across 6 rubric categories

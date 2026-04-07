@@ -1,0 +1,137 @@
+schema_version: "v1"
+id: "bolt_merlin_grader_evaluation"
+description: "Evaluates grader consistency, discrimination ability, and weakness patterns"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "bolt_merlin"
+  config:
+    agent: "execution"
+
+inputs:
+  prompt: |
+    You have access to grader performance data from recent evaluation runs.
+    Perform a complete grader reliability analysis in three parts:
+
+    PART 1: GRADER CONSISTENCY
+    - Analyze grader consistency across similar or repeated inputs
+    - Identify score variance, inconsistent judgments, systematic biases
+    - Measure intra-grader consistency and score stability
+    - Report bias patterns if found
+
+    PART 2: GRADER DISCRIMINATION
+    - Analyze how well the grader discriminates between different quality levels
+    - Identify score separation, clear vs ambiguous cases, threshold behavior
+    - Measure discrimination power and edge case handling
+    - Report score spread analysis
+
+    PART 3: GRADER WEAKNESSES
+    - Identify patterns of grader weaknesses or failure modes
+    - Analyze task types with poor accuracy, systematic errors, blind spots
+    - Assess difficulty calibration across score ranges
+    - Recommend specific improvements
+
+    Use bash to list files and read to examine the grader performance data.
+    End with a summary: "GRADER REPORT: consistency=X.XX, discrimination=X.XX, N weaknesses found"
+
+tools:
+  allowed_tools:
+    - "bash"
+    - "read"
+  mocks:
+    bash:
+      input: {}
+      result:
+        stdout: "grader_results/llm_judge.json\ngrader_results/trace_quality.json\ngrader_results/consistency_report.json\n"
+        stderr: ""
+        exit_code: 0
+    read:
+      input: {}
+      result:
+        content: |
+          {
+            "grader": "llm_judge",
+            "evaluations": [
+              {"task_id": "t1", "scores": [0.8, 0.82, 0.79], "actual_quality": "high"},
+              {"task_id": "t2", "scores": [0.5, 0.7, 0.45], "actual_quality": "medium"},
+              {"task_id": "t3", "scores": [0.3, 0.35, 0.28], "actual_quality": "low"},
+              {"task_id": "t4", "scores": [0.9, 0.88, 0.91], "actual_quality": "high"},
+              {"task_id": "t5", "scores": [0.6, 0.55, 0.65], "actual_quality": "medium"},
+              {"task_id": "t6", "scores": [0.85, 0.5, 0.82], "actual_quality": "high"}
+            ],
+            "consistency_metrics": {
+              "mean_variance": 0.023,
+              "worst_task": "t6",
+              "best_task": "t4"
+            },
+            "discrimination": {
+              "high_vs_medium_separation": 0.27,
+              "medium_vs_low_separation": 0.22,
+              "overlap_rate": 0.15
+            }
+          }
+  fault_injection: {}
+
+budgets:
+  max_steps: 40
+  max_tool_calls: 30
+  max_tokens: 8000
+  max_time_seconds: 240.0
+
+expectations:
+  must_events:
+    - "ToolCallEvent"
+    - "ModelMessageEvent"
+  must_not_events: []
+  ordering_rules:
+    - before: "ToolCallEvent"
+      after: "ModelMessageEvent"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "transcript_validity"
+    required: true
+    config: {}
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "trace_content"
+    required: true
+    config:
+      required_event_types:
+        - "ToolCallEvent"
+        - "ModelMessageEvent"
+      required_tool_calls:
+        - tool: "bash"
+          min_calls: 1
+        - tool: "read"
+          min_calls: 1
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 40
+      max_tool_calls: 30
+  - grader_type: "trace_quality"
+    weight: 0.4
+    config:
+      target_tool_calls: 6
+      tool_call_penalty: 0.08
+      rejection_penalty: 0.1
+      max_penalty: 0.4
+      pass_threshold: 0.7
+  - grader_type: "llm_judge"
+    weight: 0.6
+    config:
+      rubric: |
+        Score based on grader evaluation completeness:
+        - 1.0: All three parts covered with consistency metrics, discrimination analysis, and weakness patterns
+        - 0.7: Two parts covered with quantitative metrics
+        - 0.4: One part covered or only qualitative observations
+        - 0.0: No meaningful grader evaluation
+      model: glm-4-flash
+  - grader_type: "summary_truthfulness"
+    required: true
+    config:
+      summary_regex: "GRADER REPORT:.*consistency=\\d+\\.\\d+.*discrimination=\\d+\\.\\d+"
+      strict_match: false

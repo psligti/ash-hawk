@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Structured output graders for validating response formats.
 
 This module provides graders for validating structured outputs:

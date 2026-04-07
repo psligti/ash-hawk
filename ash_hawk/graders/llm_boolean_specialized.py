@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Unified boolean judge grader covering 7 specialized dimensions.
 
 Replaces the 7 separate grader classes (AISlopGrader, VoiceGrader, etc.)

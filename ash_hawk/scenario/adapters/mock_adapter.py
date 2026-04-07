@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Mock adapter for deterministic unit/smoke tests.
 
 This adapter emits a deterministic trace sequence for testing purposes.

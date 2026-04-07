@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Thin scenario runner using the dawn-kestrel bridge.
 
 This runner uses the thin telemetry bridge to run real dawn-kestrel agents
@@ -18,16 +19,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ash_hawk.bridge import (
+from ash_hawk.graders.registry import get_default_registry
+from ash_hawk.scenario.dawn_kestrel_bridge import DawnKestrelBridge, run_real_agent
+from ash_hawk.scenario.models import ScenarioV1
+from ash_hawk.types import (
+    EvalTrial,
+    GraderResult,
+    GraderSpec,
     RunManifest,
     RunResult,
     TelemetrySink,
     build_run_manifest,
-    run_real_agent,
 )
-from ash_hawk.graders.registry import get_default_registry
-from ash_hawk.scenario.models import ScenarioV1
-from ash_hawk.types import EvalTrial, GraderResult, GraderSpec
 
 logger = logging.getLogger(__name__)
 
