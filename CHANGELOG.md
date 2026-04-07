@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-04-06
+
+### Changed
+
+- Fallback diagnosis now returns uncertainty 0.55 (was 1.0) and action "experiment" (was "observe") to break death spirals where empty hypotheses trap the loop forever
+- Diagnosis prompt truncation limit raised from 2000 to 8000 characters for richer LLM context
+
+### Added
+
+- `has_promotable_patterns` parameter in `DiagnosisEngine.diagnose()` and `_recommend_action()` — returns "promote" when promotable patterns exist and uncertainty is low (<0.2)
+- Consecutive-observe counter in `ResearchLoop._decide()` — forces FIX after 2 consecutive observes to prevent infinite observe loops
+- All-zero score detection in `_run_evaluation()` — logs adapter error traces when every score is 0.0
+
+### Fixed
+
+- Research loop death spiral: loops with no LLM client or malformed responses would observe forever instead of experimenting or fixing
+- Updated test assertions to match new fallback behavior
+
+
 ## [0.2.0] - 2026-04-01
 
 ### Added

@@ -61,6 +61,7 @@ class DiagnosisEngine:
         scores: dict[str, float],
         experiment_log_path: Path | None = None,
         grader_details: dict[str, Any] | None = None,
+        has_promotable_patterns: bool = False,
     ) -> DiagnosisReport:
         if not eval_results:
             return _fallback_diagnosis("unknown")
@@ -90,7 +91,9 @@ class DiagnosisEngine:
 
         primary = max(hypotheses, key=lambda h: h.confidence)
         uncertainty = _calculate_uncertainty(hypotheses)
-        recommended_action = _recommend_action(uncertainty)
+        recommended_action = _recommend_action(
+            uncertainty, has_promotable_patterns=has_promotable_patterns
+        )
 
         cause_categories = _unique_cause_categories(hypotheses)
         diagnosis_id = uuid.uuid4().hex
@@ -176,7 +179,7 @@ def _build_prompt(
         f"{log_path}"
     )
 
-    return prompt[:2000]
+    return prompt[:8000]
 
 
 def _summarize_eval_results(eval_results: dict[str, float]) -> str:
@@ -400,7 +403,13 @@ def _calculate_uncertainty(hypotheses: list[CompetingHypothesis]) -> float:
     return max(0.0, min(1.0, 1.0 - max_confidence))
 
 
-def _recommend_action(uncertainty_level: float) -> str:
+def _recommend_action(
+    uncertainty_level: float,
+    *,
+    has_promotable_patterns: bool = False,
+) -> str:
+    if has_promotable_patterns and uncertainty_level < 0.2:
+        return "promote"
     if uncertainty_level > 0.6:
         return "observe"
     if uncertainty_level > 0.3:
@@ -427,9 +436,9 @@ def _fallback_diagnosis(run_id: str) -> DiagnosisReport:
         cause_categories=[CauseCategory.UNKNOWN],
         hypotheses=[],
         primary_hypothesis=None,
-        uncertainty_level=1.0,
+        uncertainty_level=0.55,
         missing_signals=[],
-        recommended_action="observe",
+        recommended_action="experiment",
     )
 
 

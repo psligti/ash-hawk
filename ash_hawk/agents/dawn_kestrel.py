@@ -1,3 +1,4 @@
+# type-hygiene: skip-file  # dawn-kestrel integration uses dynamic Any for SDK compatibility
 """Dawn-Kestrel agent runner implementation.
 
 This module provides integration between ash-hawk and the dawn-kestrel
@@ -350,7 +351,7 @@ class _SinglePassRuntime:
             max_tokens=self._config.get("max_tokens", self._runner._kwargs.get("max_tokens")),
         )
 
-        max_iterations = int(self._config.get("max_tool_iterations", 3) or 3)
+        max_iterations = int(self._config.get("max_tool_iterations", 50) or 50)
         response: Any | None = None
 
         for iteration in range(max_iterations):

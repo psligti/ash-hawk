@@ -139,6 +139,7 @@ class EvaluationSnapshot:
     previous_score: float
     score_delta: float
     grader_details: dict[str, Any] | None
+    transcripts: list[EvalTranscript] | None = None
 
 
 class ResearchLoop:
@@ -172,6 +173,7 @@ class ResearchLoop:
         self._latest_eval: EvaluationSnapshot | None = None
         self._project_root: Path | None = None
         self._pending_revert: tuple[str, str] | None = None
+        self._consecutive_observes: int = 0
 
     async def run(
         self,
@@ -286,6 +288,10 @@ class ResearchLoop:
         self._latest_eval = evaluation
         self._diagnosis_count += 1
 
+        has_promotable = any(
+            self._strategy_promoter.should_promote(p)
+            for p in self._strategy_promoter.get_candidate_patterns()
+        )
         async with progress_indicator(f"Iter {iteration + 1}: Diagnosing"):
             report = await self._diagnosis_engine.diagnose(
                 eval_results=evaluation.eval_results,
@@ -293,8 +299,11 @@ class ResearchLoop:
                 scores=evaluation.scores,
                 experiment_log_path=None,
                 grader_details=evaluation.grader_details,
+                has_promotable_patterns=has_promotable,
             )
         return report
+
+    _MAX_CONSECUTIVE_OBSERVES = 2
 
     def _decide(self, diagnosis: DiagnosisReport, iteration: int) -> ResearchDecision:
         """Decide next action based on diagnosis and uncertainty state."""
@@ -303,7 +312,14 @@ class ResearchLoop:
             self._uncertainty.uncertainty_level,
         )
 
-        if effective_uncertainty > self._config.uncertainty_threshold:
+        # Force FIX after too many consecutive observes to break death spirals.
+        # Without this, fallback diagnoses with no hypotheses trap the loop forever.
+        if (
+            self._consecutive_observes >= self._MAX_CONSECUTIVE_OBSERVES
+            and self._project_root is not None
+        ):
+            action = ResearchAction.FIX
+        elif effective_uncertainty > self._config.uncertainty_threshold:
             action = ResearchAction.OBSERVE
         elif diagnosis.recommended_action == "promote":
             action = ResearchAction.PROMOTE
@@ -313,6 +329,11 @@ class ResearchLoop:
             action = ResearchAction.EXPERIMENT
         else:
             action = ResearchAction.FIX
+
+        if action is ResearchAction.OBSERVE:
+            self._consecutive_observes += 1
+        else:
+            self._consecutive_observes = 0
 
         target: str | None = None
         if action is not ResearchAction.OBSERVE:
@@ -457,7 +478,9 @@ class ResearchLoop:
             return
 
         evaluation = self._latest_eval
-        transcripts: list[EvalTranscript] = []
+        transcripts: list[EvalTranscript] = (
+            evaluation.transcripts if evaluation and evaluation.transcripts else []
+        )
         category_scores = evaluation.category_scores if evaluation else None
 
         async with progress_indicator(f"Fix → {match.name}"):
@@ -537,7 +560,7 @@ class ResearchLoop:
         iteration: int,
     ) -> EvaluationSnapshot | None:
         if not scenarios:
-            return self._build_snapshot(0.0, {}, [], {}, None, iteration)
+            return self._build_snapshot(0.0, {}, [], {}, None, iteration, [])
 
         scenario_names = [p.stem for p in scenarios]
         tracker = ScenarioProgressTracker(
@@ -583,6 +606,7 @@ class ResearchLoop:
         trace_events: list[dict[str, str | int | float | bool | list[str]]] = []
         category_scores: dict[str, float] = {}
         grader_details: dict[str, Any] | None = None
+        transcripts: list[EvalTranscript] = []
 
         for trial in summary.trials:
             result = trial.result
@@ -593,8 +617,28 @@ class ResearchLoop:
             category_scores = self._merge_category_scores(category_scores, result.grader_results)
             if grader_details is None:
                 grader_details = self._extract_emotional_details(result.grader_results)
+            transcripts.append(result.transcript)
 
         mean_score = float(summary.metrics.mean_score)
+
+        all_zero = eval_results and all(v == 0.0 for v in eval_results.values())
+        if all_zero:
+            error_traces = [
+                t.result.transcript.error_trace
+                for t in summary.trials
+                if t.result is not None and t.result.transcript.error_trace
+            ]
+            if error_traces:
+                first_error = error_traces[0][:200]
+                _console.print(
+                    f"[red]  All scores 0.0 — adapter likely failed: {first_error}[/red]"
+                )
+            else:
+                _console.print("[red]  All scores 0.0 — no agent output produced[/red]")
+            logger.warning(
+                "Iteration %d: all evaluation scores are 0.0 — check adapter configuration",
+                iteration,
+            )
         return self._build_snapshot(
             mean_score,
             eval_results,
@@ -602,6 +646,7 @@ class ResearchLoop:
             category_scores,
             grader_details,
             iteration,
+            transcripts,
         )
 
     def _build_snapshot(
@@ -612,6 +657,7 @@ class ResearchLoop:
         category_scores: dict[str, float],
         grader_details: dict[str, Any] | None,
         iteration: int,
+        transcripts: list[EvalTranscript] | None = None,
     ) -> EvaluationSnapshot:
         if not eval_results:
             eval_results["mean_score"] = mean_score
@@ -639,6 +685,7 @@ class ResearchLoop:
             previous_score=previous_score,
             score_delta=score_delta,
             grader_details=grader_details,
+            transcripts=transcripts or [],
         )
 
     @staticmethod
