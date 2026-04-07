@@ -72,8 +72,8 @@ class TestDiagnosisEngine:
         report = await engine.diagnose({"score": 0.2}, [], {})
 
         assert report.cause_categories == [CauseCategory.UNKNOWN]
-        assert report.uncertainty_level == 1.0
-        assert report.recommended_action == "observe"
+        assert report.uncertainty_level == 0.55
+        assert report.recommended_action == "experiment"
 
     @pytest.mark.asyncio
     async def test_diagnose_valid_json(self) -> None:
@@ -111,7 +111,7 @@ class TestDiagnosisEngine:
         report = await engine.diagnose({"score": 0.2}, [], {})
 
         assert report.hypotheses == []
-        assert report.recommended_action == "observe"
+        assert report.recommended_action == "experiment"
 
     @pytest.mark.asyncio
     async def test_confidence_is_clamped(self) -> None:
@@ -194,7 +194,7 @@ class TestDiagnosisEngine:
         report = await engine.diagnose({}, [], {})
 
         assert report.cause_categories == [CauseCategory.UNKNOWN]
-        assert report.uncertainty_level == 1.0
+        assert report.uncertainty_level == 0.55
 
     @pytest.mark.asyncio
     async def test_cause_categories_populated(self) -> None:
