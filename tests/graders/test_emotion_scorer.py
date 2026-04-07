@@ -150,7 +150,7 @@ class TestEmotionScorer:
             patch(
                 "ash_hawk.graders.emotion_scorer.importlib.import_module",
                 side_effect=lambda name: (
-                    module if name == "dawn_kestrel.llm.client" else real_import(name)
+                    module if name == "dawn_kestrel.provider.llm_client" else real_import(name)
                 ),
             ),
             patch("asyncio.sleep", new_callable=AsyncMock) as sleep_mock,

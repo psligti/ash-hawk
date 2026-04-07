@@ -63,7 +63,7 @@ class EmotionScorer:
         for attempt in range(3):
             try:
                 async with self._semaphore:
-                    module = importlib.import_module("dawn_kestrel.llm.client")
+                    module = importlib.import_module("dawn_kestrel.provider.llm_client")
                     request_options = getattr(module, "LLMRequestOptions")
                     options = request_options(
                         temperature=self._config.model_config_ref.temperature,

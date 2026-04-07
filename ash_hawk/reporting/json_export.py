@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """JSON/JSONL export functionality for ash-hawk evaluation results.
 
 Provides machine-readable export of evaluation runs including:

@@ -12,8 +12,9 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from ash_hawk.bridge import DiffFieldChange, DiffReport, RunManifest
+from ash_hawk.agents.agent_resolver import AgentResolutionError, resolve_agent_path
 from ash_hawk.scenario.thin_runner import ThinScenarioRunner
+from ash_hawk.types import DiffFieldChange, DiffReport, RunManifest
 
 console = Console()
 
@@ -34,9 +35,9 @@ def thin() -> None:
     "--agent",
     "-a",
     "agent_path",
-    type=click.Path(exists=True),
+    type=str,
     default=None,
-    help="Path to agent directory (e.g., .dawn-kestrel/agents/bolt-merlin)",
+    help="Agent name or path (e.g., bolt-merlin or .dawn-kestrel/agents/bolt-merlin)",
 )
 @click.option(
     "--max-iterations",
@@ -102,6 +103,15 @@ def run_thin(
 
     effective_storage = Path(storage_root) if storage_root else None
 
+    resolved_agent_path: Path | None = None
+    if agent_path is not None:
+        try:
+            resolution = resolve_agent_path(agent_path, work_dir)
+        except AgentResolutionError as exc:
+            console.print(f"[red]Error:[/red] {exc}")
+            raise SystemExit(1)
+        resolved_agent_path = resolution.path
+
     console.print(f"[cyan]Loading scenario:[/cyan] {scenario.id}")
     if variant:
         console.print(f"[cyan]Variant:[/cyan] {variant}")
@@ -114,7 +124,7 @@ def run_thin(
         max_iterations=max_iterations,
         variant=variant,
         storage_root=effective_storage,
-        agent_override_path=Path(agent_path) if agent_path else None,
+        agent_override_path=resolved_agent_path,
     )
 
     async def _run() -> None:

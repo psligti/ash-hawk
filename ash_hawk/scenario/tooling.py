@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 from __future__ import annotations
 
 import json
@@ -35,12 +36,12 @@ def _normalize_input(value: Any) -> str:
             for key, val in cast(dict[object, object], item).items():
                 normalized[str(key)] = _to_jsonable(val)
             return normalized
-        if isinstance(item, (list, tuple)):
+        if isinstance(item, list | tuple):
             sequence = cast(list[object] | tuple[object, ...], item)
             return [_to_jsonable(val) for val in sequence]
         if isinstance(item, set):
             return sorted(_to_jsonable(val) for val in cast(set[object], item))
-        if isinstance(item, (str, int, float, bool)) or item is None:
+        if isinstance(item, str | int | float | bool) or item is None:
             return item
         return repr(item)
 

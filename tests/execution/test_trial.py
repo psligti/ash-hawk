@@ -1,11 +1,11 @@
-"""Tests for ash_hawk.execution.trial module."""
+"""Tests for ash_hawk.scenario.trial module (absorbed from execution/)."""
 
 import asyncio
 
 import pytest
 
-from ash_hawk.execution import AgentRunner, TrialExecutor
 from ash_hawk.policy import PolicyEnforcer
+from ash_hawk.scenario import AgentRunner, TrialExecutor
 from ash_hawk.storage import StorageBackend, StoredTrial
 from ash_hawk.types import (
     EvalOutcome,
@@ -424,7 +424,7 @@ class TestAgentRunnerProtocol:
     """Test AgentRunner protocol compliance."""
 
     def test_function_runner_implements_protocol(self):
-        from ash_hawk.execution.trial import _FunctionRunner
+        from ash_hawk.scenario.trial import _FunctionRunner
 
         async def sample(
             task: EvalTask, enforcer: PolicyEnforcer, config: dict[str, object]
@@ -437,7 +437,7 @@ class TestAgentRunnerProtocol:
 
     @pytest.mark.asyncio
     async def test_function_runner_returns_correct_types(self):
-        from ash_hawk.execution.trial import _FunctionRunner
+        from ash_hawk.scenario.trial import _FunctionRunner
 
         async def sample(
             task: EvalTask, enforcer: PolicyEnforcer, config: dict[str, object]

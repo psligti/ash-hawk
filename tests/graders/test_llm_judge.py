@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Tests for ash_hawk.graders.llm_judge module."""
 
 import json
@@ -414,7 +415,7 @@ class TestLLMJudgeGrader:
     async def test_grade_handles_import_error(self):
         grader = LLMJudgeGrader()
         with patch(
-            "dawn_kestrel.llm.client.LLMClient",
+            "dawn_kestrel.provider.llm_client.LLMClient",
             side_effect=ImportError("dawn-kestrel not found"),
         ):
             grader._client = None

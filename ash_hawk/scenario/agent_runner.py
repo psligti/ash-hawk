@@ -64,7 +64,7 @@ class ToolingHarnessRecorder:
         return {"value": self._to_json_value(result)}
 
     def _to_json_value(self, value: object) -> JSONValue:
-        if value is None or isinstance(value, (str, int, float, bool)):
+        if value is None or isinstance(value, str | int | float | bool):
             return value
         if isinstance(value, dict):
             return {str(key): self._to_json_value(item) for key, item in value.items()}
@@ -81,12 +81,14 @@ class ScenarioAgentRunner:
         artifacts_root: Path | None = None,
         injector: object | None = None,
         scenario_timeout_seconds: float | None = None,
+        agent_path: Path | None = None,
     ) -> None:
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._tooling_mode = tooling_mode
         self._artifacts_root = artifacts_root
         self._injector = injector
         self._scenario_timeout_seconds = scenario_timeout_seconds
+        self._agent_path = agent_path
 
     async def run(
         self,
@@ -133,6 +135,8 @@ class ScenarioAgentRunner:
             "policy": tool_policy.model_dump(),
             "injector": self._injector,
         }
+        if self._agent_path is not None:
+            tooling_context["agent_path"] = str(self._agent_path)
 
         try:
             raw_adapter_result = await asyncio.to_thread(
@@ -438,7 +442,7 @@ class ScenarioAgentRunner:
         )
 
     def _to_json_value(self, value: object) -> JSONValue:
-        if value is None or isinstance(value, (str, int, float, bool)):
+        if value is None or isinstance(value, str | int | float | bool):
             return value
         if isinstance(value, dict):
             return {str(key): self._to_json_value(item) for key, item in value.items()}

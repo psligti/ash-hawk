@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "ash-hawk"
-version = "0.2.1"
+version = "0.3.0"
 description = "Ash Hawk - Python evaluation harness for AI agents"
 readme = "README.md"
 requires-python = ">=3.11"

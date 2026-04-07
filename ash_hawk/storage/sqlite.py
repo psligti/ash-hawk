@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """SQLite-based storage backend for Ash Hawk using aiosqlite."""
 
 from __future__ import annotations

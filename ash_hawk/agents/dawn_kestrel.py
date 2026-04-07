@@ -10,7 +10,6 @@ from __future__ import annotations
 import ast
 import asyncio
 import importlib
-import inspect
 import json
 import logging
 import os
@@ -22,7 +21,6 @@ from pathlib import Path
 from typing import Any, cast
 
 from ash_hawk.policy import PolicyEnforcer
-from ash_hawk.scenario.trace import DEFAULT_TRACE_TS
 from ash_hawk.types import (
     EvalOutcome,
     EvalTask,
@@ -78,13 +76,10 @@ def _mcp_result_to_text(result: dict[str, Any]) -> str:
 
 def _ensure_eval_command_allowlist() -> None:
     try:
-        security_module = importlib.import_module("dawn_kestrel.core.security")
+        importlib.import_module("dawn_kestrel.base.config")
     except ImportError:
         return
-
-    allowed_commands = getattr(security_module, "ALLOWED_SHELL_COMMANDS", None)
-    if isinstance(allowed_commands, set):
-        allowed_commands.add("rg")
+    # No ALLOWED_SHELL_COMMANDS in new SDK — function is effectively a no-op
 
 
 class _McpStdioClient:
@@ -627,14 +622,10 @@ class DawnKestrelAgentRunner:
 
     def _get_client(self) -> Any:
         if self._client is None:
-            settings_module = importlib.import_module("dawn_kestrel.core.settings")
-            llm_client_module = importlib.import_module("dawn_kestrel.llm.client")
-            get_settings = getattr(settings_module, "get_settings")
+            llm_client_module = importlib.import_module("dawn_kestrel.provider.llm_client")
             llm_client_type = getattr(llm_client_module, "LLMClient")
+            api_key = None  # LLMClient auto-resolves from agent_config.yaml
 
-            settings = get_settings()
-            api_key_secret = settings.get_api_key_for_provider(self._provider)
-            api_key = api_key_secret.get_secret_value() if api_key_secret else None
             env_timeout = os.getenv("ASH_HAWK_LLM_TIMEOUT_SECONDS")
             timeout_value = self._kwargs.get("timeout_seconds", env_timeout)
             timeout_seconds = float(timeout_value) if timeout_value is not None else None
@@ -664,65 +655,12 @@ class DawnKestrelAgentRunner:
         except ImportError:
             tools_framework_module = importlib.import_module("dawn_kestrel.tools.framework")
             default_tool_registry = getattr(tools_framework_module, "ToolRegistry")
-        permission_filter_module = importlib.import_module("dawn_kestrel.tools.permission_filter")
-        tool_permission_filter = getattr(permission_filter_module, "ToolPermissionFilter")
 
         if base_registry is None:
             base_registry = default_tool_registry()
         if not hasattr(base_registry, "tool_metadata"):
             setattr(base_registry, "tool_metadata", {})
-
-        policy = policy_enforcer.policy
-        allowed_tools: list[str] = []
-        denied_tools: list[str] = []
-        if use_policy_filters:
-            allowed_tools = list(policy.allowed_tools) if policy.allowed_tools else []
-            denied_tools = list(policy.denied_tools) if policy.denied_tools else []
-        if allowed_tools_override is not None:
-            allowed_tools = list(allowed_tools_override)
-        if denied_tools_override is not None:
-            denied_tools = list(denied_tools_override)
-
-        init_params = set(inspect.signature(tool_permission_filter.__init__).parameters.keys())
-        filter_kwargs: dict[str, Any] = {"tool_registry": base_registry}
-
-        permissions: list[dict[str, Any]] = []
-        for tool in allowed_tools:
-            permissions.append({"permission": tool, "pattern": "*", "action": "allow"})
-        for tool in denied_tools:
-            permissions.append({"permission": tool, "pattern": "*", "action": "deny"})
-
-        if "allowed_tools" in init_params:
-            filter_kwargs["allowed_tools"] = allowed_tools
-        elif "allowlist" in init_params:
-            filter_kwargs["allowlist"] = allowed_tools
-        elif "permissions" in init_params:
-            filter_kwargs["permissions"] = permissions
-
-        if "denied_tools" in init_params:
-            filter_kwargs["denied_tools"] = denied_tools
-        elif "denylist" in init_params:
-            filter_kwargs["denylist"] = denied_tools
-        elif "permissions" in init_params and "permissions" not in filter_kwargs:
-            filter_kwargs["permissions"] = permissions
-
-        permission_filter = tool_permission_filter(**filter_kwargs)
-
-        filtered_registry = permission_filter.get_filtered_registry()
-        if filtered_registry is None:
-            filtered_registry = default_tool_registry()
-        if (
-            hasattr(filtered_registry, "tools")
-            and isinstance(getattr(filtered_registry, "tools"), dict)
-            and not getattr(filtered_registry, "tools")
-            and hasattr(base_registry, "tools")
-            and isinstance(getattr(base_registry, "tools"), dict)
-            and getattr(base_registry, "tools")
-        ):
-            filtered_registry = base_registry
-        if not hasattr(filtered_registry, "tool_metadata"):
-            setattr(filtered_registry, "tool_metadata", {})
-        return filtered_registry
+        return base_registry
 
     def _build_tool_definitions(self, tools: dict[str, Any]) -> list[dict[str, Any]]:
         definitions: list[dict[str, Any]] = []
@@ -1330,20 +1268,11 @@ class DawnKestrelAgentRunner:
         all_tool_calls: list[dict[str, Any]] = []
 
         try:
-            agents_v2_module = importlib.import_module("dawn_kestrel.agents.v2")
-            policy_contracts_module = importlib.import_module("dawn_kestrel.policy.contracts")
-            core_models_module = importlib.import_module("dawn_kestrel.core.models")
-            llm_client_module = importlib.import_module("dawn_kestrel.llm.client")
+            agent_module = importlib.import_module("dawn_kestrel.agent.loop")
+            agent_types_module = importlib.import_module("dawn_kestrel.agent.types")
 
-            agent_v2_builder_type = getattr(agents_v2_module, "AgentV2Builder")
-            command_router_type = getattr(agents_v2_module, "CommandRouter")
-            execution_loop_type = getattr(agents_v2_module, "ExecutionLoop")
-            filesystem_loader_type = getattr(agents_v2_module, "FilesystemAgentLoader")
-            injected_skill_loader_type = getattr(agents_v2_module, "InjectedSkillLoader")
-            from_prompt = getattr(agents_v2_module, "from_prompt")
-            step_proposal_type = getattr(policy_contracts_module, "StepProposal")
-            session_type = getattr(core_models_module, "Session")
-            llm_request_options_type = getattr(llm_client_module, "LLMRequestOptions")
+            run_agent = getattr(agent_module, "run_agent")
+            LoopConfig = getattr(agent_types_module, "LoopConfig")
 
             _ensure_eval_command_allowlist()
 
@@ -1352,11 +1281,10 @@ class DawnKestrelAgentRunner:
 
             base_registry = self._create_base_registry()
             mcp_clients = await self._register_mcp_tools(base_registry)
-            use_policy_filters = False
             filtered_registry = self._create_filtered_registry(
                 policy_enforcer,
                 base_registry=base_registry,
-                use_policy_filters=use_policy_filters,
+                use_policy_filters=False,
             )
 
             if isinstance(task_input, dict):
@@ -1366,7 +1294,16 @@ class DawnKestrelAgentRunner:
                 prompt = str(task_input)
 
             agent_id = str(config.get("agent_name", "default"))
-            if self._lesson_injector is not None:
+            agent_path = config.get("agent_path")
+            if agent_path is not None:
+                # Read agent instructions directly from the agent_path directory
+                agent_md = Path(agent_path) / "AGENT.md"
+                if agent_md.exists():
+                    agent_content = agent_md.read_text(encoding="utf-8")
+                    prompt = (
+                        f"<agent-instructions>\n{agent_content}\n</agent-instructions>\n\n{prompt}"
+                    )
+            elif self._lesson_injector is not None:
                 skill_name = self._lesson_injector.discover_skill_name()
                 skills_to_inject = [skill_name] if skill_name else None
                 prompt = self._lesson_injector.inject_into_prompt(
@@ -1374,7 +1311,24 @@ class DawnKestrelAgentRunner:
                 )
 
             trial_id = str(config.get("trial_id") or f"trial-{int(time.time() * 1000)}")
-            available_tools = await filtered_registry.get_all()
+
+            available_tools_raw: Any = {}
+            if hasattr(filtered_registry, "tools") and isinstance(
+                getattr(filtered_registry, "tools"), dict
+            ):
+                available_tools_raw = dict(getattr(filtered_registry, "tools"))
+            elif hasattr(filtered_registry, "get_all") and callable(
+                getattr(filtered_registry, "get_all")
+            ):
+                try:
+                    maybe_awaitable = filtered_registry.get_all()
+                    if hasattr(maybe_awaitable, "__await__"):
+                        available_tools_raw = await maybe_awaitable
+                    else:
+                        available_tools_raw = maybe_awaitable
+                except Exception:
+                    available_tools_raw = {}
+
             _ALLOWED_TOOLS = frozenset(
                 {
                     "read",
@@ -1398,145 +1352,74 @@ class DawnKestrelAgentRunner:
                 metadata = tool_metadata.get(tool_name)
                 return isinstance(metadata, dict) and isinstance(metadata.get("mcp_server"), str)
 
-            available_tools = (
-                {k: v for k, v in available_tools.items() if _is_allowed_tool_name(k)}
-                if isinstance(available_tools, dict)
-                else {k: v for k, v in available_tools if _is_allowed_tool_name(k)}
-            )
-            tool_definitions = self._build_tool_definitions(available_tools)
-
-            runtime = _SinglePassRuntime(
-                runner=self,
-                client=client,
-                prompt=prompt,
-                tool_definitions=tool_definitions,
-                filtered_registry=filtered_registry,
-                config=config,
-                trial_id=trial_id,
-                llm_request_options_type=llm_request_options_type,
-            )
-
-            base_dir_value = config.get("workdir") or "."
-            base_dir = Path(base_dir_value) if isinstance(base_dir_value, str) else Path(".")
-            agent_loader = filesystem_loader_type(base_dir=base_dir)
-            skill_loader = injected_skill_loader_type(base_dir=base_dir)
-            command_router = command_router_type()
-            policy_engine = _NoOpPolicyEngine(step_proposal_type)
+            if isinstance(available_tools_raw, dict):
+                available_tools = {
+                    k: v for k, v in available_tools_raw.items() if _is_allowed_tool_name(k)
+                }
+            else:
+                available_tools = {k: v for k, v in available_tools_raw if _is_allowed_tool_name(k)}
 
             max_loop_iterations = int(config.get("max_iterations", 1) or 1)
             if max_loop_iterations < 1:
                 max_loop_iterations = 1
 
-            build_result = (
-                agent_v2_builder_type()
-                .with_name(str(config.get("agent_name", "ash_hawk_eval")))
-                .with_description("Ash Hawk evaluation runner")
-                .with_mode("primary")
-                .with_model(f"{self._provider}/{self._model}")
-                .with_max_iterations(max_loop_iterations)
-                .build()
-            )
-            if hasattr(build_result, "is_err") and build_result.is_err():
-                error_text = str(build_result.error)
-                raise RuntimeError(f"AgentV2 config build failed: {error_text}")
-            loop_config = build_result.unwrap()
+            tools_registry_module = importlib.import_module("dawn_kestrel.tools.registry")
+            tool_registry = tools_registry_module.ToolRegistry()
+            if isinstance(available_tools, dict):
+                for tool_name, tool_impl in available_tools.items():
+                    tool_registry.register(tool_impl)
 
-            loop = execution_loop_type(
+            loop_config = LoopConfig(max_iterations=max_loop_iterations)
+
+            result = await run_agent(
+                client=client,
+                messages=[{"role": "user", "content": prompt}],
+                tools=tool_registry,
                 config=loop_config,
-                policy_engine=policy_engine,
-                command_router=command_router,
-                runtime=runtime,
-                agent_loader=agent_loader,
-                skill_loader=skill_loader,
             )
 
-            initial_input = from_prompt(prompt, max_iterations=max_loop_iterations)
-            session = session_type(
-                id=trial_id,
-                slug=str(config.get("agent_name", "ash_hawk_eval")),
-                project_id="ash-hawk",
-                directory=str(base_dir.resolve()),
-                title=task.description or "Ash Hawk evaluation",
-                version="v2",
-            )
-
-            loop_result = await loop.run(initial_input, session)
-            conversation = list(runtime.conversation)
-
-            telemetry_ledger = loop_result.telemetry.get_tool_call_ledger()
-            if telemetry_ledger:
-                for item in telemetry_ledger:
-                    normalized: dict[str, Any] = {
-                        "tool": item.get("tool_name"),
-                        "name": item.get("tool_name"),
-                        "input": item.get("arguments", {}),
-                        "arguments": item.get("arguments", {}),
+            if result.session is not None:
+                conversation = list(result.session.messages)
+                for event in result.session.filter_by_type("tool_call"):
+                    normalized_tc: dict[str, Any] = {
+                        "tool": event.tool_name,
+                        "name": event.tool_name,
+                        "input": event.tool_input,
+                        "arguments": event.tool_input,
                     }
-                    if "result" in item:
-                        normalized["output"] = item.get("result")
-                    if "error" in item and item.get("error") is not None:
-                        normalized["error"] = item.get("error")
-                    all_tool_calls.append(normalized)
-            else:
-                all_tool_calls = list(runtime.normalized_tool_calls)
-
-            trace_events: list[dict[str, Any]] = []
-            for event in loop_result.telemetry.get_trace_events():
-                event_type_raw = str(event.get("event_type", ""))
-                mapped_type = {
-                    "PolicyDecision": "PolicyDecisionEvent",
-                    "Rejection": "RejectionEvent",
-                    "ToolCallStarted": "ToolCallEvent",
-                    "ToolCallCompleted": "ToolResultEvent",
-                }.get(event_type_raw, "ModelMessageEvent")
-                trace_events.append(
-                    {
-                        "schema_version": 1,
-                        "event_type": mapped_type,
-                        "ts": DEFAULT_TRACE_TS,
-                        "data": {
-                            "event_type": event_type_raw,
-                            "payload": event.get("payload", {}),
-                            "iteration": event.get("iteration"),
-                            "session_id": event.get("session_id"),
-                        },
-                    }
-                )
-
-            summary = loop_result.telemetry.get_summary()
-            total_cost_usd = float(summary.get("cost_usd_total", 0.0))
-            if total_cost_usd <= 0.0:
-                total_cost_usd = float(runtime._last_cost)
+                    if hasattr(event, "output_preview") and event.output_preview:
+                        normalized_tc["output"] = event.output_preview
+                    if hasattr(event, "error") and event.error is not None:
+                        normalized_tc["error"] = event.error
+                    all_tool_calls.append(normalized_tc)
 
             duration = time.time() - start_time
+            total_usage = result.total_usage or {}
+
+            total_cost_usd = 0.0
+            if result.session is not None:
+                for evt in result.session.filter_by_type("llm_call"):
+                    total_cost_usd += getattr(evt, "cost_usd", 0.0)
 
             transcript = EvalTranscript(
                 messages=conversation,
                 tool_calls=all_tool_calls,
-                trace_events=trace_events,
+                trace_events=[],
                 token_usage=TokenUsage(
-                    input=int(loop_result.tokens_used.get("input", 0)),
-                    output=int(loop_result.tokens_used.get("output", 0)),
-                    reasoning=int(loop_result.tokens_used.get("reasoning", 0)),
-                    cache_read=int(loop_result.tokens_used.get("cache_read", 0)),
-                    cache_write=int(loop_result.tokens_used.get("cache_write", 0)),
+                    input=int(total_usage.get("input", 0)),
+                    output=int(total_usage.get("output", 0)),
+                    reasoning=int(total_usage.get("reasoning", 0)),
+                    cache_read=int(total_usage.get("cache_read", 0)),
+                    cache_write=int(total_usage.get("cache_write", 0)),
                 ),
                 cost_usd=total_cost_usd,
                 duration_seconds=duration,
-                agent_response=loop_result.response,
-                error_trace=loop_result.error,
+                agent_response=result.response.text if result.response else None,
+                error_trace=result.error,
             )
 
-            if loop_result.outcome is not None and not bool(loop_result.outcome.success):
-                outcome = EvalOutcome.failure(
-                    FailureMode.AGENT_ERROR,
-                    str(loop_result.outcome.message),
-                )
-            elif loop_result.error is not None:
-                outcome = EvalOutcome.failure(
-                    FailureMode.AGENT_ERROR,
-                    loop_result.error,
-                )
+            if result.error is not None:
+                outcome = EvalOutcome.failure(FailureMode.AGENT_ERROR, result.error)
             else:
                 outcome = EvalOutcome.success()
 

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ theme }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trial Detail — {{ trial.id }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f26;
+            --bg-card: #232a33;
+            --bg-elevated: #2d353f;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --text-muted: #5f6368;
+            --accent: #ff8a50;
+            --accent-glow: rgba(255, 138, 80, 0.3);
+            --success: #34d399;
+            --success-muted: rgba(52, 211, 153, 0.15);
+            --error: #f87171;
+            --error-muted: rgba(248, 113, 113, 0.15);
+            --warning: #fbbf24;
+            --info: #60a5fa;
+            --info-muted: rgba(96, 165, 250, 0.15);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(255, 138, 80, 0.3);
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            --radius: 12px;
+            --radius-sm: 6px;
+            --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+            --font-serif: 'Source Serif 4', Georgia, serif;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #fafaf9;
+            --bg-secondary: #f5f5f4;
+            --bg-card: #ffffff;
+            --bg-elevated: #fafaf9;
+            --text-primary: #1c1917;
+            --text-secondary: #57534e;
+            --text-muted: #a8a29e;
+            --accent: #ea580c;
+            --accent-glow: rgba(234, 88, 12, 0.15);
+            --success: #059669;
+            --success-muted: rgba(5, 150, 105, 0.1);
+            --error: #dc2626;
+            --error-muted: rgba(220, 38, 38, 0.1);
+            --warning: #d97706;
+            --info: #2563eb;
+            --info-muted: rgba(37, 99, 235, 0.1);
+            --border: rgba(0, 0, 0, 0.08);
+            --border-accent: rgba(234, 88, 12, 0.3);
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            padding: 16px 0;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), #ff6b35);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 16px;
+        }
+
+        .logo-text {
+            font-family: var(--font-serif);
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--border-accent);
+            color: var(--text-primary);
+        }
+
+        main { padding: 48px 0 96px; }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--accent); }
+
+        .trial-header {
+            margin-bottom: 32px;
+        }
+
+        .trial-title {
+            font-family: var(--font-serif);
+            font-size: clamp(24px, 4vw, 32px);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+
+        .status-badge-large {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-badge-large.passed {
+            background: var(--success-muted);
+            color: var(--success);
+        }
+
+        .status-badge-large.failed {
+            background: var(--error-muted);
+            color: var(--error);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 48px;
+        }
+
+        .meta-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .meta-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .transcript-timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .transcript-timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .transcript-entry {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .transcript-entry::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+        }
+
+        .transcript-entry.user::before { border-color: var(--info); }
+        .transcript-entry.assistant::before { border-color: var(--accent); }
+        .transcript-entry.tool::before { border-color: var(--warning); }
+
+        .transcript-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .transcript-role {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .transcript-role.user { color: var(--info); }
+        .transcript-role.assistant { color: var(--accent); }
+        .transcript-role.tool { color: var(--warning); }
+
+        .transcript-time {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .transcript-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transcript-content.expanded {
+            max-height: none;
+        }
+
+        .expand-btn {
+            display: block;
+            margin-top: 8px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 4px 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .expand-btn:hover {
+            border-color: var(--border-accent);
+            color: var(--text-primary);
+        }
+
+        .tool-call-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .tool-call-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .tool-call-name {
+            font-weight: 500;
+            color: var(--warning);
+        }
+
+        .tool-call-toggle {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .tool-call-body {
+            padding: 16px;
+            display: none;
+        }
+
+        .tool-call-body.open {
+            display: block;
+        }
+
+        .tool-call-code {
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .grader-result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .grader-result-card.passed { border-left: 3px solid var(--success); }
+        .grader-result-card.failed { border-left: 3px solid var(--error); }
+
+        .grader-result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .grader-type {
+            font-weight: 500;
+        }
+
+        .grader-score {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grader-score-value {
+            font-weight: 600;
+        }
+
+        .grader-score-value.passed { color: var(--success); }
+        .grader-score-value.failed { color: var(--error); }
+
+        .grader-result-body {
+            padding: 16px;
+        }
+
+        .grader-details {
+            font-size: 13px;
+        }
+
+        .grader-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .grader-detail-row:last-child { border-bottom: none; }
+
+        .grader-detail-label { color: var(--text-muted); }
+        .grader-detail-value { font-weight: 500; }
+
+        .token-bar-container {
+            background: var(--bg-elevated);
+            border-radius: 999px;
+            height: 24px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .token-bar-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 500;
+            color: white;
+            min-width: 40px;
+        }
+
+        .token-bar-input { background: var(--accent); }
+        .token-bar-output { background: var(--success); }
+        .token-bar-reasoning { background: var(--warning); }
+
+        .envelope-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .envelope-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .envelope-title {
+            font-weight: 600;
+        }
+
+        .envelope-toggle {
+            color: var(--text-muted);
+        }
+
+        .envelope-content {
+            padding: 16px;
+            display: none;
+        }
+
+        .envelope-content.open {
+            display: block;
+        }
+
+        .envelope-code {
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-inner">
+                <div class="logo">
+                    <div class="logo-icon">A</div>
+                    <span class="logo-text">Ash Hawk</span>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <a href="#" class="back-link" onclick="history.back(); return false;">← Back to Task</a>
+
+            <section class="trial-header">
+                <h1 class="trial-title">{{ trial.id }}</h1>
+                {% if trial.result %}
+                <div class="status-badge-large {% if trial.result.aggregate_passed %}passed{% else %}failed{% endif %}">
+                    <span class="status-dot"></span>
+                    {% if trial.result.aggregate_passed %}Passed{% else %}Failed{% endif %}
+                    · {{ (trial.result.aggregate_score * 100)|round(1) }}%
+                </div>
+                {% endif %}
+            </section>
+
+            <div class="meta-grid">
+                <div class="meta-card">
+                    <div class="meta-label">Task ID</div>
+                    <div class="meta-value">{{ trial.task_id }}</div>
+                </div>
+                <div class="meta-card">
+                    <div class="meta-label">Attempt</div>
+                    <div class="meta-value">#{{ trial.attempt_number }}</div>
+                </div>
+                <div class="meta-card">
+                    <div class="meta-label">Status</div>
+                    <div class="meta-value">{{ trial.status }}</div>
+                </div>
+                {% if trial.result %}
+                <div class="meta-card">
+                    <div class="meta-label">Duration</div>
+                    <div class="meta-value">{{ format_duration(trial.result.transcript.duration_seconds) }}</div>
+                </div>
+                <div class="meta-card">
+                    <div class="meta-label">Tokens</div>
+                    <div class="meta-value">{{ format_tokens(trial.result.transcript.token_usage.total) }}</div>
+                </div>
+                <div class="meta-card">
+                    <div class="meta-label">Cost</div>
+                    <div class="meta-value">{{ format_cost(trial.result.transcript.cost_usd) }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if trial.result %}
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Token Usage</h2>
+                </div>
+                <div class="token-bar-container">
+                    {% set total = trial.result.transcript.token_usage.total %}
+                    {% if total > 0 %}
+                    {% set input_pct = (trial.result.transcript.token_usage.input / total * 100)|round %}
+                    {% set output_pct = (trial.result.transcript.token_usage.output / total * 100)|round %}
+                    {% set reason_pct = (trial.result.transcript.token_usage.reasoning / total * 100)|round %}
+                    <div class="token-bar-segment token-bar-input" style="width: {{ input_pct }}%">
+                        {% if input_pct > 10 %}In{% endif %}
+                    </div>
+                    <div class="token-bar-segment token-bar-output" style="width: {{ output_pct }}%">
+                        {% if output_pct > 10 %}Out{% endif %}
+                    </div>
+                    <div class="token-bar-segment token-bar-reasoning" style="width: {{ reason_pct }}%">
+                        {% if reason_pct > 10 %}Reas{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div style="display: flex; gap: 24px; margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+                    <span>Input: {{ format_tokens(trial.result.transcript.token_usage.input) }}</span>
+                    <span>Output: {{ format_tokens(trial.result.transcript.token_usage.output) }}</span>
+                    <span>Reasoning: {{ format_tokens(trial.result.transcript.token_usage.reasoning) }}</span>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Grader Results</h2>
+                    <span style="color: var(--text-muted); font-size: 13px;">{{ trial.result.grader_results|length }} graders</span>
+                </div>
+                {% for grader in trial.result.grader_results %}
+                <div class="grader-result-card {% if grader.passed %}passed{% else %}failed{% endif %}">
+                    <div class="grader-result-header">
+                        <span class="grader-type">{{ grader.grader_type }}</span>
+                        <div class="grader-score">
+                            <span class="grader-score-value {% if grader.passed %}passed{% else %}failed{% endif %}">
+                                {{ (grader.score * 100)|round(1) }}%
+                            </span>
+                            <span style="color: var(--text-muted)">·</span>
+                            <span style="color: var(--text-secondary); font-size: 12px;">
+                                {% if grader.passed %}Passed{% else %}Failed{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% if grader.details or grader.error_message %}
+                    <div class="grader-result-body">
+                        {% if grader.error_message %}
+                        <div style="color: var(--error); margin-bottom: 12px;">{{ grader.error_message }}</div>
+                        {% endif %}
+                        {% if grader.details %}
+                        <div class="grader-details">
+                            {% for key, value in grader.details.items() %}
+                            <div class="grader-detail-row">
+                                <span class="grader-detail-label">{{ key }}</span>
+                                <span class="grader-detail-value">
+                                    {% if value is string %}{{ value }}{% else %}{{ value|string }}{% endif %}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div style="color: var(--text-muted); padding: 24px; text-align: center; background: var(--bg-card); border-radius: var(--radius);">
+                    No grader results available
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if trial.result and trial.result.transcript.messages %}
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Message Transcript</h2>
+                    <span style="color: var(--text-muted); font-size: 13px;">{{ trial.result.transcript.messages|length }} messages</span>
+                </div>
+                <div class="transcript-timeline">
+                    {% for msg in trial.result.transcript.messages %}
+                    <div class="transcript-entry {{ msg.role | default('user') }}">
+                        <div class="transcript-header">
+                            <span class="transcript-role {{ msg.role | default('user') }}">{{ msg.role | default('user') | upper }}</span>
+                        </div>
+                        <div class="transcript-content" id="msg-{{ loop.index }}">
+                            {% if msg.content is string %}
+{% set content = msg.content %}
+{{ content[0:2000] }}{% if content|length > 2000 %}...{% endif %}
+                            {% else %}
+{% set content_json = json_dump(msg) %}
+{{ content_json[0:2000] }}{% if content_json|length > 2000 %}...{% endif %}
+                            {% endif %}
+                        </div>
+                        {% if (msg.content is string and msg.content|length > 2000) or (msg.content is not string and json_dump(msg)|length > 2000) %}
+                        <button class="expand-btn" onclick="toggleExpand('msg-{{ loop.index }}', this)">Show Full</button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            {% if trial.result and trial.result.transcript.tool_calls %}
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Tool Calls</h2>
+                    <span style="color: var(--text-muted); font-size: 13px;">{{ trial.result.transcript.tool_calls|length }} calls</span>
+                </div>
+                {% for tool_call in trial.result.transcript.tool_calls %}
+                <div class="tool-call-card">
+                    <div class="tool-call-header" onclick="toggleTool(this)">
+                        <span class="tool-call-name">{{ tool_call.name | default('unknown') }}</span>
+                        <span class="tool-call-toggle">▶</span>
+                    </div>
+                    <div class="tool-call-body">
+                        <div class="tool-call-code"><pre>{{ tool_call | tojson(indent=2) }}</pre></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if envelope %}
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Run Envelope</h2>
+                </div>
+                <div class="envelope-section">
+                    <div class="envelope-header" onclick="toggleEnvelope(this)">
+                        <span class="envelope-title">Reproducibility Metadata</span>
+                        <span class="envelope-toggle">▶</span>
+                    </div>
+                    <div class="envelope-content">
+                        <div class="envelope-code">{{ envelope.model_dump() | tojson(indent=2) }}</div>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+        </div>
+    </main>
+
+    <footer>
+        Generated by Ash Hawk
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.dataset.theme;
+            html.dataset.theme = current === 'light' ? 'dark' : 'light';
+            localStorage.setItem('ash-hawk-theme', html.dataset.theme);
+        }
+
+        function toggleExpand(id, btn) {
+            const el = document.getElementById(id);
+            el.classList.toggle('expanded');
+            btn.textContent = el.classList.contains('expanded') ? 'Show Less' : 'Show Full';
+        }
+
+        function toggleTool(header) {
+            const body = header.nextElementSibling;
+            const toggle = header.querySelector('.tool-call-toggle');
+            body.classList.toggle('open');
+            toggle.textContent = body.classList.contains('open') ? '▼' : '▶';
+        }
+
+        function toggleEnvelope(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.envelope-toggle');
+            content.classList.toggle('open');
+            toggle.textContent = content.classList.contains('open') ? '▼' : '▶';
+        }
+
+        (function() {
+            const saved = localStorage.getItem('ash-hawk-theme');
+            if (saved) document.documentElement.dataset.theme = saved;
+        })();
+    </script>
+</body>
+</html>

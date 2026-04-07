@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-04-07
+
+### Changed
+
+- **Major refactor**: stripped codebase from ~30K to ~15K lines per approved 9-step design
+- Removed `auto_research/` module (replaced by `improve/`)
+- Removed `research/` module (replaced by `improve/`)
+- Removed `improvement/` module (replaced by `improve/`)
+- Removed `bridge/` module (contracts migrated to `types.py`)
+- Removed `contracts/` module (types consolidated into `types.py`)
+- Removed `execution/` module (functionality absorbed into `scenario/`)
+- Removed `services/` module (service layer eliminated)
+- Removed `adapters/` module (consolidated into agent layer)
+- Removed reporting submodules: `arc_visualizer`, `cross_run_comparator`, `inflection_detector`
+- Expanded `types.py` with consolidated type definitions (+442 lines)
+- Expanded `scenario/runner.py` with absorbed execution logic (+281 lines)
+
+### Added
+
+- `ash_hawk/improve/` module with `diagnose.py`, `loop.py`, `patch.py` — streamlined improvement cycle
+- `ash_hawk/tracing.py` — trace event capture utilities (92 LOC)
+- `ash_hawk/scenario/trace.py` — TraceEvent hierarchy (234 LOC)
+- `ash_hawk/scenario/trace_normalizer.py` — eval transcript normalization (175 LOC)
+- `tests/improve/` — test suite for new improve module (250 LOC)
+- `tests/test_tracing.py` — test suite for tracing module (212 LOC)
+- `evals/bolt-merlin/` — bolt-merlin eval scenario pack
+
+### Removed
+
+- 14 module directories and 60+ files deleted as part of consolidation
+- `scripts/run_improvement_cycle.py` and `scripts/test_improvement_cycle.py` (dead scripts)
+
 ## [0.2.1] - 2026-04-06
 
 ### Changed

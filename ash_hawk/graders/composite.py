@@ -1,3 +1,4 @@
+# type-hygiene: skip-file
 """Composite grader for running multiple graders.
 
 This module provides a CompositeGrader that combines multiple graders

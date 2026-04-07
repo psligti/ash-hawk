@@ -1,0 +1,133 @@
+schema_version: "v1"
+id: "bolt_merlin_threshold_optimization"
+description: "Analyzes threshold sensitivity, identifies edge cases, and recommends threshold adjustments"
+
+sut:
+  type: "agentic_sdk"
+  adapter: "bolt_merlin"
+  config:
+    agent: "execution"
+
+inputs:
+  prompt: |
+    You have access to threshold analysis data from recent evaluation runs.
+    Perform a complete threshold optimization analysis in three parts:
+
+    PART 1: THRESHOLD SENSITIVITY
+    - Analyze how sensitive outcomes are to threshold changes
+    - Calculate accuracy at different threshold values (0.3, 0.4, 0.5, 0.6, 0.7)
+    - Perform ROC-like analysis with precision/recall tradeoffs
+    - Identify the optimal threshold range
+
+    PART 2: EDGE CASE IDENTIFICATION
+    - Identify cases that fall near threshold boundaries (within 0.05)
+    - Analyze borderline scores and ambiguous cases
+    - Quantify uncertainty for edge cases
+    - Report edge case patterns and boundary behavior
+
+    PART 3: THRESHOLD RECOMMENDATIONS
+    - Based on the analysis, recommend specific threshold adjustments
+    - Consider current accuracy, calibration error, operational requirements
+    - Provide expected impact with confidence intervals
+    - Prioritize recommendations by expected improvement
+
+    Use bash to list files and read to examine the threshold analysis data.
+    End with a summary: "THRESHOLD OPT: recommended=X.XX, accuracy=X.XX, N edge cases"
+
+tools:
+  allowed_tools:
+    - "bash"
+    - "read"
+  mocks:
+    bash:
+      input: {}
+      result:
+        stdout: "threshold_analysis/scores_by_threshold.json\nthreshold_analysis/edge_cases.json\nthreshold_analysis/roc_data.json\n"
+        stderr: ""
+        exit_code: 0
+    read:
+      input: {}
+      result:
+        content: |
+          {
+            "current_threshold": 0.5,
+            "threshold_analysis": {
+              "0.3": {"accuracy": 0.72, "precision": 0.65, "recall": 0.95, "f1": 0.77},
+              "0.4": {"accuracy": 0.78, "precision": 0.73, "recall": 0.88, "f1": 0.80},
+              "0.5": {"accuracy": 0.82, "precision": 0.80, "recall": 0.78, "f1": 0.79},
+              "0.6": {"accuracy": 0.80, "precision": 0.88, "recall": 0.65, "f1": 0.75},
+              "0.7": {"accuracy": 0.74, "precision": 0.92, "recall": 0.48, "f1": 0.63}
+            },
+            "edge_cases": [
+              {"task_id": "t3", "score": 0.48, "boundary": "below", "uncertainty": 0.12},
+              {"task_id": "t7", "score": 0.52, "boundary": "above", "uncertainty": 0.08},
+              {"task_id": "t11", "score": 0.49, "boundary": "below", "uncertainty": 0.15},
+              {"task_id": "t15", "score": 0.53, "boundary": "above", "uncertainty": 0.06}
+            ],
+            "optimal_range": {"low": 0.45, "high": 0.55, "peak": 0.50}
+          }
+  fault_injection: {}
+
+budgets:
+  max_steps: 40
+  max_tool_calls: 30
+  max_tokens: 8000
+  max_time_seconds: 240.0
+
+expectations:
+  must_events:
+    - "ToolCallEvent"
+    - "ModelMessageEvent"
+  must_not_events: []
+  ordering_rules:
+    - before: "ToolCallEvent"
+      after: "ModelMessageEvent"
+  diff_assertions: []
+  output_assertions: []
+
+graders:
+  - grader_type: "transcript_validity"
+    required: true
+    config: {}
+  - grader_type: "trace_schema"
+    required: true
+    config: {}
+  - grader_type: "trace_content"
+    required: true
+    config:
+      required_event_types:
+        - "ToolCallEvent"
+        - "ModelMessageEvent"
+      required_tool_calls:
+        - tool: "bash"
+          min_calls: 1
+        - tool: "read"
+          min_calls: 1
+  - grader_type: "budget"
+    required: true
+    config:
+      max_steps: 40
+      max_tool_calls: 30
+  - grader_type: "trace_quality"
+    weight: 0.4
+    config:
+      target_tool_calls: 6
+      tool_call_penalty: 0.08
+      rejection_penalty: 0.1
+      max_penalty: 0.4
+      pass_threshold: 0.7
+  - grader_type: "llm_judge"
+    weight: 0.6
+    config:
+      rubric: |
+        Score based on threshold optimization completeness:
+        - 1.0: All three parts covered with sensitivity analysis, edge case identification, and actionable recommendations
+        - 0.7: Two parts covered with quantitative analysis
+        - 0.4: One part covered or only qualitative observations
+        - 0.0: No meaningful threshold analysis
+      model: glm-4-flash
+  - grader_type: "summary_truthfulness"
+    required: true
+    config:
+      summary_regex: "THRESHOLD OPT:.*recommended=\\d+\\.\\d+.*accuracy=\\d+\\.\\d+"
+      strict_match: false

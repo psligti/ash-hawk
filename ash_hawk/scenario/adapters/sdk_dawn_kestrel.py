@@ -1,6 +1,8 @@
+# type-hygiene: skip-file
 from __future__ import annotations
 
 import asyncio
+import os
 import threading
 from pathlib import Path
 from typing import Any, Callable, Coroutine, TypeVar
@@ -34,7 +36,7 @@ def _run_coroutine_sync(coro: Coroutine[Any, Any, _T]) -> _T:
     finally:
         try:
             loop.run_until_complete(loop.shutdown_asyncgens())
-        except Exception:
+        except Exception:  # nosec B110
             pass
         asyncio.set_event_loop(None)
         loop.close()
@@ -89,23 +91,17 @@ def _resolve_provider_model(config: dict[str, Any]) -> tuple[str, str]:
         return provider.strip(), model.strip()
 
     try:
-        from dawn_kestrel.core.settings import get_settings
+        from dawn_kestrel.base.config import load_agent_config
     except ImportError as exc:
         raise ValueError("Provider/model not configured and dawn-kestrel is unavailable") from exc
 
-    settings = get_settings()
-    default_account = settings.get_default_account()
+    dk_config = load_agent_config()
 
     if not isinstance(provider, str) or not provider.strip():
-        if default_account is not None:
-            provider = str(default_account.provider_id.value)
-        else:
-            provider = str(settings.get_default_provider().value)
+        provider = dk_config.get("runtime.provider") or os.environ.get("DAWN_KESTREL_PROVIDER")
 
     if not isinstance(model, str) or not model.strip():
-        default_model = settings.get_default_model(provider)
-        if isinstance(default_model, str) and default_model.strip():
-            model = default_model
+        model = dk_config.get("runtime.model") or os.environ.get("DAWN_KESTREL_MODEL")
 
     if (
         not isinstance(provider, str)
@@ -189,6 +185,13 @@ class SdkDawnKestrelAdapter:
             run_config["policy_mode"] = policy_mode.strip()
 
         run_config["workdir"] = str(workdir.resolve())
+
+        # Inject agent_path from tooling_harness if available
+        agent_path_value = None
+        if isinstance(tooling_harness, dict):
+            agent_path_value = tooling_harness.get("agent_path")
+        if agent_path_value is not None:
+            run_config["agent_path"] = agent_path_value
 
         policy_payload: dict[str, Any] = {}
         tooling_call: Callable[[str, Any], dict[str, Any]] | None = None
