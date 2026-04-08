@@ -10,7 +10,6 @@ from ash_hawk.graders.structured import (
 from ash_hawk.types import (
     EvalTranscript,
     EvalTrial,
-    GraderResult,
     GraderSpec,
 )
 

@@ -20,11 +20,10 @@ import os
 import re
 import shlex
 import time
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from ash_hawk.graders.base import Grader
 from ash_hawk.types import (
@@ -32,7 +31,6 @@ from ash_hawk.types import (
     EvalTrial,
     GraderResult,
     GraderSpec,
-    ToolSurfacePolicy,
 )
 
 if TYPE_CHECKING:

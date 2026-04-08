@@ -12,12 +12,10 @@ from ash_hawk.graders.code import (
     ToolCallGrader,
     TranscriptGrader,
     redact_secrets,
-    run_sandboxed_command,
 )
 from ash_hawk.types import (
     EvalTranscript,
     EvalTrial,
-    GraderResult,
     GraderSpec,
     TokenUsage,
 )

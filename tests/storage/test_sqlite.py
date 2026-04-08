@@ -1,6 +1,5 @@
 import pytest
 
-from ash_hawk.storage import StoredTrial
 from ash_hawk.storage.sqlite import SQLiteStorage
 from ash_hawk.types import (
     EvalOutcome,

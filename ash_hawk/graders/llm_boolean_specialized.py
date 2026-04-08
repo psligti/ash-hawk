@@ -10,8 +10,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, Literal
 
-import pydantic as pd
-
 from ash_hawk.graders.base import Grader
 from ash_hawk.types import EvalTranscript, EvalTrial, GraderResult, GraderSpec
 

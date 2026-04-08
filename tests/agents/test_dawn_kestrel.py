@@ -54,7 +54,6 @@ from ash_hawk.types import (
     EvalTask,
     EvalTranscript,
     FailureMode,
-    TokenUsage,
     ToolSurfacePolicy,
 )
 

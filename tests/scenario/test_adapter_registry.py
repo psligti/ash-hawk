@@ -1,9 +1,6 @@
 """Tests for ash_hawk.scenario.registry module."""
 
 from pathlib import Path
-from typing import Any
-
-import pytest
 
 from ash_hawk.scenario.adapters import ScenarioAdapter
 from ash_hawk.scenario.models import ScenarioAdapterResult, ScenarioTraceEvent
@@ -26,10 +23,10 @@ class MockScenarioAdapter:
 
     def run_scenario(
         self,
-        scenario: dict[str, Any],
+        scenario: dict[str, object],
         workdir: Path,
-        tooling_harness: dict[str, Any],
-        budgets: dict[str, Any],
+        tooling_harness: dict[str, object],
+        budgets: dict[str, object],
     ) -> ScenarioAdapterResult:
         """Mock implementation of run_scenario."""
         final_output = f"output for {scenario.get('id', 'unknown')}"

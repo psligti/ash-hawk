@@ -5,14 +5,13 @@ import asyncio
 import pytest
 
 from ash_hawk.policy import PolicyEnforcer
-from ash_hawk.scenario import AgentRunner, TrialExecutor
-from ash_hawk.storage import StorageBackend, StoredTrial
+from ash_hawk.scenario import TrialExecutor
+from ash_hawk.storage import StoredTrial
 from ash_hawk.types import (
     EvalOutcome,
     EvalStatus,
     EvalTask,
     EvalTranscript,
-    EvalTrial,
     FailureMode,
     GraderSpec,
     RunEnvelope,

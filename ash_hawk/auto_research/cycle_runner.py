@@ -27,7 +27,6 @@ from enum import StrEnum
 from pathlib import Path
 
 from rich.console import Console
-from rich.table import Table
 
 from ash_hawk.auto_research.convergence import (
     ConvergenceDetector,
@@ -38,8 +37,8 @@ from ash_hawk.auto_research.knowledge_promotion import (
     KnowledgePromoter,
     PromotionCriteria,
 )
-from ash_hawk.improve.lesson_store import Lesson, LessonStore
-from ash_hawk.improvement.fixture_splitter import FixtureSplitter, TrainHoldoutSplit
+from ash_hawk.improve.lesson_store import LessonStore
+from ash_hawk.improvement.fixture_splitter import FixtureSplitter
 from ash_hawk.improvement.guardrails import (
     GuardrailChecker,
     GuardrailConfig,

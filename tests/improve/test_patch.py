@@ -1,8 +1,6 @@
 # type-hygiene: skip-file
 from __future__ import annotations
 
-from pathlib import Path
-
 from ash_hawk.improve.diagnose import Diagnosis
 from ash_hawk.improve.patch import ProposedPatch, _sanitize_path, write_patch
 

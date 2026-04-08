@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import pytest
-
 from ash_hawk.auto_research.convergence import (
     ConvergenceDetector,
     ConvergenceReason,
-    ConvergenceResult,
     ScoreRecord,
 )
 

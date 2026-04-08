@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 from ash_hawk.storage import StoredTrial
 from ash_hawk.types import (
     EvalRunSummary,
-    EvalTrial,
     RunArtifact,
     RunEnvelope,
     StepRecord,
@@ -220,34 +219,4 @@ class ArtifactAdapter:
                 "failed_tasks": summary.metrics.failed_tasks,
             },
             created_at=self._parse_datetime(envelope.created_at),
-        )
-
-    def create_artifact_from_trial(
-        self, stored: StoredTrial, suite_id: str, agent_name: str
-    ) -> RunArtifact:
-        tc, st, msg, dur, tok, cost, err = self._extract_trial_data(stored)
-
-        outcome = "success"
-        if stored.trial.result:
-            if stored.trial.result.outcome.failure_mode:
-                outcome = "failure"
-
-        return RunArtifact(
-            run_id=stored.envelope.run_id,
-            suite_id=suite_id,
-            agent_name=agent_name,
-            outcome=outcome,
-            tool_calls=tc,
-            steps=st,
-            messages=msg,
-            total_duration_ms=dur if dur > 0 else None,
-            token_usage=tok,
-            cost_usd=cost,
-            error_message=err,
-            metadata={
-                "trial_id": stored.trial.id,
-                "task_id": stored.trial.task_id,
-            },
-            created_at=self._parse_datetime(stored.envelope.created_at),
-            completed_at=self._parse_datetime(stored.envelope.completed_at),
         )

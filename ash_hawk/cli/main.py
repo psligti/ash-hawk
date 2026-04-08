@@ -37,8 +37,6 @@ def cli(ctx: click.Context, version: bool) -> None:
         console.print(ctx.get_help())
 
 
-import asyncio
-
 from ash_hawk.agents.agent_resolver import AgentResolutionError, resolve_agent_path
 from ash_hawk.auto_research.cycle_runner import CycleConfig
 from ash_hawk.cli.run import run
@@ -76,7 +74,6 @@ def improve(
     output_dir: str | None,
 ) -> None:
     from ash_hawk.auto_research.cycle_runner import run_cycle
-    from ash_hawk.improvement.guardrails import GuardrailConfig
 
     try:
         resolution = resolve_agent_path(agent, Path("."))

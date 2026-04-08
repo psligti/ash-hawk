@@ -38,12 +38,11 @@ from ash_hawk.types import (
     SuiteMetrics,
     TokenUsage,
     ToolSurfacePolicy,
-    TrialEnvelope,
     TrialResult,
 )
 
 if TYPE_CHECKING:
-    from ash_hawk.storage import FileStorage, StorageBackend
+    from ash_hawk.storage import StorageBackend
 logger = logging.getLogger(__name__)
 console = Console()
 

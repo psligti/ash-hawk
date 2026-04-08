@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from ash_hawk.improve.diagnose import Diagnosis, _parse_diagnosis_response, diagnose_failures
+from ash_hawk.improve.diagnose import _parse_diagnosis_response, diagnose_failures
 from ash_hawk.types import EvalOutcome, EvalStatus, EvalTrial, TrialResult
 
 

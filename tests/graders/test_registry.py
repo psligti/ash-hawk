@@ -9,7 +9,6 @@ from ash_hawk.graders import (
     PassThroughGrader,
     get_default_registry,
 )
-from ash_hawk.graders.base import Grader as BaseGrader
 from ash_hawk.types import (
     EvalOutcome,
     EvalStatus,

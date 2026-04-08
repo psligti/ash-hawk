@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from ash_hawk.improvement.guardrails import (
     GuardrailChecker,
     GuardrailConfig,

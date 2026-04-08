@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ash_hawk.improve.lesson_store import LessonStore
     from ash_hawk.types import EvalTrial
 
 logger = logging.getLogger(__name__)

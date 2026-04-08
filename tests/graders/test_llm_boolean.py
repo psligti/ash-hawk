@@ -1,6 +1,6 @@
 """Tests for ash_hawk.graders.llm_boolean module."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -11,7 +11,6 @@ from ash_hawk.graders.llm_boolean import (
 from ash_hawk.types import (
     EvalTranscript,
     EvalTrial,
-    GraderResult,
     GraderSpec,
 )
 

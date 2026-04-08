@@ -2,9 +2,7 @@
 
 from pathlib import Path
 
-import pytest
-
-from ash_hawk.scenario.fixtures import FixtureError, FixtureResolver
+from ash_hawk.scenario.fixtures import FixtureResolver
 from ash_hawk.types import EvalSuite, EvalTask
 
 

@@ -1,7 +1,6 @@
 # type-hygiene: skip-file
 from __future__ import annotations
 
-import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field

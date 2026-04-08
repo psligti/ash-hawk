@@ -1,7 +1,5 @@
 """Tests for ash_hawk.policy.enforcer module."""
 
-import pytest
-
 from ash_hawk.policy import PolicyCheckResult, PolicyEnforcer
 from ash_hawk.types import FailureMode, ToolPermission, ToolSurfacePolicy
 

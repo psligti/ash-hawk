@@ -1,6 +1,5 @@
 """Tests for trace excerpting utilities."""
 
-import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 

@@ -68,7 +68,6 @@ class ToolingHarness:
         self.root = Path(root)
         self._mocks: dict[tuple[str, str], dict[str, Any]] = {}
         self._timeout_injections: dict[str, int] = {}
-        self._exception_injections: dict[str, list[Exception]] = {}
         self._malformed_injections: dict[str, int] = {}
 
         scenario_id = _scenario_id_from_root(self.root)
@@ -91,18 +90,12 @@ class ToolingHarness:
     def inject_timeout(self, tool_name: str) -> None:
         self._timeout_injections[tool_name] = self._timeout_injections.get(tool_name, 0) + 1
 
-    def inject_exception(self, tool_name: str, exc: Exception) -> None:
-        self._exception_injections.setdefault(tool_name, []).append(exc)
-
     def inject_malformed(self, tool_name: str) -> None:
         self._malformed_injections[tool_name] = self._malformed_injections.get(tool_name, 0) + 1
 
     def call(self, tool_name: str, tool_input: Any) -> dict[str, Any]:
         if self._consume_timeout(tool_name):
             raise ToolTimeoutError(f"Tool {tool_name} timed out")
-        injected_exc = self._consume_exception(tool_name)
-        if injected_exc is not None:
-            raise injected_exc
         if self._consume_malformed(tool_name):
             return deepcopy(MALFORMED_OUTPUT)
 
@@ -135,9 +128,6 @@ class ToolingHarness:
             self._append_record(self._trace_path, record)
         return result
 
-    def close(self) -> None:
-        return None
-
     def _consume_timeout(self, tool_name: str) -> bool:
         count = self._timeout_injections.get(tool_name, 0)
         if count <= 0:
@@ -147,15 +137,6 @@ class ToolingHarness:
         else:
             self._timeout_injections[tool_name] = count - 1
         return True
-
-    def _consume_exception(self, tool_name: str) -> Exception | None:
-        queue = self._exception_injections.get(tool_name)
-        if not queue:
-            return None
-        exc = queue.pop(0)
-        if not queue:
-            self._exception_injections.pop(tool_name, None)
-        return exc
 
     def _consume_malformed(self, tool_name: str) -> bool:
         count = self._malformed_injections.get(tool_name, 0)

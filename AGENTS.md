@@ -99,7 +99,7 @@ config: dict[str, Any] = {}
 class MyModel(pd.BaseModel):
     field: str = pd.Field(description="Field description")
     optional: int | None = pd.Field(default=None, description="Optional field")
-    
+
     model_config = pd.ConfigDict(extra="forbid")
 
 # Use computed_field for derived properties
@@ -157,7 +157,7 @@ def trial():
 # Class-based test organization
 class TestCompositeGrader:
     """Test CompositeGrader."""
-    
+
     @pytest.mark.asyncio
     async def test_weighted_scoring(self, trial, transcript, spec):
         # Arrange
@@ -176,27 +176,25 @@ class TestCompositeGrader:
 ash-hawk/
 ├── ash_hawk/           # Main package
 │   ├── agents/         # Agent adapters (dawn-kestrel, etc.)
-│   ├── calibration/    # Calibration analysis (ECE, Brier)
-│   ├── cli/            # CLI commands (run, list, report)
-│   ├── configs/        # Config loading (pyproject, conftest)
-│   ├── events/         # Event system
-│   ├── execution/      # Trial execution, fixtures
+│   ├── auto_research/  # Auto-research cycle runner
+│   ├── cli/            # CLI commands (run, thin, improve)
 │   ├── graders/        # Graders (base, llm_judge, composite, etc.)
-│   ├── metrics/        # Statistics and metrics
+│   ├── improve/        # Improve loop, diagnosis, patching
+│   ├── improvement/    # Guardrails, fixture splitting
 │   ├── policy/         # Tool policy enforcement
-│   ├── reporting/      # HTML/JSON reports
-│   ├── scenario/       # Scenario running (new framework)
-│   ├── storage/        # Backends (file, sqlite, postgres, s3)
-│   ├── templates/      # Task templates
+│   ├── prompts/        # LLM prompt templates
+│   ├── scenario/       # Scenario running, adapters, trials
+│   ├── storage/        # Backends (file, sqlite)
+│   ├── tracing.py      # Trace/event utilities
 │   ├── types.py        # Core type definitions
+│   ├── context.py      # Eval context management
 │   └── config.py       # Configuration management
 ├── tests/              # Test suite (mirrors ash_hawk structure)
 ├── evals/              # Evaluation suites and fixtures
 ├── examples/           # Example suites and scenarios
 ├── docs/               # Documentation
 ├── pyproject.toml      # Project config
-├── ruff.toml           # Linter config
-└── pyrightconfig.json  # Type checker config
+└── ruff.toml           # Linter config
 ```
 
 ---
@@ -314,18 +312,19 @@ ASH_HAWK_TRIAL_MAX_WORKERS=4       # Max concurrent trials
 ### Usage
 
 ```python
-from ash_hawk.execution import EvalRunner, TrialExecutor, LLMRequestQueue
+from ash_hawk.scenario.runner import EvalRunner
+from ash_hawk.scenario.trial import TrialExecutor
 
 async def run_with_throttling():
     config = get_config()
     storage = FileStorage(base_path="./results")
     policy = ToolSurfacePolicy()
-    
+
     trial_executor = TrialExecutor(storage, policy, agent_runner)
     runner = EvalRunner(config, storage, trial_executor)
-    
+
     summary = await runner.run_suite(suite, agent_config, run_envelope)
-    
+
     queue_stats = await runner.llm_queue.get_stats()
     print(f"LLM queue: {queue_stats}")
 ```

@@ -87,7 +87,7 @@
 16. **Ash Hawk has two parallel evaluation frameworks:**
     - **Suite-based evals** (`ash-hawk run suite.yaml`) — traditional eval suites
     - **Scenario-based evals** (`ash-hawk scenario run`) — newer scenario framework
-    
+
     **Which framework should be the primary direction?**
     - [ ] Suite-based only (deprecate scenarios)
     - [ ] Scenario-based only (deprecate suites)
@@ -208,11 +208,11 @@
     **conftest.yaml Loading:**
     - [ ] Still wanted
     - [ ] No longer needed
-    
+
     **pyproject.toml Configuration:**
     - [ ] Still wanted
     - [ ] No longer needed
-    
+
     **Suite Discovery (-k, -m filtering):**
     - [ ] Still wanted
     - [ ] No longer needed
@@ -313,7 +313,6 @@
 
 49. **Which agent adapters are actually used?**
     - [ ] dawn-kestrel SDK
-    - [ ] vox_jay (command/policy)
     - [ ] mock_adapter
     - [ ] coding_agent_subprocess
     - [ ] Other: ___________

@@ -147,29 +147,6 @@ def normalize_eval_transcript(transcript: EvalTranscript) -> list[TraceEvent]:
     return events
 
 
-def extract_trace_events_only(transcript: EvalTranscript) -> list[TraceEvent]:
-    events: list[TraceEvent] = []
-    last_event: TraceEvent | None = None
-
-    for trace_event in cast(list[object], transcript.trace_events):
-        if not isinstance(trace_event, dict):
-            continue
-        parsed = _event_from_trace_payload(cast(dict[str, Any], trace_event))
-        if parsed is None:
-            continue
-        if (
-            last_event is not None
-            and parsed.event_type == last_event.event_type
-            and parsed.data == last_event.data
-        ):
-            continue
-        events.append(parsed)
-        last_event = parsed
-
-    return events
-
-
 __all__ = [
     "normalize_eval_transcript",
-    "extract_trace_events_only",
 ]

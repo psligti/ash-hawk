@@ -14,13 +14,10 @@ from ash_hawk.types import (
     EvalSuite,
     EvalTask,
     EvalTranscript,
-    EvalTrial,
-    FailureMode,
     RunEnvelope,
     SuiteMetrics,
     TokenUsage,
     ToolSurfacePolicy,
-    TrialResult,
 )
 
 
