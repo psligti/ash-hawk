@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -90,3 +92,82 @@ class TraceContext:
                 f.write(json.dumps(self.to_dict()) + "\n")
         except OSError:
             logger.warning("Failed to write trace JSONL", extra={"path": str(path)})
+
+
+class TelemetryLog:
+    """Structured JSONL telemetry logger for eval runs.
+
+    Writes one JSON line per event to ``.ash-hawk/telemetry.jsonl`` (or
+    whatever path is configured via ``ASH_HAWK_TELEMETRY_PATH``).  Every
+    event includes an ISO timestamp, event kind, and a flat payload dict.
+
+    The file is opened lazily on first write so merely importing this module
+    has zero I/O cost.
+    """
+
+    def __init__(self) -> None:
+        self._path: Path | None = None
+        self._file_handle: Any = None
+
+    @property
+    def path(self) -> Path:
+        if self._path is not None:
+            return self._path
+        env = os.getenv("ASH_HAWK_TELEMETRY_PATH", "")
+        if env:
+            self._path = Path(env).expanduser().resolve()
+        else:
+            storage = os.getenv("ASH_HAWK_STORAGE_PATH", ".ash-hawk")
+            self._path = Path(storage).expanduser().resolve() / "telemetry.jsonl"
+        return self._path
+
+    def _ensure_handle(self) -> Any:
+        if self._file_handle is not None:
+            return self._file_handle
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self._file_handle = open(self.path, "a")  # noqa: SIM115
+        except OSError:
+            logger.warning("telemetry: cannot open %s — telemetry disabled", self.path)
+        return self._file_handle
+
+    def emit(self, event: str, **payload: Any) -> None:
+        handle = self._ensure_handle()
+        if handle is None:
+            return
+        record: dict[str, Any] = {
+            "ts": datetime.now(UTC).isoformat(),
+            "event": event,
+        }
+        if payload:
+            record["payload"] = payload
+        try:
+            handle.write(json.dumps(record, default=str) + "\n")
+            handle.flush()
+        except OSError:
+            logger.warning("telemetry: write failed")
+
+    def close(self) -> None:
+        if self._file_handle is not None:
+            try:
+                self._file_handle.close()
+            except OSError:
+                pass
+            self._file_handle = None
+
+
+_telemetry: TelemetryLog | None = None
+
+
+def get_telemetry() -> TelemetryLog:
+    global _telemetry
+    if _telemetry is None:
+        _telemetry = TelemetryLog()
+    return _telemetry
+
+
+def reset_telemetry() -> None:
+    global _telemetry
+    if _telemetry is not None:
+        _telemetry.close()
+    _telemetry = None

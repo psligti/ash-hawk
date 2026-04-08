@@ -9,7 +9,7 @@ from ash_hawk.scenario.models import JSONValue, ScenarioAdapterResult
 class BoltMerlinScenarioAdapter(SdkDawnKestrelAdapter):
     name: str = "bolt_merlin"
 
-    def run_scenario(
+    async def async_run_scenario(
         self,
         scenario: dict[str, JSONValue],
         workdir: Path,
@@ -27,7 +27,7 @@ class BoltMerlinScenarioAdapter(SdkDawnKestrelAdapter):
         config["run_config"] = run_config
         sut["config"] = config
         scenario_copy["sut"] = sut
-        return super().run_scenario(scenario_copy, workdir, tooling_harness, budgets)
+        return await super().async_run_scenario(scenario_copy, workdir, tooling_harness, budgets)
 
 
 __all__ = ["BoltMerlinScenarioAdapter"]

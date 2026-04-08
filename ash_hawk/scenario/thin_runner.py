@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ash_hawk.context import clear_eval_context, set_eval_context
 from ash_hawk.graders.registry import get_default_registry
 from ash_hawk.scenario.dawn_kestrel_bridge import DawnKestrelBridge, run_real_agent
 from ash_hawk.scenario.models import ScenarioV1
@@ -143,6 +144,8 @@ class ThinScenarioRunner:
             grader_set=[g.grader_type for g in scenario.graders] if scenario.graders else [],
         )
 
+        set_eval_context(run_id=manifest.run_id, suite_id=scenario.id)
+
         result = await run_real_agent(
             agent_path=agent_path,
             input=input_text,
@@ -154,6 +157,7 @@ class ThinScenarioRunner:
         result.manifest = manifest
 
         self._persist_run_artifacts(result, scenario_path)
+        clear_eval_context()
 
         return result
 
@@ -191,6 +195,8 @@ class ThinScenarioRunner:
             variant=self.variant,
             grader_set=grader_types,
         )
+
+        set_eval_context(run_id=manifest.run_id, suite_id=scenario.id)
 
         result = await run_real_agent(
             agent_path=agent_path,
@@ -267,6 +273,7 @@ class ThinScenarioRunner:
         )
         self._persist_run_artifacts(result, scenario_path, grader_results=grader_results)
 
+        clear_eval_context()
         return graded
 
     def _persist_run_artifacts(

@@ -4,7 +4,7 @@ description: Minimal auto-research scenario focused on intent and grader-defined
 
 sut:
   type: "agentic_sdk"
-  adapter: "dawn_kestrel"
+  adapter: "sdk_dawn_kestrel"
   config:
     skill_path: ".dawn-kestrel/skills/python-bugfix.md"
     max_tokens: 2000

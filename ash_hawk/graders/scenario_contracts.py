@@ -88,12 +88,15 @@ def _extract_todo_updates(
             continue
 
         current_snapshot: dict[str, str] = {}
-        for todo_raw in todos_raw:
+        for todo_idx, todo_raw in enumerate(todos_raw):
             if not isinstance(todo_raw, dict):
                 continue
-            todo_id = str(todo_raw.get("id", "")).strip()
-            desc = str(todo_raw.get("description", "")).strip()
-            state = _normalize_status(todo_raw.get("state", ""))
+            raw_id = str(todo_raw.get("id", "")).strip()
+            desc = str(todo_raw.get("description", "") or todo_raw.get("content", "")).strip()
+            state = _normalize_status(todo_raw.get("state", "") or todo_raw.get("status", ""))
+            # Generate synthetic ID when none provided (e.g. todowrite uses
+            # content + priority instead of id + description).
+            todo_id = raw_id or desc or f"todo-{todo_idx}"
             if not todo_id:
                 continue
             if desc and desc not in created_descriptions:

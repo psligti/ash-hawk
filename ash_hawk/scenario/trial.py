@@ -11,9 +11,11 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
+from ash_hawk.context import set_eval_context
 from ash_hawk.graders.registry import get_default_registry
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.scenario.fixtures import FixtureResolver
+from ash_hawk.tracing import get_telemetry
 from ash_hawk.types import (
     EvalOutcome,
     EvalStatus,
@@ -196,6 +198,8 @@ class TrialExecutor:
         start_time = time.time()
         started_at = datetime.now(UTC).isoformat()
 
+        set_eval_context(trial_id=trial_id)
+
         resolved_task = task
         if self._fixture_resolver is not None:
             resolved_task = self._fixture_resolver.inject_fixtures(task)
@@ -254,6 +258,13 @@ class TrialExecutor:
                     trial_id,
                     timeout_seconds,
                 )
+                get_telemetry().emit(
+                    "trial.agent_timeout",
+                    trial_id=trial_id,
+                    run_id=run_envelope.run_id,
+                    task_id=task.id,
+                    timeout_s=timeout_seconds,
+                )
                 outcome = EvalOutcome.failure(
                     FailureMode.TIMEOUT,
                     f"Trial timed out after {timeout_seconds}s",
@@ -264,6 +275,16 @@ class TrialExecutor:
             else:
                 transcript, outcome = run_task.result()
                 logger.info("Trial %s agent runner completed", trial_id)
+                get_telemetry().emit(
+                    "trial.agent_completed",
+                    trial_id=trial_id,
+                    run_id=run_envelope.run_id,
+                    task_id=task.id,
+                    status=outcome.status.value,
+                    duration_s=round(time.time() - start_time, 3),
+                    tool_call_count=len(transcript.tool_calls),
+                    message_count=len(transcript.messages),
+                )
 
         except asyncio.CancelledError:
             cancelled = True
@@ -309,12 +330,24 @@ class TrialExecutor:
                 envelope=trial_envelope,
             )
 
-            if trial_result.outcome.status == EvalStatus.COMPLETED:
-                if not transcript.messages and transcript.agent_response is None:
+            if trial_result.outcome.status in (
+                EvalStatus.COMPLETED,
+                EvalStatus.ERROR,
+            ):
+                has_transcript_content = (
+                    bool(transcript.messages) or transcript.agent_response is not None
+                )
+                has_tool_activity = bool(transcript.tool_calls) or bool(transcript.trace_events)
+                if not has_transcript_content and not has_tool_activity:
                     logger.warning(
                         "Trial %s completed but transcript is empty "
-                        "(no messages, no agent_response), skipping grading",
+                        "(no messages, no agent_response, no tool activity), skipping grading",
                         trial_id,
+                    )
+                    get_telemetry().emit(
+                        "trial.grading_skipped",
+                        trial_id=trial_id,
+                        reason="empty_transcript",
                     )
                 else:
                     logger.info(
@@ -334,6 +367,26 @@ class TrialExecutor:
                         resolved_task.grader_specs,
                         grader_results,
                     )
+                    grader_summary = [
+                        {
+                            "type": r.grader_type,
+                            "score": r.score,
+                            "passed": r.passed,
+                            "error": r.error_message,
+                        }
+                        for r in grader_results
+                    ]
+                    get_telemetry().emit(
+                        "trial.grading_completed",
+                        trial_id=trial_id,
+                        run_id=run_envelope.run_id,
+                        task_id=task.id,
+                        outcome_status=trial_result.outcome.status.value,
+                        aggregate_score=round(aggregate_score, 4),
+                        aggregate_passed=aggregate_passed,
+                        grader_count=len(grader_results),
+                        graders=grader_summary,
+                    )
                     trial_result = trial_result.model_copy(
                         update={
                             "grader_results": grader_results,
@@ -341,6 +394,14 @@ class TrialExecutor:
                             "aggregate_passed": aggregate_passed,
                         }
                     )
+            else:
+                get_telemetry().emit(
+                    "trial.grading_skipped",
+                    trial_id=trial_id,
+                    run_id=run_envelope.run_id,
+                    task_id=task.id,
+                    reason=f"outcome_status={trial_result.outcome.status.value}",
+                )
 
             eval_trial = EvalTrial(
                 id=trial_id,

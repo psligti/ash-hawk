@@ -25,3 +25,5 @@ htmlcov/
 .DS_Store
 .ash-hawk/
 "emotional chart.jpg"
+.dawn-kestrel/
+__pycache__/

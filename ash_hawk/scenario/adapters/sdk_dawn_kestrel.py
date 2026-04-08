@@ -83,12 +83,40 @@ def _extract_prompt(inputs: dict[str, Any]) -> str:
     return ""
 
 
-def _resolve_provider_model(config: dict[str, Any]) -> tuple[str, str]:
+def _resolve_provider_model(
+    config: dict[str, Any], agent_path: str | None = None
+) -> tuple[str, str]:
     provider = config.get("provider") or config.get("provider_id")
     model = config.get("model")
 
     if isinstance(provider, str) and provider.strip() and isinstance(model, str) and model.strip():
         return provider.strip(), model.strip()
+
+    if agent_path is not None:
+        agent_dir = Path(agent_path)
+        for candidate in [
+            agent_dir / "agent_config.yaml",
+            agent_dir.parent / ".dawn-kestrel" / "agent_config.yaml",
+        ]:
+            if candidate.exists():
+                try:
+                    import yaml
+
+                    data = yaml.safe_load(candidate.read_text(encoding="utf-8")) or {}
+                    runtime = data.get("runtime", {})
+                    if not isinstance(provider, str) or not provider.strip():
+                        provider = runtime.get("provider")
+                    if not isinstance(model, str) or not model.strip():
+                        model = runtime.get("model")
+                    if (
+                        isinstance(provider, str)
+                        and provider.strip()
+                        and isinstance(model, str)
+                        and model.strip()
+                    ):
+                        return provider.strip(), model.strip()
+                except Exception:
+                    pass  # nosec B110 — config parse is best-effort
 
     try:
         from dawn_kestrel.base.config import load_agent_config
@@ -132,6 +160,28 @@ class SdkDawnKestrelAdapter:
         tooling_harness: Any,
         budgets: dict[str, Any],
     ) -> ScenarioAdapterResult:
+        """Sync backward-compatible wrapper around async_run_scenario."""
+        return _run_async(
+            self.async_run_scenario,
+            scenario,
+            workdir,
+            tooling_harness,
+            budgets,
+        )
+
+    async def async_run_scenario(
+        self,
+        scenario: dict[str, Any],
+        workdir: Path,
+        tooling_harness: Any,
+        budgets: dict[str, Any],
+    ) -> ScenarioAdapterResult:
+        """Execute scenario by calling the agent runner directly on the current event loop.
+
+        This avoids creating a new event loop per trial, which breaks the
+        dawn-kestrel SDK's ProviderBus singleton (its background asyncio.Task
+        workers become stale when their originating loop is closed).
+        """
         trace_events: list[dict[str, Any]] = []
         artifacts: dict[str, Any] = {}
 
@@ -151,7 +201,11 @@ class SdkDawnKestrelAdapter:
         sut_config_raw = sut.get("config", {})
         sut_config = dict(sut_config_raw) if isinstance(sut_config_raw, dict) else {}
 
-        provider, model = _resolve_provider_model(sut_config)
+        agent_path_value = None
+        if isinstance(tooling_harness, dict):
+            agent_path_value = tooling_harness.get("agent_path")
+
+        provider, model = _resolve_provider_model(sut_config, agent_path=agent_path_value)
         runner_kwargs_raw = sut_config.get("runner_kwargs", {})
         runner_kwargs = dict(runner_kwargs_raw) if isinstance(runner_kwargs_raw, dict) else {}
 
@@ -186,10 +240,6 @@ class SdkDawnKestrelAdapter:
 
         run_config["workdir"] = str(workdir.resolve())
 
-        # Inject agent_path from tooling_harness if available
-        agent_path_value = None
-        if isinstance(tooling_harness, dict):
-            agent_path_value = tooling_harness.get("agent_path")
         if agent_path_value is not None:
             run_config["agent_path"] = agent_path_value
 
@@ -212,8 +262,10 @@ class SdkDawnKestrelAdapter:
         tool_policy = ToolSurfacePolicy.model_validate(policy_payload)
         policy_enforcer = PolicyEnforcer(tool_policy)
 
-        transcript, outcome = _run_async(
-            runner.run,
+        # Direct await — no thread, no new event loop.
+        # The caller's event loop is the same one the dawn-kestrel
+        # ProviderBus workers live on, so they stay alive across calls.
+        transcript, outcome = await runner.run(
             task=task,
             policy_enforcer=policy_enforcer,
             config=run_config,
@@ -296,12 +348,25 @@ class SdkDawnKestrelAdapter:
         if final_output is None:
             final_output = transcript.error_trace
 
+        parsed_messages: list[Any] = []
+        for message in transcript.messages:
+            try:
+                parsed_messages.append(ScenarioMessage.model_validate(message))
+            except Exception:
+                if isinstance(message, dict):
+                    role = message.get("role", "unknown")
+                    content = message.get("content", "")
+                    if isinstance(content, str):
+                        parsed_messages.append(ScenarioMessage(role=role, content=content))
+                    elif content is None:
+                        parsed_messages.append(ScenarioMessage(role=role, content=""))
+
         return ScenarioAdapterResult(
             final_output=final_output,
             trace_events=[ScenarioTraceEvent.model_validate(event) for event in trace_events],
             artifacts=artifacts,
             outcome=outcome,
-            messages=[ScenarioMessage.model_validate(message) for message in transcript.messages],
+            messages=parsed_messages,
             tool_calls=[
                 parsed
                 for tool_call in transcript.tool_calls

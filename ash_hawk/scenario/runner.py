@@ -18,11 +18,13 @@ from rich.console import Console
 
 from ash_hawk import __version__
 from ash_hawk.config import EvalConfig, get_config
+from ash_hawk.context import clear_eval_context, set_eval_context
 from ash_hawk.scenario.agent_runner import ScenarioAgentRunner
 from ash_hawk.scenario.loader import discover_scenarios, load_scenario
 from ash_hawk.scenario.models import ScenarioGraderSpec, ScenarioV1
 from ash_hawk.scenario.registry import ScenarioAdapterRegistry, get_default_adapter_registry
 from ash_hawk.scenario.trial import TrialExecutor
+from ash_hawk.tracing import get_telemetry
 from ash_hawk.types import (
     EvalOutcome,
     EvalRunSummary,
@@ -541,6 +543,8 @@ class EvalRunner:
         self._trials = []
         self._trial_durations = []
 
+        set_eval_context(run_id=run_envelope.run_id, suite_id=suite.id)
+
         start_time = time.time()
 
         try:
@@ -610,6 +614,7 @@ class EvalRunner:
         finally:
             end_time = time.time()
             suite_duration = end_time - start_time
+            clear_eval_context()
 
         metrics = _build_metrics(
             suite=suite,
@@ -624,6 +629,19 @@ class EvalRunner:
             envelope=run_envelope,
             metrics=metrics,
             trials=self._trials,
+        )
+
+        get_telemetry().emit(
+            "suite.completed",
+            suite_id=suite.id,
+            run_id=run_envelope.run_id,
+            total_tasks=metrics.total_tasks,
+            completed_tasks=metrics.completed_tasks,
+            passed_tasks=metrics.passed_tasks,
+            pass_rate=round(metrics.pass_rate, 4),
+            mean_score=round(metrics.mean_score, 4),
+            duration_s=round(suite_duration, 3),
+            trial_ids=[t.id for t in self._trials],
         )
 
         try:

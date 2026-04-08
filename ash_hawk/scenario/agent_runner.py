@@ -139,13 +139,22 @@ class ScenarioAgentRunner:
             tooling_context["agent_path"] = str(self._agent_path)
 
         try:
-            raw_adapter_result = await asyncio.to_thread(
-                adapter.run_scenario,
-                scenario.model_dump(),
-                tooling_root,
-                tooling_context,
-                scenario.budgets.model_dump(),
-            )
+            async_run = getattr(adapter, "async_run_scenario", None)
+            if callable(async_run):
+                raw_adapter_result = await async_run(
+                    scenario.model_dump(),
+                    tooling_root,
+                    tooling_context,
+                    scenario.budgets.model_dump(),
+                )
+            else:
+                raw_adapter_result = await asyncio.to_thread(
+                    adapter.run_scenario,
+                    scenario.model_dump(),
+                    tooling_root,
+                    tooling_context,
+                    scenario.budgets.model_dump(),
+                )
             adapter_result = self._normalize_adapter_result(raw_adapter_result)
         except Exception as exc:
             return self._failure_transcript(

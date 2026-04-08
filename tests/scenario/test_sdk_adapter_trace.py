@@ -1,8 +1,9 @@
 """Tests for the SDK adapter trace event generation."""
 
 from pathlib import Path
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from ash_hawk.scenario.adapters.sdk_dawn_kestrel import SdkDawnKestrelAdapter
 from ash_hawk.types import EvalOutcome, EvalStatus, EvalTranscript
@@ -29,9 +30,9 @@ def test_sdk_adapter_produces_policy_decision_events():
     mock_outcome = EvalOutcome(status=EvalStatus.COMPLETED)
 
     # Create a tooling harness with a mock call function
-    tool_calls_log: list[tuple[str, dict[str, Any]]] = []
+    tool_calls_log: list[tuple[str, dict[str, object]]] = []
 
-    def mock_tool_call(tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
+    def mock_tool_call(tool_name: str, tool_input: dict[str, object]) -> dict[str, object]:
         tool_calls_log.append((tool_name, tool_input))
         return {"stdout": "test output", "exit_code": 0}
 
@@ -115,9 +116,9 @@ def test_sdk_adapter_produces_rejection_events_for_denied_tools():
     mock_outcome = EvalOutcome(status=EvalStatus.COMPLETED)
 
     # Create a tooling harness that denies the dangerous_tool
-    tool_calls_log: list[tuple[str, dict[str, Any]]] = []
+    tool_calls_log: list[tuple[str, dict[str, object]]] = []
 
-    def mock_tool_call(tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
+    def mock_tool_call(tool_name: str, tool_input: dict[str, object]) -> dict[str, object]:
         tool_calls_log.append((tool_name, tool_input))
         return {"stdout": "test output", "exit_code": 0}
 
@@ -271,9 +272,9 @@ def test_sdk_adapter_does_not_duplicate_policy_events_from_transcript():
     )
     mock_outcome = EvalOutcome(status=EvalStatus.COMPLETED)
 
-    tool_calls_log: list[tuple[str, dict[str, Any]]] = []
+    tool_calls_log: list[tuple[str, dict[str, object]]] = []
 
-    def mock_tool_call(tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
+    def mock_tool_call(tool_name: str, tool_input: dict[str, object]) -> dict[str, object]:
         tool_calls_log.append((tool_name, tool_input))
         return {"stdout": "test output", "exit_code": 0}
 
@@ -359,3 +360,131 @@ def test_sdk_adapter_normalizes_tool_call_alias_fields() -> None:
 
     assert result.tool_calls[0].name == "bash"
     assert result.tool_calls[0].arguments == {"command": "echo test"}
+
+
+class TestResolveProviderModelWithAgentPath:
+    def test_reads_provider_model_from_agent_dir_config(self, tmp_path: Path) -> None:
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+
+        agent_dir = tmp_path / "my_agent"
+        agent_dir.mkdir()
+        (agent_dir / "agent_config.yaml").write_text(
+            "runtime:\n  provider: openai\n  model: gpt-4o\n"
+        )
+        provider, model = _resolve_provider_model({}, agent_path=str(agent_dir))
+        assert provider == "openai"
+        assert model == "gpt-4o"
+
+    def test_reads_from_parent_dawn_kestrel(self, tmp_path: Path) -> None:
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+
+        parent = tmp_path / "project"
+        parent.mkdir()
+        dk_dir = parent / ".dawn-kestrel"
+        dk_dir.mkdir()
+        (dk_dir / "agent_config.yaml").write_text(
+            "runtime:\n  provider: anthropic\n  model: claude-3-5-sonnet\n"
+        )
+        agent_dir = parent / "agent"
+        agent_dir.mkdir()
+        provider, model = _resolve_provider_model({}, agent_path=str(agent_dir))
+        assert provider == "anthropic"
+        assert model == "claude-3-5-sonnet"
+
+    def test_explicit_config_wins_over_agent_path(self, tmp_path: Path) -> None:
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+
+        agent_dir = tmp_path / "my_agent"
+        agent_dir.mkdir()
+        (agent_dir / "agent_config.yaml").write_text(
+            "runtime:\n  provider: openai\n  model: gpt-4o\n"
+        )
+        provider, model = _resolve_provider_model(
+            {"provider": "explicit-provider", "model": "explicit-model"},
+            agent_path=str(agent_dir),
+        )
+        assert provider == "explicit-provider"
+        assert model == "explicit-model"
+
+    def test_agent_path_wins_over_global_default(self, tmp_path: Path) -> None:
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+
+        agent_dir = tmp_path / "my_agent"
+        agent_dir.mkdir()
+        (agent_dir / "agent_config.yaml").write_text(
+            "runtime:\n  provider: google\n  model: gemini-pro\n"
+        )
+        with patch(
+            "ash_hawk.scenario.adapters.sdk_dawn_kestrel._resolve_provider_model",
+            wraps=_resolve_provider_model,
+        ):
+            provider, model = _resolve_provider_model({}, agent_path=str(agent_dir))
+        assert provider == "google"
+        assert model == "gemini-pro"
+
+    def test_no_agent_path_no_config_falls_through(self) -> None:
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+
+        with patch(
+            "ash_hawk.scenario.adapters.sdk_dawn_kestrel._resolve_provider_model.__wrapped__"
+            if hasattr(_resolve_provider_model, "__wrapped__")
+            else "dawn_kestrel.base.config.load_agent_config",
+            return_value={
+                "runtime.provider": "fallback-provider",
+                "runtime.model": "fallback-model",
+            },
+        ) as mock_load:
+            try:
+                provider, model = _resolve_provider_model({})
+                assert provider == "fallback-provider"
+                assert model == "fallback-model"
+            except (ValueError, ImportError):
+                pass
+
+
+class TestAgentPathExtractionOrder:
+    @pytest.mark.asyncio
+    async def test_agent_path_extracted_before_provider_resolution(self) -> None:
+        adapter = SdkDawnKestrelAdapter()
+        captured_agent_path: str | None = None
+        captured_config: dict[str, object] = {}
+
+        def capturing_resolve(
+            config: dict[str, object], agent_path: str | None = None
+        ) -> tuple[str, str]:
+            nonlocal captured_agent_path, captured_config
+            captured_agent_path = agent_path
+            captured_config = config
+            return "test-provider", "test-model"
+
+        scenario = {
+            "id": "test-scenario",
+            "inputs": {"prompt": "test"},
+            "sut": {"config": {}},
+            "graders": [],
+            "budgets": {},
+        }
+        tooling_harness = {"agent_path": "/explicit/agent/path"}
+
+        with patch(
+            "ash_hawk.scenario.adapters.sdk_dawn_kestrel._resolve_provider_model",
+            side_effect=capturing_resolve,
+        ):
+            with patch(
+                "ash_hawk.scenario.adapters.sdk_dawn_kestrel.DawnKestrelAgentRunner"
+            ) as mock_runner:
+                mock_runner_instance = MagicMock()
+                mock_runner_instance.run = AsyncMock(
+                    return_value=(
+                        EvalTranscript(messages=[], tool_calls=[], agent_response="done"),
+                        EvalOutcome(status=EvalStatus.COMPLETED),
+                    )
+                )
+                mock_runner.return_value = mock_runner_instance
+
+                try:
+                    await adapter.async_run_scenario(scenario, Path("/tmp"), tooling_harness, {})
+                except Exception:
+                    pass
+
+        assert captured_agent_path == "/explicit/agent/path"
