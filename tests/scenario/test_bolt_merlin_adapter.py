@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -289,7 +290,16 @@ class TestBoltMerlinScenarioAdapter:
 
         recorded_cwd: list[str] = []
 
-        async def fake_execute(prompt: str, trace: bool, on_event: Any) -> MagicMock:
+        async def fake_execute(
+            prompt: str,
+            trace: bool,
+            on_event: Any,
+            config_path: Path | None = None,
+        ) -> MagicMock:
+            del prompt
+            del trace
+            del on_event
+            del config_path
             recorded_cwd.append(os.getcwd())
             return _make_mock_execution_result()
 
@@ -314,6 +324,98 @@ class TestBoltMerlinScenarioAdapter:
             await adapter.async_run_scenario(scenario, workdir, {}, {})
 
         mock_cwd.assert_called_once_with(workdir.resolve())
+
+    @pytest.mark.asyncio
+    async def test_agent_path_drives_explicit_agent_config_path(self, tmp_path: Path) -> None:
+        adapter = BoltMerlinScenarioAdapter()
+        scenario = _default_scenario()
+        repo_root = tmp_path / "bolt-merlin"
+        agent_dir = repo_root / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+        (repo_root / ".git").mkdir()
+        (repo_root / "bolt_merlin" / "__init__.py").write_text("", encoding="utf-8")
+        (agent_dir / "__init__.py").write_text("", encoding="utf-8")
+
+        captured: dict[str, object] = {}
+
+        async def fake_execute(**kwargs):
+            captured.update(kwargs)
+            return _make_mock_execution_result()
+
+        mock_execute_module = MagicMock()
+        mock_execute_module.execute = fake_execute
+
+        with (
+            patch.dict(
+                "sys.modules",
+                {
+                    "bolt_merlin": MagicMock(),
+                    "bolt_merlin.agent": MagicMock(),
+                    "bolt_merlin.agent.execute": mock_execute_module,
+                },
+            ),
+            patch(
+                "ash_hawk.scenario.adapters.bolt_merlin.import_package_from_agent_path",
+                side_effect=lambda *_args, **_kwargs: nullcontext(),
+            ),
+        ):
+            await adapter.async_run_scenario(
+                scenario,
+                Path("/tmp"),
+                {"agent_path": str(agent_dir)},
+                {},
+            )
+
+        expected_config_path = repo_root / ".dawn-kestrel" / "agent_config.yaml"
+        assert captured["config_path"] == expected_config_path
+
+    @pytest.mark.asyncio
+    async def test_agent_path_prefers_nearest_config_file(self, tmp_path: Path) -> None:
+        adapter = BoltMerlinScenarioAdapter()
+        scenario = _default_scenario()
+        repo_root = tmp_path / "bolt-merlin"
+        agent_dir = repo_root / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+        (repo_root / ".git").mkdir()
+        (repo_root / "bolt_merlin" / "__init__.py").write_text("", encoding="utf-8")
+        (agent_dir / "__init__.py").write_text("", encoding="utf-8")
+        local_config = agent_dir / "agent_config.yaml"
+        local_config.write_text("tools: [read]\n", encoding="utf-8")
+        repo_config = repo_root / ".dawn-kestrel" / "agent_config.yaml"
+        repo_config.parent.mkdir(parents=True)
+        repo_config.write_text("tools: [write]\n", encoding="utf-8")
+
+        captured: dict[str, object] = {}
+
+        async def fake_execute(**kwargs):
+            captured.update(kwargs)
+            return _make_mock_execution_result()
+
+        mock_execute_module = MagicMock()
+        mock_execute_module.execute = fake_execute
+
+        with (
+            patch.dict(
+                "sys.modules",
+                {
+                    "bolt_merlin": MagicMock(),
+                    "bolt_merlin.agent": MagicMock(),
+                    "bolt_merlin.agent.execute": mock_execute_module,
+                },
+            ),
+            patch(
+                "ash_hawk.scenario.adapters.bolt_merlin.import_package_from_agent_path",
+                side_effect=lambda *_args, **_kwargs: nullcontext(),
+            ),
+        ):
+            await adapter.async_run_scenario(
+                scenario,
+                Path("/tmp"),
+                {"agent_path": str(agent_dir)},
+                {},
+            )
+
+        assert captured["config_path"] == local_config
 
     def test_sync_run_scenario_wraps_async(self) -> None:
         """run_scenario (sync) returns same result as async_run_scenario."""

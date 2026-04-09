@@ -9,7 +9,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Coroutine, Iterator, TypeVar
 
-from ash_hawk.agents.source_workspace import detect_package_name, import_package_from_agent_path
+from ash_hawk.agents.source_workspace import (
+    detect_agent_config_path,
+    detect_package_name,
+    import_package_from_agent_path,
+)
 from ash_hawk.scenario.models import (
     JSONValue,
     ScenarioAdapterResult,
@@ -126,6 +130,7 @@ class BoltMerlinScenarioAdapter:
     ) -> ScenarioAdapterResult:
         package_name = "bolt_merlin"
         agent_path_value: Path | None = None
+        config_path_value: Path | None = None
         if isinstance(tooling_harness, dict):
             raw_agent_path = tooling_harness.get("agent_path")
             if isinstance(raw_agent_path, str) and raw_agent_path.strip():
@@ -133,6 +138,7 @@ class BoltMerlinScenarioAdapter:
                 detected_package = detect_package_name(agent_path_value)
                 if detected_package is not None:
                     package_name = detected_package
+                config_path_value = detect_agent_config_path(agent_path_value)
 
         try:
             with import_package_from_agent_path(package_name, agent_path_value):
@@ -175,6 +181,7 @@ class BoltMerlinScenarioAdapter:
                     prompt=prompt,
                     trace=False,
                     on_event=on_event,
+                    config_path=config_path_value,
                 )
 
         # ExecutionError has error_type attribute; ExecutionResult does not.

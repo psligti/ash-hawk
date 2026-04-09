@@ -66,6 +66,22 @@ def detect_package_name(agent_path: Path) -> str | None:
     return package_name
 
 
+def detect_agent_config_path(agent_path: Path) -> Path:
+    resolved = agent_path.resolve()
+    search_roots = [resolved, *resolved.parents]
+    for candidate in search_roots:
+        direct_config = candidate / "agent_config.yaml"
+        if direct_config.exists():
+            return direct_config
+
+        dawn_config = candidate / ".dawn-kestrel" / "agent_config.yaml"
+        if dawn_config.exists():
+            return dawn_config
+
+    source_root = detect_source_root(resolved)
+    return source_root / ".dawn-kestrel" / "agent_config.yaml"
+
+
 @dataclass
 class IsolatedAgentWorkspace:
     repo_root: Path
@@ -199,6 +215,7 @@ __all__ = [
     "IsolatedAgentWorkspace",
     "detect_package_name",
     "detect_git_repo_root",
+    "detect_agent_config_path",
     "detect_source_root",
     "import_package_from_agent_path",
     "infer_agent_name_from_path",
