@@ -1,12 +1,13 @@
-# type-hygiene: skip-file
 from __future__ import annotations
 
 import os
 import subprocess
+from io import StringIO
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from rich.console import Console
 
 from ash_hawk.improve.diagnose import Diagnosis
 from ash_hawk.improve.loop import ImprovementResult, improve
@@ -308,3 +309,38 @@ class TestImprove:
         assert result.mutation_history == []
         assert target_file.read_text(encoding="utf-8") == "bad"
         assert mock_run.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_console_clarifies_outer_pass_and_single_hypothesis(self, tmp_path):
+        diagnosis = Diagnosis(
+            trial_id="trial-0",
+            failure_summary="bad prompt",
+            root_cause="prompt needs update",
+            suggested_fix="update prompt",
+            target_files=["prompt.md"],
+            confidence=0.9,
+        )
+        output = StringIO()
+        console = Console(file=output, force_terminal=False)
+
+        with (
+            patch("ash_hawk.improve.loop._run_eval", new_callable=AsyncMock) as mock_run,
+            patch("ash_hawk.improve.loop.diagnose_failures", new_callable=AsyncMock) as mock_diag,
+            patch("ash_hawk.improve.loop.propose_patch", new_callable=AsyncMock),
+        ):
+            mock_run.return_value = _make_mock_summary(0.0, n_trials=1)
+            mock_diag.return_value = [diagnosis]
+
+            await improve(
+                "suite.yaml",
+                max_iterations=1,
+                lessons_dir=tmp_path / "lessons",
+                output_dir=tmp_path,
+                eval_repeats=1,
+                console=console,
+            )
+
+        rendered = output.getvalue()
+        assert "Outer pass 1/1" in rendered
+        assert "runs the full suite" in rendered
+        assert "One failing trial produced one diagnosis" in rendered

@@ -129,8 +129,11 @@ async def improve(
             actual_iterations += 1
             if console is not None:
                 console.print(
-                    f"  [bold]Iteration {i + 1}/{max_iterations}[/bold]  "
+                    f"  [bold]Outer pass {i + 1}/{max_iterations}[/bold]  "
                     f"[dim]Step 1: baseline evaluation[/dim]"
+                )
+                console.print(
+                    "  [dim]Each outer pass runs the full suite, then diagnoses only the failures from that fresh baseline run.[/dim]"
                 )
 
             mean_pass_rate, last_summary, eval_errors = await _run_eval_n_times(
@@ -186,7 +189,7 @@ async def improve(
                     total = last_summary.metrics.completed_tasks
                     trial_info = f"  trials=[{passed}/{total} passed]"
                 console.print(
-                    f"  [bold]Baseline result:[/bold] iteration {i + 1}/{max_iterations}  "
+                    f"  [bold]Baseline result:[/bold] outer pass {i + 1}/{max_iterations}  "
                     f"score=[{color}]{mean_pass_rate:.2%}[/{color}]"
                     f"{trial_info}  "
                     f"target={target:.0%}"
@@ -243,6 +246,9 @@ async def improve(
                 console.print(
                     f"  [yellow]Failures found:[/yellow] {len(failures)}  ids={_format_path_list(failed_ids)}"
                 )
+                console.print(
+                    "  [dim]These failures come from the latest baseline suite run. New trial ids here mean the suite was rerun, not that the same hypothesis is on a second sub-trial.[/dim]"
+                )
             if not failures:
                 logger.info("No failures found in iteration %d, stopping", i)
                 if console is not None:
@@ -275,6 +281,14 @@ async def improve(
                     f"  [cyan]Diagnoses:[/cyan] "
                     f"{len(diagnoses)} generated from {len(failures)} failure(s)"
                 )
+                if len(diagnoses) == len(failures) == 1:
+                    console.print(
+                        "  [dim]One failing trial produced one diagnosis, so this pass has one hypothesis candidate to test.[/dim]"
+                    )
+                elif len(diagnoses) < len(failures):
+                    console.print(
+                        "  [dim]Some failures did not turn into diagnoses, so they will not produce hypotheses in this pass.[/dim]"
+                    )
 
             ranking = ranker.rank(diagnoses)
 
@@ -663,7 +677,7 @@ async def improve(
 
             if console is not None:
                 console.print(
-                    f"  [dim]Iteration {i + 1} complete: "
+                    f"  [dim]Outer pass {i + 1} complete: "
                     f"score {final_pass_rate:.2%}  "
                     f"tested={len(mutation_history)}  kept={sum(1 for m in mutation_history if m.get('kept'))}[/dim]"
                 )

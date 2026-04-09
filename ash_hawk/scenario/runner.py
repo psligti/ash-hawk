@@ -198,6 +198,13 @@ class ScenarioRunner:
 
             # Check for low score
             if trial.result.aggregate_score is not None and trial.result.aggregate_score <= 0.3:
+                failing_graders: list[str] = []
+                for grader_result in getattr(trial.result, "grader_results", []):
+                    if not getattr(grader_result, "passed", False):
+                        grader_type = getattr(grader_result, "grader_type", None)
+                        if grader_type:
+                            failing_graders.append(str(grader_type))
+
                 low_score_trials.append(
                     {
                         "trial_id": trial.id,
@@ -206,6 +213,7 @@ class ScenarioRunner:
                         "error_trace": transcript.error_trace,
                         "has_empty_tool_calls": len(transcript.tool_calls) == 0,
                         "has_empty_messages": len(transcript.messages) == 0,
+                        "failing_graders": failing_graders,
                     }
                 )
 
@@ -282,21 +290,16 @@ class ScenarioRunner:
                         console.print(f"    [dim]Error in {trial_info['trial_id']}:[/dim]")
                         console.print(f"    [dim]{trial_info['error_trace'][:200]}[/dim]")
 
-                # Recommendations
                 if pattern_info["pattern"] == "low_score":
                     console.print()
-                    console.print("  [yellow]Recommendations:[/yellow]")
-                    console.print("  [dim]• Check agent configuration and adapter setup[/dim]")
-                    console.print(
-                        "  [dim]• Verify tool registry and permission filter compatibility[/dim]"
-                    )
-                    console.print("  [dim]• Review scenario mock configuration[/dim]")
+                    console.print("  [yellow]Insights:[/yellow]")
+                    for insight in self._build_low_score_insights(pattern_info["trials"]):
+                        console.print(f"  [dim]• {insight}[/dim]")
                 elif pattern_info["pattern"] == "empty_transcript":
                     console.print()
-                    console.print("  [yellow]Recommendations:[/yellow]")
-                    console.print("  [dim]• Agent may be crashing before completing any work[/dim]")
-                    console.print("  [dim]• Check for runtime errors in agent initialization[/dim]")
-                    console.print("  [dim]• Verify allowed_tools configuration[/dim]")
+                    console.print("  [yellow]Insights:[/yellow]")
+                    for insight in self._build_empty_transcript_insights(pattern_info["trials"]):
+                        console.print(f"  [dim]• {insight}[/dim]")
 
         return {
             "failure_patterns": failure_patterns,
@@ -304,6 +307,56 @@ class ScenarioRunner:
             "error_trace_trials": error_trace_trials,
             "empty_transcript_trials": empty_transcript_trials,
         }
+
+    def _build_low_score_insights(self, trials: list[dict[str, Any]]) -> list[str]:
+        insights: list[str] = []
+        if not trials:
+            return insights
+
+        scores = [float(t["score"]) for t in trials if t.get("score") is not None]
+        if scores:
+            insights.append(
+                f"Score range {min(scores):.2f} to {max(scores):.2f}, average {sum(scores) / len(scores):.2f}"
+            )
+
+        empty_tool_calls = sum(1 for trial in trials if trial.get("has_empty_tool_calls"))
+        if empty_tool_calls:
+            insights.append(
+                f"{empty_tool_calls}/{len(trials)} low-score trial(s) made zero tool calls"
+            )
+
+        empty_messages = sum(1 for trial in trials if trial.get("has_empty_messages"))
+        if empty_messages:
+            insights.append(
+                f"{empty_messages}/{len(trials)} low-score trial(s) produced no conversation messages"
+            )
+
+        grader_counts: dict[str, int] = {}
+        for trial in trials:
+            for grader_type in trial.get("failing_graders", []):
+                grader_counts[grader_type] = grader_counts.get(grader_type, 0) + 1
+        if grader_counts:
+            top_graders = sorted(grader_counts.items(), key=lambda item: (-item[1], item[0]))[:3]
+            grader_summary = ", ".join(f"{name} ({count})" for name, count in top_graders)
+            insights.append(f"Most common failing graders: {grader_summary}")
+
+        if not insights:
+            insights.append("Low scores were detected, but no richer failure signals were recorded")
+
+        return insights
+
+    def _build_empty_transcript_insights(self, trials: list[dict[str, Any]]) -> list[str]:
+        if not trials:
+            return []
+
+        trial_ids = ", ".join(str(trial["trial_id"]) for trial in trials[:3])
+        insights = [
+            "No messages, tool calls, trace events, response, or error trace were recorded",
+            f"Affected trial ids: {trial_ids}",
+        ]
+        if len(trials) > 3:
+            insights.append(f"Additional empty transcripts: {len(trials) - 3} more")
+        return insights
 
     def _load_scenario_sources(self, paths: list[str]) -> list[tuple[ScenarioV1, Path]]:
         if not paths:
