@@ -79,6 +79,25 @@ class TestDiagnoseFailures:
         assert d.confidence == 0.1
         assert d.target_files == []
         assert "unavailable" in d.root_cause.lower()
+        assert d.actionable is False
+        assert d.diagnosis_mode == "fallback_llm_unavailable"
+        assert d.degraded_reason == "diagnosis_llm_unavailable"
+
+    @pytest.mark.asyncio
+    async def test_unparseable_response_returns_non_actionable_fallback(self):
+        trial = _make_trial()
+        with patch(
+            "ash_hawk.improve.diagnose._call_llm",
+            new_callable=AsyncMock,
+            return_value="not valid json",
+        ):
+            results = await diagnose_failures([trial])
+
+        assert len(results) == 1
+        d = results[0]
+        assert d.actionable is False
+        assert d.diagnosis_mode == "fallback_parse_failure"
+        assert d.degraded_reason == "diagnosis_parse_failure"
 
     @pytest.mark.asyncio
     async def test_diagnosis_prompt_includes_transcript_context(self):

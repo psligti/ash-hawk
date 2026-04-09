@@ -19,6 +19,9 @@ class DiagnosisSummary(pd.BaseModel):
     root_cause: str = pd.Field(description="Root cause analysis")
     target_files: list[str] = pd.Field(default_factory=list)
     confidence: float = pd.Field(ge=0.0, le=1.0)
+    actionable: bool = pd.Field(default=True)
+    diagnosis_mode: str = pd.Field(default="llm")
+    degraded_reason: str | None = pd.Field(default=None)
 
 
 class IterationLog(pd.BaseModel):
@@ -32,6 +35,13 @@ class IterationLog(pd.BaseModel):
         default_factory=list, description="Diagnoses generated"
     )
     hypothesis_ranked: int = pd.Field(default=0, description="Number of hypotheses after ranking")
+    hypothesis_attempted: str | None = pd.Field(
+        default=None, description="Trial ID of the hypothesis that reached mutation generation"
+    )
+    hypothesis_outcome: str | None = pd.Field(
+        default=None,
+        description="High-level outcome for the attempted hypothesis",
+    )
     hypothesis_tested: str | None = pd.Field(
         default=None, description="Trial ID of the tested hypothesis"
     )
@@ -54,6 +64,9 @@ def diagnosis_to_summary(diagnosis: Diagnosis) -> DiagnosisSummary:
         root_cause=diagnosis.root_cause,
         target_files=diagnosis.target_files,
         confidence=diagnosis.confidence,
+        actionable=diagnosis.actionable,
+        diagnosis_mode=diagnosis.diagnosis_mode,
+        degraded_reason=diagnosis.degraded_reason,
     )
 
 

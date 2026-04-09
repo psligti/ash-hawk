@@ -7,7 +7,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import pydantic as pd
 
@@ -56,6 +56,39 @@ class Diagnosis(pd.BaseModel):
     )
     confidence: float = pd.Field(
         default=0.0, ge=0.0, le=1.0, description="LLM confidence in the diagnosis"
+    )
+    actionable: bool = pd.Field(
+        default=True,
+        description="Whether this diagnosis is actionable enough to test as a hypothesis",
+    )
+    diagnosis_mode: Literal["llm", "fallback_llm_unavailable", "fallback_parse_failure"] = pd.Field(
+        default="llm", description="How the diagnosis was produced"
+    )
+    degraded_reason: str | None = pd.Field(
+        default=None,
+        description="Why this diagnosis is degraded or non-actionable",
+    )
+
+
+def _fallback_diagnosis(
+    trial: EvalTrial,
+    *,
+    failure_summary: str,
+    root_cause: str,
+    suggested_fix: str,
+    diagnosis_mode: Literal["fallback_llm_unavailable", "fallback_parse_failure"],
+    degraded_reason: str,
+) -> Diagnosis:
+    return Diagnosis(
+        trial_id=trial.id,
+        failure_summary=failure_summary[:200],
+        root_cause=root_cause,
+        suggested_fix=suggested_fix,
+        target_files=[],
+        confidence=0.1,
+        actionable=False,
+        diagnosis_mode=diagnosis_mode,
+        degraded_reason=degraded_reason,
     )
 
 
@@ -131,6 +164,9 @@ async def _diagnose_single(
     grader_results_str = "[]"
     error_trace = ""
 
+    if trial.result is None:
+        error_trace = f"Trial produced no result (status={trial.status})"
+
     if transcript is not None:
         agent_response = str(transcript.agent_response or "")[:2000]
         if trial.result and trial.result.grader_results:
@@ -190,17 +226,17 @@ async def _diagnose_single(
             console.print(
                 f"    [yellow]⚠ LLM unavailable, using fallback diagnosis for trial {trial.id}[/yellow]"
             )
-        return Diagnosis(
-            trial_id=trial.id,
-            failure_summary=error_msg[:200],
+        return _fallback_diagnosis(
+            trial,
+            failure_summary=error_msg,
             root_cause=(
                 f"LLM diagnosis unavailable. Error trace: {error_trace[:500]}"
                 if error_trace
                 else "LLM diagnosis unavailable"
             ),
             suggested_fix="Review transcript and error trace manually",
-            target_files=[],
-            confidence=0.1,
+            diagnosis_mode="fallback_llm_unavailable",
+            degraded_reason="diagnosis_llm_unavailable",
         )
 
     result = _parse_diagnosis_response(trial.id, response)
@@ -213,6 +249,20 @@ async def _diagnose_single(
         )
     elif result is None and console is not None:
         console.print(f"    [yellow]⚠ Could not parse diagnosis for trial {trial.id}[/yellow]")
+    if result is None:
+        return _fallback_diagnosis(
+            trial,
+            failure_summary=error_trace or agent_response or "Diagnosis response was not parseable",
+            root_cause="Diagnosis response was not parseable JSON",
+            suggested_fix="Review the failed trial manually and retry diagnosis",
+            diagnosis_mode="fallback_parse_failure",
+            degraded_reason="diagnosis_parse_failure",
+        )
+
+    if not result.target_files:
+        result.actionable = False
+        result.degraded_reason = "diagnosis_missing_target_files"
+
     return result
 
 
@@ -290,4 +340,6 @@ def _parse_diagnosis_response(trial_id: str, response: str) -> Diagnosis | None:
         suggested_fix=str(data["suggested_fix"]),
         target_files=data.get("target_files", []),
         confidence=float(data.get("confidence", 0.0)),
+        actionable=True,
+        diagnosis_mode="llm",
     )

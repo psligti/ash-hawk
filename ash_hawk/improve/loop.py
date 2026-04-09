@@ -230,9 +230,7 @@ async def improve(
                 continue
 
             failures = [
-                t
-                for t in last_summary.trials
-                if t.result is not None and not t.result.aggregate_passed
+                t for t in last_summary.trials if t.result is None or not t.result.aggregate_passed
             ]
             failure_by_id = {t.id: t for t in failures}
             get_telemetry().emit(
@@ -276,6 +274,8 @@ async def improve(
                 continue
 
             logger.info("Diagnosed %d failures in iteration %d", len(diagnoses), i)
+            actionable_diagnoses = [d for d in diagnoses if d.actionable]
+            non_actionable_diagnoses = [d for d in diagnoses if not d.actionable]
             if console is not None:
                 console.print(
                     f"  [cyan]Diagnoses:[/cyan] "
@@ -289,8 +289,41 @@ async def improve(
                     console.print(
                         "  [dim]Some failures did not turn into diagnoses, so they will not produce hypotheses in this pass.[/dim]"
                     )
+                if non_actionable_diagnoses:
+                    reasons = sorted(
+                        {
+                            diagnosis.degraded_reason or diagnosis.diagnosis_mode
+                            for diagnosis in non_actionable_diagnoses
+                        }
+                    )
+                    console.print(
+                        f"  [yellow]Non-actionable diagnoses:[/yellow] {len(non_actionable_diagnoses)}  reasons={_format_path_list(reasons)}"
+                    )
 
-            ranking = ranker.rank(diagnoses)
+            if not actionable_diagnoses:
+                if console is not None:
+                    console.print(
+                        "  [bold yellow]⚠ No actionable diagnoses this pass, so mutation testing is skipped.[/bold yellow]"
+                    )
+                    console.print(
+                        "  [dim]The improver will stop here because rerunning the same suite without target files or a usable diagnosis would only create more placeholder output.[/dim]"
+                    )
+                final_stop_reasons = ["no_actionable_diagnoses"]
+                iter_log = IterationLog(
+                    iteration=i,
+                    baseline_score=mean_pass_rate,
+                    baseline_repeats=eval_repeats,
+                    failures=[t.id for t in failures],
+                    diagnoses=[diagnosis_to_summary(d) for d in diagnoses],
+                    hypothesis_ranked=0,
+                    hypothesis_outcome="no_actionable_diagnoses",
+                    stop_reasons=final_stop_reasons,
+                )
+                iteration_logs.append(iter_log.model_dump())
+                write_iteration_log(iter_log, output_dir)
+                break
+
+            ranking = ranker.rank(actionable_diagnoses)
 
             logger.debug(
                 "Iteration %d: %d hypotheses ranked (%d filtered as already tried)",
@@ -313,9 +346,31 @@ async def improve(
                     f"  [dim]Top targets:[/dim] {_format_path_list(top_targets, limit=3)}"
                 )
 
+            if not ranking.hypotheses:
+                if console is not None:
+                    console.print(
+                        "  [bold yellow]⚠ No hypotheses remain after filtering already-tried ideas.[/bold yellow]"
+                    )
+                final_stop_reasons = ["no_ranked_hypotheses"]
+                iter_log = IterationLog(
+                    iteration=i,
+                    baseline_score=mean_pass_rate,
+                    baseline_repeats=eval_repeats,
+                    failures=[t.id for t in failures],
+                    diagnoses=[diagnosis_to_summary(d) for d in diagnoses],
+                    hypothesis_ranked=0,
+                    hypothesis_outcome="no_ranked_hypotheses",
+                    stop_reasons=final_stop_reasons,
+                )
+                iteration_logs.append(iter_log.model_dump())
+                write_iteration_log(iter_log, output_dir)
+                break
+
             mean_old = mean_pass_rate
 
             iteration_kept: bool | None = None
+            iteration_hypothesis_attempted: str | None = None
+            iteration_hypothesis_outcome: str | None = None
             iteration_hypothesis_tested: str | None = None
             iteration_hypothesis_score: float | None = None
             iteration_delta: float | None = None
@@ -342,6 +397,7 @@ async def improve(
                 workspace = None
                 hypothesis_mutator = None
                 try:
+                    iteration_hypothesis_attempted = hyp.diagnosis.trial_id
                     if agent_path is not None:
                         if console is not None:
                             console.print(
@@ -437,6 +493,7 @@ async def improve(
                                         f"{patch.agent_relative_path}[/dim]"
                                     )
                         else:
+                            iteration_hypothesis_outcome = "mutation_generation_failed"
                             patch_path = write_patch(patch, output_dir)
                             logger.info(
                                 "Patch proposed: %s for %s",
@@ -445,6 +502,9 @@ async def improve(
                             )
                             if console is not None:
                                 console.print(f"    [dim]Patch written: {patch_path.name}[/dim]")
+                                console.print(
+                                    "    [yellow]No mutation was applied, so no validation run will happen for this hypothesis.[/yellow]"
+                                )
                             workspace.cleanup()
                             hypothesis_mutator.cleanup()
                             continue
@@ -461,6 +521,7 @@ async def improve(
                         hypothesis_mutator.diff_since_snapshot(hypothesis_snapshot).keys()
                     )
                     if not changed_paths:
+                        iteration_hypothesis_outcome = "no_file_changes"
                         logger.info(
                             "Mutation produced no file changes for hypothesis rank=%d", hyp.rank
                         )
@@ -493,6 +554,7 @@ async def improve(
                     )
 
                     if new_mean is None:
+                        iteration_hypothesis_outcome = "post_mutation_eval_failed"
                         logger.warning(
                             "All post-mutation evals failed for hypothesis rank=%d",
                             hyp.rank,
@@ -540,6 +602,7 @@ async def improve(
 
                     delta = evaluated_mean - mean_old
                     kept = delta > score_threshold
+                    iteration_hypothesis_outcome = "kept" if kept else "reverted"
 
                     logger.debug(
                         "Hypothesis result: rank=%d delta=%.4f (%.4f -> %.4f) %s",
@@ -647,6 +710,7 @@ async def improve(
                         break
 
                 except Exception:
+                    iteration_hypothesis_outcome = "hypothesis_exception"
                     logger.warning("Hypothesis %s failed", hyp.diagnosis.trial_id, exc_info=True)
                     if workspace is not None:
                         workspace.cleanup()
@@ -665,6 +729,8 @@ async def improve(
                 failures=[t.id for t in failures],
                 diagnoses=[diagnosis_to_summary(d) for d in diagnoses],
                 hypothesis_ranked=ranking.ranked_count,
+                hypothesis_attempted=iteration_hypothesis_attempted,
+                hypothesis_outcome=iteration_hypothesis_outcome,
                 hypothesis_tested=iteration_hypothesis_tested,
                 hypothesis_score=iteration_hypothesis_score,
                 delta=iteration_delta,

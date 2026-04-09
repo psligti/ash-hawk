@@ -153,8 +153,8 @@ class TestImprove:
                 "suite.yaml", max_iterations=3, output_dir=tmp_path, eval_repeats=1
             )
 
-        # 1 call per iteration (failure gathering reuses initial eval result)
-        assert mock_run.call_count == 3
+        assert mock_run.call_count == 1
+        assert result.stop_reasons == ["no_actionable_diagnoses"]
 
     @pytest.mark.asyncio
     async def test_run_eval_failure_continues(self, tmp_path):
@@ -344,3 +344,47 @@ class TestImprove:
         assert "Outer pass 1/1" in rendered
         assert "runs the full suite" in rendered
         assert "One failing trial produced one diagnosis" in rendered
+
+    @pytest.mark.asyncio
+    async def test_non_actionable_diagnosis_stops_without_testing_hypothesis(self, tmp_path):
+        diagnosis = Diagnosis(
+            trial_id="trial-0",
+            failure_summary="trial timed out",
+            root_cause="LLM diagnosis unavailable",
+            suggested_fix="review manually",
+            target_files=[],
+            confidence=0.1,
+            actionable=False,
+            diagnosis_mode="fallback_llm_unavailable",
+            degraded_reason="diagnosis_llm_unavailable",
+        )
+        output = StringIO()
+        console = Console(file=output, force_terminal=False)
+
+        with (
+            patch("ash_hawk.improve.loop._run_eval", new_callable=AsyncMock) as mock_run,
+            patch("ash_hawk.improve.loop.diagnose_failures", new_callable=AsyncMock) as mock_diag,
+            patch("ash_hawk.improve.loop.propose_patch", new_callable=AsyncMock) as mock_patch,
+        ):
+            mock_run.return_value = _make_mock_summary(0.0, n_trials=1)
+            mock_diag.return_value = [diagnosis]
+
+            result = await improve(
+                "suite.yaml",
+                max_iterations=2,
+                lessons_dir=tmp_path / "lessons",
+                output_dir=tmp_path,
+                eval_repeats=1,
+                console=console,
+            )
+
+        rendered = output.getvalue()
+        assert "Non-actionable diagnoses: 1" in rendered
+        assert "No actionable diagnoses this pass" in rendered
+        assert result.stop_reasons == ["no_actionable_diagnoses"]
+        assert result.mutation_history == []
+        assert mock_patch.await_count == 0
+
+        iter_log = (tmp_path / "iter-000.json").read_text(encoding="utf-8")
+        assert '"hypothesis_ranked": 0' in iter_log
+        assert '"hypothesis_outcome": "no_actionable_diagnoses"' in iter_log
