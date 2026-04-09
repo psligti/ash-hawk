@@ -10,7 +10,10 @@ from typing import TYPE_CHECKING, Any
 import pydantic as pd
 from rich.console import Console
 
-from ash_hawk.agents.source_workspace import prepare_isolated_agent_workspace
+from ash_hawk.agents.source_workspace import (
+    detect_agent_config_path,
+    prepare_isolated_agent_workspace,
+)
 from ash_hawk.improve.diagnose import diagnose_failures
 from ash_hawk.improve.hypothesis_ranker import HypothesisRanker
 from ash_hawk.improve.iteration_log import (
@@ -453,6 +456,9 @@ async def improve(
                                 lines.append(f"[tool_call] {name}({args})")
                             transcript_excerpt = "\n".join(lines)
 
+                        hypothesis_config_path = detect_agent_config_path(hypothesis_agent_path)
+                        hypothesis_repo_root = workspace.workspace_root
+
                         try:
                             patch = await propose_patch_via_agent(
                                 hyp.diagnosis,
@@ -461,6 +467,8 @@ async def improve(
                                 grader_details=grader_details,
                                 transcript_excerpt=transcript_excerpt,
                                 console=console,
+                                config_path=hypothesis_config_path,
+                                repo_root=hypothesis_repo_root,
                             )
                         except ImportError:
                             logger.warning("bolt_merlin unavailable, falling back to LLM patching")

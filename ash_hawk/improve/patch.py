@@ -2,28 +2,15 @@
 from __future__ import annotations
 
 import logging
-import os
 import re
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 import pydantic as pd
 
-from ash_hawk.agents.source_workspace import detect_package_name, import_package_from_agent_path
 from ash_hawk.improve.diagnose import Diagnosis
 
 logger = logging.getLogger(__name__)
-
-
-@contextmanager
-def _cwd(path: Path) -> Iterator[None]:
-    original = os.getcwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(original)
 
 
 class ProposedPatch(pd.BaseModel):
@@ -115,6 +102,8 @@ def _build_mutation_prompt(
     grader_details: str = "",
     transcript_excerpt: str = "",
     agent_content: dict[str, str] | None = None,
+    agent_source_path: Path | None = None,
+    repo_root: Path | None = None,
 ) -> str:
     agent_files_section = ""
     if agent_content:
@@ -133,6 +122,21 @@ def _build_mutation_prompt(
     if transcript_excerpt:
         transcript_section = f"\n## Agent Transcript (last actions)\n{transcript_excerpt}\n"
 
+    scope_constraint = ""
+    if agent_source_path is not None and repo_root is not None:
+        rel_agent = (
+            agent_source_path.relative_to(repo_root)
+            if agent_source_path.is_relative_to(repo_root)
+            else agent_source_path
+        )
+        scope_constraint = (
+            f"\n## CRITICAL SCOPE CONSTRAINT\n"
+            f"You MUST ONLY modify files under {rel_agent}/.\n"
+            f"Do NOT modify session files, test files, eval infrastructure, or anything outside {rel_agent}/.\n"
+            f"Your changes will be measured by diffing only files in {rel_agent}/ — "
+            f"changes elsewhere are invisible and wasted effort.\n"
+        )
+
     return (
         "You are a coding agent that has been running evaluation scenarios. "
         "The latest evaluation run FAILED. Your task is to fix your OWN source code "
@@ -145,12 +149,13 @@ def _build_mutation_prompt(
         f"- Target Files: {target_files}\n"
         f"{grader_section}"
         f"{transcript_section}"
+        f"{scope_constraint}"
         f"{agent_files_section}\n\n"
         "## Instructions\n"
         "1. Read the relevant source files (prompts, config, tools)\n"
         "2. Identify what in YOUR code caused this failure\n"
         "3. Make minimal, targeted changes to fix the issue\n"
-        "4. Do NOT change test files or evaluation infrastructure\n"
+        "4. Do NOT change test files, session files, or evaluation infrastructure\n"
         f"5. Focus on the root cause: {diagnosis.root_cause}\n\n"
         "The files are in the current working directory. Use your tools to read and edit them."
     )
@@ -163,48 +168,41 @@ async def propose_patch_via_agent(
     grader_details: str = "",
     transcript_excerpt: str = "",
     console: Any | None = None,
+    config_path: Path | None = None,
+    repo_root: Path | None = None,
 ) -> ProposedPatch:
-    package_name = detect_package_name(agent_source_path) or "bolt_merlin"
-
-    with import_package_from_agent_path(package_name, agent_source_path):
-        from bolt_merlin.agent.execute import execute
-
     prompt = _build_mutation_prompt(
         diagnosis,
         grader_details=grader_details,
         transcript_excerpt=transcript_excerpt,
         agent_content=agent_content,
+        agent_source_path=agent_source_path,
+        repo_root=repo_root,
     )
 
-    with _cwd(agent_source_path.resolve()):
-        with import_package_from_agent_path(package_name, agent_source_path):
-            if console is not None:
-                console.print("    [dim]Running agent to apply fix...[/dim]")
-            result = await execute(
-                prompt=prompt,
-                trace=False,
-            )
+    if console is not None:
+        console.print("    [dim]Running agent to apply fix...[/dim]")
 
-    if hasattr(result, "error_type"):
+    response_text, error = await _run_agent_cli(
+        prompt=prompt,
+        cwd=repo_root or agent_source_path.parent,
+        config_path=config_path,
+    )
+
+    if error is not None:
         if console is not None:
-            console.print(f"    [bold red]✗ Agent execution failed: {result.message}[/bold red]")
-        logger.warning(
-            "Agent execution failed for %s: [%s] %s",
-            diagnosis.trial_id,
-            result.error_type,
-            result.message,
-        )
+            console.print(f"    [bold red]✗ Agent execution failed: {error}[/bold red]")
+        logger.warning("Agent execution failed for %s: %s", diagnosis.trial_id, error)
         return ProposedPatch(
             diagnosis=diagnosis,
             file_path=diagnosis.target_files[0] if diagnosis.target_files else "unknown",
-            description=f"Agent execution failed: {result.message}",
+            description=f"Agent execution failed: {error}",
             diff="",
             rationale=diagnosis.root_cause,
             agent_relative_path=None,
             content=None,
         )
 
-    response_text = result.response or ""
     return ProposedPatch(
         diagnosis=diagnosis,
         file_path=diagnosis.target_files[0] if diagnosis.target_files else "unknown",
@@ -212,8 +210,43 @@ async def propose_patch_via_agent(
         diff="",
         rationale=diagnosis.root_cause,
         agent_relative_path="(agent-edited)",
-        content=response_text,
+        content=response_text or "",
     )
+
+
+async def _run_agent_cli(
+    prompt: str,
+    cwd: Path,
+    config_path: Path | None = None,
+) -> tuple[str | None, str | None]:
+    import asyncio
+    import shutil
+
+    bolt_merlin = shutil.which("bolt-merlin")
+    if bolt_merlin is None:
+        venv_bin = Path(".venv") / "bin" / "bolt-merlin"
+        if venv_bin.exists():
+            bolt_merlin = str(venv_bin)
+        else:
+            return None, "bolt-merlin CLI not found in PATH or .venv/bin"
+
+    cmd = [bolt_merlin, "code", prompt]
+    if config_path is not None and config_path.exists():
+        cmd.extend(["--config", str(config_path)])
+
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        cwd=str(cwd),
+    )
+    stdout, stderr = await proc.communicate()
+
+    if proc.returncode != 0:
+        err_msg = stderr.decode(errors="replace").strip() or f"exit code {proc.returncode}"
+        return None, err_msg
+
+    return stdout.decode(errors="replace").strip(), None
 
 
 def _sanitize_path(name: str) -> str:
