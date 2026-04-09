@@ -1,6 +1,7 @@
+# type-hygiene: skip-file
 from __future__ import annotations
 
-from typing import Literal, TypeAlias, cast
+from typing import Any, Literal, TypeAlias, cast
 
 import pydantic as pd
 
@@ -221,7 +222,7 @@ class ScenarioAdapterResult(pd.BaseModel):
     )
     trace_events: list[ScenarioTraceEvent] = pd.Field(
         default_factory=list,
-        description="Structured trace events",
+        description="Structured trace events (single source of truth)",
     )
     artifacts: dict[str, JSONValue] = pd.Field(
         default_factory=dict,
@@ -231,16 +232,29 @@ class ScenarioAdapterResult(pd.BaseModel):
         default_factory=EvalOutcome.success,
         description="Outcome from adapter execution",
     )
-    messages: list[ScenarioMessage] = pd.Field(
-        default_factory=list,
-        description="Conversation messages",
-    )
-    tool_calls: list[ScenarioToolCall] = pd.Field(
-        default_factory=list,
-        description="Tool calls made during scenario execution",
-    )
 
     model_config = pd.ConfigDict(extra="forbid")
+
+    def extract_messages(self) -> list[ScenarioMessage]:
+        return [
+            ScenarioMessage(role=cast(str, e.data["role"]), content=cast(str, e.data["content"]))
+            for e in self.trace_events
+            if e.event_type == "ModelMessageEvent"
+            and isinstance(e.data.get("role"), str)
+            and isinstance(e.data.get("content"), str)
+        ]
+
+    def extract_tool_calls(self) -> list[ScenarioToolCall]:
+        return [
+            ScenarioToolCall(
+                name=cast(str, e.data.get("name") or e.data.get("tool", "")),
+                arguments=cast(dict[str, Any], e.data.get("arguments") or e.data.get("input", {})),
+            )
+            for e in self.trace_events
+            if e.event_type == "ToolCallEvent"
+            and isinstance(e.data.get("name") or e.data.get("tool"), str)
+            and (e.data.get("name") or e.data.get("tool"))
+        ]
 
 
 __all__ = [

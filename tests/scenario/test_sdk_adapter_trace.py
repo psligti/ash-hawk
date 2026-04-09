@@ -358,8 +358,8 @@ def test_sdk_adapter_normalizes_tool_call_alias_fields() -> None:
 
         result = adapter.run_scenario(scenario, Path("/tmp"), tooling_harness, {})
 
-    assert result.tool_calls[0].name == "bash"
-    assert result.tool_calls[0].arguments == {"command": "echo test"}
+    assert result.extract_tool_calls()[0].name == "bash"
+    assert result.extract_tool_calls()[0].arguments == {"command": "echo test"}
 
 
 class TestResolveProviderModelWithAgentPath:

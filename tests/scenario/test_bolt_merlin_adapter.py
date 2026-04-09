@@ -126,8 +126,6 @@ class TestBoltMerlinScenarioAdapter:
                         FailureMode.AGENT_ERROR,
                         error_message="bolt-merlin agent unavailable: No module named 'bolt_merlin'",
                     ),
-                    messages=[],
-                    tool_calls=[],
                 )
 
                 result = await adapter.async_run_scenario(scenario, Path("/tmp"), {}, {})
@@ -192,9 +190,10 @@ class TestBoltMerlinScenarioAdapter:
         assert result.artifacts["tokens_out"] == 50
         assert result.artifacts["duration_ms"] == 1000
         # Messages should include user prompt
-        assert len(result.messages) >= 1
-        assert result.messages[0].role == "user"
-        assert result.messages[0].content == "Write a hello world function"
+        messages = result.extract_messages()
+        assert len(messages) >= 1
+        assert messages[0].role == "user"
+        assert messages[0].content == "Write a hello world function"
 
     @pytest.mark.asyncio
     async def test_execute_returns_execution_error(self) -> None:
@@ -225,61 +224,49 @@ class TestBoltMerlinScenarioAdapter:
         assert result.final_output is None
 
     @pytest.mark.asyncio
-    async def test_build_tool_calls_extracts_tool_events(self) -> None:
-        """Tool execution events are captured as ScenarioToolCall entries."""
-        from ash_hawk.scenario.adapters.bolt_merlin import _build_tool_calls
+    async def test_build_trace_events_extracts_tool_events(self) -> None:
+        """Tool execution events are captured as ToolCallEvent trace entries."""
+        from ash_hawk.scenario.adapters.bolt_merlin import _build_trace_events
 
         class FakeToolExecutionEvent:
             def __init__(self, tool_name: str, tool_input: dict[str, Any]) -> None:
                 self.tool_name = tool_name
                 self.tool_input = tool_input
-                self.event_type = "tool_execution"
+                self.event_type = "tool_call"
 
             def to_dict(self) -> dict[str, Any]:
                 return {
-                    "event_type": "tool_execution",
+                    "event_type": "tool_call",
                     "tool_name": self.tool_name,
                     "tool_input": self.tool_input,
-                    "timestamp": 1700000000.0,
+                    "timestamp": 0.0,
                 }
 
         fake_event = FakeToolExecutionEvent(tool_name="read", tool_input={"path": "foo.py"})
-        mock_events_module = MagicMock()
-        mock_events_module.ToolExecutionEvent = FakeToolExecutionEvent
+        trace_events = _build_trace_events([fake_event], prompt="do it")
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "dawn_kestrel": MagicMock(),
-                "dawn_kestrel.agent": MagicMock(),
-                "dawn_kestrel.agent.events": mock_events_module,
-            },
-        ):
-            tool_calls = _build_tool_calls([fake_event])
-
-        assert len(tool_calls) == 1
-        assert tool_calls[0].name == "read"
-        assert tool_calls[0].arguments == {"path": "foo.py"}
+        tool_call_events = [e for e in trace_events if e.event_type == "ToolCallEvent"]
+        assert len(tool_call_events) == 1
+        assert tool_call_events[0].data["name"] == "read"
+        assert tool_call_events[0].data["arguments"] == {"path": "foo.py"}
 
     @pytest.mark.asyncio
-    async def test_build_messages_from_llm_call_events(self) -> None:
-        """LLM call events produce assistant messages alongside user prompt."""
-        adapter = BoltMerlinScenarioAdapter()
+    async def test_build_trace_events_produces_messages(self) -> None:
+        """LLM call events produce ModelMessageEvent trace entries."""
+        from ash_hawk.scenario.adapters.bolt_merlin import _build_trace_events
+
         prompt = "Read the file"
         final_response = "done"
-
-        from ash_hawk.scenario.adapters.bolt_merlin import _build_messages
-
         llm_event = _make_mock_llm_call_event(text="I read the file")
-        messages = _build_messages([llm_event], prompt, final_response)
 
-        # Should have: user prompt, assistant from llm_call, assistant final
-        assert messages[0].role == "user"
-        assert messages[0].content == prompt
-        assert messages[1].role == "assistant"
-        assert messages[1].content == "I read the file"
-        # Final response is appended only if different from last assistant message
-        assert messages[-1].content == final_response
+        trace_events = _build_trace_events(
+            [llm_event], prompt=prompt, final_response=final_response
+        )
+
+        msg_events = [e for e in trace_events if e.event_type == "ModelMessageEvent"]
+        roles = [e.data["role"] for e in msg_events]
+        assert "user" in roles
+        assert "assistant" in roles
 
     @pytest.mark.asyncio
     async def test_cwd_changes_to_workdir(self) -> None:

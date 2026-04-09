@@ -11,14 +11,11 @@ from ash_hawk.agents import DawnKestrelAgentRunner
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.scenario.models import (
     ScenarioAdapterResult,
-    ScenarioMessage,
     ScenarioTraceEvent,
     parse_scenario_tool_call,
 )
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
-    EVENT_TYPE_TOOL_CALL,
-    EVENT_TYPE_TOOL_RESULT,
     PolicyDecisionEvent,
     RejectionEvent,
 )
@@ -274,8 +271,6 @@ class SdkDawnKestrelAdapter:
         normalized_events = normalize_eval_transcript(transcript)
         has_policy_trace_events = False
         for event in normalized_events:
-            if event.event_type in {EVENT_TYPE_TOOL_CALL, EVENT_TYPE_TOOL_RESULT}:
-                continue
             if event.event_type in {"PolicyDecisionEvent", "RejectionEvent"}:
                 has_policy_trace_events = True
             trace_events.append(event.model_dump())
@@ -348,30 +343,11 @@ class SdkDawnKestrelAdapter:
         if final_output is None:
             final_output = transcript.error_trace
 
-        parsed_messages: list[Any] = []
-        for message in transcript.messages:
-            try:
-                parsed_messages.append(ScenarioMessage.model_validate(message))
-            except Exception:
-                if isinstance(message, dict):
-                    role = message.get("role", "unknown")
-                    content = message.get("content", "")
-                    if isinstance(content, str):
-                        parsed_messages.append(ScenarioMessage(role=role, content=content))
-                    elif content is None:
-                        parsed_messages.append(ScenarioMessage(role=role, content=""))
-
         return ScenarioAdapterResult(
             final_output=final_output,
             trace_events=[ScenarioTraceEvent.model_validate(event) for event in trace_events],
             artifacts=artifacts,
             outcome=outcome,
-            messages=parsed_messages,
-            tool_calls=[
-                parsed
-                for tool_call in transcript.tool_calls
-                if (parsed := parse_scenario_tool_call(tool_call)) is not None
-            ],
         )
 
 

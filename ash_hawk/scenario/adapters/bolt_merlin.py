@@ -7,7 +7,7 @@ import threading
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Coroutine, Iterator, TypeVar
+from typing import Any, Callable, Coroutine, Iterator, TypeVar, cast
 
 from ash_hawk.agents.source_workspace import (
     detect_agent_config_path,
@@ -17,8 +17,6 @@ from ash_hawk.agents.source_workspace import (
 from ash_hawk.scenario.models import (
     JSONValue,
     ScenarioAdapterResult,
-    ScenarioMessage,
-    ScenarioToolCall,
     ScenarioTraceEvent,
 )
 from ash_hawk.types import EvalOutcome, FailureMode
@@ -152,8 +150,6 @@ class BoltMerlinScenarioAdapter:
                     FailureMode.AGENT_ERROR,
                     error_message=f"bolt-merlin agent unavailable: {exc}",
                 ),
-                messages=[],
-                tool_calls=[],
             )
 
         prompt = _extract_prompt(scenario)
@@ -166,8 +162,6 @@ class BoltMerlinScenarioAdapter:
                     FailureMode.VALIDATION_ERROR,
                     error_message="No prompt found in scenario inputs",
                 ),
-                messages=[],
-                tool_calls=[],
             )
 
         captured_events: list[Any] = []
@@ -184,23 +178,20 @@ class BoltMerlinScenarioAdapter:
                     config_path=config_path_value,
                 )
 
-        # ExecutionError has error_type attribute; ExecutionResult does not.
         if hasattr(result, "error_type"):
             return ScenarioAdapterResult(
                 final_output=None,
-                trace_events=_build_trace_events(captured_events),
+                trace_events=_build_trace_events(captured_events, prompt),
                 artifacts={},
                 outcome=EvalOutcome.failure(
                     FailureMode.AGENT_ERROR,
                     error_message=f"[{result.error_type}] {result.message}",
                 ),
-                messages=[],
-                tool_calls=_build_tool_calls(captured_events),
             )
 
         return ScenarioAdapterResult(
             final_output=result.response,
-            trace_events=_build_trace_events(captured_events),
+            trace_events=_build_trace_events(captured_events, prompt, result.response),
             artifacts={
                 "session_id": result.session_id,
                 "tokens_in": result.tokens_in,
@@ -208,13 +199,25 @@ class BoltMerlinScenarioAdapter:
                 "duration_ms": result.duration_ms,
             },
             outcome=EvalOutcome.success(),
-            messages=_build_messages(captured_events, prompt, result.response),
-            tool_calls=_build_tool_calls(captured_events),
         )
 
 
-def _build_trace_events(events: list[Any]) -> list[ScenarioTraceEvent]:
+def _build_trace_events(
+    events: list[Any],
+    prompt: str | None = None,
+    final_response: str | None = None,
+) -> list[ScenarioTraceEvent]:
     trace_events: list[ScenarioTraceEvent] = []
+
+    if prompt:
+        trace_events.append(
+            ScenarioTraceEvent(
+                event_type="ModelMessageEvent",
+                ts=datetime.now(UTC).isoformat(),
+                data={"role": "user", "content": prompt},
+            )
+        )
+
     for event in events:
         event_dict: dict[str, Any] = event.to_dict()
         event_type = str(event_dict.pop("event_type", "unknown"))
@@ -223,48 +226,48 @@ def _build_trace_events(events: list[Any]) -> list[ScenarioTraceEvent]:
             ts = datetime.fromtimestamp(timestamp_raw, tz=UTC).isoformat()
         else:
             ts = datetime.now(UTC).isoformat()
-        trace_events.append(ScenarioTraceEvent(event_type=event_type, ts=ts, data=event_dict))
-    return trace_events
 
-
-def _build_tool_calls(events: list[Any]) -> list[ScenarioToolCall]:
-    try:
-        from dawn_kestrel.agent.events import ToolExecutionEvent
-    except ImportError:
-        return []
-
-    tool_calls: list[ScenarioToolCall] = []
-    for event in events:
-        if not isinstance(event, ToolExecutionEvent):
-            continue
-        tool_name = event.tool_name
-        if not tool_name:
-            continue
-        tool_calls.append(ScenarioToolCall(name=tool_name, arguments=event.tool_input))
-    return tool_calls
-
-
-def _build_messages(
-    events: list[Any],
-    prompt: str,
-    final_response: str,
-) -> list[ScenarioMessage]:
-    messages: list[ScenarioMessage] = []
-    messages.append(ScenarioMessage(role="user", content=prompt))
-
-    for event in events:
-        if getattr(event, "event_type", None) != "llm_call":
-            continue
-        text = getattr(event, "text", "")
-        if not text:
-            continue
-        messages.append(ScenarioMessage(role="assistant", content=text))
+        if event_type == "llm_call":
+            text = event_dict.get("text", "")
+            if text:
+                trace_events.append(
+                    ScenarioTraceEvent(
+                        event_type="ModelMessageEvent",
+                        ts=ts,
+                        data={"role": "assistant", "content": text},
+                    )
+                )
+        elif event_type == "tool_call":
+            tool_name = event_dict.get("tool_name", "")
+            tool_input = event_dict.get("tool_input", {})
+            if tool_name:
+                trace_events.append(
+                    ScenarioTraceEvent(
+                        event_type="ToolCallEvent",
+                        ts=ts,
+                        data={"name": tool_name, "arguments": tool_input},
+                    )
+                )
+        else:
+            trace_events.append(ScenarioTraceEvent(event_type=event_type, ts=ts, data=event_dict))
 
     if final_response:
-        if not messages or messages[-1].content != final_response:
-            messages.append(ScenarioMessage(role="assistant", content=final_response))
+        has_final = any(
+            e.event_type == "ModelMessageEvent"
+            and isinstance(e.data.get("content"), str)
+            and cast(str, e.data["content"]) == final_response
+            for e in trace_events
+        )
+        if not has_final:
+            trace_events.append(
+                ScenarioTraceEvent(
+                    event_type="ModelMessageEvent",
+                    ts=datetime.now(UTC).isoformat(),
+                    data={"role": "assistant", "content": final_response},
+                )
+            )
 
-    return messages
+    return trace_events
 
 
 __all__ = ["BoltMerlinScenarioAdapter"]

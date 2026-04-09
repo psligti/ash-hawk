@@ -2,18 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Literal
 
 import pydantic as pd
 
+logger = logging.getLogger(__name__)
+
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.scenario.models import (
     JSONValue,
     ScenarioAdapterResult,
-    ScenarioMessage,
-    ScenarioToolCall,
     ScenarioTraceEvent,
     ScenarioV1,
     parse_scenario_tool_call,
@@ -167,20 +168,37 @@ class ScenarioAgentRunner:
                 trace_events=tooling_recorder.events,
             )
 
-        adapter_messages = [message.model_dump(mode="json") for message in adapter_result.messages]
+        adapter_messages = [
+            message.model_dump(mode="json") for message in adapter_result.extract_messages()
+        ]
         adapter_tool_calls = [
-            tool_call.model_dump(mode="json") for tool_call in adapter_result.tool_calls
+            tool_call.model_dump(mode="json") for tool_call in adapter_result.extract_tool_calls()
         ]
         normalized_trace_events = [
             event.model_dump(mode="json") for event in adapter_result.trace_events
         ]
-        inferred_messages, inferred_tool_calls = self._infer_transcript_content(
-            normalized_trace_events + tooling_recorder.events
-        )
-        if not adapter_messages:
-            adapter_messages = inferred_messages
-        if not adapter_tool_calls:
-            adapter_tool_calls = inferred_tool_calls
+        combined_raw_events = normalized_trace_events + tooling_recorder.events
+
+        if not adapter_messages or not adapter_tool_calls:
+            inferred_messages, inferred_tool_calls = self._infer_transcript_content(
+                combined_raw_events
+            )
+            if not adapter_messages:
+                logger.warning(
+                    "ScenarioAgentRunner: adapter returned empty messages, "
+                    "inferring %d messages from %d trace events",
+                    len(inferred_messages),
+                    len(combined_raw_events),
+                )
+                adapter_messages = inferred_messages
+            if not adapter_tool_calls:
+                logger.warning(
+                    "ScenarioAgentRunner: adapter returned empty tool_calls, "
+                    "inferring %d tool calls from %d trace events",
+                    len(inferred_tool_calls),
+                    len(combined_raw_events),
+                )
+                adapter_tool_calls = inferred_tool_calls
 
         # If adapter returned a failure outcome, propagate it
         if adapter_result.outcome.failure_mode is not None:
@@ -428,29 +446,40 @@ class ScenarioAgentRunner:
             elif isinstance(outcome_raw, dict):
                 outcome = EvalOutcome.model_validate(outcome_raw)
 
-        messages: list[ScenarioMessage] = []
         if result_len >= 5 and isinstance(adapter_result[4], list):
             for message_raw in adapter_result[4]:
                 if isinstance(message_raw, dict):
-                    try:
-                        messages.append(ScenarioMessage.model_validate(message_raw))
-                    except pd.ValidationError:
-                        continue
+                    role = message_raw.get("role")
+                    content = message_raw.get("content")
+                    if isinstance(role, str) and isinstance(content, str):
+                        trace_events.append(
+                            ScenarioTraceEvent(
+                                event_type="ModelMessageEvent",
+                                ts=DEFAULT_TRACE_TS,
+                                data={"role": role, "content": content},
+                            )
+                        )
 
-        tool_calls: list[ScenarioToolCall] = []
         if result_len >= 6 and isinstance(adapter_result[5], list):
             for tool_call_raw in adapter_result[5]:
                 parsed_tool_call = parse_scenario_tool_call(tool_call_raw)
                 if parsed_tool_call is not None:
-                    tool_calls.append(parsed_tool_call)
+                    trace_events.append(
+                        ScenarioTraceEvent(
+                            event_type="ToolCallEvent",
+                            ts=DEFAULT_TRACE_TS,
+                            data={
+                                "name": parsed_tool_call.name,
+                                "arguments": parsed_tool_call.arguments,
+                            },
+                        )
+                    )
 
         return ScenarioAdapterResult(
             final_output=final_output,
             trace_events=trace_events,
             artifacts=artifacts,
             outcome=outcome,
-            messages=messages,
-            tool_calls=tool_calls,
         )
 
     def _to_json_value(self, value: object) -> JSONValue:

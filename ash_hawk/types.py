@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import enum
 import hashlib
+import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -25,6 +26,8 @@ from pathlib import Path
 from typing import Any, Literal, Protocol
 
 import pydantic as pd
+
+_logger = logging.getLogger(__name__)
 
 # =============================================================================
 # ENUMS
@@ -362,6 +365,106 @@ class EvalTranscript(pd.BaseModel):
     )
 
     model_config = pd.ConfigDict(extra="forbid")
+
+    @pd.model_validator(mode="after")
+    def _check_trace_tool_call_consistency(self) -> EvalTranscript:
+        """Warn when trace_events contains tool calls but tool_calls is empty.
+
+        This invariant catches silent data-loss bugs where adapters capture tool
+        calls as trace events but fail to populate the ``tool_calls`` field.  The
+        validator emits a warning rather than raising so that existing callers
+        (tests, error paths) continue to work, but the inconsistency is surfaced
+        in logs and CI output.
+        """
+        tc_in_traces = sum(
+            1
+            for event in self.trace_events
+            if isinstance(event, dict) and event.get("event_type") == "ToolCallEvent"
+        )
+        if tc_in_traces > 0 and not self.tool_calls:
+            _logger.warning(
+                "EvalTranscript consistency check: %d ToolCallEvent(s) in "
+                "trace_events but tool_calls is empty — adapter data capture "
+                "may be broken.  trace_events sample: %s",
+                tc_in_traces,
+                [
+                    e
+                    for e in self.trace_events
+                    if isinstance(e, dict) and e.get("event_type") == "ToolCallEvent"
+                ][:2],
+            )
+        return self
+
+    @classmethod
+    def from_trace_events(
+        cls,
+        trace_events: list[dict[str, Any]],
+        agent_response: str | dict[str, Any] | None = None,
+        error_trace: str | None = None,
+        duration_seconds: float = 0.0,
+        cost_usd: float = 0.0,
+        token_usage: TokenUsage | None = None,
+    ) -> EvalTranscript:
+        """Build a transcript exclusively from trace events.
+
+        Extracts ``messages`` and ``tool_calls`` from the normalised trace
+        event stream, guaranteeing that the three views are always consistent.
+
+        Args:
+            trace_events: Normalised trace events (must use ash-hawk event_type
+                strings like ``"ToolCallEvent"`` and ``"ModelMessageEvent"``).
+            agent_response: Optional final agent response.
+            error_trace: Optional error trace.
+            duration_seconds: Execution wall-clock time.
+            cost_usd: Total cost.
+            token_usage: Token usage stats.
+
+        Returns:
+            A fully populated ``EvalTranscript``.
+        """
+        messages: list[dict[str, Any]] = []
+        for event in trace_events:
+            if not isinstance(event, dict):
+                continue
+            if event.get("event_type") != "ModelMessageEvent":
+                continue
+            data = event.get("data")
+            if not isinstance(data, dict):
+                continue
+            role = data.get("role")
+            content = data.get("content")
+            if isinstance(role, str) and isinstance(content, str):
+                messages.append({"role": role, "content": content})
+
+        tool_calls: list[dict[str, Any]] = []
+        for event in trace_events:
+            if not isinstance(event, dict):
+                continue
+            if event.get("event_type") != "ToolCallEvent":
+                continue
+            data = event.get("data")
+            if not isinstance(data, dict):
+                continue
+            name = data.get("name")
+            if not isinstance(name, str) or not name.strip():
+                continue
+            arguments = data.get("arguments")
+            if arguments is None:
+                arguments = {}
+            if not isinstance(arguments, dict):
+                arguments = {"value": arguments}
+            tool_calls.append({"name": name, "arguments": arguments})
+
+        return cls(
+            messages=messages,
+            tool_calls=tool_calls,
+            trace_events=trace_events,
+            agent_response=agent_response,
+            error_trace=error_trace,
+            duration_seconds=duration_seconds,
+            cost_usd=cost_usd,
+            token_usage=token_usage or TokenUsage(),
+        )
 
 
 # =============================================================================
