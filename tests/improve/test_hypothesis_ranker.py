@@ -10,6 +10,7 @@ from ash_hawk.improve.hypothesis_ranker import (
     HypothesisRanking,
     RankedHypothesis,
 )
+from ash_hawk.improve.lesson_store import Lesson
 
 
 def _diagnosis(
@@ -26,6 +27,25 @@ def _diagnosis(
         suggested_fix="fix it",
         target_files=target_files or ["main.py"],
         confidence=confidence,
+    )
+
+
+def _make_lesson(
+    target_files: list[str] | None = None,
+    outcome: str = "kept",
+    score_delta: float = 0.3,
+) -> Lesson:
+    return Lesson(
+        lesson_id="l1",
+        trial_id="trial-1",
+        hypothesis_summary="fix",
+        root_cause="bug",
+        target_files=target_files or ["main.py"],
+        outcome=outcome,
+        score_before=0.3,
+        score_after=0.6,
+        score_delta=score_delta,
+        iteration=1,
     )
 
 
@@ -115,7 +135,7 @@ class TestComputeNovelty:
         store = MagicMock()
         store.has_been_tried.return_value = False
         lesson_mock = MagicMock()
-        lesson_mock.id = "lesson-1"
+        lesson_mock.lesson_id = "lesson-1"
         store.find_similar.return_value = [lesson_mock]
 
         ranker = HypothesisRanker(lesson_store=store)
@@ -141,44 +161,56 @@ class TestComputeNovelty:
 
 
 class TestComputeImpact:
-    def test_base_confidence(self) -> None:
+    def test_no_store_uses_confidence(self) -> None:
         ranker = HypothesisRanker()
-        d = Diagnosis(
-            trial_id="t",
-            failure_summary="f",
-            root_cause="",
-            suggested_fix="s",
-            target_files=[],
-            confidence=0.5,
-        )
+        d = _diagnosis(confidence=0.5)
         impact = ranker._compute_impact(d)
         assert impact == pytest.approx(0.5, abs=0.01)
 
-    def test_many_files_boosts_impact(self) -> None:
-        ranker = HypothesisRanker()
-        few = _diagnosis(confidence=0.5, target_files=["a.py"])
-        many = _diagnosis(confidence=0.5, target_files=["a.py", "b.py", "c.py"])
+    def test_measured_delta_from_kept_lessons(self) -> None:
+        store = MagicMock()
+        store.load_for_target.return_value = [
+            _make_lesson(outcome="kept", score_delta=0.4),
+            _make_lesson(outcome="kept", score_delta=0.6),
+        ]
 
-        assert ranker._compute_impact(many) > ranker._compute_impact(few)
-
-    def test_long_root_cause_boosts_impact(self) -> None:
-        ranker = HypothesisRanker()
-        short_rc = _diagnosis(confidence=0.5, root_cause="x")
-        long_rc = _diagnosis(confidence=0.5, root_cause="x" * 300)
-
-        assert ranker._compute_impact(long_rc) > ranker._compute_impact(short_rc)
-
-    def test_clamped_to_one(self) -> None:
-        ranker = HypothesisRanker()
-        d = _diagnosis(confidence=1.0, target_files=["a", "b", "c"], root_cause="x" * 300)
+        ranker = HypothesisRanker(lesson_store=store)
+        d = _diagnosis(confidence=0.5)
         impact = ranker._compute_impact(d)
-        assert impact <= 1.0
 
-    def test_clamped_to_zero(self) -> None:
-        ranker = HypothesisRanker()
-        d = _diagnosis(confidence=0.0, target_files=[], root_cause="")
+        assert impact == pytest.approx(0.5, abs=0.01)
+
+    def test_all_reverted_penalizes(self) -> None:
+        store = MagicMock()
+        store.load_for_target.return_value = [
+            _make_lesson(outcome="reverted", score_delta=-0.1),
+        ]
+
+        ranker = HypothesisRanker(lesson_store=store)
+        d = _diagnosis(confidence=0.5)
         impact = ranker._compute_impact(d)
-        assert impact >= 0.0
+
+        assert impact == pytest.approx(0.3, abs=0.01)
+
+    def test_no_past_data_uses_confidence(self) -> None:
+        store = MagicMock()
+        store.load_for_target.return_value = []
+
+        ranker = HypothesisRanker(lesson_store=store)
+        d = _diagnosis(confidence=0.7)
+        impact = ranker._compute_impact(d)
+
+        assert impact == pytest.approx(0.7, abs=0.01)
+
+    def test_store_exception_uses_confidence(self) -> None:
+        store = MagicMock()
+        store.load_for_target.side_effect = RuntimeError("boom")
+
+        ranker = HypothesisRanker(lesson_store=store)
+        d = _diagnosis(confidence=0.8)
+        impact = ranker._compute_impact(d)
+
+        assert impact == pytest.approx(0.8, abs=0.01)
 
 
 class TestEnsureDiversity:
@@ -270,7 +302,7 @@ class TestEnsureDiversity:
         assert len(result) == 2
 
 
-class TestHypothesisRankingDataclass:
+class TestHypothesisRankingModel:
     def test_fields(self) -> None:
         ranking = HypothesisRanking(
             hypotheses=[],

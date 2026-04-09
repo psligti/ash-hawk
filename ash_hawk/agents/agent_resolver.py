@@ -8,9 +8,14 @@ not need to duplicate its own lookup logic.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
+
+from ash_hawk.agents.source_workspace import infer_agent_name_from_path
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -76,7 +81,7 @@ def resolve_agent_path(agent_ref: str, workdir: Path) -> AgentResolution:
         resolved = direct.resolve()
         return AgentResolution(
             path=resolved,
-            name=resolved.stem,
+            name=infer_agent_name_from_path(resolved),
             resolved_from="cli_path",
         )
 
@@ -89,7 +94,25 @@ def resolve_agent_path(agent_ref: str, workdir: Path) -> AgentResolution:
             resolved_from="name_lookup",
         )
 
-    # --- 3. OpenCode agent directory lookup --------------------------------
+    # --- 3. Adapter registry (agent source path) -------------------------
+    _normalized = agent_ref.replace("-", "_")
+    try:
+        from ash_hawk.scenario.registry import get_default_adapter_registry
+
+        registry = get_default_adapter_registry()
+        adapter = registry.get(agent_ref) or registry.get(_normalized)
+        if adapter is not None and hasattr(adapter, "agent_source_path"):
+            src_path = adapter.agent_source_path()
+            if src_path is not None and src_path.is_dir():
+                return AgentResolution(
+                    path=src_path,
+                    name=agent_ref,
+                    resolved_from="name_lookup",
+                )
+    except Exception:
+        logger.debug("Adapter registry lookup failed for %s", agent_ref, exc_info=True)
+
+    # --- 4. OpenCode agent directory lookup --------------------------------
     opencode_md = (workdir / _OPENCODE_AGENT_DIR / f"{agent_ref}.md").resolve()
     if opencode_md.exists():
         opencode_dir = opencode_md.parent / agent_ref

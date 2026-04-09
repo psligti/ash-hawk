@@ -1,14 +1,15 @@
 # type-hygiene: skip-file
 from __future__ import annotations
 
+import asyncio
 import importlib
 import json
 import logging
 import os
-import re
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+import pydantic as pd
 
 if TYPE_CHECKING:
     from ash_hawk.types import EvalTrial
@@ -22,6 +23,14 @@ Task ID: {task_id}
 Agent Response: {agent_response}
 Grader Results: {grader_results}
 Error Trace: {error_trace}
+Transcript Excerpt:
+{transcript_excerpt}
+
+Recent Tool Calls:
+{tool_calls_excerpt}
+
+Recent Trace Events:
+{trace_excerpt}
 
 Provide your diagnosis as JSON:
 {{
@@ -33,14 +42,55 @@ Provide your diagnosis as JSON:
 }}"""
 
 
-@dataclass
-class Diagnosis:
-    trial_id: str
-    failure_summary: str
-    root_cause: str
-    suggested_fix: str
-    target_files: list[str] = field(default_factory=list)
-    confidence: float = 0.0
+class Diagnosis(pd.BaseModel):
+    """LLM-generated diagnosis of a failed evaluation trial."""
+
+    model_config = pd.ConfigDict(extra="forbid")
+
+    trial_id: str = pd.Field(description="ID of the failed trial")
+    failure_summary: str = pd.Field(description="One-line summary of the failure")
+    root_cause: str = pd.Field(description="Detailed root cause analysis")
+    suggested_fix: str = pd.Field(description="Concrete fix suggestion")
+    target_files: list[str] = pd.Field(
+        default_factory=list, description="Files that should be modified"
+    )
+    confidence: float = pd.Field(
+        default=0.0, ge=0.0, le=1.0, description="LLM confidence in the diagnosis"
+    )
+
+
+def _truncate(text: str, limit: int) -> str:
+    return text if len(text) <= limit else text[: limit - 3] + "..."
+
+
+def _format_transcript_excerpt(trial: EvalTrial) -> tuple[str, str, str]:
+    transcript = trial.result.transcript if trial.result else None
+    if transcript is None:
+        return "none", "none", "none"
+
+    transcript_lines: list[str] = []
+    for message in transcript.messages[-8:]:
+        role = str(message.get("role", "unknown"))
+        content = _truncate(str(message.get("content", "")), 300)
+        transcript_lines.append(f"[{role}] {content}")
+
+    tool_lines: list[str] = []
+    for tool_call in transcript.tool_calls[-8:]:
+        name = str(tool_call.get("name") or tool_call.get("tool") or "unknown")
+        args = tool_call.get("arguments") or tool_call.get("input") or {}
+        tool_lines.append(_truncate(f"{name}({json.dumps(args, default=str)})", 300))
+
+    trace_lines: list[str] = []
+    for event in transcript.trace_events[-12:]:
+        event_type = str(event.get("event_type", "unknown"))
+        data = event.get("data", {})
+        trace_lines.append(_truncate(f"{event_type}: {json.dumps(data, default=str)}", 300))
+
+    return (
+        "\n".join(transcript_lines) if transcript_lines else "none",
+        "\n".join(tool_lines) if tool_lines else "none",
+        "\n".join(trace_lines) if trace_lines else "none",
+    )
 
 
 async def diagnose_failures(
@@ -48,15 +98,24 @@ async def diagnose_failures(
     trace_dir: Path | None = None,
     agent_content: dict[str, str] | None = None,
     lesson_store: Any | None = None,
+    console: Any | None = None,
 ) -> list[Diagnosis]:
+    """Diagnose multiple failures in parallel using asyncio.gather."""
+    results = await asyncio.gather(
+        *[
+            _diagnose_single(f, trace_dir, agent_content, lesson_store, console=console)
+            for f in failures
+        ],
+        return_exceptions=True,
+    )
+
     diagnoses: list[Diagnosis] = []
-    for failure in failures:
-        try:
-            diagnosis = await _diagnose_single(failure, trace_dir, agent_content, lesson_store)
-            if diagnosis is not None:
-                diagnoses.append(diagnosis)
-        except Exception:
-            logger.warning("Diagnosis failed for trial %s", failure.id, exc_info=True)
+    for failure, result in zip(failures, results):
+        if isinstance(result, Exception):
+            logger.warning("Diagnosis failed for trial %s", failure.id, exc_info=result)
+        elif isinstance(result, Diagnosis):
+            diagnoses.append(result)
+
     return diagnoses
 
 
@@ -65,6 +124,7 @@ async def _diagnose_single(
     trace_dir: Path | None,
     agent_content: dict[str, str] | None = None,
     lesson_store: Any | None = None,
+    console: Any | None = None,
 ) -> Diagnosis | None:
     transcript = trial.result.transcript if trial.result else None
     agent_response = ""
@@ -79,12 +139,17 @@ async def _diagnose_single(
             ]
         error_trace = str(transcript.error_trace or "")[:2000]
 
+    transcript_excerpt, tool_calls_excerpt, trace_excerpt = _format_transcript_excerpt(trial)
+
     prompt = DIAGNOSIS_PROMPT.format(
         trial_id=trial.id,
         task_id=trial.task_id,
         agent_response=agent_response,
         grader_results=grader_results_str,
         error_trace=error_trace,
+        transcript_excerpt=transcript_excerpt,
+        tool_calls_excerpt=tool_calls_excerpt,
+        trace_excerpt=trace_excerpt,
     )
 
     agent_context = ""
@@ -116,11 +181,39 @@ async def _diagnose_single(
                 trial.id,
             )
 
+    if console is not None:
+        console.print(f"    [dim]Diagnosing trial {trial.id} (task={trial.task_id})...[/dim]")
     response = await _call_llm(prompt)
     if response is None:
-        return None
+        error_msg = error_trace or agent_response or "Unknown failure"
+        if console is not None:
+            console.print(
+                f"    [yellow]⚠ LLM unavailable, using fallback diagnosis for trial {trial.id}[/yellow]"
+            )
+        return Diagnosis(
+            trial_id=trial.id,
+            failure_summary=error_msg[:200],
+            root_cause=(
+                f"LLM diagnosis unavailable. Error trace: {error_trace[:500]}"
+                if error_trace
+                else "LLM diagnosis unavailable"
+            ),
+            suggested_fix="Review transcript and error trace manually",
+            target_files=[],
+            confidence=0.1,
+        )
 
-    return _parse_diagnosis_response(trial.id, response)
+    result = _parse_diagnosis_response(trial.id, response)
+    if result is not None and console is not None:
+        files_str = ", ".join(result.target_files[:3]) if result.target_files else "none"
+        console.print(
+            f"    [dim]Diagnosed trial {trial.id}: "
+            f"{result.failure_summary[:60]}  "
+            f"files=[{files_str}][/dim]"
+        )
+    elif result is None and console is not None:
+        console.print(f"    [yellow]⚠ Could not parse diagnosis for trial {trial.id}[/yellow]")
+    return result
 
 
 async def _call_llm(prompt: str) -> str | None:
@@ -152,22 +245,37 @@ async def _call_llm(prompt: str) -> str | None:
             system_prompt="You are analyzing a failed evaluation trial to diagnose the root cause.",
             user_message=prompt,
         )
-        return result
+        return result if isinstance(result, str) else None
     except Exception:
         logger.warning("LLM call failed", exc_info=True)
         return None
 
 
-def _parse_diagnosis_response(trial_id: str, response: str) -> Diagnosis | None:
-    json_match = re.search(r"\{[^{}]*\}", response, re.DOTALL)
-    if not json_match:
-        logger.warning("No JSON found in diagnosis response for %s", trial_id)
-        return None
+def _extract_json_object(text: str) -> dict[str, Any] | None:
+    """Extract the first balanced-brace JSON object from text."""
+    depth = 0
+    start: int | None = None
+    for i, ch in enumerate(text):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start is not None:
+                try:
+                    parsed = json.loads(text[start : i + 1])
+                    return parsed if isinstance(parsed, dict) else None
+                except json.JSONDecodeError:
+                    start = None
+                    continue
+    return None
 
-    try:
-        data = json.loads(json_match.group())
-    except json.JSONDecodeError:
-        logger.warning("Invalid JSON in diagnosis response for %s", trial_id)
+
+def _parse_diagnosis_response(trial_id: str, response: str) -> Diagnosis | None:
+    data = _extract_json_object(response)
+    if data is None:
+        logger.warning("No JSON found in diagnosis response for %s", trial_id)
         return None
 
     required_fields = ["failure_summary", "root_cause", "suggested_fix"]

@@ -38,6 +38,18 @@ class TestResolveAgentPath:
         assert result.path == agent_dir.resolve()
         assert result.resolved_from == "cli_path"
 
+    def test_direct_agent_package_path_uses_parent_package_name(self, tmp_path: Path) -> None:
+        agent_dir = tmp_path / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+        (tmp_path / "bolt_merlin" / "__init__.py").write_text("", encoding="utf-8")
+        (agent_dir / "__init__.py").write_text("", encoding="utf-8")
+
+        result = resolve_agent_path(str(agent_dir), tmp_path)
+
+        assert result.path == agent_dir.resolve()
+        assert result.name == "bolt_merlin"
+        assert result.resolved_from == "cli_path"
+
     def test_direct_path_symlink(self, tmp_path: Path) -> None:
         """Symlink is resolved to its real path."""
         real_dir = tmp_path / "real-agent"

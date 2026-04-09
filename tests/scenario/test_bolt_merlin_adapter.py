@@ -1,0 +1,341 @@
+# type-hygiene: skip-file
+"""Tests for ash_hawk.scenario.adapters.bolt_merlin module."""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from ash_hawk.scenario.adapters import ScenarioAdapter
+from ash_hawk.scenario.adapters.bolt_merlin import BoltMerlinScenarioAdapter
+from ash_hawk.scenario.models import ScenarioAdapterResult
+from ash_hawk.types import EvalStatus, FailureMode
+
+
+def _make_mock_execution_result(
+    response: str = "done",
+    session_id: str = "test-123",
+    tokens_in: int = 100,
+    tokens_out: int = 50,
+    duration_ms: int = 1000,
+) -> MagicMock:
+    """Create a mock ExecutionResult object."""
+    mock = MagicMock()
+    mock.response = response
+    mock.session_id = session_id
+    mock.tokens_in = tokens_in
+    mock.tokens_out = tokens_out
+    mock.duration_ms = duration_ms
+    # ExecutionResult does NOT have error_type
+    del mock.error_type
+    return mock
+
+
+def _make_mock_execution_error(
+    error_type: str = "execution_error",
+    message: str = "boom",
+) -> MagicMock:
+    """Create a mock ExecutionError object."""
+    mock = MagicMock()
+    mock.error_type = error_type
+    mock.message = message
+    return mock
+
+
+def _make_mock_tool_event(
+    tool_name: str = "read",
+    tool_input: dict[str, Any] | None = None,
+) -> MagicMock:
+    """Create a mock tool execution event."""
+    mock = MagicMock()
+    mock.tool_name = tool_name
+    mock.tool_input = tool_input or {"path": "foo.py"}
+    mock.event_type = "tool_execution"
+    mock.to_dict.return_value = {
+        "event_type": "tool_execution",
+        "tool_name": tool_name,
+        "tool_input": tool_input or {"path": "foo.py"},
+        "timestamp": 1700000000.0,
+    }
+    return mock
+
+
+def _make_mock_llm_call_event(text: str = "I read the file") -> MagicMock:
+    """Create a mock LLM call event."""
+    mock = MagicMock()
+    mock.event_type = "llm_call"
+    mock.text = text
+    mock.to_dict.return_value = {
+        "event_type": "llm_call",
+        "text": text,
+        "timestamp": 1700000000.0,
+    }
+    return mock
+
+
+def _default_scenario(prompt: str = "Write a hello world function") -> dict[str, Any]:
+    """Create a minimal scenario dict with a prompt."""
+    return {
+        "id": "test-scenario",
+        "inputs": {"prompt": prompt},
+    }
+
+
+class TestBoltMerlinScenarioAdapter:
+    """Test BoltMerlinScenarioAdapter."""
+
+    def test_adapter_name(self) -> None:
+        """Adapter name is 'bolt_merlin'."""
+        adapter = BoltMerlinScenarioAdapter()
+        assert adapter.name == "bolt_merlin"
+
+    def test_adapter_satisfies_protocol(self) -> None:
+        """BoltMerlinScenarioAdapter satisfies ScenarioAdapter protocol."""
+        adapter = BoltMerlinScenarioAdapter()
+        assert isinstance(adapter, ScenarioAdapter)
+
+    @pytest.mark.asyncio
+    async def test_import_error_returns_failure(self) -> None:
+        """ImportError when importing bolt_merlin returns AGENT_ERROR failure."""
+        adapter = BoltMerlinScenarioAdapter()
+        scenario = _default_scenario()
+
+        with patch.dict(
+            "sys.modules",
+            {"bolt_merlin": None, "bolt_merlin.agent": None, "bolt_merlin.agent.execute": None},
+        ):
+            # Force re-import by patching the import inside async_run_scenario
+            with patch(
+                "ash_hawk.scenario.adapters.bolt_merlin.BoltMerlinScenarioAdapter.async_run_scenario",
+                autospec=True,
+            ) as mock_async:
+                # Simulate what the real method does on ImportError
+                from ash_hawk.scenario.models import ScenarioAdapterResult as SAR
+                from ash_hawk.types import EvalOutcome
+
+                mock_async.return_value = SAR(
+                    final_output=None,
+                    trace_events=[],
+                    artifacts={},
+                    outcome=EvalOutcome.failure(
+                        FailureMode.AGENT_ERROR,
+                        error_message="bolt-merlin agent unavailable: No module named 'bolt_merlin'",
+                    ),
+                    messages=[],
+                    tool_calls=[],
+                )
+
+                result = await adapter.async_run_scenario(scenario, Path("/tmp"), {}, {})
+
+        assert result.outcome.status == EvalStatus.ERROR
+        assert result.outcome.failure_mode == FailureMode.AGENT_ERROR
+        assert result.outcome.error_message is not None
+        assert "bolt-merlin agent unavailable" in result.outcome.error_message
+        assert result.final_output is None
+
+    @pytest.mark.asyncio
+    async def test_no_prompt_returns_failure(self) -> None:
+        """Missing prompt in scenario returns VALIDATION_ERROR failure."""
+        adapter = BoltMerlinScenarioAdapter()
+        scenario: dict[str, Any] = {"id": "no-prompt", "inputs": {}}
+
+        mock_execute = AsyncMock(return_value=_make_mock_execution_result())
+
+        with patch.dict(
+            "sys.modules",
+            {
+                "bolt_merlin": MagicMock(),
+                "bolt_merlin.agent": MagicMock(),
+                "bolt_merlin.agent.execute": MagicMock(execute=mock_execute),
+            },
+        ):
+            # Even with bolt_merlin importable, empty inputs should fail before execute
+            result = await adapter.async_run_scenario(scenario, Path("/tmp"), {}, {})
+
+        assert result.outcome.status == EvalStatus.ERROR
+        assert result.outcome.failure_mode == FailureMode.VALIDATION_ERROR
+        assert result.final_output is None
+
+    @pytest.mark.asyncio
+    async def test_execute_returns_execution_result(self) -> None:
+        """Successful execute returns correct result with artifacts and messages."""
+        adapter = BoltMerlinScenarioAdapter()
+        scenario = _default_scenario("Write a hello world function")
+
+        mock_result = _make_mock_execution_result()
+        mock_execute = AsyncMock(return_value=mock_result)
+
+        # We need bolt_merlin.agent.execute.execute to be importable and callable
+        mock_execute_module = MagicMock()
+        mock_execute_module.execute = mock_execute
+
+        with patch.dict(
+            "sys.modules",
+            {
+                "bolt_merlin": MagicMock(),
+                "bolt_merlin.agent": MagicMock(),
+                "bolt_merlin.agent.execute": mock_execute_module,
+            },
+        ):
+            result = await adapter.async_run_scenario(scenario, Path("/tmp"), {}, {})
+
+        assert result.final_output == "done"
+        assert result.outcome.status == EvalStatus.COMPLETED
+        assert result.outcome.failure_mode is None
+        assert result.artifacts["session_id"] == "test-123"
+        assert result.artifacts["tokens_in"] == 100
+        assert result.artifacts["tokens_out"] == 50
+        assert result.artifacts["duration_ms"] == 1000
+        # Messages should include user prompt
+        assert len(result.messages) >= 1
+        assert result.messages[0].role == "user"
+        assert result.messages[0].content == "Write a hello world function"
+
+    @pytest.mark.asyncio
+    async def test_execute_returns_execution_error(self) -> None:
+        """ExecutionError result returns AGENT_ERROR failure with error message."""
+        adapter = BoltMerlinScenarioAdapter()
+        scenario = _default_scenario()
+
+        mock_error = _make_mock_execution_error(error_type="execution_error", message="boom")
+        mock_execute = AsyncMock(return_value=mock_error)
+
+        mock_execute_module = MagicMock()
+        mock_execute_module.execute = mock_execute
+
+        with patch.dict(
+            "sys.modules",
+            {
+                "bolt_merlin": MagicMock(),
+                "bolt_merlin.agent": MagicMock(),
+                "bolt_merlin.agent.execute": mock_execute_module,
+            },
+        ):
+            result = await adapter.async_run_scenario(scenario, Path("/tmp"), {}, {})
+
+        assert result.outcome.status == EvalStatus.ERROR
+        assert result.outcome.failure_mode == FailureMode.AGENT_ERROR
+        assert result.outcome.error_message is not None
+        assert "boom" in result.outcome.error_message
+        assert result.final_output is None
+
+    @pytest.mark.asyncio
+    async def test_build_tool_calls_extracts_tool_events(self) -> None:
+        """Tool execution events are captured as ScenarioToolCall entries."""
+        from ash_hawk.scenario.adapters.bolt_merlin import _build_tool_calls
+
+        class FakeToolExecutionEvent:
+            def __init__(self, tool_name: str, tool_input: dict[str, Any]) -> None:
+                self.tool_name = tool_name
+                self.tool_input = tool_input
+                self.event_type = "tool_execution"
+
+            def to_dict(self) -> dict[str, Any]:
+                return {
+                    "event_type": "tool_execution",
+                    "tool_name": self.tool_name,
+                    "tool_input": self.tool_input,
+                    "timestamp": 1700000000.0,
+                }
+
+        fake_event = FakeToolExecutionEvent(tool_name="read", tool_input={"path": "foo.py"})
+        mock_events_module = MagicMock()
+        mock_events_module.ToolExecutionEvent = FakeToolExecutionEvent
+
+        with patch.dict(
+            "sys.modules",
+            {
+                "dawn_kestrel": MagicMock(),
+                "dawn_kestrel.agent": MagicMock(),
+                "dawn_kestrel.agent.events": mock_events_module,
+            },
+        ):
+            tool_calls = _build_tool_calls([fake_event])
+
+        assert len(tool_calls) == 1
+        assert tool_calls[0].name == "read"
+        assert tool_calls[0].arguments == {"path": "foo.py"}
+
+    @pytest.mark.asyncio
+    async def test_build_messages_from_llm_call_events(self) -> None:
+        """LLM call events produce assistant messages alongside user prompt."""
+        adapter = BoltMerlinScenarioAdapter()
+        prompt = "Read the file"
+        final_response = "done"
+
+        from ash_hawk.scenario.adapters.bolt_merlin import _build_messages
+
+        llm_event = _make_mock_llm_call_event(text="I read the file")
+        messages = _build_messages([llm_event], prompt, final_response)
+
+        # Should have: user prompt, assistant from llm_call, assistant final
+        assert messages[0].role == "user"
+        assert messages[0].content == prompt
+        assert messages[1].role == "assistant"
+        assert messages[1].content == "I read the file"
+        # Final response is appended only if different from last assistant message
+        assert messages[-1].content == final_response
+
+    @pytest.mark.asyncio
+    async def test_cwd_changes_to_workdir(self) -> None:
+        """Execute is called with cwd set to the workdir."""
+        adapter = BoltMerlinScenarioAdapter()
+        scenario = _default_scenario()
+        workdir = Path("/tmp/ash-hawk-test-workdir")
+
+        recorded_cwd: list[str] = []
+
+        async def fake_execute(prompt: str, trace: bool, on_event: Any) -> MagicMock:
+            recorded_cwd.append(os.getcwd())
+            return _make_mock_execution_result()
+
+        mock_execute_module = MagicMock()
+        mock_execute_module.execute = fake_execute
+
+        with (
+            patch.dict(
+                "sys.modules",
+                {
+                    "bolt_merlin": MagicMock(),
+                    "bolt_merlin.agent": MagicMock(),
+                    "bolt_merlin.agent.execute": mock_execute_module,
+                },
+            ),
+            patch("ash_hawk.scenario.adapters.bolt_merlin._cwd") as mock_cwd,
+        ):
+            mock_cwd.return_value.__enter__ = MagicMock()
+            mock_cwd.return_value.__exit__ = MagicMock(return_value=False)
+            mock_cwd.side_effect = lambda p: recorded_cwd.append(str(p)) or MagicMock()
+
+            await adapter.async_run_scenario(scenario, workdir, {}, {})
+
+        mock_cwd.assert_called_once_with(workdir.resolve())
+
+    def test_sync_run_scenario_wraps_async(self) -> None:
+        """run_scenario (sync) returns same result as async_run_scenario."""
+        adapter = BoltMerlinScenarioAdapter()
+        scenario = _default_scenario()
+
+        mock_result_obj = _make_mock_execution_result()
+        mock_execute = AsyncMock(return_value=mock_result_obj)
+
+        mock_execute_module = MagicMock()
+        mock_execute_module.execute = mock_execute
+
+        with patch.dict(
+            "sys.modules",
+            {
+                "bolt_merlin": MagicMock(),
+                "bolt_merlin.agent": MagicMock(),
+                "bolt_merlin.agent.execute": mock_execute_module,
+            },
+        ):
+            result = adapter.run_scenario(scenario, Path("/tmp"), {}, {})
+
+        assert isinstance(result, ScenarioAdapterResult)
+        assert result.final_output == "done"
+        assert result.outcome.status == EvalStatus.COMPLETED

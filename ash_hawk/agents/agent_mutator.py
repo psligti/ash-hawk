@@ -159,6 +159,35 @@ class AgentMutator:
                 tmp_path.unlink()
             raise
 
+    def backup_all(self) -> None:
+        """Back up every file in the agent directory for full revert.
+
+        Copies all files (respecting the same filters as :meth:`scan`)
+        into the backup directory so that :meth:`revert_all` can restore
+        them after an external process (e.g. a coding agent) modifies
+        files directly on disk.
+        """
+        if not self.agent_path.is_dir():
+            return
+        for child in sorted(self.agent_path.rglob("*")):
+            if not child.is_file():
+                continue
+            rel = child.relative_to(self.agent_path)
+            if any(part.startswith(".") for part in rel.parts):
+                continue
+            if child.suffix.lower() not in _ALLOWED_EXTENSIONS:
+                continue
+            try:
+                if child.stat().st_size > _MAX_FILE_SIZE:
+                    continue
+            except OSError:
+                continue
+            backup_path = self.backup_dir / rel
+            if backup_path.exists():
+                continue
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(child, backup_path)
+
     def revert_all(self) -> None:
         """Revert all mutated files to their pre-snapshot state.
 

@@ -4,6 +4,7 @@ Run fast tests: pytest -m unit
 Skip integration: pytest -m "not integration"
 """
 
+import logging
 import re
 import tempfile
 from pathlib import Path
@@ -12,7 +13,10 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
+from ash_hawk.agents.agent_resolver import AgentResolution
 from ash_hawk.cli.main import cli
+from ash_hawk.context import setup_eval_logging
+from ash_hawk.improve.loop import ImprovementResult
 from ash_hawk.types import EvalOutcome, EvalTranscript
 
 
@@ -100,6 +104,48 @@ class TestCliMain:
         assert "run" in result.output
         assert "improve" in result.output
         assert "thin" in result.output
+
+    def test_improve_command_shows_process_header_and_mutes_logs(
+        self, runner, monkeypatch, tmp_path
+    ):
+        agent_dir = tmp_path / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+
+        async def fake_improve(**kwargs):
+            logging.getLogger("ash_hawk.improve.loop").warning("suppressed logger noise")
+            kwargs["console"].print("[cyan]Simulated step:[/cyan] preparing worktree")
+            return ImprovementResult(
+                iterations=1,
+                initial_pass_rate=0.25,
+                final_pass_rate=1.0,
+                patches_proposed=[],
+                patches_applied=["prompt.md"],
+                mutation_history=[],
+                iteration_logs=[],
+                convergence_achieved=True,
+                stop_reasons=[],
+            )
+
+        monkeypatch.setattr(
+            "ash_hawk.cli.main.resolve_agent_path",
+            lambda _agent, _workdir: AgentResolution(
+                path=agent_dir,
+                name="bolt_merlin",
+                resolved_from="cli_path",
+            ),
+        )
+        monkeypatch.setattr("ash_hawk.improve.loop.improve", fake_improve)
+
+        try:
+            result = runner.invoke(cli, ["improve", "suite.yaml", "--agent", "bolt_merlin"])
+        finally:
+            setup_eval_logging(logging.INFO)
+
+        assert result.exit_code == 0
+        assert "Improve Run" in result.output
+        assert "Console shows process steps only" in result.output
+        assert "Simulated step:" in result.output
+        assert "suppressed logger noise" not in result.output
 
 
 @pytest.mark.integration

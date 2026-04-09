@@ -35,11 +35,11 @@ def _make_lesson(
     )
 
 
-class TestLessonDataclass:
-    def test_to_dict_roundtrip(self):
+class TestLessonModel:
+    def test_model_dump_roundtrip(self):
         lesson = _make_lesson()
-        data = lesson.to_dict()
-        restored = Lesson.from_dict(data)
+        data = lesson.model_dump()
+        restored = Lesson.model_validate(data)
         assert restored.lesson_id == lesson.lesson_id
         assert restored.trial_id == lesson.trial_id
         assert restored.target_files == lesson.target_files
@@ -47,10 +47,10 @@ class TestLessonDataclass:
         assert restored.metadata == lesson.metadata
 
     def test_from_dict_extra_fields_raises(self):
-        data = _make_lesson().to_dict()
+        data = _make_lesson().model_dump()
         data["unknown_field"] = "oops"
-        with pytest.raises(TypeError):
-            Lesson.from_dict(data)
+        with pytest.raises(Exception):
+            Lesson.model_validate(data)
 
     def test_default_created_at_is_iso(self):
         lesson = _make_lesson()

@@ -82,6 +82,7 @@ class ScenarioAgentRunner:
         injector: object | None = None,
         scenario_timeout_seconds: float | None = None,
         agent_path: Path | None = None,
+        adapter_override: str | None = None,
     ) -> None:
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._tooling_mode = tooling_mode
@@ -89,6 +90,7 @@ class ScenarioAgentRunner:
         self._injector = injector
         self._scenario_timeout_seconds = scenario_timeout_seconds
         self._agent_path = agent_path
+        self._adapter_override = adapter_override
 
     async def run(
         self,
@@ -113,11 +115,12 @@ class ScenarioAgentRunner:
                 start_time,
             )
 
-        adapter = self._adapter_registry.get(scenario.sut.adapter)
+        adapter_name = self._adapter_override or scenario.sut.adapter
+        adapter = self._adapter_registry.get(adapter_name)
         if adapter is None:
             return self._failure_transcript(
                 FailureMode.AGENT_ERROR,
-                f"Scenario adapter not found: {scenario.sut.adapter}",
+                f"Scenario adapter not found: {adapter_name}",
                 start_time,
             )
 
