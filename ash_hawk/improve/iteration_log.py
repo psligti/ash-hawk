@@ -28,7 +28,9 @@ class IterationLog(pd.BaseModel):
     model_config = pd.ConfigDict(extra="forbid")
 
     iteration: int = pd.Field(description="Iteration number (0-indexed)")
-    baseline_score: float = pd.Field(ge=0.0, le=1.0, description="Mean pass rate at baseline")
+    baseline_score: float = pd.Field(
+        ge=0.0, le=1.0, description="Baseline score used for improve decisions"
+    )
     baseline_repeats: int = pd.Field(ge=1, description="Number of eval repeats for baseline")
     failures: list[str] = pd.Field(default_factory=list, description="Trial IDs that failed")
     diagnoses: list[DiagnosisSummary] = pd.Field(

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import statistics
 import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -28,6 +29,7 @@ from ash_hawk.improve.patch import (
     propose_patch_via_agent,
     write_patch,
 )
+from ash_hawk.improve.run_bundle import ImproveRunBundle
 from ash_hawk.improve.stop_condition import ScoreRecord, StopCondition, StopConditionConfig
 from ash_hawk.tracing import get_telemetry
 
@@ -53,12 +55,12 @@ class ImprovementResult(pd.BaseModel):
     initial_pass_rate: float = pd.Field(
         ge=0.0,
         le=1.0,
-        description="Initial improvement score (currently backed by scenario mean_score)",
+        description="Initial improvement score used by the improve loop",
     )
     final_pass_rate: float = pd.Field(
         ge=0.0,
         le=1.0,
-        description="Final improvement score (currently backed by scenario mean_score)",
+        description="Final improvement score used by the improve loop",
     )
     patches_proposed: list[dict[str, Any]] = pd.Field(
         default_factory=list, description="Serialized ProposedPatch list"
@@ -71,6 +73,39 @@ class ImprovementResult(pd.BaseModel):
     )
     convergence_achieved: bool = False
     stop_reasons: list[str] = pd.Field(default_factory=list, description="Final stop reasons")
+
+
+class EvalRepeatAggregate(pd.BaseModel):
+    model_config = pd.ConfigDict(extra="forbid")
+
+    selected_score: float = pd.Field(ge=0.0, le=1.0)
+    mean_score: float = pd.Field(ge=0.0, le=1.0)
+    median_score: float = pd.Field(ge=0.0, le=1.0)
+    min_score: float = pd.Field(ge=0.0, le=1.0)
+    max_score: float = pd.Field(ge=0.0, le=1.0)
+    repeat_count: int = pd.Field(ge=1)
+
+
+def _summarize_repeat_scores(scores: list[float]) -> EvalRepeatAggregate:
+    mean_score = sum(scores) / len(scores)
+    median_score = statistics.median(scores)
+    return EvalRepeatAggregate(
+        selected_score=median_score if len(scores) > 1 else mean_score,
+        mean_score=mean_score,
+        median_score=median_score,
+        min_score=min(scores),
+        max_score=max(scores),
+        repeat_count=len(scores),
+    )
+
+
+def _format_repeat_aggregate(stats: EvalRepeatAggregate) -> str:
+    if stats.repeat_count <= 1:
+        return ""
+    return (
+        f"  [dim](median {stats.median_score:.2%}, mean {stats.mean_score:.2%}, "
+        f"range {stats.min_score:.2%}-{stats.max_score:.2%})[/dim]"
+    )
 
 
 def _serialize_patch(patch: ProposedPatch) -> dict[str, Any]:
@@ -99,6 +134,7 @@ async def improve(
     stop_config: StopConditionConfig | None = None,
     console: Console | None = None,
 ) -> ImprovementResult:
+    run_bundle = ImproveRunBundle(output_dir)
     lesson_store = LessonStore(lessons_dir=lessons_dir)
     ranker = HypothesisRanker(lesson_store=lesson_store)
     stop_condition = StopCondition(config=stop_config)
@@ -126,6 +162,7 @@ async def improve(
         agent_content = original_mutator.scan()
 
     if console is not None:
+        console.print(f"[cyan]Improve run bundle:[/cyan] {run_bundle.path}")
         console.print(
             f"[cyan]Run plan:[/cyan] baseline eval x{eval_repeats}, integrity eval x{integrity_repeats}, target {target:.0%}"
         )
@@ -134,6 +171,26 @@ async def improve(
                 f"[cyan]Loaded agent source:[/cyan] {len(agent_content)} text file(s) ready for mutation analysis"
             )
         console.print()
+
+    run_bundle.write_json(
+        "config.json",
+        {
+            "suite_path": suite_path,
+            "agent_name": agent_name,
+            "agent_path": str(agent_path) if agent_path else None,
+            "target": target,
+            "max_iterations": max_iterations,
+            "trace_dir": str(trace_dir) if trace_dir else None,
+            "output_dir": str(output_dir) if output_dir else None,
+            "iteration_timeout_seconds": iteration_timeout_seconds,
+            "eval_repeats": eval_repeats,
+            "integrity_repeats": integrity_repeats,
+            "score_threshold": score_threshold,
+            "lessons_dir": str(lessons_dir) if lessons_dir else None,
+            "stop_config": stop_config.model_dump() if stop_config else None,
+        },
+    )
+    run_bundle.append_event("improve.run_started", suite_path=suite_path, agent_name=agent_name)
 
     try:
         for i in range(max_iterations):
@@ -147,7 +204,7 @@ async def improve(
                     "  [dim]Each outer pass runs the full suite, then diagnoses only the failures from that fresh baseline run.[/dim]"
                 )
 
-            mean_score, last_summary, eval_errors = await _run_eval_n_times(
+            baseline_stats, last_summary, eval_errors = await _run_eval_n_times(
                 suite_path,
                 agent_name,
                 iteration_timeout_seconds,
@@ -157,7 +214,7 @@ async def improve(
                 phase_label="baseline evaluation",
             )
 
-            if mean_score is None:
+            if baseline_stats is None:
                 logger.warning("Iteration %d: all eval runs failed, skipping", i)
                 if console is not None:
                     console.print(
@@ -181,19 +238,21 @@ async def improve(
                 continue
 
             if i == 0:
-                initial_score = mean_score
-            final_score = mean_score
+                initial_score = baseline_stats.selected_score
+            final_score = baseline_stats.selected_score
 
             logger.debug(
-                "Iteration %d: mean_score=%.4f (runs=%d) target=%.2f",
+                "Iteration %d: selected_score=%.4f mean_score=%.4f median_score=%.4f (runs=%d) target=%.2f",
                 i,
-                mean_score,
+                baseline_stats.selected_score,
+                baseline_stats.mean_score,
+                baseline_stats.median_score,
                 eval_repeats,
                 target,
             )
 
             if console is not None:
-                color = "green" if mean_score >= target else "yellow"
+                color = "green" if baseline_stats.selected_score >= target else "yellow"
                 trial_info = ""
                 if last_summary is not None:
                     passed = last_summary.metrics.passed_tasks
@@ -201,23 +260,24 @@ async def improve(
                     trial_info = f"  trials=[{passed}/{total} passed]"
                 console.print(
                     f"  [bold]Baseline result:[/bold] outer pass {i + 1}/{max_iterations}  "
-                    f"score=[{color}]{mean_score:.2%}[/{color}]"
+                    f"score=[{color}]{baseline_stats.selected_score:.2%}[/{color}]"
                     f"{trial_info}  "
                     f"target={target:.0%}"
+                    f"{_format_repeat_aggregate(baseline_stats)}"
                 )
 
-            if mean_score >= target:
+            if baseline_stats.selected_score >= target:
                 logger.info("Target reached at iteration %d", i)
                 if console is not None:
                     console.print(
                         f"  [bold green]✓ Target reached: "
-                        f"{mean_score:.2%} >= {target:.0%}[/bold green]"
+                        f"{baseline_stats.selected_score:.2%} >= {target:.0%}[/bold green]"
                     )
                 convergence_achieved = True
 
                 iter_log = IterationLog(
                     iteration=i,
-                    baseline_score=mean_score,
+                    baseline_score=baseline_stats.selected_score,
                     baseline_repeats=eval_repeats,
                     stop_reasons=["target_reached"],
                 )
@@ -264,7 +324,7 @@ async def improve(
                     console.print("  [bold green]✓ All scenarios passing[/bold green]")
                 iter_log = IterationLog(
                     iteration=i,
-                    baseline_score=mean_score,
+                    baseline_score=baseline_stats.selected_score,
                     baseline_repeats=eval_repeats,
                     stop_reasons=["all_passing"],
                 )
@@ -331,7 +391,7 @@ async def improve(
                 final_stop_reasons = ["no_actionable_diagnoses"]
                 iter_log = IterationLog(
                     iteration=i,
-                    baseline_score=mean_score,
+                    baseline_score=baseline_stats.selected_score,
                     baseline_repeats=eval_repeats,
                     failures=[t.id for t in failures],
                     diagnoses=[diagnosis_to_summary(d) for d in diagnoses],
@@ -374,7 +434,7 @@ async def improve(
                 final_stop_reasons = ["no_ranked_hypotheses"]
                 iter_log = IterationLog(
                     iteration=i,
-                    baseline_score=mean_score,
+                    baseline_score=baseline_stats.selected_score,
                     baseline_repeats=eval_repeats,
                     failures=[t.id for t in failures],
                     diagnoses=[diagnosis_to_summary(d) for d in diagnoses],
@@ -386,7 +446,7 @@ async def improve(
                 write_iteration_log(iter_log, output_dir)
                 break
 
-            mean_old = mean_score
+            baseline_score = baseline_stats.selected_score
 
             iteration_kept: bool | None = None
             iteration_hypothesis_attempted: str | None = None
@@ -568,7 +628,7 @@ async def improve(
                             "    [dim]Step 4: fast validation on mutated worktree...[/dim]"
                         )
 
-                    new_mean, _, _ = await _run_eval_n_times(
+                    fast_validation_stats, _, _ = await _run_eval_n_times(
                         suite_path,
                         agent_name,
                         iteration_timeout_seconds,
@@ -578,7 +638,7 @@ async def improve(
                         phase_label="fast validation",
                     )
 
-                    if new_mean is None:
+                    if fast_validation_stats is None:
                         iteration_hypothesis_outcome = "post_mutation_eval_failed"
                         logger.warning(
                             "All post-mutation evals failed for hypothesis rank=%d",
@@ -593,15 +653,15 @@ async def improve(
                         hypothesis_mutator.cleanup()
                         continue
 
-                    evaluated_mean = new_mean
-                    fast_delta = new_mean - mean_old
+                    evaluated_stats = fast_validation_stats
+                    fast_delta = fast_validation_stats.selected_score - baseline_score
 
                     if fast_delta > score_threshold and integrity_repeats > eval_repeats:
                         if console is not None:
                             console.print(
                                 f"    [dim]Step 5: integrity validation ({integrity_repeats} repeats)...[/dim]"
                             )
-                        integrity_mean, _, integrity_errors = await _run_eval_n_times(
+                        integrity_stats, _, integrity_errors = await _run_eval_n_times(
                             suite_path,
                             agent_name,
                             iteration_timeout_seconds,
@@ -610,7 +670,7 @@ async def improve(
                             console=console,
                             phase_label="integrity validation",
                         )
-                        if integrity_mean is None:
+                        if integrity_stats is None:
                             logger.warning(
                                 "Integrity pass failed for hypothesis rank=%d: %s",
                                 hyp.rank,
@@ -623,19 +683,24 @@ async def improve(
                             workspace.cleanup()
                             hypothesis_mutator.cleanup()
                             continue
-                        evaluated_mean = integrity_mean
+                        evaluated_stats = integrity_stats
 
-                    delta = evaluated_mean - mean_old
+                    evaluated_score = evaluated_stats.selected_score
+                    delta = evaluated_score - baseline_score
                     kept = delta > score_threshold
                     iteration_hypothesis_outcome = "kept" if kept else "reverted"
 
                     logger.debug(
-                        "Hypothesis result: rank=%d delta=%.4f (%.4f -> %.4f) %s",
+                        "Hypothesis result: rank=%d delta=%.4f (%.4f -> %.4f) %s [mean=%.4f median=%.4f range=%.4f-%.4f]",
                         hyp.rank,
                         delta,
-                        mean_old,
-                        evaluated_mean,
+                        baseline_score,
+                        evaluated_score,
                         "KEPT" if kept else "REVERTED",
+                        evaluated_stats.mean_score,
+                        evaluated_stats.median_score,
+                        evaluated_stats.min_score,
+                        evaluated_stats.max_score,
                     )
 
                     if console is not None:
@@ -643,13 +708,15 @@ async def improve(
                             console.print(
                                 f"    [green]✓ KEPT[/green]  "
                                 f"delta=[green]{delta:+.4f}[/green]  "
-                                f"({mean_old:.4f} → {evaluated_mean:.4f})"
+                                f"({baseline_score:.4f} → {evaluated_score:.4f})"
+                                f"{_format_repeat_aggregate(evaluated_stats)}"
                             )
                         else:
                             console.print(
                                 f"    [red]✗ REVERTED[/red]  "
                                 f"delta=[red]{delta:+.4f}[/red]  "
-                                f"({mean_old:.4f} → {evaluated_mean:.4f})"
+                                f"({baseline_score:.4f} → {evaluated_score:.4f})"
+                                f"{_format_repeat_aggregate(evaluated_stats)}"
                             )
 
                     lesson = Lesson(
@@ -659,8 +726,8 @@ async def improve(
                         root_cause=hyp.diagnosis.root_cause,
                         target_files=hyp.diagnosis.target_files,
                         outcome="kept" if kept else "reverted",
-                        score_before=mean_old,
-                        score_after=evaluated_mean,
+                        score_before=baseline_score,
+                        score_after=evaluated_score,
                         score_delta=delta,
                         iteration=i,
                         agent_path=str(agent_path) if agent_path else None,
@@ -679,9 +746,13 @@ async def improve(
                             "iteration": i,
                             "hypothesis_rank": hyp.rank,
                             "trial_id": hyp.diagnosis.trial_id,
-                            "mean_score_before": mean_old,
-                            "mean_score_after": evaluated_mean,
-                            "fast_mean_score_after": new_mean,
+                            "baseline_score_before": baseline_score,
+                            "selected_score_after": evaluated_score,
+                            "fast_selected_score_after": fast_validation_stats.selected_score,
+                            "mean_score_after": evaluated_stats.mean_score,
+                            "median_score_after": evaluated_stats.median_score,
+                            "min_score_after": evaluated_stats.min_score,
+                            "max_score_after": evaluated_stats.max_score,
                             "applied_files": changed_paths,
                             "improvement": delta,
                             "kept": kept,
@@ -692,31 +763,31 @@ async def improve(
                     stop_result = stop_condition.record(
                         ScoreRecord(
                             iteration=i,
-                            score=evaluated_mean if kept else mean_old,
+                            score=evaluated_score if kept else baseline_score,
                             applied=kept,
                             delta=delta,
                         )
                     )
 
                     iteration_hypothesis_tested = hyp.diagnosis.trial_id
-                    iteration_hypothesis_score = evaluated_mean
+                    iteration_hypothesis_score = evaluated_score
                     iteration_delta = delta
                     iteration_lesson_id = lesson.lesson_id
                     iteration_kept = kept
 
                     if kept:
-                        final_score = evaluated_mean
+                        final_score = evaluated_score
                         synced_paths = workspace.sync_back()
                         applied_files.update(synced_paths)
                         if original_mutator is not None:
                             agent_content = original_mutator.scan()
-                        mean_old = evaluated_mean
+                        baseline_score = evaluated_score
                         if console is not None:
                             console.print(
                                 f"    [green]Step 6: synced kept mutation back to agent[/green]  {_format_path_list(synced_paths)}"
                             )
                             console.print(
-                                f"    [dim]Kept patch raised score floor to {evaluated_mean:.2%}; continuing to next ranked hypothesis from the updated baseline.[/dim]"
+                                f"    [dim]Kept patch raised the selected score to {evaluated_score:.2%}; continuing to next ranked hypothesis from the updated baseline.[/dim]"
                             )
                         workspace.cleanup()
                         hypothesis_mutator.cleanup()
@@ -753,7 +824,7 @@ async def improve(
 
             iter_log = IterationLog(
                 iteration=i,
-                baseline_score=mean_score,
+                baseline_score=baseline_stats.selected_score,
                 baseline_repeats=eval_repeats,
                 failures=[t.id for t in failures],
                 diagnoses=[diagnosis_to_summary(d) for d in diagnoses],
@@ -827,7 +898,7 @@ async def _run_eval_n_times(
     n: int,
     console: Console | None = None,
     phase_label: str = "evaluation",
-) -> tuple[float | None, EvalRunSummary | None, list[str]]:
+) -> tuple[EvalRepeatAggregate | None, EvalRunSummary | None, list[str]]:
     scores: list[float] = []
     errors: list[str] = []
     last_summary: EvalRunSummary | None = None
@@ -865,7 +936,15 @@ async def _run_eval_n_times(
     if not scores:
         return None, None, errors
 
-    return sum(scores) / len(scores), last_summary, errors
+    aggregate = _summarize_repeat_scores(scores)
+    if console is not None and aggregate.repeat_count > 1:
+        console.print(
+            f"    [dim]{phase_label.capitalize()} aggregate uses median for selection: "
+            f"{aggregate.selected_score:.2%} "
+            f"(mean {aggregate.mean_score:.2%}, range {aggregate.min_score:.2%}-{aggregate.max_score:.2%})[/dim]"
+        )
+
+    return aggregate, last_summary, errors
 
 
 async def _run_eval(

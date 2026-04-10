@@ -10,7 +10,12 @@ import pytest
 from rich.console import Console
 
 from ash_hawk.improve.diagnose import Diagnosis
-from ash_hawk.improve.loop import ImprovementResult, _resolve_adapter_override, improve
+from ash_hawk.improve.loop import (
+    ImprovementResult,
+    _resolve_adapter_override,
+    _run_eval_n_times,
+    improve,
+)
 from ash_hawk.improve.patch import ProposedPatch
 
 
@@ -246,6 +251,32 @@ class TestImprove:
         mock_run.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_run_eval_n_times_uses_median_for_multi_run_selection(self):
+        summaries = [
+            _make_mock_summary(0.0, n_trials=1, mean_score=0.8222),
+            _make_mock_summary(0.0, n_trials=1, mean_score=0.7778),
+            _make_mock_summary(0.0, n_trials=1, mean_score=0.7667),
+        ]
+
+        with patch("ash_hawk.improve.loop._run_eval", new_callable=AsyncMock) as mock_run:
+            mock_run.side_effect = summaries
+            stats, last_summary, errors = await _run_eval_n_times(
+                "suite.yaml",
+                "agent",
+                300.0,
+                None,
+                3,
+            )
+
+        assert stats is not None
+        assert stats.selected_score == pytest.approx(0.7778)
+        assert stats.mean_score == pytest.approx((0.8222 + 0.7778 + 0.7667) / 3)
+        assert stats.min_score == pytest.approx(0.7667)
+        assert stats.max_score == pytest.approx(0.8222)
+        assert last_summary is summaries[-1]
+        assert errors == []
+
+    @pytest.mark.asyncio
     async def test_kept_mutation_is_evaluated_in_workspace_and_synced_back(self, tmp_path):
         agent_dir = _init_git_agent_repo(tmp_path)
         target_file = agent_dir / "prompt.md"
@@ -382,10 +413,73 @@ class TestImprove:
         assert result.final_pass_rate == pytest.approx(1.0)
         assert sorted(result.patches_applied) == ["config.md", "prompt.md"]
         assert len(result.mutation_history) == 2
-        assert result.mutation_history[0]["mean_score_before"] == pytest.approx(0.0)
-        assert result.mutation_history[0]["mean_score_after"] == pytest.approx(0.5)
-        assert result.mutation_history[1]["mean_score_before"] == pytest.approx(0.5)
-        assert result.mutation_history[1]["mean_score_after"] == pytest.approx(1.0)
+        assert result.mutation_history[0]["baseline_score_before"] == pytest.approx(0.0)
+        assert result.mutation_history[0]["selected_score_after"] == pytest.approx(0.5)
+        assert result.mutation_history[1]["baseline_score_before"] == pytest.approx(0.5)
+        assert result.mutation_history[1]["selected_score_after"] == pytest.approx(1.0)
+
+    @pytest.mark.asyncio
+    async def test_integrity_validation_reverts_mean_flattering_mutation(self, tmp_path):
+        agent_dir = _init_git_agent_repo(tmp_path)
+
+        diagnosis = Diagnosis(
+            trial_id="trial-0",
+            failure_summary="bad prompt",
+            root_cause="prompt needs update",
+            suggested_fix="update prompt",
+            target_files=["prompt.md"],
+            confidence=0.9,
+        )
+
+        eval_summaries = [
+            _make_mock_summary(0.0, n_trials=1, mean_score=0.7798),
+            _make_mock_summary(0.0, n_trials=1, mean_score=0.9000),
+            _make_mock_summary(0.0, n_trials=1, mean_score=0.8222),
+            _make_mock_summary(0.0, n_trials=1, mean_score=0.7778),
+            _make_mock_summary(0.0, n_trials=1, mean_score=0.7667),
+        ]
+
+        async def patch_side_effect(*args, **kwargs):
+            agent_source_path = args[1]
+            (Path(agent_source_path) / "prompt.md").write_text("better", encoding="utf-8")
+            return ProposedPatch(
+                diagnosis=diagnosis,
+                file_path="prompt.md",
+                description="update prompt",
+                rationale="prompt needs update",
+                agent_relative_path="(agent-edited)",
+                content="updated in workspace",
+            )
+
+        with (
+            patch("ash_hawk.improve.loop._run_eval", new_callable=AsyncMock) as mock_run,
+            patch("ash_hawk.improve.loop.diagnose_failures", new_callable=AsyncMock) as mock_diag,
+            patch(
+                "ash_hawk.improve.loop.propose_patch_via_agent",
+                new_callable=AsyncMock,
+                side_effect=patch_side_effect,
+            ),
+        ):
+            mock_run.side_effect = eval_summaries
+            mock_diag.return_value = [diagnosis]
+
+            result = await improve(
+                "suite.yaml",
+                agent_name="bolt_merlin",
+                agent_path=agent_dir,
+                max_iterations=1,
+                eval_repeats=1,
+                integrity_repeats=3,
+                score_threshold=0.005,
+                lessons_dir=tmp_path / "lessons",
+                output_dir=tmp_path,
+            )
+
+        assert result.final_pass_rate == pytest.approx(0.7798)
+        assert len(result.mutation_history) == 1
+        assert result.mutation_history[0]["kept"] is False
+        assert result.mutation_history[0]["selected_score_after"] == pytest.approx(0.7778)
+        assert result.mutation_history[0]["mean_score_after"] == pytest.approx(0.7889)
 
     @pytest.mark.asyncio
     async def test_no_op_agent_edit_is_rejected_without_re_evaluation(self, tmp_path):
