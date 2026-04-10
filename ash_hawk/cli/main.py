@@ -67,7 +67,12 @@ cli.add_command(thin)
 @click.option("--agent", default="build", help="Agent name to evaluate")
 @click.option("--target", default=1.0, type=float, help="Target pass rate (0.0-1.0)")
 @click.option("--max-iterations", default=5, type=int, help="Maximum improvement iterations")
-@click.option("--threshold", default=0.02, type=float, help="Min score delta to keep a change")
+@click.option(
+    "--threshold",
+    default=0.02,
+    type=float,
+    help="Min selected-score delta to keep a change",
+)
 @click.option(
     "--eval-repeats", default=1, type=int, help="Eval runs per iteration (baseline + hypothesis)"
 )
@@ -110,7 +115,7 @@ def improve(
     console.print(f"[bold]Agent:[/bold] {resolution.name}")
     console.print(f"[bold]Agent source:[/bold] {resolution.path}")
     console.print(
-        f"[bold]Validation:[/bold] baseline x{eval_repeats}, integrity x{integrity_repeats}, keep threshold {threshold:+.2%}"
+        f"[bold]Validation:[/bold] baseline x{eval_repeats}, integrity x{integrity_repeats}, keep threshold {threshold:+.2%} on selected score"
     )
     console.print(f"[bold]Iteration cap:[/bold] {max_iterations}")
     console.print("[bold]Mutation mode:[/bold] disposable git worktree per hypothesis")
