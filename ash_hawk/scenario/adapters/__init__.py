@@ -9,43 +9,14 @@ Scenario adapters are discovered and loaded via the registry system.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, TypeAlias, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from ash_hawk.scenario.models import JSONValue, ScenarioAdapterResult
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-LegacyAdapterTuple: TypeAlias = (
-    tuple[
-        JSONValue,
-        list[dict[str, JSONValue]],
-        dict[str, JSONValue],
-    ]
-    | tuple[
-        JSONValue,
-        list[dict[str, JSONValue]],
-        dict[str, JSONValue],
-        object,
-    ]
-    | tuple[
-        JSONValue,
-        list[dict[str, JSONValue]],
-        dict[str, JSONValue],
-        object,
-        list[dict[str, JSONValue]],
-    ]
-    | tuple[
-        JSONValue,
-        list[dict[str, JSONValue]],
-        dict[str, JSONValue],
-        object,
-        list[dict[str, JSONValue]],
-        list[dict[str, JSONValue]],
-    ]
-)
-
-__all__ = ["LegacyAdapterTuple", "ScenarioAdapter"]
+__all__ = ["ScenarioAdapter"]
 
 
 @runtime_checkable
@@ -69,6 +40,6 @@ class ScenarioAdapter(Protocol):
         workdir: Path,
         tooling_harness: dict[str, object],
         budgets: dict[str, JSONValue],
-    ) -> ScenarioAdapterResult | LegacyAdapterTuple:
+    ) -> ScenarioAdapterResult:
         """Execute a scenario and return model-based results."""
         ...

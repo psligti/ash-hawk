@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import pydantic as pd
 
+from ash_hawk.improve.agentic_diagnoser import investigate_trial_with_explorer
+
 if TYPE_CHECKING:
     from ash_hawk.types import EvalTrial
 
@@ -32,14 +34,28 @@ Recent Tool Calls:
 Recent Trace Events:
 {trace_excerpt}
 
+Generate AT LEAST 5 distinct candidate improvement ideas for this single failure whenever the
+trace contains enough signal to do so. Each idea must be meaningfully different in intervention
+angle, target files, or proposed fix. Do not repeat the same idea with small wording changes.
+
+Prefer diversity across prompting, runtime config, skills, tool behavior, verification, path
+resolution, and execution flow.
+
 Provide your diagnosis as JSON:
 {{
-    "failure_summary": "one-line summary",
-    "root_cause": "detailed root cause analysis",
-    "suggested_fix": "concrete fix suggestion",
-    "target_files": ["file1.py", "file2.py"],
-    "confidence": 0.8
-}}"""
+    "ideas": [
+        {{
+            "failure_summary": "one-line summary",
+            "root_cause": "detailed root cause analysis",
+            "suggested_fix": "concrete fix suggestion",
+            "target_files": ["file1.py", "file2.py"],
+            "confidence": 0.8
+        }}
+    ]
+}}
+
+If you truly cannot produce 5 non-duplicate ideas from the evidence, return as many distinct
+ideas as possible, but maximize variety."""
 
 
 class Diagnosis(pd.BaseModel):
@@ -78,18 +94,20 @@ def _fallback_diagnosis(
     suggested_fix: str,
     diagnosis_mode: Literal["fallback_llm_unavailable", "fallback_parse_failure"],
     degraded_reason: str,
-) -> Diagnosis:
-    return Diagnosis(
-        trial_id=trial.id,
-        failure_summary=failure_summary[:200],
-        root_cause=root_cause,
-        suggested_fix=suggested_fix,
-        target_files=[],
-        confidence=0.1,
-        actionable=False,
-        diagnosis_mode=diagnosis_mode,
-        degraded_reason=degraded_reason,
-    )
+) -> list[Diagnosis]:
+    return [
+        Diagnosis(
+            trial_id=trial.id,
+            failure_summary=failure_summary[:200],
+            root_cause=root_cause,
+            suggested_fix=suggested_fix,
+            target_files=[],
+            confidence=0.1,
+            actionable=False,
+            diagnosis_mode=diagnosis_mode,
+            degraded_reason=degraded_reason,
+        )
+    ]
 
 
 def _truncate(text: str, limit: int) -> str:
@@ -130,13 +148,21 @@ async def diagnose_failures(
     failures: list[EvalTrial],
     trace_dir: Path | None = None,
     agent_content: dict[str, str] | None = None,
+    agent_path: Path | None = None,
     lesson_store: Any | None = None,
     console: Any | None = None,
 ) -> list[Diagnosis]:
     """Diagnose multiple failures in parallel using asyncio.gather."""
     results = await asyncio.gather(
         *[
-            _diagnose_single(f, trace_dir, agent_content, lesson_store, console=console)
+            _diagnose_single(
+                f,
+                trace_dir,
+                agent_content,
+                agent_path,
+                lesson_store,
+                console=console,
+            )
             for f in failures
         ],
         return_exceptions=True,
@@ -146,8 +172,8 @@ async def diagnose_failures(
     for failure, result in zip(failures, results):
         if isinstance(result, Exception):
             logger.warning("Diagnosis failed for trial %s", failure.id, exc_info=result)
-        elif isinstance(result, Diagnosis):
-            diagnoses.append(result)
+        elif isinstance(result, list):
+            diagnoses.extend(result)
 
     return diagnoses
 
@@ -156,9 +182,10 @@ async def _diagnose_single(
     trial: EvalTrial,
     trace_dir: Path | None,
     agent_content: dict[str, str] | None = None,
+    agent_path: Path | None = None,
     lesson_store: Any | None = None,
     console: Any | None = None,
-) -> Diagnosis | None:
+) -> list[Diagnosis]:
     transcript = trial.result.transcript if trial.result else None
     agent_response = ""
     grader_results_str = "[]"
@@ -188,21 +215,6 @@ async def _diagnose_single(
         trace_excerpt=trace_excerpt,
     )
 
-    agent_context = ""
-    if agent_content:
-        agent_files_section = "\n\n## Agent Content\n"
-        for key in sorted(agent_content.keys()):
-            if "AGENT.md" in key or "agent.md" in key:
-                agent_files_section += f"\n### {key}\n{agent_content[key][:2000]}\n"
-        skill_count = 0
-        for key in sorted(agent_content.keys()):
-            if "skill" in key.lower() and skill_count < 2:
-                agent_files_section += f"\n### {key}\n{agent_content[key][:1000]}\n"
-                skill_count += 1
-        agent_context = agent_files_section
-
-    prompt = prompt + agent_context
-
     # Inject past lessons to avoid repeating failed approaches
     if lesson_store is not None:
         failed_lessons = lesson_store.get_failed_attempts()
@@ -219,7 +231,20 @@ async def _diagnose_single(
 
     if console is not None:
         console.print(f"    [dim]Diagnosing trial {trial.id} (task={trial.task_id})...[/dim]")
-    response = await _call_llm(prompt)
+
+    response: str | None = None
+    if agent_path is not None:
+        if console is not None:
+            console.print(f"    [dim]Running explorer diagnosis for trial {trial.id}[/dim]")
+        response = await investigate_trial_with_explorer(trial, agent_path, lesson_store)
+        if response is None and console is not None:
+            console.print(
+                f"    [yellow]⚠ Explorer diagnosis unavailable for trial {trial.id}; falling back[/yellow]"
+            )
+
+    if response is None:
+        response = await _call_llm(prompt)
+
     if response is None:
         error_msg = error_trace or agent_response or "Unknown failure"
         if console is not None:
@@ -239,17 +264,18 @@ async def _diagnose_single(
             degraded_reason="diagnosis_llm_unavailable",
         )
 
-    result = _parse_diagnosis_response(trial.id, response)
-    if result is not None and console is not None:
-        files_str = ", ".join(result.target_files[:3]) if result.target_files else "none"
+    results = _parse_diagnosis_response(trial.id, response)
+    if results and console is not None:
+        primary = results[0]
+        files_str = ", ".join(primary.target_files[:3]) if primary.target_files else "none"
         console.print(
             f"    [dim]Diagnosed trial {trial.id}: "
-            f"{result.failure_summary[:60]}  "
-            f"files=[{files_str}][/dim]"
+            f"{primary.failure_summary[:60]}  "
+            f"files=[{files_str}]  ideas={len(results)}[/dim]"
         )
-    elif result is None and console is not None:
+    elif not results and console is not None:
         console.print(f"    [yellow]⚠ Could not parse diagnosis for trial {trial.id}[/yellow]")
-    if result is None:
+    if not results:
         return _fallback_diagnosis(
             trial,
             failure_summary=error_trace or agent_response or "Diagnosis response was not parseable",
@@ -259,11 +285,12 @@ async def _diagnose_single(
             degraded_reason="diagnosis_parse_failure",
         )
 
-    if not result.target_files:
-        result.actionable = False
-        result.degraded_reason = "diagnosis_missing_target_files"
+    for result in results:
+        if not result.target_files:
+            result.actionable = False
+            result.degraded_reason = "diagnosis_missing_target_files"
 
-    return result
+    return results
 
 
 async def _call_llm(prompt: str) -> str | None:
@@ -322,24 +349,59 @@ def _extract_json_object(text: str) -> dict[str, Any] | None:
     return None
 
 
-def _parse_diagnosis_response(trial_id: str, response: str) -> Diagnosis | None:
+def _parse_diagnosis_response(trial_id: str, response: str) -> list[Diagnosis]:
     data = _extract_json_object(response)
     if data is None:
         logger.warning("No JSON found in diagnosis response for %s", trial_id)
-        return None
+        return []
 
+    raw_ideas = data.get("ideas")
+    if isinstance(raw_ideas, list):
+        parsed_ideas = _parse_diagnosis_ideas(trial_id, raw_ideas)
+        if parsed_ideas:
+            return parsed_ideas
+
+    parsed_single = _parse_diagnosis_ideas(trial_id, [data])
+    if parsed_single:
+        return parsed_single
+
+    logger.warning("Missing required fields in diagnosis for %s", trial_id)
+    return []
+
+
+def _parse_diagnosis_ideas(trial_id: str, raw_ideas: list[Any]) -> list[Diagnosis]:
     required_fields = ["failure_summary", "root_cause", "suggested_fix"]
-    if not all(f in data for f in required_fields):
-        logger.warning("Missing required fields in diagnosis for %s", trial_id)
-        return None
+    diagnoses: list[Diagnosis] = []
+    seen_keys: set[tuple[str, str, tuple[str, ...]]] = set()
 
-    return Diagnosis(
-        trial_id=trial_id,
-        failure_summary=str(data["failure_summary"]),
-        root_cause=str(data["root_cause"]),
-        suggested_fix=str(data["suggested_fix"]),
-        target_files=data.get("target_files", []),
-        confidence=float(data.get("confidence", 0.0)),
-        actionable=True,
-        diagnosis_mode="llm",
-    )
+    for raw_idea in raw_ideas:
+        if not isinstance(raw_idea, dict):
+            continue
+        if not all(field in raw_idea for field in required_fields):
+            continue
+
+        target_files_raw = raw_idea.get("target_files", [])
+        target_files = (
+            [str(path) for path in target_files_raw] if isinstance(target_files_raw, list) else []
+        )
+        failure_summary = str(raw_idea["failure_summary"])
+        root_cause = str(raw_idea["root_cause"])
+        dedupe_key = (failure_summary, root_cause, tuple(target_files))
+        if dedupe_key in seen_keys:
+            continue
+        seen_keys.add(dedupe_key)
+
+        diagnoses.append(
+            Diagnosis(
+                trial_id=trial_id,
+                failure_summary=failure_summary,
+                root_cause=root_cause,
+                suggested_fix=str(raw_idea["suggested_fix"]),
+                target_files=target_files,
+                confidence=float(raw_idea.get("confidence", 0.0)),
+                actionable=True,
+                diagnosis_mode="llm",
+            )
+        )
+
+    return diagnoses

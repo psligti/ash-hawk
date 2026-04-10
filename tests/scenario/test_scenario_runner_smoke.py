@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 import yaml
@@ -20,10 +19,10 @@ class MockScenarioAdapter:
 
     def run_scenario(
         self,
-        scenario: dict[str, Any],
+        scenario: dict[str, object],
         workdir: Path,
-        tooling_harness: dict[str, Any],
-        budgets: dict[str, Any],
+        tooling_harness: dict[str, object],
+        budgets: dict[str, object],
     ) -> ScenarioAdapterResult:
         del workdir, budgets
         call = tooling_harness["call"]
@@ -38,6 +37,36 @@ class MockScenarioAdapter:
             final_output="ok",
             trace_events=trace_events,
             artifacts={"note": "artifact"},
+        )
+
+
+class WorkspaceInspectingAdapter:
+    @property
+    def name(self) -> str:
+        return "workspace_adapter"
+
+    def run_scenario(
+        self,
+        scenario: dict[str, object],
+        workdir: Path,
+        tooling_harness: dict[str, object],
+        budgets: dict[str, object],
+    ) -> ScenarioAdapterResult:
+        del scenario, tooling_harness, budgets
+        auth_content = (workdir / "auth.py").read_text(encoding="utf-8")
+        readme_content = (workdir / "README.md").read_text(encoding="utf-8")
+        return ScenarioAdapterResult(
+            final_output="workspace-ok",
+            trace_events=[
+                ScenarioTraceEvent(
+                    event_type="ModelMessageEvent",
+                    data={
+                        "role": "assistant",
+                        "content": f"{auth_content}\n---\n{readme_content}",
+                    },
+                )
+            ],
+            artifacts={},
         )
 
 
@@ -128,3 +157,60 @@ def test_scenario_runner_overrides_task_timeout_from_constructor(tmp_path: Path)
 
     task = runner._scenario_to_task(scenario, tmp_path / "demo.scenario.yaml")
     assert task.timeout_seconds == 420.0
+
+
+def test_scenario_runner_seeds_workspace_content(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry = ScenarioAdapterRegistry()
+    adapter = WorkspaceInspectingAdapter()
+    assert isinstance(adapter, ScenarioAdapter)
+    registry.register(adapter)
+
+    monkeypatch.setattr(registry_module, "_default_registry", registry)
+    monkeypatch.chdir(tmp_path)
+
+    scenario_path = tmp_path / "workspace-demo.scenario.yaml"
+    scenario_path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": "v1",
+                "id": "workspace-demo",
+                "description": "Workspace seeded scenario",
+                "sut": {"type": "coding_agent", "adapter": "workspace_adapter", "config": {}},
+                "inputs": {"prompt": "run"},
+                "tools": {
+                    "allowed_tools": [],
+                    "mocks": {},
+                    "fault_injection": {},
+                },
+                "budgets": {
+                    "max_steps": 3,
+                    "max_tool_calls": 5,
+                    "max_tokens": 100,
+                    "max_time_seconds": 10.0,
+                },
+                "expectations": {
+                    "must_events": [],
+                    "must_not_events": [],
+                    "ordering_rules": [],
+                    "diff_assertions": [],
+                    "output_assertions": [],
+                },
+                "graders": [],
+                "workspace": {
+                    "auth.py": "return False\n",
+                    "README.md": "# Seeded README\n",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    summary = run_scenarios([str(scenario_path)])
+    assert summary.trials
+    trial = summary.trials[0]
+    assert trial.result is not None
+    assert (
+        trial.result.transcript.messages[-1]["content"] == "return False\n\n---\n# Seeded README\n"
+    )

@@ -5,6 +5,7 @@ import json
 import logging
 import time
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Literal
 
 import pydantic as pd
@@ -126,47 +127,51 @@ class ScenarioAgentRunner:
             )
 
         tool_policy = self._build_policy(scenario, policy_enforcer)
-        tooling_root = self._tooling_root(task)
-        tooling_harness = ToolingHarness(mode=self._tooling_mode, root=tooling_root)
-        self._register_tool_mocks(tooling_harness, scenario.tools.mocks)
-        self._apply_fault_injection(tooling_harness, scenario.tools.fault_injection)
-
-        tooling_recorder = ToolingHarnessRecorder(tooling_harness)
-        tooling_context = {
-            "call": tooling_recorder.call,
-            "harness": tooling_harness,
-            "mode": tooling_harness.mode,
-            "policy": tool_policy.model_dump(),
-            "injector": self._injector,
-        }
-        if self._agent_path is not None:
-            tooling_context["agent_path"] = str(self._agent_path)
-
+        tooling_root, workspace_handle = self._prepare_workspace(task, scenario)
         try:
-            async_run = getattr(adapter, "async_run_scenario", None)
-            if callable(async_run):
-                raw_adapter_result = await async_run(
-                    scenario.model_dump(),
-                    tooling_root,
-                    tooling_context,
-                    scenario.budgets.model_dump(),
+            tooling_harness = ToolingHarness(mode=self._tooling_mode, root=tooling_root)
+            self._register_tool_mocks(tooling_harness, scenario.tools.mocks)
+            self._apply_fault_injection(tooling_harness, scenario.tools.fault_injection)
+
+            tooling_recorder = ToolingHarnessRecorder(tooling_harness)
+            tooling_context = {
+                "call": tooling_recorder.call,
+                "harness": tooling_harness,
+                "mode": tooling_harness.mode,
+                "policy": tool_policy.model_dump(),
+                "injector": self._injector,
+            }
+            if self._agent_path is not None:
+                tooling_context["agent_path"] = str(self._agent_path)
+
+            try:
+                async_run = getattr(adapter, "async_run_scenario", None)
+                if callable(async_run):
+                    raw_adapter_result = await async_run(
+                        scenario.model_dump(),
+                        tooling_root,
+                        tooling_context,
+                        scenario.budgets.model_dump(),
+                    )
+                else:
+                    raw_adapter_result = await asyncio.to_thread(
+                        adapter.run_scenario,
+                        scenario.model_dump(),
+                        tooling_root,
+                        tooling_context,
+                        scenario.budgets.model_dump(),
+                    )
+                adapter_result = self._normalize_adapter_result(raw_adapter_result)
+            except Exception as exc:
+                return self._failure_transcript(
+                    FailureMode.AGENT_ERROR,
+                    f"Scenario execution failed: {exc}",
+                    start_time,
+                    trace_events=tooling_recorder.events,
                 )
-            else:
-                raw_adapter_result = await asyncio.to_thread(
-                    adapter.run_scenario,
-                    scenario.model_dump(),
-                    tooling_root,
-                    tooling_context,
-                    scenario.budgets.model_dump(),
-                )
-            adapter_result = self._normalize_adapter_result(raw_adapter_result)
-        except Exception as exc:
-            return self._failure_transcript(
-                FailureMode.AGENT_ERROR,
-                f"Scenario execution failed: {exc}",
-                start_time,
-                trace_events=tooling_recorder.events,
-            )
+        finally:
+            if workspace_handle is not None:
+                workspace_handle.cleanup()
 
         adapter_messages = [
             message.model_dump(mode="json") for message in adapter_result.extract_messages()
@@ -242,6 +247,25 @@ class ScenarioAgentRunner:
             if isinstance(root_raw, str) and root_raw.strip() != "":
                 return Path(root_raw)
         return Path.cwd()
+
+    def _prepare_workspace(
+        self,
+        task: EvalTask,
+        scenario: ScenarioV1,
+    ) -> tuple[Path, TemporaryDirectory[str] | None]:
+        base_root = self._tooling_root(task)
+        if not scenario.workspace:
+            return base_root, None
+
+        workspace_handle: TemporaryDirectory[str] = TemporaryDirectory(
+            prefix=f"ash-hawk-scenario-{scenario.id}-"
+        )
+        workspace_root = Path(workspace_handle.name)
+        for relative_path, content in scenario.workspace.items():
+            target_path = workspace_root / relative_path
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.write_text(content, encoding="utf-8")
+        return workspace_root, workspace_handle
 
     def _build_policy(
         self,
@@ -416,70 +440,8 @@ class ScenarioAgentRunner:
     def _normalize_adapter_result(self, adapter_result: object) -> ScenarioAdapterResult:
         if isinstance(adapter_result, ScenarioAdapterResult):
             return adapter_result
-        if not isinstance(adapter_result, tuple):
-            raise ValueError("Adapter must return ScenarioAdapterResult or legacy tuple")
-
-        result_len = len(adapter_result)
-        if result_len < 3:
-            raise ValueError(
-                "Adapter legacy tuple must include at least output, trace_events, artifacts"
-            )
-
-        final_output = self._normalize_agent_response(adapter_result[0])
-        trace_events_raw = adapter_result[1]
-        trace_events = self._normalize_trace_events(
-            trace_events_raw if isinstance(trace_events_raw, list) else []
-        )
-
-        artifacts_raw = adapter_result[2]
-        artifacts: dict[str, JSONValue] = {}
-        if isinstance(artifacts_raw, dict):
-            artifacts = {
-                str(key): self._to_json_value(value) for key, value in artifacts_raw.items()
-            }
-
-        outcome = EvalOutcome.success()
-        if result_len >= 4:
-            outcome_raw = adapter_result[3]
-            if isinstance(outcome_raw, EvalOutcome):
-                outcome = outcome_raw
-            elif isinstance(outcome_raw, dict):
-                outcome = EvalOutcome.model_validate(outcome_raw)
-
-        if result_len >= 5 and isinstance(adapter_result[4], list):
-            for message_raw in adapter_result[4]:
-                if isinstance(message_raw, dict):
-                    role = message_raw.get("role")
-                    content = message_raw.get("content")
-                    if isinstance(role, str) and isinstance(content, str):
-                        trace_events.append(
-                            ScenarioTraceEvent(
-                                event_type="ModelMessageEvent",
-                                ts=DEFAULT_TRACE_TS,
-                                data={"role": role, "content": content},
-                            )
-                        )
-
-        if result_len >= 6 and isinstance(adapter_result[5], list):
-            for tool_call_raw in adapter_result[5]:
-                parsed_tool_call = parse_scenario_tool_call(tool_call_raw)
-                if parsed_tool_call is not None:
-                    trace_events.append(
-                        ScenarioTraceEvent(
-                            event_type="ToolCallEvent",
-                            ts=DEFAULT_TRACE_TS,
-                            data={
-                                "name": parsed_tool_call.name,
-                                "arguments": parsed_tool_call.arguments,
-                            },
-                        )
-                    )
-
-        return ScenarioAdapterResult(
-            final_output=final_output,
-            trace_events=trace_events,
-            artifacts=artifacts,
-            outcome=outcome,
+        raise ValueError(
+            "Adapter must return ScenarioAdapterResult; legacy tuple results are no longer supported"
         )
 
     def _to_json_value(self, value: object) -> JSONValue:

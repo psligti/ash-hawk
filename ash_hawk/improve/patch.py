@@ -183,7 +183,7 @@ async def propose_patch_via_agent(
     if console is not None:
         console.print("    [dim]Running agent to apply fix...[/dim]")
 
-    response_text, error = await _run_agent_cli(
+    response_text, error = await run_agent_cli(
         prompt=prompt,
         cwd=repo_root or agent_source_path.parent,
         config_path=config_path,
@@ -214,12 +214,14 @@ async def propose_patch_via_agent(
     )
 
 
-async def _run_agent_cli(
+async def run_agent_cli(
     prompt: str,
     cwd: Path,
     config_path: Path | None = None,
+    agent_name: str | None = None,
 ) -> tuple[str | None, str | None]:
     import asyncio
+    import os
     import shutil
 
     bolt_merlin = shutil.which("bolt-merlin")
@@ -230,15 +232,26 @@ async def _run_agent_cli(
         else:
             return None, "bolt-merlin CLI not found in PATH or .venv/bin"
 
-    cmd = [bolt_merlin, "code", prompt]
+    cmd = [bolt_merlin, "code"]
+    if agent_name is not None:
+        cmd.extend(["--agent", agent_name])
     if config_path is not None and config_path.exists():
         cmd.extend(["--config", str(config_path)])
+    cmd.append(prompt)
+
+    # Prevent the worktree's source tree (e.g. bolt_merlin/) from shadowing
+    # the installed package on sys.path.  Without this, Python adds cwd to
+    # sys.path and `from bolt_merlin.cli.main import cli` resolves to the
+    # local copy instead of the installed one.
+    env = os.environ.copy()
+    env["PYTHONPATH"] = ""
 
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=str(cwd),
+        env=env,
     )
     stdout, stderr = await proc.communicate()
 

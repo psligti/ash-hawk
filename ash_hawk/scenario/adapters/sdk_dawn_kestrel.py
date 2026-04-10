@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import asyncio
 import os
-import threading
 from pathlib import Path
-from typing import Any, Callable, Coroutine, TypeVar
+from typing import Any, Callable
 
 from ash_hawk.agents import DawnKestrelAgentRunner
 from ash_hawk.policy import PolicyEnforcer
+from ash_hawk.scenario.adapter_utils import extract_prompt, run_async
 from ash_hawk.scenario.models import (
     ScenarioAdapterResult,
     ScenarioTraceEvent,
@@ -22,47 +22,6 @@ from ash_hawk.scenario.trace import (
 from ash_hawk.scenario.trace_normalizer import normalize_eval_transcript
 from ash_hawk.types import EvalTask, ToolSurfacePolicy
 
-_T = TypeVar("_T")
-
-
-def _run_coroutine_sync(coro: Coroutine[Any, Any, _T]) -> _T:
-    loop = asyncio.new_event_loop()
-    try:
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(coro)
-    finally:
-        try:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-        except Exception:  # nosec B110
-            pass
-        asyncio.set_event_loop(None)
-        loop.close()
-
-
-def _run_async(func: Callable[..., Coroutine[Any, Any, _T]], *args: Any, **kwargs: Any) -> _T:
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return _run_coroutine_sync(func(*args, **kwargs))
-
-    result_container: dict[str, _T] = {}
-    error_container: dict[str, BaseException] = {}
-
-    def _runner() -> None:
-        try:
-            result_container["result"] = _run_coroutine_sync(func(*args, **kwargs))
-        except BaseException as exc:
-            error_container["error"] = exc
-
-    thread = threading.Thread(target=_runner, daemon=True)
-    thread.start()
-    thread.join()
-
-    if "error" in error_container:
-        raise error_container["error"]
-
-    return result_container["result"]
-
 
 def _normalize_inputs(inputs_raw: Any) -> dict[str, Any]:
     if isinstance(inputs_raw, dict):
@@ -73,11 +32,7 @@ def _normalize_inputs(inputs_raw: Any) -> dict[str, Any]:
 
 
 def _extract_prompt(inputs: dict[str, Any]) -> str:
-    for key in ("prompt", "user_message", "message", "input"):
-        value = inputs.get(key)
-        if isinstance(value, str) and value.strip():
-            return value
-    return ""
+    return extract_prompt(inputs)
 
 
 def _resolve_provider_model(
@@ -158,7 +113,7 @@ class SdkDawnKestrelAdapter:
         budgets: dict[str, Any],
     ) -> ScenarioAdapterResult:
         """Sync backward-compatible wrapper around async_run_scenario."""
-        return _run_async(
+        return run_async(
             self.async_run_scenario,
             scenario,
             workdir,

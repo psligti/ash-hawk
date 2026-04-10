@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import asyncio
 import shutil
-import threading
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Coroutine, TypeVar
+from typing import Any
 
+from ash_hawk.scenario.adapter_utils import run_async
 from ash_hawk.scenario.models import JSONValue, ScenarioAdapterResult, ScenarioTraceEvent
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
@@ -16,33 +16,6 @@ from ash_hawk.scenario.trace import (
     ToolCallEvent,
     ToolResultEvent,
 )
-
-_T = TypeVar("_T")
-
-
-def _run_async(func: Callable[..., Coroutine[Any, Any, _T]], *args: Any, **kwargs: Any) -> _T:
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(func(*args, **kwargs))
-
-    result_container: dict[str, _T] = {}
-    error_container: dict[str, BaseException] = {}
-
-    def _runner() -> None:
-        try:
-            result_container["result"] = asyncio.run(func(*args, **kwargs))
-        except BaseException as exc:
-            error_container["error"] = exc
-
-    thread = threading.Thread(target=_runner, daemon=True)
-    thread.start()
-    thread.join()
-
-    if "error" in error_container:
-        raise error_container["error"]
-
-    return result_container["result"]
 
 
 async def _run_command(command: str, cwd: Path) -> dict[str, Any]:
@@ -61,7 +34,7 @@ async def _run_command(command: str, cwd: Path) -> dict[str, Any]:
 
 
 def _run_command_sync(command: str, cwd: Path) -> dict[str, Any]:
-    return _run_async(_run_command, command, cwd)
+    return run_async(_run_command, command, cwd)
 
 
 def _require_success(result: dict[str, Any], command: str) -> None:

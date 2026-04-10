@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from ash_hawk.scenario.adapters.artifact_adapter import ArtifactAdapter
+from ash_hawk.scenario.run_artifact_builder import RunArtifactBuilder
 from ash_hawk.storage import FileStorage
 from ash_hawk.types import EvalRunSummary, RunArtifact, RunEnvelope, SuiteMetrics, ToolCallRecord
 
@@ -54,15 +54,15 @@ def sample_run_summary(sample_run_envelope: RunEnvelope) -> EvalRunSummary:
     )
 
 
-class TestArtifactAdapter:
+class TestRunArtifactBuilder:
     def test_create_artifact_from_summary(
         self,
         mock_storage: Any,
         sample_run_envelope: RunEnvelope,
         sample_run_summary: EvalRunSummary,
     ) -> None:
-        adapter = ArtifactAdapter(mock_storage)
-        artifact = adapter.create_artifact_from_summary(sample_run_summary, sample_run_envelope)
+        builder = RunArtifactBuilder(mock_storage)
+        artifact = builder.create_artifact_from_summary(sample_run_summary, sample_run_envelope)
 
         assert artifact.run_id == "run-test-001"
         assert artifact.suite_id == "test-suite"
@@ -87,8 +87,8 @@ class TestArtifactAdapter:
             trials=[],
         )
 
-        adapter = ArtifactAdapter(mock_storage)
-        artifact = adapter.create_artifact_from_summary(summary, sample_run_envelope)
+        builder = RunArtifactBuilder(mock_storage)
+        artifact = builder.create_artifact_from_summary(summary, sample_run_envelope)
 
         assert artifact.outcome == "failure"
 
@@ -96,8 +96,8 @@ class TestArtifactAdapter:
     async def test_load_run_artifact_not_found(self, mock_storage: Any) -> None:
         mock_storage.load_run_envelope = AsyncMock(return_value=None)
 
-        adapter = ArtifactAdapter(mock_storage)
-        artifact = await adapter.load_run_artifact("nonexistent-run")
+        builder = RunArtifactBuilder(mock_storage)
+        artifact = await builder.load_run_artifact("nonexistent-run")
 
         assert artifact is None
 
@@ -111,8 +111,8 @@ class TestArtifactAdapter:
         mock_storage.load_run_envelope = AsyncMock(return_value=sample_run_envelope)
         mock_storage.load_summary = AsyncMock(return_value=sample_run_summary)
 
-        adapter = ArtifactAdapter(mock_storage)
-        artifact = await adapter.load_run_artifact_from_suite("test-suite", "run-test-001")
+        builder = RunArtifactBuilder(mock_storage)
+        artifact = await builder.load_run_artifact_from_suite("test-suite", "run-test-001")
 
         assert artifact is not None
         assert artifact.run_id == "run-test-001"

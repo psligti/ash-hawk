@@ -1,8 +1,7 @@
-# type-hygiene: skip-file
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from ash_hawk.storage import StoredTrial
 from ash_hawk.types import (
@@ -17,9 +16,7 @@ if TYPE_CHECKING:
     from ash_hawk.storage import StorageBackend
 
 
-class ArtifactAdapter:
-    """Converts ash-hawk storage data to RunArtifact format."""
-
+class RunArtifactBuilder:
     def __init__(self, storage: StorageBackend) -> None:
         self._storage = storage
 
@@ -44,7 +41,7 @@ class ArtifactAdapter:
 
         tool_calls: list[ToolCallRecord] = []
         steps: list[StepRecord] = []
-        messages: list[dict[str, Any]] = []
+        messages: list[dict[str, object]] = []
         total_duration_ms = 0
         token_usage: dict[str, int] = {}
         cost_usd: float | None = None
@@ -100,7 +97,7 @@ class ArtifactAdapter:
     ) -> tuple[
         list[ToolCallRecord],
         list[StepRecord],
-        list[dict[str, Any]],
+        list[dict[str, object]],
         int,
         dict[str, int],
         float | None,
@@ -108,7 +105,7 @@ class ArtifactAdapter:
     ]:
         tool_calls: list[ToolCallRecord] = []
         steps: list[StepRecord] = []
-        messages: list[dict[str, Any]] = []
+        messages: list[dict[str, object]] = []
         total_duration_ms = 0
         token_usage: dict[str, int] = {}
         cost_usd: float | None = None
@@ -220,3 +217,6 @@ class ArtifactAdapter:
             },
             created_at=self._parse_datetime(envelope.created_at),
         )
+
+
+__all__ = ["RunArtifactBuilder"]

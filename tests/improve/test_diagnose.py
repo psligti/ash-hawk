@@ -5,7 +5,10 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from ash_hawk.improve.diagnose import _parse_diagnosis_response, diagnose_failures
+from ash_hawk.improve.diagnose import (
+    _parse_diagnosis_response,
+    diagnose_failures,
+)
 from ash_hawk.types import EvalOutcome, EvalStatus, EvalTranscript, EvalTrial, TrialResult
 
 
@@ -26,43 +29,72 @@ def _make_trial(trial_id: str = "trial-1") -> EvalTrial:
 class TestParseDiagnosis:
     def test_valid_json_response(self):
         response = (
+            '{"ideas": ['
             '{"failure_summary": "bad", "root_cause": "bug", '
             '"suggested_fix": "fix it", "target_files": ["a.py"], "confidence": 0.9}'
+            "]}"
         )
         result = _parse_diagnosis_response("trial-1", response)
-        assert result is not None
-        assert result.trial_id == "trial-1"
-        assert result.failure_summary == "bad"
-        assert result.root_cause == "bug"
-        assert result.confidence == 0.9
+        assert len(result) == 1
+        assert result[0].trial_id == "trial-1"
+        assert result[0].failure_summary == "bad"
+        assert result[0].root_cause == "bug"
+        assert result[0].confidence == 0.9
 
     def test_missing_required_field(self):
         response = '{"failure_summary": "bad"}'
         result = _parse_diagnosis_response("trial-1", response)
-        assert result is None
+        assert result == []
 
     def test_invalid_json(self):
         result = _parse_diagnosis_response("trial-1", "not json at all")
-        assert result is None
+        assert result == []
 
     def test_default_confidence(self):
         response = '{"failure_summary": "bad", "root_cause": "bug", "suggested_fix": "fix"}'
         result = _parse_diagnosis_response("trial-1", response)
-        assert result is not None
-        assert result.confidence == 0.0
+        assert len(result) == 1
+        assert result[0].confidence == 0.0
 
     def test_nested_json_target_files(self):
         response = (
             "Here is my diagnosis:\n"
+            '{"ideas": ['
             '{"failure_summary": "bad", "root_cause": "nested issue", '
             '"suggested_fix": "fix it", "target_files": ["a.py", "b.py"], '
-            '"confidence": 0.7, "extra": {"nested": true}}\n'
+            '"confidence": 0.7, "extra": {"nested": true}}'
+            "]}\n"
             "End of analysis."
         )
         result = _parse_diagnosis_response("trial-1", response)
-        assert result is not None
-        assert result.target_files == ["a.py", "b.py"]
-        assert result.confidence == 0.7
+        assert len(result) == 1
+        assert result[0].target_files == ["a.py", "b.py"]
+        assert result[0].confidence == 0.7
+
+    def test_parses_multiple_unique_ideas(self):
+        response = (
+            '{"ideas": ['
+            '{"failure_summary": "bad1", "root_cause": "bug1", '
+            '"suggested_fix": "fix1", "target_files": ["a.py"], "confidence": 0.9},'
+            '{"failure_summary": "bad2", "root_cause": "bug2", '
+            '"suggested_fix": "fix2", "target_files": ["b.py"], "confidence": 0.8}'
+            "]}"
+        )
+        result = _parse_diagnosis_response("trial-1", response)
+        assert len(result) == 2
+        assert [d.target_files for d in result] == [["a.py"], ["b.py"]]
+
+    def test_dedupes_duplicate_ideas(self):
+        response = (
+            '{"ideas": ['
+            '{"failure_summary": "bad", "root_cause": "bug", '
+            '"suggested_fix": "fix1", "target_files": ["a.py"], "confidence": 0.9},'
+            '{"failure_summary": "bad", "root_cause": "bug", '
+            '"suggested_fix": "fix2", "target_files": ["a.py"], "confidence": 0.8}'
+            "]}"
+        )
+        result = _parse_diagnosis_response("trial-1", response)
+        assert len(result) == 1
 
 
 class TestDiagnoseFailures:
@@ -115,8 +147,10 @@ class TestDiagnoseFailures:
         async def fake_call_llm(prompt: str) -> str:
             captured_prompt["value"] = prompt
             return (
+                '{"ideas": ['
                 '{"failure_summary": "bad", "root_cause": "bug", '
                 '"suggested_fix": "fix it", "target_files": ["a.py"], "confidence": 0.8}'
+                "]}"
             )
 
         with patch("ash_hawk.improve.diagnose._call_llm", side_effect=fake_call_llm):
@@ -128,3 +162,54 @@ class TestDiagnoseFailures:
         assert "I should inspect the repo." in prompt
         assert 'grep({"pattern": "bug"})' in prompt
         assert "ToolCallEvent" in prompt
+
+    @pytest.mark.asyncio
+    async def test_flattens_multiple_ideas_from_single_failure(self):
+        trial = _make_trial()
+
+        with patch(
+            "ash_hawk.improve.diagnose._call_llm",
+            new_callable=AsyncMock,
+            return_value=(
+                '{"ideas": ['
+                '{"failure_summary": "bad1", "root_cause": "bug1", '
+                '"suggested_fix": "fix1", "target_files": ["a.py"], "confidence": 0.9},'
+                '{"failure_summary": "bad2", "root_cause": "bug2", '
+                '"suggested_fix": "fix2", "target_files": ["b.py"], "confidence": 0.8}'
+                "]}"
+            ),
+        ):
+            results = await diagnose_failures([trial])
+
+        assert len(results) == 2
+        assert [d.target_files for d in results] == [["a.py"], ["b.py"]]
+
+    @pytest.mark.asyncio
+    async def test_prefers_agentic_diagnosis_when_agent_path_available(self, tmp_path):
+        trial = _make_trial()
+        agent_dir = tmp_path / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+
+        with (
+            patch(
+                "ash_hawk.improve.diagnose.investigate_trial_with_explorer",
+                new_callable=AsyncMock,
+                return_value=(
+                    '{"ideas": ['
+                    '{"failure_summary": "agentic", "root_cause": "repo search", '
+                    '"suggested_fix": "change runtime", "target_files": ["runtime/x.py"], '
+                    '"confidence": 0.9}'
+                    "]}"
+                ),
+            ),
+            patch(
+                "ash_hawk.improve.diagnose._call_llm",
+                new_callable=AsyncMock,
+                return_value='{"ideas": []}',
+            ) as mock_llm,
+        ):
+            results = await diagnose_failures([trial], agent_path=agent_dir)
+
+        assert len(results) == 1
+        assert results[0].target_files == ["runtime/x.py"]
+        assert mock_llm.await_count == 0

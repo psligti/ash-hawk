@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -34,11 +33,17 @@ class FiveTupleAdapter:
 
     def run_scenario(
         self,
-        scenario: dict[str, Any],
+        scenario: dict[str, object],
         workdir: Path,
-        tooling_harness: dict[str, Any],
-        budgets: dict[str, Any],
-    ) -> tuple[str, list[dict[str, Any]], dict[str, Any], Any, list[dict[str, Any]]]:
+        tooling_harness: dict[str, object],
+        budgets: dict[str, object],
+    ) -> tuple[
+        str,
+        list[dict[str, object]],
+        dict[str, object],
+        object | None,
+        list[dict[str, object]],
+    ]:
         del scenario, workdir, tooling_harness, budgets
         return (
             "ok",
@@ -54,12 +59,17 @@ class SixTupleAdapter:
 
     def run_scenario(
         self,
-        scenario: dict[str, Any],
+        scenario: dict[str, object],
         workdir: Path,
-        tooling_harness: dict[str, Any],
-        budgets: dict[str, Any],
+        tooling_harness: dict[str, object],
+        budgets: dict[str, object],
     ) -> tuple[
-        str, list[dict[str, Any]], dict[str, Any], Any, list[dict[str, Any]], list[dict[str, Any]]
+        str,
+        list[dict[str, object]],
+        dict[str, object],
+        object | None,
+        list[dict[str, object]],
+        list[dict[str, object]],
     ]:
         del scenario, workdir, tooling_harness, budgets
         return (
@@ -77,12 +87,17 @@ class SixTupleAliasAdapter:
 
     def run_scenario(
         self,
-        scenario: dict[str, Any],
+        scenario: dict[str, object],
         workdir: Path,
-        tooling_harness: dict[str, Any],
-        budgets: dict[str, Any],
+        tooling_harness: dict[str, object],
+        budgets: dict[str, object],
     ) -> tuple[
-        str, list[dict[str, Any]], dict[str, Any], Any, list[dict[str, Any]], list[dict[str, Any]]
+        str,
+        list[dict[str, object]],
+        dict[str, object],
+        object | None,
+        list[dict[str, object]],
+        list[dict[str, object]],
     ]:
         del scenario, workdir, tooling_harness, budgets
         return (
@@ -96,7 +111,7 @@ class SixTupleAliasAdapter:
 
 
 @pytest.mark.asyncio
-async def test_agent_runner_consumes_five_tuple_messages() -> None:
+async def test_agent_runner_rejects_five_tuple_legacy_adapter_results() -> None:
     registry = ScenarioAdapterRegistry()
     registry.register(FiveTupleAdapter())
     runner = ScenarioAgentRunner(adapter_registry=registry)
@@ -107,12 +122,12 @@ async def test_agent_runner_consumes_five_tuple_messages() -> None:
         config={},
     )
 
-    assert outcome.failure_mode is None
-    assert transcript.messages == [{"role": "assistant", "content": "from-five"}]
+    assert outcome.failure_mode is not None
+    assert "legacy tuple" in (outcome.error_message or "")
 
 
 @pytest.mark.asyncio
-async def test_agent_runner_consumes_six_tuple_messages_and_tool_calls() -> None:
+async def test_agent_runner_rejects_six_tuple_legacy_adapter_results() -> None:
     registry = ScenarioAdapterRegistry()
     registry.register(SixTupleAdapter())
     runner = ScenarioAgentRunner(adapter_registry=registry)
@@ -123,13 +138,12 @@ async def test_agent_runner_consumes_six_tuple_messages_and_tool_calls() -> None
         config={},
     )
 
-    assert outcome.failure_mode is None
-    assert transcript.messages == [{"role": "assistant", "content": "from-six"}]
-    assert transcript.tool_calls == [{"name": "read", "arguments": {"path": "README.md"}}]
+    assert outcome.failure_mode is not None
+    assert "legacy tuple" in (outcome.error_message or "")
 
 
 @pytest.mark.asyncio
-async def test_agent_runner_normalizes_six_tuple_tool_call_aliases() -> None:
+async def test_agent_runner_rejects_six_tuple_alias_legacy_adapter_results() -> None:
     registry = ScenarioAdapterRegistry()
     registry.register(SixTupleAliasAdapter())
     runner = ScenarioAgentRunner(adapter_registry=registry)
@@ -140,9 +154,8 @@ async def test_agent_runner_normalizes_six_tuple_tool_call_aliases() -> None:
         config={},
     )
 
-    assert outcome.failure_mode is None
-    assert transcript.messages == [{"role": "assistant", "content": "from-six-alias"}]
-    assert transcript.tool_calls == [{"name": "read", "arguments": {"path": "README.md"}}]
+    assert outcome.failure_mode is not None
+    assert "legacy tuple" in (outcome.error_message or "")
 
 
 def test_agent_runner_policy_uses_timeout_override() -> None:

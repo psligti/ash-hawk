@@ -3,64 +3,23 @@ from __future__ import annotations
 
 import asyncio
 import os
-import threading
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Coroutine, Iterator, TypeVar, cast
+from typing import Any, Iterator, cast
 
 from ash_hawk.agents.source_workspace import (
     detect_agent_config_path,
     detect_package_name,
     import_package_from_agent_path,
 )
+from ash_hawk.scenario.adapter_utils import extract_prompt, run_async
 from ash_hawk.scenario.models import (
     JSONValue,
     ScenarioAdapterResult,
     ScenarioTraceEvent,
 )
 from ash_hawk.types import EvalOutcome, FailureMode
-
-_T = TypeVar("_T")
-
-
-def _run_coroutine_sync(coro: Coroutine[Any, Any, _T]) -> _T:
-    loop = asyncio.new_event_loop()
-    try:
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(coro)
-    finally:
-        try:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-        except Exception:  # nosec B110
-            pass
-        asyncio.set_event_loop(None)
-        loop.close()
-
-
-def _run_async(func: Callable[..., Coroutine[Any, Any, _T]], *args: Any, **kwargs: Any) -> _T:
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return _run_coroutine_sync(func(*args, **kwargs))
-
-    result_container: dict[str, _T] = {}
-    error_container: dict[str, BaseException] = {}
-
-    def _runner() -> None:
-        try:
-            result_container["result"] = _run_coroutine_sync(func(*args, **kwargs))
-        except BaseException as exc:
-            error_container["error"] = exc
-
-    thread = threading.Thread(target=_runner, daemon=True)
-    thread.start()
-    thread.join()
-
-    if "error" in error_container:
-        raise error_container["error"]
-
-    return result_container["result"]
 
 
 @contextmanager
@@ -71,17 +30,6 @@ def _cwd(path: Path) -> Iterator[None]:
         yield
     finally:
         os.chdir(original)
-
-
-def _extract_prompt(scenario: dict[str, JSONValue]) -> str:
-    inputs_raw = scenario.get("inputs")
-    if not isinstance(inputs_raw, dict):
-        return ""
-    for key in ("prompt", "user_message", "message", "input"):
-        value = inputs_raw.get(key)
-        if isinstance(value, str) and value.strip():
-            return value
-    return ""
 
 
 class BoltMerlinScenarioAdapter:
@@ -111,7 +59,7 @@ class BoltMerlinScenarioAdapter:
         tooling_harness: dict[str, object],
         budgets: dict[str, JSONValue],
     ) -> ScenarioAdapterResult:
-        return _run_async(
+        return run_async(
             self.async_run_scenario,
             scenario,
             workdir,
@@ -152,7 +100,8 @@ class BoltMerlinScenarioAdapter:
                 ),
             )
 
-        prompt = _extract_prompt(scenario)
+        inputs_raw = scenario.get("inputs")
+        prompt = extract_prompt(inputs_raw) if isinstance(inputs_raw, dict) else ""
         if not prompt:
             return ScenarioAdapterResult(
                 final_output=None,
