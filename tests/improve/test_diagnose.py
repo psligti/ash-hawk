@@ -213,3 +213,32 @@ class TestDiagnoseFailures:
         assert len(results) == 1
         assert results[0].target_files == ["runtime/x.py"]
         assert mock_llm.await_count == 0
+
+    @pytest.mark.asyncio
+    async def test_explorer_exception_falls_back_to_llm(self, tmp_path):
+        trial = _make_trial()
+        agent_dir = tmp_path / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+
+        with (
+            patch(
+                "ash_hawk.improve.diagnose.investigate_trial_with_explorer",
+                new_callable=AsyncMock,
+                side_effect=RuntimeError("explorer blew up"),
+            ),
+            patch(
+                "ash_hawk.improve.diagnose._call_llm",
+                new_callable=AsyncMock,
+                return_value=(
+                    '{"ideas": ['
+                    '{"failure_summary": "fallback", "root_cause": "llm path", '
+                    '"suggested_fix": "fix it", "target_files": ["a.py"], "confidence": 0.8}'
+                    "]}"
+                ),
+            ) as mock_llm,
+        ):
+            results = await diagnose_failures([trial], agent_path=agent_dir)
+
+        assert len(results) == 1
+        assert results[0].target_files == ["a.py"]
+        assert mock_llm.await_count == 1

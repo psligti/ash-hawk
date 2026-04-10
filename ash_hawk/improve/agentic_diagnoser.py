@@ -29,13 +29,15 @@ Follow this workflow exactly:
 1. Read the trial bundle.
 2. Identify the 2-3 strongest failure signals.
 3. Start with the suggested inspection paths in the bundle. These are your primary clues.
-4. Read the suggested inspection paths directly. Use `glob` or `grep` only if one of those paths does not exist.
-5. Read only the files needed to explain the likely cause.
-6. Do not inspect lessons unless the failure pattern clearly matches a prior lesson.
-7. Return 2-4 distinct diagnosis ideas grounded in the evidence you actually inspected.
+4. Use `json_query` on the bundle before broad reads whenever you need specific grader or trace fields.
+5. If the request gives exact file paths, use `grep` first to locate symbols or patterns, then `read_range` for the minimum chunk.
+6. Use narrow `glob` only if an exact path is missing.
+7. Use full `read` only as a last resort when `grep` and `read_range` are insufficient.
+8. Use `lesson_query` to search lessons instead of broad lesson reads.
+9. Return 2-4 distinct diagnosis ideas grounded in the evidence you actually inspected.
 
 Do not search the entire repository. Do not inspect unrelated files. If the bundle already points to likely files, follow those clues first and stop once you have enough evidence.
-Prefer `read` over `glob`/`grep` whenever the bundle already gives an exact path.
+Prefer `json_query`, `grep`, and `read_range` over broad `read` calls whenever possible.
 If tool_call_count is 0 or required files were not changed, prioritize diagnosing why the agent produced prose/todo updates without real file edits.
 If completion claims exceed actual completed work, prioritize truthfulness and execution-flow failures.
 

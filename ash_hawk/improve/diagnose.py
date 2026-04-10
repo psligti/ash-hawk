@@ -239,7 +239,15 @@ async def _diagnose_single(
             console.print(
                 f"    [dim]Diagnosis mode:[/dim] explorer  [dim]trial={trial.id}  agent={agent_path.name}[/dim]"
             )
-        explorer_raw = await investigate_trial_with_explorer(trial, agent_path, lesson_store)
+        explorer_raw = None
+        try:
+            explorer_raw = await investigate_trial_with_explorer(trial, agent_path, lesson_store)
+        except Exception as exc:
+            logger.warning("Explorer diagnosis failed for trial %s", trial.id, exc_info=exc)
+            if console is not None:
+                console.print(
+                    f"    [yellow]⚠ Explorer diagnosis crashed for trial {trial.id}; falling back[/yellow]"
+                )
         if isinstance(explorer_raw, str):
             response = explorer_raw
             explorer_result = None
