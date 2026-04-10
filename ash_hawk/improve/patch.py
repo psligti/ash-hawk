@@ -219,24 +219,34 @@ async def run_agent_cli(
     cwd: Path,
     config_path: Path | None = None,
     agent_name: str | None = None,
+    timeout_seconds: float | None = None,
+    command_name: str = "code",
+    json_output: bool = False,
 ) -> tuple[str | None, str | None]:
     import asyncio
     import os
     import shutil
 
-    bolt_merlin = shutil.which("bolt-merlin")
-    if bolt_merlin is None:
-        venv_bin = Path(".venv") / "bin" / "bolt-merlin"
-        if venv_bin.exists():
-            bolt_merlin = str(venv_bin)
-        else:
-            return None, "bolt-merlin CLI not found in PATH or .venv/bin"
+    uv_executable = shutil.which("uv")
+    local_pyproject = cwd / "pyproject.toml"
+    local_cli = cwd / ".venv" / "bin" / "bolt-merlin"
 
-    cmd = [bolt_merlin, "code"]
-    if agent_name is not None:
+    if uv_executable is not None and local_pyproject.exists():
+        cmd = [uv_executable, "run", "bolt-merlin", command_name]
+    elif local_cli.exists():
+        cmd = [str(local_cli), command_name]
+    else:
+        bolt_merlin = shutil.which("bolt-merlin")
+        if bolt_merlin is None:
+            return None, "bolt-merlin CLI not found in PATH, local .venv, or via uv run"
+        cmd = [bolt_merlin, command_name]
+
+    if agent_name is not None and command_name == "code":
         cmd.extend(["--agent", agent_name])
     if config_path is not None and config_path.exists():
         cmd.extend(["--config", str(config_path)])
+    if json_output:
+        cmd.append("--json")
     cmd.append(prompt)
 
     # Prevent the worktree's source tree (e.g. bolt_merlin/) from shadowing
@@ -252,8 +262,17 @@ async def run_agent_cli(
         stderr=asyncio.subprocess.PIPE,
         cwd=str(cwd),
         env=env,
+        start_new_session=True,
     )
-    stdout, stderr = await proc.communicate()
+    try:
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
+    except TimeoutError:
+        import signal
+
+        os.killpg(proc.pid, signal.SIGKILL)
+        await proc.communicate()
+        timeout_label = timeout_seconds if timeout_seconds is not None else "configured"
+        return None, f"bolt-merlin CLI timed out after {timeout_label}s"
 
     if proc.returncode != 0:
         err_msg = stderr.decode(errors="replace").strip() or f"exit code {proc.returncode}"

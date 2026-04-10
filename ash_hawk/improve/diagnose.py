@@ -233,11 +233,21 @@ async def _diagnose_single(
         console.print(f"    [dim]Diagnosing trial {trial.id} (task={trial.task_id})...[/dim]")
 
     response: str | None = None
+    explorer_result = None
     if agent_path is not None:
         if console is not None:
-            console.print(f"    [dim]Running explorer diagnosis for trial {trial.id}[/dim]")
-        response = await investigate_trial_with_explorer(trial, agent_path, lesson_store)
-        if response is None and console is not None:
+            console.print(
+                f"    [dim]Diagnosis mode:[/dim] explorer  [dim]trial={trial.id}  agent={agent_path.name}[/dim]"
+            )
+        explorer_raw = await investigate_trial_with_explorer(trial, agent_path, lesson_store)
+        if isinstance(explorer_raw, str):
+            response = explorer_raw
+            explorer_result = None
+        else:
+            explorer_result = explorer_raw
+            if explorer_result is not None:
+                response = explorer_result.response
+        if explorer_raw is None and console is not None:
             console.print(
                 f"    [yellow]⚠ Explorer diagnosis unavailable for trial {trial.id}; falling back[/yellow]"
             )
@@ -268,8 +278,19 @@ async def _diagnose_single(
     if results and console is not None:
         primary = results[0]
         files_str = ", ".join(primary.target_files[:3]) if primary.target_files else "none"
+        console.print(f"    [dim]Diagnosis output parsed successfully for trial {trial.id}[/dim]")
+        if explorer_result is not None and explorer_result.tool_calls_used is not None:
+            console.print(
+                "    [dim]Explorer tool budget used: "
+                f"tools {explorer_result.tool_calls_used}/{explorer_result.tool_calls_max or '?'}  "
+                f"reads {explorer_result.file_reads_used or 0}/{explorer_result.file_reads_max or '?'}  "
+                f"search {explorer_result.search_calls_used or 0}/{explorer_result.search_calls_max or '?'}[/dim]"
+            )
         console.print(
-            f"    [dim]Diagnosed trial {trial.id}: "
+            f"    [dim]Explorer returned {len(results)} idea(s) for trial {trial.id}[/dim]"
+        )
+        console.print(
+            f"    [dim]Primary diagnosis: "
             f"{primary.failure_summary[:60]}  "
             f"files=[{files_str}]  ideas={len(results)}[/dim]"
         )

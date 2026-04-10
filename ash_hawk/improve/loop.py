@@ -716,7 +716,7 @@ async def improve(
                                 f"    [green]Step 6: synced kept mutation back to agent[/green]  {_format_path_list(synced_paths)}"
                             )
                             console.print(
-                                "    [dim]Continuing to the next ranked hypothesis from the updated agent baseline.[/dim]"
+                                f"    [dim]Kept patch raised score floor to {evaluated_mean:.2%}; continuing to next ranked hypothesis from the updated baseline.[/dim]"
                             )
                         workspace.cleanup()
                         hypothesis_mutator.cleanup()
