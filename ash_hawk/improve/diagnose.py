@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+DIAGNOSIS_MESSAGE_LIMIT = 16
+DIAGNOSIS_MESSAGE_CHAR_LIMIT = 600
+DIAGNOSIS_TOOL_CALL_LIMIT = 20
+DIAGNOSIS_TOOL_CALL_CHAR_LIMIT = 600
+DIAGNOSIS_TRACE_EVENT_LIMIT = 24
+DIAGNOSIS_TRACE_EVENT_CHAR_LIMIT = 600
+
 DIAGNOSIS_PROMPT = """You are analyzing a failed evaluation trial. Diagnose why it failed.
 
 Trial ID: {trial_id}
@@ -34,12 +41,27 @@ Recent Tool Calls:
 Recent Trace Events:
 {trace_excerpt}
 
-Generate AT LEAST 5 distinct candidate improvement ideas for this single failure whenever the
-trace contains enough signal to do so. Each idea must be meaningfully different in intervention
-angle, target files, or proposed fix. Do not repeat the same idea with small wording changes.
+Mutable Agent Files (relative to agent root):
+{agent_file_manifest}
 
-Prefer diversity across prompting, runtime config, skills, tool behavior, verification, path
-resolution, and execution flow.
+Generate 2-4 distinct candidate improvement ideas for this single failure whenever the trace
+contains enough signal to do so. Prefer fewer ideas when the evidence points to one or two likely
+fixes.
+
+Strongly prefer small, simple, localized fixes. The best idea usually changes a single file or a
+tightly-coupled pair of files. Avoid sweeping refactors, broad prompt rewrites, and multi-module
+changes unless the evidence clearly requires them.
+
+Prefer executable code-path fixes first: `execute.py`, `coding_agent.py`, `prompt_builder.py`,
+`tool_dispatcher.py`, or specific `tools/*` modules. Treat shared prompt or skill files as a last
+resort, not a default lever.
+
+Do not combine a local code-path fix with shared prompt/skill cleanup in the same idea unless the
+evidence proves both are required together. If a local code path can plausibly explain the failure,
+do not propose `prompts/*` or `skills/*` changes.
+
+Prefer diversity only across plausible small fixes. Do not manufacture variety by suggesting large
+or far-reaching changes.
 
 Provide your diagnosis as JSON:
 {{
@@ -49,13 +71,20 @@ Provide your diagnosis as JSON:
             "root_cause": "detailed root cause analysis",
             "suggested_fix": "concrete fix suggestion",
             "target_files": ["file1.py", "file2.py"],
+            "anchor_files": ["existing/file.py"],
             "confidence": 0.8
         }}
     ]
 }}
 
-If you truly cannot produce 5 non-duplicate ideas from the evidence, return as many distinct
-ideas as possible, but maximize variety."""
+Rules for file targeting:
+- `target_files` must be relative to the agent root, not repo-root guesses.
+- Prefer existing files from the mutable file manifest above.
+- You may propose a NEW file only if it fits under the existing architecture and you also list 1-2 real existing `anchor_files` that will wire it into the system.
+- Do not invent filenames that are not in the manifest unless they are clearly new files tied to those anchors.
+- Shared files under `prompts/` or `skills/` should appear only when you can explain why a narrower code-path fix is insufficient.
+
+If the evidence is narrow, return one or two focused ideas rather than broad speculative ones."""
 
 
 class Diagnosis(pd.BaseModel):
@@ -64,11 +93,17 @@ class Diagnosis(pd.BaseModel):
     model_config = pd.ConfigDict(extra="forbid")
 
     trial_id: str = pd.Field(description="ID of the failed trial")
+    cluster_id: str | None = pd.Field(default=None, description="ID of grouped failure cluster")
+    family: str = pd.Field(default="unknown", description="Coarse root-cause family label")
     failure_summary: str = pd.Field(description="One-line summary of the failure")
     root_cause: str = pd.Field(description="Detailed root cause analysis")
     suggested_fix: str = pd.Field(description="Concrete fix suggestion")
     target_files: list[str] = pd.Field(
         default_factory=list, description="Files that should be modified"
+    )
+    anchor_files: list[str] = pd.Field(
+        default_factory=list,
+        description="Existing mutable files that anchor any new target file into the architecture",
     )
     confidence: float = pd.Field(
         default=0.0, ge=0.0, le=1.0, description="LLM confidence in the diagnosis"
@@ -77,9 +112,9 @@ class Diagnosis(pd.BaseModel):
         default=True,
         description="Whether this diagnosis is actionable enough to test as a hypothesis",
     )
-    diagnosis_mode: Literal["llm", "fallback_llm_unavailable", "fallback_parse_failure"] = pd.Field(
-        default="llm", description="How the diagnosis was produced"
-    )
+    diagnosis_mode: Literal[
+        "llm", "explorer", "fallback_llm_unavailable", "fallback_parse_failure"
+    ] = pd.Field(default="llm", description="How the diagnosis was produced")
     degraded_reason: str | None = pd.Field(
         default=None,
         description="Why this diagnosis is degraded or non-actionable",
@@ -98,6 +133,7 @@ def _fallback_diagnosis(
     return [
         Diagnosis(
             trial_id=trial.id,
+            family=_infer_diagnosis_family(failure_summary, root_cause, []),
             failure_summary=failure_summary[:200],
             root_cause=root_cause,
             suggested_fix=suggested_fix,
@@ -114,28 +150,160 @@ def _truncate(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[: limit - 3] + "..."
 
 
+def _format_agent_file_manifest(agent_content: dict[str, str] | None) -> str:
+    if not agent_content:
+        return "none"
+    files = sorted(agent_content.keys())
+    if len(files) > 80:
+        visible = files[:80]
+        visible.append(f"... (+{len(files) - 80} more)")
+        files = visible
+    return "\n".join(f"- {path}" for path in files)
+
+
+def _infer_diagnosis_family(
+    failure_summary: str,
+    root_cause: str,
+    target_files: list[str],
+) -> str:
+    haystack = " ".join([failure_summary, root_cause, *target_files]).lower()
+    family_rules: list[tuple[str, tuple[str, ...]]] = [
+        (
+            "workspace_path_resolution",
+            (
+                "workspace_root",
+                "wrong directory",
+                "wrong working directory",
+                "changed_paths: []",
+                "missing_required",
+                "scenario",
+                "repo_diff",
+                ".scenario.yaml",
+            ),
+        ),
+        (
+            "tool_loader",
+            (
+                "tool loader",
+                "load_tools",
+                "tool_names=[]",
+                "no tools",
+                "registered tool",
+                "tools/loader",
+                "empty list",
+            ),
+        ),
+        (
+            "tool_use_enforcement",
+            (
+                "zero tool calls",
+                "no tool calls",
+                "text-only",
+                "writing prose",
+                "must use tools",
+                "tool-use",
+                "tool usage",
+            ),
+        ),
+        (
+            "verification_honesty",
+            (
+                "falsely reported",
+                "claimed",
+                "reported success",
+                "verification",
+                "all tests pass",
+                "summary",
+                "completion_honesty",
+            ),
+        ),
+        (
+            "todo_management",
+            ("todo", "task ids", "too_many_tasks", "task count", "todowrite", "todo_update"),
+        ),
+        (
+            "edit_persistence",
+            (
+                "edit tool",
+                "write tool",
+                "not persisted",
+                "persist",
+                "old_string mismatch",
+                "write was silently dropped",
+                "post-edit verification",
+            ),
+        ),
+        (
+            "tool_budget_efficiency",
+            (
+                "tool budget",
+                "excessive reads",
+                "too many reads",
+                "too many globs",
+                "write too late",
+                "over-explored",
+            ),
+        ),
+        (
+            "prompt_scope",
+            (
+                "system prompt",
+                "coding.md",
+                "skill",
+                "general-coding",
+                "agent prompt",
+                "prompting strategy",
+            ),
+        ),
+        (
+            "integrity_validation",
+            (
+                "integrity validation",
+                "unaffected paths",
+                "pass_to_fail",
+                "score_drop against unaffected",
+                "regressed_unaffected_paths",
+            ),
+        ),
+    ]
+    for family, needles in family_rules:
+        if any(needle in haystack for needle in needles):
+            return family
+    return "unknown"
+
+
 def _format_transcript_excerpt(trial: EvalTrial) -> tuple[str, str, str]:
     transcript = trial.result.transcript if trial.result else None
     if transcript is None:
         return "none", "none", "none"
 
     transcript_lines: list[str] = []
-    for message in transcript.messages[-8:]:
+    for message in transcript.messages[-DIAGNOSIS_MESSAGE_LIMIT:]:
         role = str(message.get("role", "unknown"))
-        content = _truncate(str(message.get("content", "")), 300)
+        content = _truncate(str(message.get("content", "")), DIAGNOSIS_MESSAGE_CHAR_LIMIT)
         transcript_lines.append(f"[{role}] {content}")
 
     tool_lines: list[str] = []
-    for tool_call in transcript.tool_calls[-8:]:
+    for tool_call in transcript.tool_calls[-DIAGNOSIS_TOOL_CALL_LIMIT:]:
         name = str(tool_call.get("name") or tool_call.get("tool") or "unknown")
         args = tool_call.get("arguments") or tool_call.get("input") or {}
-        tool_lines.append(_truncate(f"{name}({json.dumps(args, default=str)})", 300))
+        tool_lines.append(
+            _truncate(
+                f"{name}({json.dumps(args, default=str)})",
+                DIAGNOSIS_TOOL_CALL_CHAR_LIMIT,
+            )
+        )
 
     trace_lines: list[str] = []
-    for event in transcript.trace_events[-12:]:
+    for event in transcript.trace_events[-DIAGNOSIS_TRACE_EVENT_LIMIT:]:
         event_type = str(event.get("event_type", "unknown"))
         data = event.get("data", {})
-        trace_lines.append(_truncate(f"{event_type}: {json.dumps(data, default=str)}", 300))
+        trace_lines.append(
+            _truncate(
+                f"{event_type}: {json.dumps(data, default=str)}",
+                DIAGNOSIS_TRACE_EVENT_CHAR_LIMIT,
+            )
+        )
 
     return (
         "\n".join(transcript_lines) if transcript_lines else "none",
@@ -150,7 +318,10 @@ async def diagnose_failures(
     agent_content: dict[str, str] | None = None,
     agent_path: Path | None = None,
     lesson_store: Any | None = None,
+    personal_preferences: str = "",
     console: Any | None = None,
+    audit_bundle: Any | None = None,
+    audit_iteration: int | None = None,
 ) -> list[Diagnosis]:
     """Diagnose multiple failures in parallel using asyncio.gather."""
     results = await asyncio.gather(
@@ -161,7 +332,10 @@ async def diagnose_failures(
                 agent_content,
                 agent_path,
                 lesson_store,
+                personal_preferences,
                 console=console,
+                audit_bundle=audit_bundle,
+                audit_iteration=audit_iteration,
             )
             for f in failures
         ],
@@ -184,7 +358,10 @@ async def _diagnose_single(
     agent_content: dict[str, str] | None = None,
     agent_path: Path | None = None,
     lesson_store: Any | None = None,
+    personal_preferences: str = "",
     console: Any | None = None,
+    audit_bundle: Any | None = None,
+    audit_iteration: int | None = None,
 ) -> list[Diagnosis]:
     transcript = trial.result.transcript if trial.result else None
     agent_response = ""
@@ -213,6 +390,7 @@ async def _diagnose_single(
         transcript_excerpt=transcript_excerpt,
         tool_calls_excerpt=tool_calls_excerpt,
         trace_excerpt=trace_excerpt,
+        agent_file_manifest=_format_agent_file_manifest(agent_content),
     )
 
     # Inject past lessons to avoid repeating failed approaches
@@ -228,6 +406,8 @@ async def _diagnose_single(
                 len(failed_lessons),
                 trial.id,
             )
+    if personal_preferences:
+        prompt += "\n\n" + personal_preferences
 
     if console is not None:
         console.print(f"    [dim]Diagnosing trial {trial.id} (task={trial.task_id})...[/dim]")
@@ -240,27 +420,45 @@ async def _diagnose_single(
                 f"    [dim]Diagnosis mode:[/dim] explorer  [dim]trial={trial.id}  agent={agent_path.name}[/dim]"
             )
         explorer_raw = None
+        explorer_failure_reported = False
         try:
-            explorer_raw = await investigate_trial_with_explorer(trial, agent_path, lesson_store)
+            explorer_raw = await investigate_trial_with_explorer(
+                trial,
+                agent_path,
+                lesson_store,
+                agent_content=agent_content,
+                audit_bundle=audit_bundle,
+                audit_stem=(
+                    f"iter-{audit_iteration:03d}/trial-{trial.id}"
+                    if audit_iteration is not None
+                    else trial.id
+                ),
+            )
         except Exception as exc:
             logger.warning("Explorer diagnosis failed for trial %s", trial.id, exc_info=exc)
             if console is not None:
                 console.print(
-                    f"    [yellow]⚠ Explorer diagnosis crashed for trial {trial.id}; falling back[/yellow]"
+                    f"    [yellow]⚠ Explorer diagnosis crashed for trial {trial.id}: {exc!r}; falling back[/yellow]"
                 )
+            explorer_failure_reported = True
         if isinstance(explorer_raw, str):
             response = explorer_raw
             explorer_result = None
         else:
             explorer_result = explorer_raw
             if explorer_result is not None:
+                if explorer_result.error and console is not None:
+                    console.print(
+                        f"    [yellow]⚠ Explorer diagnosis failed for trial {trial.id}: {explorer_result.error}; falling back[/yellow]"
+                    )
+                    explorer_failure_reported = True
                 response = explorer_result.response
-        if explorer_raw is None and console is not None:
+        if explorer_raw is None and console is not None and not explorer_failure_reported:
             console.print(
                 f"    [yellow]⚠ Explorer diagnosis unavailable for trial {trial.id}; falling back[/yellow]"
             )
 
-    if response is None:
+    if not response:
         response = await _call_llm(prompt)
 
     if response is None:
@@ -282,10 +480,38 @@ async def _diagnose_single(
             degraded_reason="diagnosis_llm_unavailable",
         )
 
-    results = _parse_diagnosis_response(trial.id, response)
+    source_mode: Literal["llm", "explorer"] = (
+        "explorer" if explorer_result is not None and not explorer_result.error else "llm"
+    )
+    results = _parse_diagnosis_response(trial.id, response, diagnosis_mode=source_mode)
+    if audit_bundle is not None:
+        audit_stem = (
+            f"iter-{audit_iteration:03d}/trial-{trial.id}"
+            if audit_iteration is not None
+            else trial.id
+        )
+        audit_bundle.write_json(
+            f"diagnoses/{audit_stem}/result.json",
+            {
+                "trial_id": trial.id,
+                "source_mode": source_mode,
+                "response": response,
+                "parsed_diagnoses": [result.model_dump() for result in results],
+                "explorer_result": None
+                if explorer_result is None
+                else {
+                    "response": explorer_result.response,
+                    "error": explorer_result.error,
+                    "tool_calls_used": explorer_result.tool_calls_used,
+                    "tool_calls_max": explorer_result.tool_calls_max,
+                    "file_reads_used": explorer_result.file_reads_used,
+                    "file_reads_max": explorer_result.file_reads_max,
+                    "search_calls_used": explorer_result.search_calls_used,
+                    "search_calls_max": explorer_result.search_calls_max,
+                },
+            },
+        )
     if results and console is not None:
-        primary = results[0]
-        files_str = ", ".join(primary.target_files[:3]) if primary.target_files else "none"
         console.print(f"    [dim]Diagnosis output parsed successfully for trial {trial.id}[/dim]")
         if explorer_result is not None and explorer_result.tool_calls_used is not None:
             console.print(
@@ -297,11 +523,11 @@ async def _diagnose_single(
         console.print(
             f"    [dim]Explorer returned {len(results)} idea(s) for trial {trial.id}[/dim]"
         )
-        console.print(
-            f"    [dim]Primary diagnosis: "
-            f"{primary.failure_summary[:60]}  "
-            f"files=[{files_str}]  ideas={len(results)}[/dim]"
-        )
+        for index, diagnosis in enumerate(results, start=1):
+            files_str = ", ".join(diagnosis.target_files) if diagnosis.target_files else "none"
+            console.print(
+                f"    [dim]Idea {index}/{len(results)}: {diagnosis.failure_summary}  files=[{files_str}][/dim]"
+            )
     elif not results and console is not None:
         console.print(f"    [yellow]⚠ Could not parse diagnosis for trial {trial.id}[/yellow]")
     if not results:
@@ -315,9 +541,13 @@ async def _diagnose_single(
         )
 
     for result in results:
+        if agent_content is not None:
+            from ash_hawk.improve.targeting import validate_diagnosis_targets
+
+            validate_diagnosis_targets(result, set(agent_content.keys()))
         if not result.target_files:
             result.actionable = False
-            result.degraded_reason = "diagnosis_missing_target_files"
+            result.degraded_reason = result.degraded_reason or "diagnosis_missing_target_files"
 
     return results
 
@@ -358,7 +588,7 @@ async def _call_llm(prompt: str) -> str | None:
 
 
 def _extract_json_object(text: str) -> dict[str, Any] | None:
-    """Extract the first balanced-brace JSON object from text."""
+    candidates: list[dict[str, Any]] = []
     depth = 0
     start: int | None = None
     for i, ch in enumerate(text):
@@ -371,14 +601,26 @@ def _extract_json_object(text: str) -> dict[str, Any] | None:
             if depth == 0 and start is not None:
                 try:
                     parsed = json.loads(text[start : i + 1])
-                    return parsed if isinstance(parsed, dict) else None
+                    if isinstance(parsed, dict):
+                        candidates.append(parsed)
                 except json.JSONDecodeError:
                     start = None
                     continue
-    return None
+    for candidate in candidates:
+        if "ideas" in candidate:
+            return candidate
+    for candidate in candidates:
+        if all(key in candidate for key in ("failure_summary", "root_cause", "suggested_fix")):
+            return candidate
+    return candidates[-1] if candidates else None
 
 
-def _parse_diagnosis_response(trial_id: str, response: str) -> list[Diagnosis]:
+def _parse_diagnosis_response(
+    trial_id: str,
+    response: str,
+    *,
+    diagnosis_mode: Literal["llm", "explorer"] = "llm",
+) -> list[Diagnosis]:
     data = _extract_json_object(response)
     if data is None:
         logger.warning("No JSON found in diagnosis response for %s", trial_id)
@@ -386,11 +628,11 @@ def _parse_diagnosis_response(trial_id: str, response: str) -> list[Diagnosis]:
 
     raw_ideas = data.get("ideas")
     if isinstance(raw_ideas, list):
-        parsed_ideas = _parse_diagnosis_ideas(trial_id, raw_ideas)
+        parsed_ideas = _parse_diagnosis_ideas(trial_id, raw_ideas, diagnosis_mode=diagnosis_mode)
         if parsed_ideas:
             return parsed_ideas
 
-    parsed_single = _parse_diagnosis_ideas(trial_id, [data])
+    parsed_single = _parse_diagnosis_ideas(trial_id, [data], diagnosis_mode=diagnosis_mode)
     if parsed_single:
         return parsed_single
 
@@ -398,10 +640,15 @@ def _parse_diagnosis_response(trial_id: str, response: str) -> list[Diagnosis]:
     return []
 
 
-def _parse_diagnosis_ideas(trial_id: str, raw_ideas: list[Any]) -> list[Diagnosis]:
+def _parse_diagnosis_ideas(
+    trial_id: str,
+    raw_ideas: list[Any],
+    *,
+    diagnosis_mode: Literal["llm", "explorer"] = "llm",
+) -> list[Diagnosis]:
     required_fields = ["failure_summary", "root_cause", "suggested_fix"]
     diagnoses: list[Diagnosis] = []
-    seen_keys: set[tuple[str, str, tuple[str, ...]]] = set()
+    seen_keys: set[tuple[str, tuple[str, ...], str]] = set()
 
     for raw_idea in raw_ideas:
         if not isinstance(raw_idea, dict):
@@ -413,9 +660,16 @@ def _parse_diagnosis_ideas(trial_id: str, raw_ideas: list[Any]) -> list[Diagnosi
         target_files = (
             [str(path) for path in target_files_raw] if isinstance(target_files_raw, list) else []
         )
+        anchor_files_raw = raw_idea.get("anchor_files", [])
+        anchor_files = (
+            [str(path) for path in anchor_files_raw] if isinstance(anchor_files_raw, list) else []
+        )
+        if len(target_files) > 3:
+            continue
         failure_summary = str(raw_idea["failure_summary"])
         root_cause = str(raw_idea["root_cause"])
-        dedupe_key = (failure_summary, root_cause, tuple(target_files))
+        family = _infer_diagnosis_family(failure_summary, root_cause, target_files)
+        dedupe_key = (family, tuple(sorted(target_files)), root_cause.strip().lower())
         if dedupe_key in seen_keys:
             continue
         seen_keys.add(dedupe_key)
@@ -423,13 +677,15 @@ def _parse_diagnosis_ideas(trial_id: str, raw_ideas: list[Any]) -> list[Diagnosi
         diagnoses.append(
             Diagnosis(
                 trial_id=trial_id,
+                family=family,
                 failure_summary=failure_summary,
                 root_cause=root_cause,
                 suggested_fix=str(raw_idea["suggested_fix"]),
                 target_files=target_files,
+                anchor_files=anchor_files,
                 confidence=float(raw_idea.get("confidence", 0.0)),
                 actionable=True,
-                diagnosis_mode="llm",
+                diagnosis_mode=diagnosis_mode,
             )
         )
 

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ash_hawk.improve.lesson_store import LessonStore
+    from ash_hawk.improve.run_bundle import ImproveRunBundle
     from ash_hawk.types import EvalTrial
 
 EXPLORER_DIAGNOSIS_PROMPT = """Investigate the failed evaluation trial using read-only exploration.
@@ -25,6 +26,9 @@ Start from these paths:
 - trial bundle: {trial_bundle}
 - lessons dir: {lessons_dir}
 
+Mutable agent files (relative to agent root):
+{agent_file_manifest}
+
 Follow this workflow exactly:
 1. Read the trial bundle.
 2. Identify the 2-3 strongest failure signals.
@@ -34,14 +38,23 @@ Follow this workflow exactly:
 6. Use narrow `glob` only if an exact path is missing.
 7. Use full `read` only as a last resort when `grep` and `read_range` are insufficient.
 8. Use `lesson_query` to search lessons instead of broad lesson reads.
-9. Return 2-4 distinct diagnosis ideas grounded in the evidence you actually inspected.
+9. Return 1-3 distinct diagnosis ideas grounded in the evidence you actually inspected.
 
 Do not search the entire repository. Do not inspect unrelated files. If the bundle already points to likely files, follow those clues first and stop once you have enough evidence.
 Prefer `json_query`, `grep`, and `read_range` over broad `read` calls whenever possible.
 If tool_call_count is 0 or required files were not changed, prioritize diagnosing why the agent produced prose/todo updates without real file edits.
 If completion claims exceed actual completed work, prioritize truthfulness and execution-flow failures.
 
-Return fewer than 5 ideas if the evidence is weak; do not invent diversity.
+Prefer a single-file or tightly-coupled two-file fix whenever possible.
+Avoid broad refactors, sweeping prompt rewrites, and cross-module changes unless the inspected
+evidence clearly requires them.
+Prefer executable code-path fixes first: `execute.py`, `coding_agent.py`, `prompt_builder.py`,
+`tool_dispatcher.py`, or specific `tools/*` modules.
+Treat `prompts/*` and `skills/*` as last-resort shared surfaces. Only target them when the
+inspected evidence shows a narrower code-path fix is insufficient.
+Do not mix a local code fix with prompt/skill cleanup in the same idea unless the evidence proves
+both changes are required together.
+Return fewer ideas if the evidence is narrow; do not invent diversity.
 Return only JSON in this shape:
 {{
   "ideas": [
@@ -50,15 +63,26 @@ Return only JSON in this shape:
       "root_cause": "detailed root cause analysis grounded in evidence",
       "suggested_fix": "concrete fix suggestion",
       "target_files": ["relative/path.py"],
+      "anchor_files": ["existing/file.py"],
       "confidence": 0.8
     }}
   ]
-}}"""
+}}
+
+Rules for file targeting:
+- `target_files` must be relative to the agent root.
+- Prefer existing files from the mutable agent file manifest above.
+- You may propose a NEW file only if it clearly fits under the existing architecture and you also provide 1-2 existing `anchor_files` from the manifest that will wire it in.
+- Do not invent generic filenames like `agent.py` or `tools.py` unless they actually appear in the manifest.
+- Shared files under `prompts/` or `skills/` should appear only when you can explain why a narrower code-path fix is insufficient.
+"""
 
 
 @dataclass(frozen=True)
 class ExplorerDiagnosisResult:
     response: str
+    raw_response: str = ""
+    error: str | None = None
     tool_calls_used: int | None = None
     tool_calls_max: int | None = None
     file_reads_used: int | None = None
@@ -81,6 +105,24 @@ def _lessons_dir(lesson_store: LessonStore | None, repo_root: Path) -> Path:
         if isinstance(lessons_dir, Path):
             return lessons_dir
     return repo_root / ".ash-hawk" / "lessons"
+
+
+def _path_for_prompt(path: Path, repo_root: Path) -> str:
+    try:
+        return str(path.relative_to(repo_root))
+    except ValueError:
+        return str(path)
+
+
+def _format_agent_file_manifest(agent_content: dict[str, str] | None) -> str:
+    if not agent_content:
+        return "none"
+    files = sorted(agent_content.keys())
+    if len(files) > 80:
+        visible = files[:80]
+        visible.append(f"... (+{len(files) - 80} more)")
+        files = visible
+    return "\n".join(f"- {path}" for path in files)
 
 
 def _write_trial_bundle(bundle_dir: Path, trial: EvalTrial) -> Path:
@@ -208,16 +250,19 @@ def _derive_suggested_inspection_paths(
     if transcript is not None and len(transcript.tool_calls) == 0:
         suggestions.extend(
             [
-                "bolt_merlin/agent/prompts/coding.md",
                 "bolt_merlin/agent/execute.py",
-                "bolt_merlin/agent/tools/loader.py",
+                "bolt_merlin/agent/coding_agent.py",
+                "bolt_merlin/agent/tool_dispatcher.py",
             ]
         )
 
     if candidate_repo_files:
         for path in [
-            "bolt_merlin/agent/prompts/coding.md",
+            "bolt_merlin/agent/execute.py",
+            "bolt_merlin/agent/coding_agent.py",
             "bolt_merlin/agent/tools/edit.py",
+            "bolt_merlin/agent/tool_dispatcher.py",
+            "bolt_merlin/agent/prompts/coding.md",
             "bolt_merlin/agent/skills/general-coding/SKILL.md",
         ]:
             if path not in suggestions:
@@ -230,6 +275,10 @@ async def investigate_trial_with_explorer(
     trial: EvalTrial,
     agent_path: Path,
     lesson_store: LessonStore | None = None,
+    *,
+    agent_content: dict[str, str] | None = None,
+    audit_bundle: ImproveRunBundle | None = None,
+    audit_stem: str | None = None,
 ) -> ExplorerDiagnosisResult | None:
     from ash_hawk.improve.patch import run_agent_cli
 
@@ -241,32 +290,45 @@ async def investigate_trial_with_explorer(
     bundle_dir = repo_root / ".ash-hawk" / "diagnosis-bundles"
     bundle_path = _write_trial_bundle(bundle_dir, trial)
     try:
+        if audit_bundle is not None and audit_stem is not None:
+            audit_bundle.write_json(
+                f"diagnoses/{audit_stem}/bundle.json", _build_trial_bundle(trial)
+            )
         prompt = EXPLORER_DIAGNOSIS_PROMPT.format(
-            agent_root=str(agent_path.relative_to(repo_root)),
-            trial_bundle=str(bundle_path.relative_to(repo_root)),
-            lessons_dir=str(_lessons_dir(lesson_store, repo_root).relative_to(repo_root)),
+            agent_root=_path_for_prompt(agent_path, repo_root),
+            trial_bundle=_path_for_prompt(bundle_path, repo_root),
+            lessons_dir=_path_for_prompt(_lessons_dir(lesson_store, repo_root), repo_root),
+            agent_file_manifest=_format_agent_file_manifest(agent_content),
         )
-        stdout, error = await run_agent_cli(
+        if audit_bundle is not None and audit_stem is not None:
+            audit_bundle.write_text(f"diagnoses/{audit_stem}/prompt.txt", prompt)
+        cli_result = await run_agent_cli(
             prompt=prompt,
             cwd=repo_root,
             config_path=config_path,
             command_name="explore",
-            timeout_seconds=120.0,
+            timeout_seconds=240.0,
             json_output=True,
         )
+        if len(cli_result) == 3:
+            stdout, error, _execution_metrics = cli_result
+        else:
+            stdout, error = cli_result
         if error is not None:
-            return None
+            return ExplorerDiagnosisResult(response="", error=error)
         if stdout is None:
-            return None
+            return ExplorerDiagnosisResult(response="", error="explorer returned no stdout")
         payload = _extract_json_payload(stdout)
         if payload is None:
-            return ExplorerDiagnosisResult(response=stdout)
+            return ExplorerDiagnosisResult(response=stdout, raw_response=stdout)
 
         response = payload.get("response")
         metadata = payload.get("metadata")
         budget = metadata.get("explorer_budget") if isinstance(metadata, dict) else None
         return ExplorerDiagnosisResult(
             response=response if isinstance(response, str) else "",
+            raw_response=stdout,
+            error=None,
             tool_calls_used=budget.get("tool_calls_used") if isinstance(budget, dict) else None,
             tool_calls_max=budget.get("tool_calls_max") if isinstance(budget, dict) else None,
             file_reads_used=budget.get("file_reads_used") if isinstance(budget, dict) else None,
