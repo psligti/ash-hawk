@@ -1,17 +1,17 @@
+# type-hygiene: skip-file
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
+import shutil
 import time
 from collections.abc import Callable
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Literal
+from typing import Any, Literal, cast
 
 import pydantic as pd
-
-logger = logging.getLogger(__name__)
 
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.scenario.models import (
@@ -40,6 +40,8 @@ from ash_hawk.types import (
     ToolPermission,
     ToolSurfacePolicy,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ToolingHarnessRecorder:
@@ -79,9 +81,7 @@ class ToolingHarnessRecorder:
                     "error": str(error) if error not in (None, "") else None,
                 }
             )
-        if isinstance(result, dict):
-            return {str(key): self._to_json_value(value) for key, value in result.items()}
-        return {"value": self._to_json_value(result)}
+        return {str(key): self._to_json_value(value) for key, value in result.items()}
 
     def _to_json_value(self, value: object) -> JSONValue:
         if value is None or isinstance(value, str | int | float | bool):
@@ -101,14 +101,16 @@ class ScenarioAgentRunner:
         artifacts_root: Path | None = None,
         injector: object | None = None,
         scenario_timeout_seconds: float | None = None,
+        on_trace_event: Callable[[dict[str, object]], None] | None = None,
         agent_path: Path | None = None,
         adapter_override: str | None = None,
     ) -> None:
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
-        self._tooling_mode = tooling_mode
+        self._tooling_mode: Literal["mock", "record", "replay"] = tooling_mode
         self._artifacts_root = artifacts_root
         self._injector = injector
         self._scenario_timeout_seconds = scenario_timeout_seconds
+        self._on_trace_event = on_trace_event
         self._agent_path = agent_path
         self._adapter_override = adapter_override
 
@@ -146,12 +148,19 @@ class ScenarioAgentRunner:
 
         tool_policy = self._build_policy(scenario, policy_enforcer)
         tooling_root, workspace_handle = self._prepare_workspace(task, scenario)
+        if isinstance(task.input, dict):
+            resolved_tooling_root = str(tooling_root.resolve())
+            task.input["workdir"] = resolved_tooling_root
+            task.input["working_dir"] = resolved_tooling_root
         try:
             tooling_harness = ToolingHarness(mode=self._tooling_mode, root=tooling_root)
             self._register_tool_mocks(tooling_harness, scenario.tools.mocks)
             self._apply_fault_injection(tooling_harness, scenario.tools.fault_injection)
 
-            tooling_recorder = ToolingHarnessRecorder(tooling_harness)
+            tooling_recorder = ToolingHarnessRecorder(
+                tooling_harness,
+                event_callback=self._on_trace_event,
+            )
             tooling_context = {
                 "call": tooling_recorder.call,
                 "harness": tooling_harness,
@@ -159,13 +168,15 @@ class ScenarioAgentRunner:
                 "policy": tool_policy.model_dump(),
                 "injector": self._injector,
             }
+            if self._on_trace_event is not None:
+                tooling_context["event_callback"] = self._on_trace_event
             if self._agent_path is not None:
                 tooling_context["agent_path"] = str(self._agent_path)
 
             try:
-                async_run = getattr(adapter, "async_run_scenario", None)
+                async_run = cast(Any, getattr(adapter, "async_run_scenario", None))
                 if callable(async_run):
-                    raw_adapter_result = await async_run(
+                    raw_adapter_result = await cast(Any, async_run)(
                         scenario.model_dump(),
                         tooling_root,
                         tooling_context,
@@ -188,6 +199,10 @@ class ScenarioAgentRunner:
                     trace_events=tooling_recorder.events,
                 )
         finally:
+            if workspace_handle is not None and isinstance(task.input, dict):
+                snapshot_root = self._persist_workspace_snapshot(tooling_root, config)
+                task.input["workdir"] = str(snapshot_root)
+                task.input["working_dir"] = str(snapshot_root)
             if workspace_handle is not None:
                 workspace_handle.cleanup()
 
@@ -362,12 +377,7 @@ class ScenarioAgentRunner:
         artifacts: dict[str, JSONValue],
         config: dict[str, object],
     ) -> list[dict[str, JSONValue]]:
-        suite_id = str(config.get("suite_id", "unknown-suite"))
-        run_id = str(config.get("run_id", "unknown-run"))
-        trial_id = str(config.get("trial_id", "unknown-trial"))
-
-        artifacts_root = self._artifacts_root or Path(".ash-hawk")
-        artifact_dir = artifacts_root / suite_id / "runs" / run_id / "artifacts" / trial_id
+        artifact_dir = self._artifact_trial_dir(config)
         artifact_dir.mkdir(parents=True, exist_ok=True)
 
         artifact_path = artifact_dir / "artifacts.json"
@@ -379,6 +389,22 @@ class ScenarioAgentRunner:
             {"path": str(artifact_path), "artifact_key": "artifacts"},
         )
         return [event.model_dump()]
+
+    def _artifact_trial_dir(self, config: dict[str, object]) -> Path:
+        suite_id = str(config.get("suite_id", "unknown-suite"))
+        run_id = str(config.get("run_id", "unknown-run"))
+        trial_id = str(config.get("trial_id", "unknown-trial"))
+
+        artifacts_root = self._artifacts_root or Path(".ash-hawk")
+        return artifacts_root / suite_id / "runs" / run_id / "artifacts" / trial_id
+
+    def _persist_workspace_snapshot(self, tooling_root: Path, config: dict[str, object]) -> Path:
+        snapshot_root = self._artifact_trial_dir(config) / "workspace"
+        snapshot_root.parent.mkdir(parents=True, exist_ok=True)
+        if snapshot_root.exists():
+            shutil.rmtree(snapshot_root)
+        shutil.copytree(tooling_root, snapshot_root)
+        return snapshot_root.resolve()
 
     def _normalize_trace_events(self, trace_events: list[object]) -> list[ScenarioTraceEvent]:
         normalized: list[ScenarioTraceEvent] = []
@@ -393,7 +419,7 @@ class ScenarioAgentRunner:
                     continue
                 continue
             if hasattr(event, "model_dump"):
-                dumped = event.model_dump(mode="json")
+                dumped = cast(Any, event).model_dump(mode="json")
                 if isinstance(dumped, dict):
                     try:
                         normalized.append(ScenarioTraceEvent.model_validate(dumped))

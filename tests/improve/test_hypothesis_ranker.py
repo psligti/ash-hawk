@@ -17,6 +17,7 @@ def _diagnosis(
     trial_id: str = "trial-1",
     confidence: float = 0.5,
     target_files: list[str] | None = None,
+    anchor_files: list[str] | None = None,
     root_cause: str = "bug",
     failure_summary: str = "failed",
 ) -> Diagnosis:
@@ -26,6 +27,7 @@ def _diagnosis(
         root_cause=root_cause,
         suggested_fix="fix it",
         target_files=target_files or ["main.py"],
+        anchor_files=anchor_files or [],
         confidence=confidence,
     )
 
@@ -165,7 +167,7 @@ class TestComputeImpact:
         ranker = HypothesisRanker()
         d = _diagnosis(confidence=0.5)
         impact = ranker._compute_impact(d)
-        assert impact == pytest.approx(0.5, abs=0.01)
+        assert impact[0] == pytest.approx(0.5, abs=0.01)
 
     def test_measured_delta_from_kept_lessons(self) -> None:
         store = MagicMock()
@@ -178,7 +180,7 @@ class TestComputeImpact:
         d = _diagnosis(confidence=0.5)
         impact = ranker._compute_impact(d)
 
-        assert impact == pytest.approx(0.5, abs=0.01)
+        assert impact[0] == pytest.approx(0.5, abs=0.01)
 
     def test_all_reverted_penalizes(self) -> None:
         store = MagicMock()
@@ -190,7 +192,7 @@ class TestComputeImpact:
         d = _diagnosis(confidence=0.5)
         impact = ranker._compute_impact(d)
 
-        assert impact == pytest.approx(0.3, abs=0.01)
+        assert impact[0] == pytest.approx(0.3, abs=0.01)
 
     def test_no_past_data_uses_confidence(self) -> None:
         store = MagicMock()
@@ -200,7 +202,7 @@ class TestComputeImpact:
         d = _diagnosis(confidence=0.7)
         impact = ranker._compute_impact(d)
 
-        assert impact == pytest.approx(0.7, abs=0.01)
+        assert impact[0] == pytest.approx(0.7, abs=0.01)
 
     def test_store_exception_uses_confidence(self) -> None:
         store = MagicMock()
@@ -210,7 +212,37 @@ class TestComputeImpact:
         d = _diagnosis(confidence=0.8)
         impact = ranker._compute_impact(d)
 
-        assert impact == pytest.approx(0.8, abs=0.01)
+        assert impact[0] == pytest.approx(0.8, abs=0.01)
+
+    def test_memory_calibration_scales_impact(self) -> None:
+        store = MagicMock()
+        store.load_for_target.return_value = []
+        memory_store = MagicMock()
+        memory_store.calibration_factor.return_value = 0.5
+
+        ranker = HypothesisRanker(lesson_store=store, memory_store=memory_store)
+        d = _diagnosis(confidence=0.8)
+
+        impact, calibration = ranker._compute_impact(d)
+
+        assert impact == pytest.approx(0.4, abs=0.01)
+        assert calibration == pytest.approx(0.5, abs=0.01)
+        memory_store.calibration_factor.assert_called_once_with("unknown", agent_name="default")
+
+    def test_memory_adjustment_changes_total_score(self) -> None:
+        lesson_store = MagicMock()
+        lesson_store.has_been_tried.return_value = False
+        lesson_store.find_similar.return_value = []
+        lesson_store.load_for_target.return_value = []
+        memory_store = MagicMock()
+        memory_store.calibration_factor.return_value = 1.0
+        memory_store.semantic_adjustment.return_value = (0.2, 0.1)
+
+        ranker = HypothesisRanker(lesson_store=lesson_store, memory_store=memory_store)
+        result = ranker.rank([_diagnosis(confidence=0.5)])
+
+        assert result.hypotheses[0].semantic_penalty == pytest.approx(0.2)
+        assert result.hypotheses[0].semantic_boost == pytest.approx(0.1)
 
 
 class TestEnsureDiversity:
@@ -226,6 +258,9 @@ class TestEnsureDiversity:
             novelty_score=1.0,
             confidence=0.9,
             estimated_impact=0.9,
+            breadth_penalty=0.0,
+            overlap_penalty=0.0,
+            total_score=0.9,
             already_tried=False,
         )
         h2 = RankedHypothesis(
@@ -234,6 +269,9 @@ class TestEnsureDiversity:
             novelty_score=1.0,
             confidence=0.8,
             estimated_impact=0.8,
+            breadth_penalty=0.0,
+            overlap_penalty=0.0,
+            total_score=0.8,
             already_tried=False,
         )
         h3 = RankedHypothesis(
@@ -242,6 +280,9 @@ class TestEnsureDiversity:
             novelty_score=1.0,
             confidence=0.7,
             estimated_impact=0.7,
+            breadth_penalty=0.0,
+            overlap_penalty=0.0,
+            total_score=0.7,
             already_tried=False,
         )
 
@@ -262,6 +303,9 @@ class TestEnsureDiversity:
             novelty_score=1.0,
             confidence=0.9,
             estimated_impact=0.9,
+            breadth_penalty=0.0,
+            overlap_penalty=0.0,
+            total_score=0.9,
             already_tried=False,
         )
         h2 = RankedHypothesis(
@@ -270,6 +314,9 @@ class TestEnsureDiversity:
             novelty_score=1.0,
             confidence=0.8,
             estimated_impact=0.8,
+            breadth_penalty=0.0,
+            overlap_penalty=0.0,
+            total_score=0.8,
             already_tried=False,
         )
 
@@ -287,6 +334,9 @@ class TestEnsureDiversity:
             novelty_score=1.0,
             confidence=0.9,
             estimated_impact=0.9,
+            breadth_penalty=0.0,
+            overlap_penalty=0.0,
+            total_score=0.9,
             already_tried=False,
         )
         h2 = RankedHypothesis(
@@ -295,6 +345,9 @@ class TestEnsureDiversity:
             novelty_score=1.0,
             confidence=0.8,
             estimated_impact=0.8,
+            breadth_penalty=0.0,
+            overlap_penalty=0.0,
+            total_score=0.8,
             already_tried=False,
         )
 
@@ -313,3 +366,102 @@ class TestHypothesisRankingModel:
         assert ranking.total_candidates == 5
         assert ranking.filtered_as_tried == 2
         assert ranking.ranked_count == 3
+
+
+class TestRankingPenalties:
+    def test_broad_mutation_penalty_lowers_rank(self) -> None:
+        focused = _diagnosis(trial_id="focused", confidence=0.8, target_files=["tools/loader.py"])
+        broad = _diagnosis(
+            trial_id="broad",
+            confidence=0.8,
+            target_files=["prompts/coding.md", "skills/general-coding/SKILL.md", "tools/edit.py"],
+        )
+
+        ranker = HypothesisRanker()
+        result = ranker.rank([broad, focused])
+
+        assert result.hypotheses[0].diagnosis.trial_id == "focused"
+        broad_ranked = next(h for h in result.hypotheses if h.diagnosis.trial_id == "broad")
+        assert broad_ranked.breadth_penalty >= 0.3
+
+    def test_overlap_penalty_demotes_resolved_family(self) -> None:
+        loader = _diagnosis(
+            trial_id="loader",
+            confidence=0.8,
+            target_files=["tools/loader.py"],
+            root_cause="tool loader empty",
+            failure_summary="registered zero tools",
+        )
+        loader.family = "tool_loader"
+        prompt = _diagnosis(
+            trial_id="prompt",
+            confidence=0.75,
+            target_files=["prompts/coding.md"],
+            root_cause="must use tools",
+            failure_summary="zero tool calls",
+        )
+        prompt.family = "tool_use_enforcement"
+
+        ranker = HypothesisRanker()
+        result = ranker.rank(
+            [loader, prompt],
+            suppress_target_files={"tools/loader.py"},
+            suppress_families={"tool_loader"},
+        )
+
+        assert result.hypotheses[0].diagnosis.trial_id == "prompt"
+
+    def test_regression_penalty_demotes_recently_regressed_family(self) -> None:
+        loader = _diagnosis(
+            trial_id="loader",
+            confidence=0.8,
+            target_files=["tools/loader.py"],
+            root_cause="tool loader empty",
+            failure_summary="registered zero tools",
+        )
+        loader.family = "tool_loader"
+        prompt = _diagnosis(
+            trial_id="prompt",
+            confidence=0.75,
+            target_files=["prompts/coding.md"],
+            root_cause="must use tools",
+            failure_summary="zero tool calls",
+        )
+        prompt.family = "tool_use_enforcement"
+
+        ranker = HypothesisRanker()
+        result = ranker.rank(
+            [loader, prompt],
+            regression_target_files={"tools/loader.py"},
+            regression_families={"tool_loader"},
+        )
+
+        assert result.hypotheses[0].diagnosis.trial_id == "prompt"
+
+    def test_filters_diagnoses_outside_allowed_target_files(self) -> None:
+        agent_diag = _diagnosis(trial_id="agent", target_files=["prompts/coding.md"])
+        external_diag = _diagnosis(trial_id="grader", target_files=["graders/repo_diff.py"])
+
+        ranker = HypothesisRanker()
+        result = ranker.rank(
+            [agent_diag, external_diag],
+            allowed_target_files={"prompts/coding.md", "tools/edit.py"},
+        )
+
+        assert [hyp.diagnosis.trial_id for hyp in result.hypotheses] == ["agent"]
+
+    def test_keeps_anchored_new_file_when_anchor_is_allowed(self) -> None:
+        anchored = _diagnosis(
+            trial_id="anchored",
+            target_files=["tools/verification_retry.py"],
+            anchor_files=["tool_dispatcher.py"],
+        )
+        external = _diagnosis(trial_id="external", target_files=["graders/repo_diff.py"])
+
+        ranker = HypothesisRanker()
+        result = ranker.rank(
+            [anchored, external],
+            allowed_target_files={"tool_dispatcher.py", "tools/edit.py"},
+        )
+
+        assert [hyp.diagnosis.trial_id for hyp in result.hypotheses] == ["anchored"]

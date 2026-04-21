@@ -15,8 +15,15 @@ def _record(
     score: float = 0.5,
     applied: bool = True,
     delta: float = 0.1,
+    mutation_outcome: str = "applied",
 ) -> ScoreRecord:
-    return ScoreRecord(iteration=iteration, score=score, applied=applied, delta=delta)
+    return ScoreRecord(
+        iteration=iteration,
+        score=score,
+        applied=applied,
+        delta=delta,
+        mutation_outcome=mutation_outcome,
+    )
 
 
 class TestScoreRecord:
@@ -57,6 +64,27 @@ class TestStopConditionMaxReverts:
             result = sc.record(_record(iteration=i, applied=False, delta=-0.1))
         assert result.should_stop
         assert any("reverts" in r for r in result.reasons)
+
+    def test_noop_mutations_do_not_count_toward_revert_limit(self):
+        sc = StopCondition(StopConditionConfig(max_reverts=2, max_consecutive_noop_mutations=99))
+        sc.record(
+            _record(iteration=0, applied=False, delta=0.0, mutation_outcome="mutation_cli_timeout")
+        )
+        result = sc.record(
+            _record(iteration=1, applied=False, delta=0.0, mutation_outcome="no_file_changes")
+        )
+        assert not result.should_stop
+
+        result = sc.record(
+            _record(iteration=2, applied=False, delta=0.0, mutation_outcome="targeted_regression")
+        )
+        assert not result.should_stop
+
+        result = sc.record(
+            _record(iteration=3, applied=False, delta=0.0, mutation_outcome="targeted_regression")
+        )
+        assert result.should_stop
+        assert any("Tested reverts" in r for r in result.reasons)
 
 
 class TestStopConditionRegression:
@@ -127,4 +155,101 @@ class TestStopConditionReset:
         sc.record(_record(applied=False))
         sc.reset()
         result = sc.record(_record(applied=False))
+        assert not result.should_stop
+
+
+class TestStopConditionMutationStall:
+    def test_stops_on_consecutive_noop_mutations(self):
+        sc = StopCondition(StopConditionConfig(max_consecutive_noop_mutations=3, max_reverts=99))
+        sc.record(
+            _record(iteration=0, applied=False, delta=0.0, mutation_outcome="no_file_changes")
+        )
+        sc.record(
+            _record(iteration=1, applied=False, delta=0.0, mutation_outcome="mutation_cli_timeout")
+        )
+        result = sc.record(
+            _record(
+                iteration=2, applied=False, delta=0.0, mutation_outcome="post_mutation_eval_failed"
+            )
+        )
+
+        assert result.should_stop
+        assert any("stalled" in reason for reason in result.reasons)
+
+    def test_targeted_regression_does_not_count_as_stall(self):
+        sc = StopCondition(StopConditionConfig(max_consecutive_noop_mutations=3, max_reverts=99))
+        sc.record(
+            _record(iteration=0, applied=False, delta=0.0, mutation_outcome="mutation_cli_timeout")
+        )
+        sc.record(
+            _record(
+                iteration=1,
+                applied=False,
+                delta=0.0,
+                mutation_outcome="targeted_regression",
+            )
+        )
+        result = sc.record(
+            _record(iteration=2, applied=False, delta=0.0, mutation_outcome="mutation_cli_timeout")
+        )
+
+        assert not result.should_stop
+
+
+class TestStopConditionMutationYield:
+    def test_does_not_check_yield_until_sample_size_reached(self):
+        sc = StopCondition(
+            StopConditionConfig(min_mutation_yield=0.5, min_yield_sample_size=4, max_reverts=99)
+        )
+        sc.record(
+            _record(iteration=0, applied=False, delta=0.0, mutation_outcome="no_file_changes")
+        )
+        sc.record(
+            _record(iteration=1, applied=False, delta=0.0, mutation_outcome="no_file_changes")
+        )
+        result = sc.record(
+            _record(iteration=2, applied=False, delta=0.0, mutation_outcome="no_file_changes")
+        )
+
+        assert not result.should_stop
+
+    def test_stops_when_yield_below_threshold(self):
+        sc = StopCondition(
+            StopConditionConfig(min_mutation_yield=0.5, min_yield_sample_size=4, max_reverts=99)
+        )
+        sc.record(_record(iteration=0, applied=True, delta=0.1, mutation_outcome="applied"))
+        sc.record(
+            _record(iteration=1, applied=False, delta=0.0, mutation_outcome="targeted_regression")
+        )
+        sc.record(
+            _record(iteration=2, applied=False, delta=0.0, mutation_outcome="targeted_regression")
+        )
+        result = sc.record(
+            _record(iteration=3, applied=False, delta=0.0, mutation_outcome="targeted_regression")
+        )
+
+        assert result.should_stop
+        assert any("yield" in reason.lower() for reason in result.reasons)
+
+    def test_yield_disabled_by_default(self):
+        sc = StopCondition(StopConditionConfig(max_reverts=99))
+        for i in range(8):
+            result = sc.record(
+                _record(
+                    iteration=i, applied=False, delta=0.0, mutation_outcome="targeted_regression"
+                )
+            )
+
+        assert not any("yield" in reason.lower() for reason in result.reasons)
+
+    def test_applied_mutation_resets_noop_stall_window(self):
+        sc = StopCondition(StopConditionConfig(max_consecutive_noop_mutations=3, max_reverts=99))
+        sc.record(
+            _record(iteration=0, applied=False, delta=0.0, mutation_outcome="no_file_changes")
+        )
+        sc.record(_record(iteration=1, applied=True, delta=0.2, mutation_outcome="applied"))
+        result = sc.record(
+            _record(iteration=2, applied=False, delta=0.0, mutation_outcome="no_file_changes")
+        )
+
         assert not result.should_stop

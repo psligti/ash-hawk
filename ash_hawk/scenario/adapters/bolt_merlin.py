@@ -1,12 +1,9 @@
 # type-hygiene: skip-file
 from __future__ import annotations
 
-import asyncio
-import os
-from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator, cast
+from typing import Any, cast
 
 from ash_hawk.agents.source_workspace import (
     detect_agent_config_path,
@@ -21,16 +18,6 @@ from ash_hawk.scenario.models import (
 )
 from ash_hawk.scenario.tool_event_preview import tool_event_preview
 from ash_hawk.types import EvalOutcome, FailureMode
-
-
-@contextmanager
-def _cwd(path: Path) -> Iterator[None]:
-    original = os.getcwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(original)
 
 
 class BoltMerlinScenarioAdapter:
@@ -49,7 +36,10 @@ class BoltMerlinScenarioAdapter:
         try:
             import bolt_merlin.agent as agent_pkg
 
-            return Path(agent_pkg.__file__).parent
+            agent_file = agent_pkg.__file__
+            if agent_file is None:
+                return None
+            return Path(agent_file).parent
         except ImportError:
             return None
 
@@ -78,14 +68,13 @@ class BoltMerlinScenarioAdapter:
         package_name = "bolt_merlin"
         agent_path_value: Path | None = None
         config_path_value: Path | None = None
-        if isinstance(tooling_harness, dict):
-            raw_agent_path = tooling_harness.get("agent_path")
-            if isinstance(raw_agent_path, str) and raw_agent_path.strip():
-                agent_path_value = Path(raw_agent_path)
-                detected_package = detect_package_name(agent_path_value)
-                if detected_package is not None:
-                    package_name = detected_package
-                config_path_value = detect_agent_config_path(agent_path_value)
+        raw_agent_path = tooling_harness.get("agent_path")
+        if isinstance(raw_agent_path, str) and raw_agent_path.strip():
+            agent_path_value = Path(raw_agent_path)
+            detected_package = detect_package_name(agent_path_value)
+            if detected_package is not None:
+                package_name = detected_package
+            config_path_value = detect_agent_config_path(agent_path_value)
 
         try:
             with import_package_from_agent_path(package_name, agent_path_value):
@@ -115,18 +104,23 @@ class BoltMerlinScenarioAdapter:
             )
 
         captured_events: list[Any] = []
+        event_callback = tooling_harness.get("event_callback")
 
         def on_event(event: Any) -> None:
             captured_events.append(event)
+            if callable(event_callback):
+                payload = _build_live_event_payload(event)
+                if payload is not None:
+                    event_callback(payload)
 
-        with _cwd(workdir.resolve()):
-            with import_package_from_agent_path(package_name, agent_path_value):
-                result: Any = await execute(
-                    prompt=prompt,
-                    trace=False,
-                    on_event=on_event,
-                    config_path=config_path_value,
-                )
+        with import_package_from_agent_path(package_name, agent_path_value):
+            result: Any = await execute(
+                prompt=prompt,
+                trace=False,
+                on_event=on_event,
+                config_path=config_path_value,
+                working_dir=workdir.resolve(),
+            )
 
         if hasattr(result, "error_type"):
             return ScenarioAdapterResult(
@@ -232,9 +226,7 @@ def _build_live_event_payload(event: Any) -> dict[str, object] | None:
         "event_type": "tool_result",
         "success": error is None,
         "preview": tool_event_preview(
-            tool_name,
-            getattr(event, "tool_input", None),
-            _live_event_result(event),
+            tool_name, getattr(event, "tool_input", None), _live_event_result(event)
         ),
         "error": str(error) if error is not None else None,
     }

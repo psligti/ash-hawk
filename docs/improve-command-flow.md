@@ -1,5 +1,11 @@
 # `ash-hawk improve` Command Flow
 
+> **Status note (2026-04-13):** The supported entrypoint is the live `ash-hawk improve`
+> CLI, which dispatches to `ash_hawk.improve.loop`. References below to historical
+> `auto_research` modules and storage paths are retained for background only and should not
+> be treated as guaranteed-live implementation details unless the corresponding source file
+> still exists in the repo.
+
 ## Overview
 
 The `improve` command runs iterative auto-research cycles that discover agent skill/policy/tool/agent files, generate LLM-proposed improvements, evaluate them against scenario suites, and keep only changes that produce a measurable score increase.

@@ -95,6 +95,36 @@ class TestRepoDiffGrader:
         assert result.passed is True
         assert result.score == 1.0
 
+    @pytest.mark.asyncio
+    async def test_normalizes_absolute_changed_paths_against_workdir(self, tmp_path: Path) -> None:
+        nested = tmp_path / "src"
+        nested.mkdir()
+        (nested / "api.py").write_text("def handler():\n    return True\n", encoding="utf-8")
+
+        grader = RepoDiffGrader()
+        transcript = EvalTranscript(
+            tool_calls=[
+                {
+                    "tool": "edit",
+                    "input": {"file": str((nested / "api.py").resolve())},
+                }
+            ]
+        )
+        spec = GraderSpec(
+            grader_type="repo_diff",
+            config={
+                "required_file_changes": [{"path": "src/api.py"}],
+                "semantic_assertions": [
+                    {"path": "src/api.py", "must_contain_after": ["return True"]}
+                ],
+            },
+        )
+
+        result = await grader.grade(_trial(tmp_path), transcript, spec)
+
+        assert result.passed is True
+        assert "src/api.py" in result.details["changed_paths"]
+
 
 class TestCompletionHonestyGrader:
     @pytest.mark.asyncio

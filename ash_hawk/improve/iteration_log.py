@@ -15,9 +15,11 @@ class DiagnosisSummary(pd.BaseModel):
     model_config = pd.ConfigDict(extra="forbid")
 
     trial_id: str = pd.Field(description="Trial that failed")
+    family: str = pd.Field(default="unknown")
     failure_summary: str = pd.Field(description="One-line summary")
     root_cause: str = pd.Field(description="Root cause analysis")
     target_files: list[str] = pd.Field(default_factory=list)
+    anchor_files: list[str] = pd.Field(default_factory=list)
     confidence: float = pd.Field(ge=0.0, le=1.0)
     actionable: bool = pd.Field(default=True)
     diagnosis_mode: str = pd.Field(default="llm")
@@ -35,6 +37,14 @@ class IterationLog(pd.BaseModel):
     failures: list[str] = pd.Field(default_factory=list, description="Trial IDs that failed")
     diagnoses: list[DiagnosisSummary] = pd.Field(
         default_factory=list, description="Diagnoses generated"
+    )
+    suspicious_trials: list[str] = pd.Field(
+        default_factory=list,
+        description="Trial IDs flagged by Phase 1 suspicious-run review",
+    )
+    failure_buckets: dict[str, str] = pd.Field(
+        default_factory=dict,
+        description="Per-trial Phase 1 failure bucket labels",
     )
     hypothesis_ranked: int = pd.Field(default=0, description="Number of hypotheses after ranking")
     hypothesis_attempted: str | None = pd.Field(
@@ -57,14 +67,31 @@ class IterationLog(pd.BaseModel):
         default_factory=list, description="Stop conditions that fired"
     )
     error: str | None = pd.Field(default=None, description="Error if iteration failed")
+    phase_durations: dict[str, float] = pd.Field(
+        default_factory=dict,
+        description=(
+            "Wall-clock seconds per improve phase "
+            "(baseline_eval, diagnosis, mutation_generation, fast_validation, integrity_validation)"
+        ),
+    )
+    mutation_wall_seconds: float | None = pd.Field(
+        default=None,
+        description="Wall-clock seconds spent generating the tested mutation",
+    )
+    mutation_llm_calls: int | None = pd.Field(
+        default=None,
+        description="LLM completion count captured for the tested mutation",
+    )
 
 
 def diagnosis_to_summary(diagnosis: Diagnosis) -> DiagnosisSummary:
     return DiagnosisSummary(
         trial_id=diagnosis.trial_id,
+        family=diagnosis.family,
         failure_summary=diagnosis.failure_summary,
         root_cause=diagnosis.root_cause,
         target_files=diagnosis.target_files,
+        anchor_files=diagnosis.anchor_files,
         confidence=diagnosis.confidence,
         actionable=diagnosis.actionable,
         diagnosis_mode=diagnosis.diagnosis_mode,
@@ -76,7 +103,7 @@ def write_iteration_log(
     log: IterationLog,
     output_dir: Path | None = None,
 ) -> Path:
-    dir_ = output_dir or Path(".ash-hawk/improve")
+    dir_ = (output_dir or Path(".ash-hawk/improve")).resolve()
     dir_.mkdir(parents=True, exist_ok=True)
     path = dir_ / f"iter-{log.iteration:03d}.json"
 

@@ -20,7 +20,7 @@ from ash_hawk import __version__
 from ash_hawk.config import EvalConfig, get_config
 from ash_hawk.context import clear_eval_context, set_eval_context
 from ash_hawk.scenario.agent_runner import ScenarioAgentRunner
-from ash_hawk.scenario.loader import discover_scenarios, load_scenario
+from ash_hawk.scenario.loader import expand_scenario_targets, load_scenario
 from ash_hawk.scenario.models import ScenarioGraderSpec, ScenarioV1
 from ash_hawk.scenario.registry import ScenarioAdapterRegistry, get_default_adapter_registry
 from ash_hawk.scenario.trial import TrialExecutor
@@ -72,6 +72,7 @@ class ScenarioRunner:
         scenario_timeout_seconds: float | None = None,
         grader_config_overrides: dict[str, Any] | None = None,
         on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
+        on_trace_event: Callable[[dict[str, object]], None] | None = None,
         agent_path: Path | None = None,
         adapter_override: str | None = None,
     ) -> None:
@@ -83,13 +84,14 @@ class ScenarioRunner:
         )
         self._storage_root = resolved_storage
         self._storage = FileStorage(base_path=resolved_storage)
-        self._tooling_mode = tooling_mode
+        self._tooling_mode: Literal["mock", "record", "replay"] = tooling_mode
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._show_failure_patterns = show_failure_patterns
         self._injector = injector
         self._scenario_timeout_seconds = scenario_timeout_seconds
         self._grader_config_overrides = grader_config_overrides or {}
         self._on_trial_progress = on_trial_progress
+        self._on_trace_event = on_trace_event
         self._agent_path = agent_path
         self._adapter_override = adapter_override
         resolved_parallelism = parallelism or config.parallelism
@@ -137,6 +139,7 @@ class ScenarioRunner:
             artifacts_root=self._storage_root,
             injector=self._injector,
             scenario_timeout_seconds=self._scenario_timeout_seconds,
+            on_trace_event=self._on_trace_event,
             agent_path=self._agent_path,
             adapter_override=self._adapter_override,
         )
@@ -193,11 +196,9 @@ class ScenarioRunner:
                 continue
 
             transcript = trial.result.transcript
-            if transcript is None:
-                continue
 
             # Check for low score
-            if trial.result.aggregate_score is not None and trial.result.aggregate_score <= 0.3:
+            if trial.result.aggregate_score <= 0.3:
                 failing_graders: list[str] = []
                 for grader_result in getattr(trial.result, "grader_results", []):
                     if not getattr(grader_result, "passed", False):
@@ -364,12 +365,8 @@ class ScenarioRunner:
 
         scenario_sources: list[tuple[ScenarioV1, Path]] = []
         for raw_path in paths:
-            path = Path(raw_path)
-            if path.is_dir():
-                for scenario_path in discover_scenarios(path):
-                    scenario_sources.append((load_scenario(scenario_path), scenario_path))
-            else:
-                scenario_sources.append((load_scenario(path), path))
+            for scenario_path in expand_scenario_targets(raw_path):
+                scenario_sources.append((load_scenario(scenario_path), scenario_path))
 
         if not scenario_sources:
             raise ValueError("No scenarios found for provided paths")

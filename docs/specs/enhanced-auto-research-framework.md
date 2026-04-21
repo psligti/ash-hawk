@@ -8,6 +8,11 @@ version: 0.1.0
 
 # Enhanced Auto-Research Framework
 
+> **Status note (2026-04-13):** This is a draft design document, not a description of the
+> currently shipped implementation. Several module paths referenced here under
+> `ash_hawk/auto_research/` do not exist in the live repo today. Use it as a future design
+> spec only.
+
 ## Abstract
 
 This specification defines an enhanced auto-research framework for Ash Hawk that enables **multi-target parallel improvement**, **lever matrix search**, **intent discovery**, and **knowledge promotion**. The framework transforms the current single-target, sequential improvement cycle into a comprehensive agent optimization system that can:
@@ -156,23 +161,23 @@ class TargetDiscovery:
         scenarios: list[Path],
     ) -> list[ImprovementTarget]:
         """Discover all skills, tools, and agents that could be improved.
-        
+
         Priority order:
         1. Agents (highest - affect everything downstream)
         2. Skills (medium - affect specific capabilities)
         3. Tools (lowest - focused scope)
-        
+
         Dependencies tracked for ordered improvement.
         """
         ...
-    
+
     def rank_targets_by_impact(
         self,
         targets: list[ImprovementTarget],
         scenario_results: list[ScenarioResult],
     ) -> list[ImprovementTarget]:
         """Rank targets by potential impact on scenario scores.
-        
+
         Uses:
         - Frequency of target usage in failed scenarios
         - Correlation between target and failure patterns
@@ -232,7 +237,7 @@ class MultiTargetCycleRunner:
         convergence_window: int = 5,
         convergence_variance_threshold: float = 0.001,
     ): ...
-    
+
     async def run_multi_target_cycle(
         self,
         scenarios: list[Path],
@@ -243,7 +248,7 @@ class MultiTargetCycleRunner:
         strategy_name: str | None = None,
     ) -> MultiTargetResult:
         """Run improvement cycles for multiple targets in parallel.
-        
+
         Process:
         1. Rank targets by impact
         2. Run top N targets in parallel (N = parallelism)
@@ -252,7 +257,7 @@ class MultiTargetCycleRunner:
         5. Promote validated lessons
         """
         ...
-    
+
     async def _run_single_target_cycle(
         self,
         target: ImprovementTarget,
@@ -261,7 +266,7 @@ class MultiTargetCycleRunner:
         shared_llm_client: Any,
     ) -> CycleResult:
         """Run improvement cycle for a single target.
-        
+
         Uses existing cycle_runner.run_cycle() internally.
         """
         ...
@@ -278,7 +283,7 @@ async def run_with_limit(target: ImprovementTarget) -> CycleResult:
         return await self._run_single_target_cycle(target, ...)
 
 results = await asyncio.gather(*[
-    run_with_limit(target) 
+    run_with_limit(target)
     for target in ranked_targets
 ])
 ```
@@ -365,11 +370,11 @@ class LeverConfiguration:
     context_strategy: str
     prompt_preset: str
     timeout_multiplier: float
-    
+
     def to_genome(self) -> Genome:
         """Convert to genetic optimizer genome format."""
         ...
-    
+
     @classmethod
     def from_genome(cls, genome: Genome) -> "LeverConfiguration":
         """Convert from genetic optimizer genome format."""
@@ -382,11 +387,11 @@ class LeverMatrixSearch:
         lever_space: dict[str, LeverDimension] | None = None,
         genetic_config: dict[str, Any] | None = None,
     ): ...
-    
+
     def sample_random(self) -> LeverConfiguration:
         """Sample a random configuration from the lever space."""
         ...
-    
+
     def sample_neighbors(
         self,
         config: LeverConfiguration,
@@ -394,7 +399,7 @@ class LeverMatrixSearch:
     ) -> list[LeverConfiguration]:
         """Sample n neighbors by mutating 1-2 levers."""
         ...
-    
+
     def crossover(
         self,
         a: LeverConfiguration,
@@ -402,7 +407,7 @@ class LeverMatrixSearch:
     ) -> LeverConfiguration:
         """Combine two configurations via crossover."""
         ...
-    
+
     async def evaluate(
         self,
         config: LeverConfiguration,
@@ -410,7 +415,7 @@ class LeverMatrixSearch:
         storage_path: Path,
     ) -> float:
         """Evaluate a configuration against scenarios.
-        
+
         Returns fitness score (0.0 - 1.0).
         """
         ...
@@ -465,13 +470,13 @@ class IntentPatterns:
 
 class IntentAnalyzer:
     def __init__(self, llm_client: Any | None = None): ...
-    
+
     async def analyze_transcripts(
         self,
         transcripts: list[EvalTranscript],
     ) -> IntentPatterns:
         """Extract intent patterns from agent transcripts.
-        
+
         Process:
         1. Extract tool usage statistics
         2. Identify tool sequences
@@ -480,14 +485,14 @@ class IntentAnalyzer:
         5. Generate intent hypothesis via LLM
         """
         ...
-    
+
     def _extract_tool_patterns(
         self,
         transcripts: list[EvalTranscript],
     ) -> list[ToolUsagePattern]:
         """Extract tool usage patterns from transcripts."""
         ...
-    
+
     def _identify_sequences(
         self,
         transcripts: list[EvalTranscript],
@@ -496,21 +501,21 @@ class IntentAnalyzer:
     ) -> dict[tuple[str, ...], int]:
         """Identify common tool sequences and their frequencies."""
         ...
-    
+
     def _cluster_decision_patterns(
         self,
         transcripts: list[EvalTranscript],
     ) -> list[DecisionPattern]:
         """Cluster decision patterns using sequence analysis."""
         ...
-    
+
     def _classify_failures(
         self,
         transcripts: list[EvalTranscript],
     ) -> list[FailurePattern]:
         """Classify failure patterns from error traces."""
         ...
-    
+
     async def _generate_intent_hypothesis(
         self,
         patterns: IntentPatterns,
@@ -573,29 +578,29 @@ class ConvergenceDetector:
         min_improvement: float = 0.005,
         max_iterations_without_improvement: int = 10,
     ): ...
-    
+
     def check(
         self,
         iterations: list[IterationResult],
     ) -> ConvergenceResult:
         """Check if improvement has converged.
-        
+
         Convergence criteria:
         1. Score variance < variance_threshold for window_size iterations
         2. No improvement > min_improvement for max_iterations_without_improvement
         3. Score has decreased for 3+ consecutive iterations (regression)
-        
+
         Returns convergence status with reason and confidence.
         """
         ...
-    
+
     def _compute_variance(
         self,
         scores: list[float],
     ) -> float:
         """Compute variance of recent scores."""
         ...
-    
+
     def _iterations_since_improvement(
         self,
         iterations: list[IterationResult],
@@ -673,7 +678,7 @@ class KnowledgePromoter:
         criteria: PromotionCriteria | None = None,
         note_lark_enabled: bool = True,
     ): ...
-    
+
     async def should_promote(
         self,
         iteration: IterationResult,
@@ -681,30 +686,30 @@ class KnowledgePromoter:
         scenario_results: list[ScenarioResult],
     ) -> tuple[bool, str]:
         """Determine if an improvement should be promoted.
-        
+
         Returns (should_promote, reason).
         """
         ...
-    
+
     async def promote_lesson(
         self,
         lesson: PromotedLesson,
         targets: list[str] | None = None,  # None = global
     ) -> bool:
         """Promote a lesson to persistent storage.
-        
+
         1. Write to local .ash-hawk/lessons/
         2. If note_lark_enabled, also write to note-lark knowledge base
         """
         ...
-    
+
     async def promote_to_note_lark(
         self,
         lesson: PromotedLesson,
         intent_patterns: IntentPatterns | None = None,
     ) -> str | None:
         """Promote lesson to note-lark knowledge base.
-        
+
         Returns note_id if successful.
         """
         ...
@@ -719,22 +724,22 @@ async def promote_to_note_lark(
     intent_patterns: IntentPatterns | None = None,
 ) -> str | None:
     """Promote lesson to note-lark knowledge base."""
-    
+
     # Build tags from lesson metadata and intent patterns
     tags = ["auto-research", "improvement", lesson.target_type.value]
     if intent_patterns:
         tags.extend(intent_patterns.dominant_tools[:3])
-    
+
     # Determine memory type based on target type
     memory_type = {
         TargetType.AGENT: "procedural",
         TargetType.SKILL: "procedural",
         TargetType.TOOL: "reference",
     }[lesson.target_type]
-    
+
     # Calculate confidence based on score delta and stability
     confidence = min(0.95, lesson.score_delta / 0.2)
-    
+
     # Call note-lark memory_structured
     result = await note_lark_memory_structured(payload={
         "title": f"Auto-discovered: {lesson.improvement_text[:80]}",
@@ -760,7 +765,7 @@ async def promote_to_note_lark(
 {self._format_intent_context(intent_patterns) if intent_patterns else "No intent analysis available."}
 """,
     })
-    
+
     return result.get("note_id")
 ```
 
@@ -780,15 +785,15 @@ class HybridConfig:
     # Population settings
     population_size: int = 8
     elite_count: int = 2
-    
+
     # Genetic operators
     mutation_rate: float = 0.2
     crossover_rate: float = 0.7
-    
+
     # Hill-climbing settings
     hill_climb_iterations: int = 5
     hill_climb_neighbors: int = 3
-    
+
     # Convergence
     max_generations: int = 10
     convergence_patience: int = 3
@@ -800,7 +805,7 @@ class HybridOptimizer:
         lever_space: dict[str, LeverDimension],
         config: HybridConfig | None = None,
     ): ...
-    
+
     async def optimize(
         self,
         scenarios: list[Path],
@@ -808,7 +813,7 @@ class HybridOptimizer:
         initial_population: list[LeverConfiguration] | None = None,
     ) -> OptimizationResult:
         """Run hybrid genetic + hill-climbing optimization.
-        
+
         Process:
         1. Initialize population (random or provided)
         2. For each generation:
@@ -821,7 +826,7 @@ class HybridOptimizer:
         3. Return best configuration and history
         """
         ...
-    
+
     async def _evaluate_population(
         self,
         population: list[LeverConfiguration],
@@ -830,28 +835,28 @@ class HybridOptimizer:
     ) -> list[tuple[LeverConfiguration, float]]:
         """Evaluate all configurations in parallel."""
         ...
-    
+
     def _select_elites(
         self,
         evaluated: list[tuple[LeverConfiguration, float]],
     ) -> list[LeverConfiguration]:
         """Select top performers as elites."""
         ...
-    
+
     def _crossover(
         self,
         population: list[LeverConfiguration],
     ) -> list[LeverConfiguration]:
         """Generate offspring via crossover."""
         ...
-    
+
     def _mutate(
         self,
         population: list[LeverConfiguration],
     ) -> list[LeverConfiguration]:
         """Apply mutations to population."""
         ...
-    
+
     async def _hill_climb(
         self,
         config: LeverConfiguration,
@@ -880,24 +885,24 @@ class EnhancedCycleConfig:
     # Multi-target settings
     enable_multi_target: bool = True
     max_parallel_targets: int = 4
-    
+
     # Lever search settings
     enable_lever_search: bool = True
     lever_space: dict[str, LeverDimension] | None = None
-    
+
     # Intent discovery settings
     enable_intent_analysis: bool = True
-    
+
     # Knowledge promotion settings
     enable_knowledge_promotion: bool = True
     promotion_criteria: PromotionCriteria | None = None
     note_lark_enabled: bool = True
-    
+
     # Convergence settings
     convergence_window: int = 5
     convergence_variance_threshold: float = 0.001
     max_iterations_without_improvement: int = 10
-    
+
     # Hybrid optimization settings
     enable_hybrid_optimization: bool = True
     hybrid_config: HybridConfig | None = None
@@ -925,7 +930,7 @@ async def run_enhanced_cycle(
     project_root: Path | None = None,
 ) -> EnhancedCycleResult:
     """Run enhanced auto-research cycle.
-    
+
     Process:
     1. Discover all improvement targets
     2. Run intent analysis on baseline transcripts
@@ -972,14 +977,14 @@ def enhanced_run(
     hybrid_optimization: bool,
 ) -> None:
     """Run enhanced auto-research improvement cycle.
-    
+
     Examples:
         # Basic enhanced run
         ash-hawk auto-research enhanced-run -s evals/scenarios/*.yaml
-        
+
         # Multi-target with lever search
         ash-hawk auto-research enhanced-run -s evals/scenarios/*.yaml --multi-target --lever-search
-        
+
         # Full featured with knowledge promotion
         ash-hawk auto-research enhanced-run -s evals/scenarios/*.yaml \\
             --multi-target --lever-search --intent-analysis \\
@@ -1043,15 +1048,15 @@ class CycleResult:
     error_message: str | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
-    
+
     @property
     def total_iterations(self) -> int:
         return len(self.iterations)
-    
+
     @property
     def improvement_delta(self) -> float:
         return self.final_score - self.initial_score
-    
+
     @property
     def applied_iterations(self) -> list[IterationResult]:
         return [i for i in self.iterations if i.applied]
@@ -1250,10 +1255,10 @@ hybrid_optimization:
 # tests/auto_research/test_target_discovery.py
 def test_discover_skills():
     """Test skill discovery from project structure."""
-    
+
 def test_discover_tools():
     """Test tool discovery from project structure."""
-    
+
 def test_rank_targets_by_impact():
     """Test target ranking based on scenario results."""
 
@@ -1262,7 +1267,7 @@ def test_rank_targets_by_impact():
 @pytest.mark.asyncio
 async def test_parallel_cycle_execution():
     """Test running multiple cycles in parallel."""
-    
+
 @pytest.mark.asyncio
 async def test_semaphore_limiting():
     """Test that parallelism is limited correctly."""
@@ -1271,10 +1276,10 @@ async def test_semaphore_limiting():
 # tests/auto_research/test_lever_matrix.py
 def test_sample_random():
     """Test random sampling from lever space."""
-    
+
 def test_sample_neighbors():
     """Test neighbor sampling via mutation."""
-    
+
 def test_crossover():
     """Test configuration crossover."""
 
@@ -1282,10 +1287,10 @@ def test_crossover():
 # tests/auto_research/test_intent_analyzer.py
 def test_extract_tool_patterns():
     """Test tool pattern extraction."""
-    
+
 def test_identify_sequences():
     """Test sequence identification."""
-    
+
 @pytest.mark.asyncio
 async def test_generate_intent_hypothesis():
     """Test LLM-based intent generation."""
@@ -1294,10 +1299,10 @@ async def test_generate_intent_hypothesis():
 # tests/auto_research/test_convergence.py
 def test_plateau_detection():
     """Test score plateau detection."""
-    
+
 def test_no_improvement_detection():
     """Test detection of no improvement."""
-    
+
 def test_regression_detection():
     """Test regression detection."""
 
@@ -1306,7 +1311,7 @@ def test_regression_detection():
 @pytest.mark.asyncio
 async def test_should_promote_criteria():
     """Test promotion criteria evaluation."""
-    
+
 @pytest.mark.asyncio
 async def test_promote_to_note_lark():
     """Test note-lark integration."""
@@ -1319,7 +1324,7 @@ async def test_promote_to_note_lark():
 @pytest.mark.asyncio
 async def test_full_enhanced_cycle():
     """Test full enhanced cycle with all components."""
-    
+
 @pytest.mark.asyncio
 async def test_enhanced_cycle_with_mock_adapter():
     """Test enhanced cycle using mock adapter."""
@@ -1333,7 +1338,7 @@ async def test_enhanced_cycle_with_mock_adapter():
 @pytest.mark.asyncio
 async def test_enhanced_cycle_bolt_merlin():
     """Test enhanced cycle on bolt-merlin scenarios."""
-    
+
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_knowledge_promotion_e2e():

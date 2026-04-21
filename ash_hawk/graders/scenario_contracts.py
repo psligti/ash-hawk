@@ -35,6 +35,24 @@ def _extract_file_path(arguments: dict[str, object]) -> str | None:
     return None
 
 
+def _normalize_changed_paths(changed_paths: set[str], workspace_root: Path) -> set[str]:
+    normalized = set(changed_paths)
+    workspace_root_resolved = workspace_root.resolve()
+    for raw_path in list(changed_paths):
+        path = Path(raw_path)
+        if not path.is_absolute():
+            continue
+        try:
+            normalized.add(str(path.resolve().relative_to(workspace_root_resolved)))
+        except ValueError:
+            raw_posix = path.as_posix()
+            for candidate in workspace_root_resolved.rglob(path.name):
+                rel = candidate.relative_to(workspace_root_resolved).as_posix()
+                if raw_posix.endswith(rel):
+                    normalized.add(rel)
+    return normalized
+
+
 def _normalize_status(value: object) -> str:
     raw = str(value).strip().lower()
     return {
@@ -230,6 +248,9 @@ class RepoDiffGrader(Grader):
             if path is not None:
                 changed_paths.add(path)
 
+        workspace_root = self._resolve_workspace_root(trial)
+        changed_paths = _normalize_changed_paths(changed_paths, workspace_root)
+
         required_raw = spec.config.get("required_file_changes", [])
         required_paths: list[str] = []
         for item in required_raw:
@@ -247,7 +268,6 @@ class RepoDiffGrader(Grader):
         missing_required = [path for path in required_paths if path not in changed_paths]
         forbidden_modified = [path for path in forbidden_paths if path in changed_paths]
 
-        workspace_root = self._resolve_workspace_root(trial)
         semantic_failures: list[dict[str, str | list[str]]] = []
         semantic_assertions_raw = spec.config.get("semantic_assertions", [])
         semantic_assertions = [item for item in semantic_assertions_raw if isinstance(item, dict)]

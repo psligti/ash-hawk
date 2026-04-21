@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import os
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -269,25 +268,15 @@ class TestBoltMerlinScenarioAdapter:
         assert "assistant" in roles
 
     @pytest.mark.asyncio
-    async def test_cwd_changes_to_workdir(self) -> None:
-        """Execute is called with cwd set to the workdir."""
+    async def test_working_dir_is_passed_to_execute(self) -> None:
         adapter = BoltMerlinScenarioAdapter()
         scenario = _default_scenario()
         workdir = Path("/tmp/ash-hawk-test-workdir")
 
-        recorded_cwd: list[str] = []
+        captured: dict[str, Any] = {}
 
-        async def fake_execute(
-            prompt: str,
-            trace: bool,
-            on_event: Any,
-            config_path: Path | None = None,
-        ) -> MagicMock:
-            del prompt
-            del trace
-            del on_event
-            del config_path
-            recorded_cwd.append(os.getcwd())
+        async def fake_execute(**kwargs: Any) -> MagicMock:
+            captured.update(kwargs)
             return _make_mock_execution_result()
 
         mock_execute_module = MagicMock()
@@ -302,15 +291,10 @@ class TestBoltMerlinScenarioAdapter:
                     "bolt_merlin.agent.execute": mock_execute_module,
                 },
             ),
-            patch("ash_hawk.scenario.adapters.bolt_merlin._cwd") as mock_cwd,
         ):
-            mock_cwd.return_value.__enter__ = MagicMock()
-            mock_cwd.return_value.__exit__ = MagicMock(return_value=False)
-            mock_cwd.side_effect = lambda p: recorded_cwd.append(str(p)) or MagicMock()
-
             await adapter.async_run_scenario(scenario, workdir, {}, {})
 
-        mock_cwd.assert_called_once_with(workdir.resolve())
+        assert captured["working_dir"] == workdir.resolve()
 
     @pytest.mark.asyncio
     async def test_agent_path_drives_explicit_agent_config_path(self, tmp_path: Path) -> None:

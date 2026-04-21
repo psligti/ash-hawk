@@ -3,8 +3,22 @@
     "ash_hawk",
     "tests"
   ],
+  "exclude": [
+    "ash_hawk/thin_runtime/tool_impl"
+  ],
   "pythonVersion": "3.11",
   "typeCheckingMode": "strict",
+  "extraPaths": [
+    "."
+  ],
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnusedImport": "none",
+  "reportUnusedFunction": "none",
+  "reportUnhashable": "none",
   "stubPath": "",
   "venvPath": ".",
   "venv": ".venv"

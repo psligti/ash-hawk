@@ -8,6 +8,7 @@ import logging
 import re
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -17,6 +18,7 @@ from ash_hawk.agents.agent_resolver import AgentResolution
 from ash_hawk.cli.main import cli
 from ash_hawk.context import setup_eval_logging
 from ash_hawk.improve.loop import ImprovementResult
+from ash_hawk.thin_runtime import RuntimeGoal
 from ash_hawk.types import EvalOutcome, EvalTranscript
 
 
@@ -104,6 +106,177 @@ class TestCliMain:
         assert "run" in result.output
         assert "improve" in result.output
         assert "thin" in result.output
+        assert "thin-runtime" in result.output
+
+    def test_thin_runtime_run_command(self, runner, monkeypatch, tmp_path):
+        captured: dict[str, object] = {}
+
+        class FakeHarness:
+            def execute(self, goal, **kwargs):
+                captured["goal"] = goal
+                captured.update(kwargs)
+                return SimpleNamespace(
+                    run_id="test-run",
+                    agent=SimpleNamespace(name="coordinator"),
+                    success=True,
+                    error=None,
+                    selected_tool_names=["select_next_action"],
+                    artifact_dir=str(tmp_path / "artifacts"),
+                    model_dump=lambda mode="json": {
+                        "run_id": "test-run",
+                        "success": True,
+                        "agent": {"name": "coordinator"},
+                    },
+                )
+
+        monkeypatch.setattr(
+            "ash_hawk.cli.thin_runtime.create_default_harness",
+            lambda **_: FakeHarness(),
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "thin-runtime",
+                "run",
+                "Test runtime goal",
+                "--goal-id",
+                "goal-123",
+                "--agent",
+                "coordinator",
+                "--max-iterations",
+                "5",
+                "--workdir",
+                str(tmp_path),
+                "--skill",
+                "process-control",
+                "--tool",
+                "select_next_action",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert isinstance(captured["goal"], RuntimeGoal)
+        assert captured["scenario_path"] is None
+        assert captured["requested_skills"] == ["process-control"]
+        assert captured["tool_execution_order"] == ["select_next_action"]
+        assert "test-run" in result.output
+
+    def test_thin_runtime_run_uses_agent_default_goal(self, runner, monkeypatch, tmp_path):
+        captured: dict[str, object] = {}
+
+        class FakeHarness:
+            def __init__(self) -> None:
+                self.catalog = SimpleNamespace(
+                    agents=[
+                        SimpleNamespace(
+                            name="improver",
+                            default_goal_description="Improve the agent against the specified evals until the measured outcome meaningfully improves.",
+                        )
+                    ]
+                )
+
+            def execute(self, goal, **kwargs):
+                captured["goal"] = goal
+                captured.update(kwargs)
+                return SimpleNamespace(run_id="default-goal-run")
+
+        monkeypatch.setattr(
+            "ash_hawk.cli.thin_runtime.create_default_harness",
+            lambda **_: FakeHarness(),
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "thin-runtime",
+                "run",
+                "--agent",
+                "improver",
+                "--workdir",
+                str(tmp_path),
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert isinstance(captured["goal"], RuntimeGoal)
+        assert captured["goal"].description == (
+            "Improve the agent against the specified evals until the measured outcome meaningfully improves."
+        )
+        assert "default-goal-run" in result.output
+
+    def test_thin_runtime_run_errors_without_goal_or_agent_default(
+        self, runner, monkeypatch, tmp_path
+    ):
+        class FakeHarness:
+            def __init__(self) -> None:
+                self.catalog = SimpleNamespace(
+                    agents=[SimpleNamespace(name="coordinator", default_goal_description="")]
+                )
+
+        monkeypatch.setattr(
+            "ash_hawk.cli.thin_runtime.create_default_harness",
+            lambda **_: FakeHarness(),
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "thin-runtime",
+                "run",
+                "--agent",
+                "coordinator",
+                "--workdir",
+                str(tmp_path),
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "has no default_goal_description" in result.output
+
+    def test_thin_runtime_run_explicit_goal_overrides_agent_default(
+        self, runner, monkeypatch, tmp_path
+    ):
+        captured: dict[str, object] = {}
+
+        class FakeHarness:
+            def __init__(self) -> None:
+                self.catalog = SimpleNamespace(
+                    agents=[
+                        SimpleNamespace(
+                            name="improver",
+                            default_goal_description="Improve the default eval target.",
+                        )
+                    ]
+                )
+
+            def execute(self, goal, **kwargs):
+                captured["goal"] = goal
+                captured.update(kwargs)
+                return SimpleNamespace(run_id="explicit-goal-run")
+
+        monkeypatch.setattr(
+            "ash_hawk.cli.thin_runtime.create_default_harness",
+            lambda **_: FakeHarness(),
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "thin-runtime",
+                "run",
+                "Use the user supplied goal",
+                "--agent",
+                "improver",
+                "--workdir",
+                str(tmp_path),
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert isinstance(captured["goal"], RuntimeGoal)
+        assert captured["goal"].description == "Use the user supplied goal"
+        assert "explicit-goal-run" in result.output
 
     def test_improve_command_shows_process_header_and_mutes_logs(
         self, runner, monkeypatch, tmp_path
@@ -116,6 +289,8 @@ class TestCliMain:
             kwargs["console"].print("[cyan]Simulated step:[/cyan] preparing worktree")
             return ImprovementResult(
                 iterations=1,
+                initial_score=0.25,
+                final_score=1.0,
                 initial_pass_rate=0.25,
                 final_pass_rate=1.0,
                 patches_proposed=[],
@@ -146,6 +321,194 @@ class TestCliMain:
         assert "Console shows process steps only" in result.output
         assert "Simulated step:" in result.output
         assert "suppressed logger noise" not in result.output
+
+    def test_improve_directory_expands_to_scenarios(self, runner, monkeypatch, tmp_path):
+        agent_dir = tmp_path / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+        scenarios_dir = tmp_path / "evals" / "scenarios"
+        scenarios_dir.mkdir(parents=True)
+        a = scenarios_dir / "a.scenario.yaml"
+        b = scenarios_dir / "b.scenario.yaml"
+        a.write_text("id: a\n", encoding="utf-8")
+        b.write_text("id: b\n", encoding="utf-8")
+
+        captured: dict[str, object] = {}
+
+        async def fake_improve(**kwargs):
+            captured.update(kwargs)
+            return ImprovementResult(
+                iterations=1,
+                initial_score=0.25,
+                final_score=1.0,
+                initial_pass_rate=0.25,
+                final_pass_rate=1.0,
+                patches_proposed=[],
+                patches_applied=[],
+                mutation_history=[],
+                iteration_logs=[],
+                convergence_achieved=True,
+                stop_reasons=[],
+            )
+
+        monkeypatch.setattr(
+            "ash_hawk.cli.main.resolve_agent_path",
+            lambda _agent, _workdir: AgentResolution(
+                path=agent_dir,
+                name="bolt_merlin",
+                resolved_from="cli_path",
+            ),
+        )
+        monkeypatch.setattr("ash_hawk.improve.loop.improve", fake_improve)
+
+        result = runner.invoke(cli, ["improve", str(scenarios_dir), "--agent", "bolt_merlin"])
+
+        assert result.exit_code == 0
+        assert captured["suite_path"] == [str(a), str(b)]
+        assert "Resolved paths:" in result.output
+
+    def test_improve_glob_expands_to_scenarios(self, runner, monkeypatch, tmp_path):
+        agent_dir = tmp_path / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+        scenarios_dir = tmp_path / "evals" / "scenarios"
+        scenarios_dir.mkdir(parents=True)
+        a = scenarios_dir / "a.scenario.yaml"
+        b = scenarios_dir / "b.scenario.yaml"
+        a.write_text("id: a\n", encoding="utf-8")
+        b.write_text("id: b\n", encoding="utf-8")
+
+        captured: dict[str, object] = {}
+
+        async def fake_improve(**kwargs):
+            captured.update(kwargs)
+            return ImprovementResult(
+                iterations=1,
+                initial_score=0.25,
+                final_score=1.0,
+                initial_pass_rate=0.25,
+                final_pass_rate=1.0,
+                patches_proposed=[],
+                patches_applied=[],
+                mutation_history=[],
+                iteration_logs=[],
+                convergence_achieved=True,
+                stop_reasons=[],
+            )
+
+        monkeypatch.setattr(
+            "ash_hawk.cli.main.resolve_agent_path",
+            lambda _agent, _workdir: AgentResolution(
+                path=agent_dir,
+                name="bolt_merlin",
+                resolved_from="cli_path",
+            ),
+        )
+        monkeypatch.setattr("ash_hawk.improve.loop.improve", fake_improve)
+
+        result = runner.invoke(
+            cli,
+            ["improve", str(scenarios_dir / "*.scenario.yaml"), "--agent", "bolt_merlin"],
+        )
+
+        assert result.exit_code == 0
+        assert captured["suite_path"] == [str(a), str(b)]
+
+    def test_improve_pack_expands_to_scenarios(self, runner, monkeypatch, tmp_path):
+        agent_dir = tmp_path / "bolt_merlin" / "agent"
+        agent_dir.mkdir(parents=True)
+        scenarios_dir = tmp_path / "evals" / "scenarios"
+        foundation_dir = scenarios_dir / "curriculum" / "foundation"
+        foundation_dir.mkdir(parents=True)
+        a = foundation_dir / "a.scenario.yaml"
+        b = foundation_dir / "b.scenario.yaml"
+        a.write_text(
+            "schema_version: v1\nid: a\nsut: {type: agentic_sdk, adapter: mock}\n", encoding="utf-8"
+        )
+        b.write_text(
+            "schema_version: v1\nid: b\nsut: {type: agentic_sdk, adapter: mock}\n", encoding="utf-8"
+        )
+        pack = scenarios_dir / "phase1_evidence_pack.yaml"
+        pack.write_text(
+            yaml.safe_dump(
+                {
+                    "schema_version": "v1",
+                    "id": "phase1",
+                    "scenarios": [
+                        {"scenario": "./curriculum/foundation/a.scenario.yaml"},
+                        {"scenario": "./curriculum/foundation/b.scenario.yaml"},
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        captured: dict[str, object] = {}
+
+        async def fake_improve(**kwargs):
+            captured.update(kwargs)
+            return ImprovementResult(
+                iterations=1,
+                initial_score=0.25,
+                final_score=1.0,
+                initial_pass_rate=0.25,
+                final_pass_rate=1.0,
+                patches_proposed=[],
+                patches_applied=[],
+                mutation_history=[],
+                iteration_logs=[],
+                convergence_achieved=True,
+                stop_reasons=[],
+            )
+
+        monkeypatch.setattr(
+            "ash_hawk.cli.main.resolve_agent_path",
+            lambda _agent, _workdir: AgentResolution(
+                path=agent_dir,
+                name="bolt_merlin",
+                resolved_from="cli_path",
+            ),
+        )
+        monkeypatch.setattr("ash_hawk.improve.loop.improve", fake_improve)
+
+        result = runner.invoke(cli, ["improve", str(pack), "--agent", "bolt_merlin"])
+
+        assert result.exit_code == 0
+        assert captured["suite_path"] == [str(a.resolve()), str(b.resolve())]
+        assert "Resolved paths:" in result.output
+
+    def test_backfill_memory_command_prints_summary(self, runner, monkeypatch, tmp_path):
+        captured: dict[str, object] = {}
+
+        def fake_backfill(
+            runs_dir: Path,
+            memory_dir: Path,
+            *,
+            force: bool = False,
+            include_improve_cycle: bool = False,
+        ):
+            captured["runs_dir"] = runs_dir
+            captured["memory_dir"] = memory_dir
+            captured["force"] = force
+            captured["include_improve_cycle"] = include_improve_cycle
+            return {"imported_episodes": 7, "semantic_rules": 3, "skip_precision_basis": 2500}
+
+        monkeypatch.setattr("ash_hawk.improve.loop.backfill_memory", fake_backfill)
+
+        result = runner.invoke(
+            cli,
+            [
+                "backfill-memory",
+                "--runs-dir",
+                str(tmp_path / "runs"),
+                "--memory-dir",
+                str(tmp_path / "memory"),
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert captured["runs_dir"] == tmp_path / "runs"
+        assert captured["memory_dir"] == tmp_path / "memory"
+        assert captured["include_improve_cycle"] is False
+        assert "Imported episodes:" in result.output
 
 
 @pytest.mark.integration

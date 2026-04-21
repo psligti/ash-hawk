@@ -1,5 +1,11 @@
 # Self-Improvement Loop Implementation Status
 
+> **Status note (2026-04-13):** This document describes an older `auto_research` /
+> `ash_hawk/improvement/` architecture that is no longer present in the live source tree.
+> The supported implementation now lives under `ash_hawk/improve/` and is invoked via
+> `ash-hawk improve ...`. Treat the details below as historical context unless they are
+> explicitly mirrored by live source files.
+
 ## ✅ Completed
 
 ### Infrastructure (Commits: e4f2a3d, faaaf8e, 6620b6f, 204ea33)
@@ -54,7 +60,7 @@ uv run ash-hawk auto-research run -s evals/scenarios/*.scenario.yaml
 
 **Configuration**:
 - Default: 10 retries
-- Max: 50 retries  
+- Max: 50 retries
 - Env var: `ASH_HAWK_AUTO_RESEARCH_LLM_MAX_RETRIES`
 
 **Future**: A proper request queue is planned to serialize agent execution with configurable workers.
@@ -102,7 +108,7 @@ if checker.should_stop():
 
 ## Next Steps
 
-To achieve +20pt improvement on heldout:
-1. Fix workdir issue in adapter
-2. Run full 100-iteration cycle
-3. Verify improvement on holdout set
+Current priorities for the live improve loop:
+1. Expand diagnosis context so the diagnoser sees more of each failed run
+2. Run improvement through `ash-hawk improve ...` against real scenario suites
+3. Investigate mutation timeouts in kept candidate runs before tuning broader search strategy

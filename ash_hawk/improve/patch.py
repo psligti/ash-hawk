@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import re
+import statistics
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,59 @@ class ProposedPatch(pd.BaseModel):
         default=None, description="Relative path within agent dir"
     )
     content: str | None = pd.Field(default=None, description="Full file content")
+    execution_metrics: dict[str, Any] = pd.Field(
+        default_factory=dict,
+        description="Mutation subprocess execution metrics",
+    )
+    failure_reason: str | None = pd.Field(
+        default=None,
+        description="Structured failure reason when mutation generation did not yield a clean patch",
+    )
+    recovered_from_changed_files: bool = pd.Field(
+        default=False,
+        description="Whether the mutation was recovered from on-disk changes instead of clean stdout",
+    )
+
+
+class MutationExecutionMetrics(pd.BaseModel):
+    model_config = pd.ConfigDict(extra="forbid")
+
+    registered_tool_count: int = pd.Field(default=0, ge=0)
+    llm_completion_count: int = pd.Field(default=0, ge=0)
+    llm_completion_durations: list[float] = pd.Field(default_factory=list)
+    max_llm_completion_seconds: float = pd.Field(default=0.0, ge=0.0)
+    mean_llm_completion_seconds: float = pd.Field(default=0.0, ge=0.0)
+    long_llm_completion_count: int = pd.Field(default=0, ge=0)
+    created_virtualenv: bool = pd.Field(default=False)
+
+
+def _extract_execution_metrics(stdout_text: str, stderr_text: str) -> MutationExecutionMetrics:
+    durations = [
+        float(match)
+        for match in re.findall(
+            r"_collect_stream_events_once completed in ([0-9]+(?:\.[0-9]+)?)s", stdout_text
+        )
+    ]
+    return MutationExecutionMetrics(
+        registered_tool_count=len(
+            re.findall(r"^Registered tool:", stdout_text, flags=re.MULTILINE)
+        ),
+        llm_completion_count=len(durations),
+        llm_completion_durations=durations,
+        max_llm_completion_seconds=max(durations, default=0.0),
+        mean_llm_completion_seconds=statistics.mean(durations) if durations else 0.0,
+        long_llm_completion_count=sum(1 for duration in durations if duration >= 90.0),
+        created_virtualenv="Creating virtual environment at:" in stderr_text,
+    )
+
+
+def _classify_cli_error(error: str) -> str:
+    lowered = error.lower()
+    if "timed out" in lowered:
+        return "mutation_cli_timeout"
+    if "registered zero tools" in lowered:
+        return "mutation_zero_tools"
+    return "mutation_cli_error"
 
 
 async def propose_patch(
@@ -44,11 +98,13 @@ async def propose_patch(
             formatted_agent += f"\n--- {key} ---\n{agent_content[key][:2000]}\n"
 
         target_files = ", ".join(diagnosis.target_files) if diagnosis.target_files else "unknown"
+        anchor_files = ", ".join(diagnosis.anchor_files) if diagnosis.anchor_files else "none"
         prompt = (
             "Based on this diagnosis and the agent content below, output the COMPLETE FILE CONTENT "
             "for the file that needs to change. Do NOT output a diff. Output the full file.\n\n"
             f"Agent files:\n{formatted_agent}\n\n"
             f"Target files: {target_files}\n"
+            f"Anchor files: {anchor_files}\n"
             f"Root cause: {diagnosis.root_cause}\n"
             f"Suggested fix: {diagnosis.suggested_fix}\n\n"
             "Output the complete file content, starting with the file path on the first line as: "
@@ -113,6 +169,7 @@ def _build_mutation_prompt(
         agent_files_section = "\n## Current Source Files\n" + "\n".join(lines)
 
     target_files = ", ".join(diagnosis.target_files) if diagnosis.target_files else "unknown"
+    anchor_files = ", ".join(diagnosis.anchor_files) if diagnosis.anchor_files else "none"
 
     grader_section = ""
     if grader_details:
@@ -147,16 +204,18 @@ def _build_mutation_prompt(
         f"- Root Cause: {diagnosis.root_cause}\n"
         f"- Suggested Fix: {diagnosis.suggested_fix}\n"
         f"- Target Files: {target_files}\n"
+        f"- Anchor Files: {anchor_files}\n"
         f"{grader_section}"
         f"{transcript_section}"
         f"{scope_constraint}"
         f"{agent_files_section}\n\n"
         "## Instructions\n"
         "1. Read the relevant source files (prompts, config, tools)\n"
-        "2. Identify what in YOUR code caused this failure\n"
-        "3. Make minimal, targeted changes to fix the issue\n"
-        "4. Do NOT change test files, session files, or evaluation infrastructure\n"
-        f"5. Focus on the root cause: {diagnosis.root_cause}\n\n"
+        "2. Identify the smallest plausible change in YOUR code that caused this failure\n"
+        "3. Make the smallest possible targeted change. Prefer one file, or at most two tightly-coupled files.\n"
+        "4. Avoid broad prompt rewrites, sweeping refactors, new modules, or touching many tools unless the evidence clearly requires it.\n"
+        "5. Do NOT change test files, session files, or evaluation infrastructure\n"
+        f"6. Focus on the root cause: {diagnosis.root_cause}\n\n"
         "The files are in the current working directory. Use your tools to read and edit them."
     )
 
@@ -170,6 +229,9 @@ async def propose_patch_via_agent(
     console: Any | None = None,
     config_path: Path | None = None,
     repo_root: Path | None = None,
+    timeout_seconds: float | None = None,
+    audit_bundle: Any | None = None,
+    audit_stem: str | None = None,
 ) -> ProposedPatch:
     prompt = _build_mutation_prompt(
         diagnosis,
@@ -183,10 +245,13 @@ async def propose_patch_via_agent(
     if console is not None:
         console.print("    [dim]Running agent to apply fix...[/dim]")
 
-    response_text, error = await run_agent_cli(
+    response_text, error, execution_metrics = await run_agent_cli(
         prompt=prompt,
         cwd=repo_root or agent_source_path.parent,
         config_path=config_path,
+        timeout_seconds=timeout_seconds,
+        audit_bundle=audit_bundle,
+        audit_stem=audit_stem,
     )
 
     if error is not None:
@@ -201,6 +266,8 @@ async def propose_patch_via_agent(
             rationale=diagnosis.root_cause,
             agent_relative_path=None,
             content=None,
+            execution_metrics=execution_metrics,
+            failure_reason=_classify_cli_error(error),
         )
 
     return ProposedPatch(
@@ -211,6 +278,8 @@ async def propose_patch_via_agent(
         rationale=diagnosis.root_cause,
         agent_relative_path="(agent-edited)",
         content=response_text or "",
+        execution_metrics=execution_metrics,
+        failure_reason=None,
     )
 
 
@@ -222,7 +291,9 @@ async def run_agent_cli(
     timeout_seconds: float | None = None,
     command_name: str = "code",
     json_output: bool = False,
-) -> tuple[str | None, str | None]:
+    audit_bundle: Any | None = None,
+    audit_stem: str | None = None,
+) -> tuple[str | None, str | None, dict[str, Any]]:
     import asyncio
     import os
     import shutil
@@ -238,7 +309,7 @@ async def run_agent_cli(
     else:
         bolt_merlin = shutil.which("bolt-merlin")
         if bolt_merlin is None:
-            return None, "bolt-merlin CLI not found in PATH, local .venv, or via uv run"
+            return None, "bolt-merlin CLI not found in PATH, local .venv, or via uv run", {}
         cmd = [bolt_merlin, command_name]
 
     if agent_name is not None and command_name == "code":
@@ -269,16 +340,63 @@ async def run_agent_cli(
     except TimeoutError:
         import signal
 
-        os.killpg(proc.pid, signal.SIGKILL)
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
         await proc.communicate()
         timeout_label = timeout_seconds if timeout_seconds is not None else "configured"
-        return None, f"bolt-merlin CLI timed out after {timeout_label}s"
+        if audit_bundle is not None and audit_stem is not None:
+            audit_bundle.write_json(
+                f"subprocess/{audit_stem}.json",
+                {
+                    "command": cmd,
+                    "cwd": str(cwd),
+                    "config_path": str(config_path) if config_path else None,
+                    "command_name": command_name,
+                    "agent_name": agent_name,
+                    "json_output": json_output,
+                    "timeout_seconds": timeout_seconds,
+                    "stdout": None,
+                    "stderr": None,
+                    "error": f"bolt-merlin CLI timed out after {timeout_label}s",
+                    "execution_metrics": {},
+                },
+            )
+        return None, f"bolt-merlin CLI timed out after {timeout_label}s", {}
+
+    stdout_text = stdout.decode(errors="replace").strip()
+    stderr_text = stderr.decode(errors="replace").strip()
+    execution_metrics = _extract_execution_metrics(stdout_text, stderr_text).model_dump()
+    if audit_bundle is not None and audit_stem is not None:
+        audit_bundle.write_json(
+            f"subprocess/{audit_stem}.json",
+            {
+                "command": cmd,
+                "cwd": str(cwd),
+                "config_path": str(config_path) if config_path else None,
+                "command_name": command_name,
+                "agent_name": agent_name,
+                "json_output": json_output,
+                "timeout_seconds": timeout_seconds,
+                "returncode": proc.returncode,
+                "stdout": stdout_text,
+                "stderr": stderr_text,
+                "execution_metrics": execution_metrics,
+                "error": None
+                if proc.returncode == 0
+                else (stderr_text or f"exit code {proc.returncode}"),
+            },
+        )
 
     if proc.returncode != 0:
-        err_msg = stderr.decode(errors="replace").strip() or f"exit code {proc.returncode}"
-        return None, err_msg
+        err_msg = stderr_text or f"exit code {proc.returncode}"
+        return None, err_msg, execution_metrics
 
-    return stdout.decode(errors="replace").strip(), None
+    if execution_metrics.get("registered_tool_count", 0) == 0:
+        return None, "mutation subprocess registered zero tools", execution_metrics
+
+    return stdout_text, None, execution_metrics
 
 
 def _sanitize_path(name: str) -> str:

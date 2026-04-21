@@ -24,18 +24,37 @@ def _git_env() -> dict[str, str]:
     return env
 
 
-def _run_git(args: list[str], cwd: Path) -> CompletedProcess[str]:
+def _run_git(
+    args: list[str], cwd: Path, extra_env: dict[str, str] | None = None
+) -> CompletedProcess[str]:
     git_binary = shutil.which("git")
     if git_binary is None:
         raise ValueError("git executable not found")
+    env = _git_env()
+    if extra_env is not None:
+        env.update(extra_env)
     return run(  # nosec B603
         [git_binary, *args],
         cwd=cwd,
         check=False,
         capture_output=True,
         text=True,
-        env=_git_env(),
+        env=env,
     )
+
+
+def _default_commit_identity_env(repo_root: Path) -> dict[str, str]:
+    name_result = _run_git(["config", "user.name"], repo_root)
+    email_result = _run_git(["config", "user.email"], repo_root)
+    if name_result.returncode == 0 and email_result.returncode == 0:
+        if name_result.stdout.strip() and email_result.stdout.strip():
+            return {}
+    return {
+        "GIT_AUTHOR_NAME": "Ash Hawk Improve",
+        "GIT_AUTHOR_EMAIL": "ash-hawk-improve@local",
+        "GIT_COMMITTER_NAME": "Ash Hawk Improve",
+        "GIT_COMMITTER_EMAIL": "ash-hawk-improve@local",
+    }
 
 
 def infer_agent_name_from_path(agent_path: Path) -> str:
@@ -102,6 +121,16 @@ class IsolatedAgentWorkspace:
         shutil.rmtree(self.workspace_parent, ignore_errors=True)
 
 
+@dataclass
+class RepoCommit:
+    repo_root: Path
+    branch: str | None
+    commit_sha: str
+    committed_paths: list[str]
+    message_title: str
+    message_body: str
+
+
 def _sync_directory_contents(source_dir: Path, destination_dir: Path) -> list[str]:
     source_hashes = compute_directory_hashes(source_dir)
     destination_hashes = compute_directory_hashes(destination_dir)
@@ -133,6 +162,84 @@ def detect_git_repo_root(path: Path) -> Path | None:
         return None
     stdout = result.stdout.strip()
     return Path(stdout).resolve() if stdout else None
+
+
+def commit_agent_changes(
+    repo_root: Path,
+    agent_path: Path,
+    changed_paths: list[str],
+    *,
+    message_title: str,
+    message_body: str,
+) -> RepoCommit:
+    if not changed_paths:
+        raise ValueError("Cannot create improve commit without changed paths")
+
+    resolved_repo_root = repo_root.resolve()
+    resolved_agent_path = agent_path.resolve()
+    relative_agent_path = resolved_agent_path.relative_to(resolved_repo_root)
+    repo_paths = [str((relative_agent_path / rel_path).as_posix()) for rel_path in changed_paths]
+
+    staged_before = _run_git(["diff", "--cached", "--name-only"], resolved_repo_root)
+    if staged_before.returncode != 0:
+        stderr = staged_before.stderr.strip() or staged_before.stdout.strip() or "unknown git error"
+        raise ValueError(f"Failed to inspect staged changes before improve commit: {stderr}")
+
+    preexisting_staged = [
+        line.strip() for line in staged_before.stdout.splitlines() if line.strip()
+    ]
+    unexpected_staged = sorted(path for path in preexisting_staged if path not in repo_paths)
+    if unexpected_staged:
+        raise ValueError(
+            "Cannot create improve commit with pre-existing staged changes outside the kept mutation: "
+            + ", ".join(unexpected_staged[:5])
+        )
+
+    add_result = _run_git(["add", "-A", "--", *repo_paths], resolved_repo_root)
+    if add_result.returncode != 0:
+        stderr = add_result.stderr.strip() or add_result.stdout.strip() or "unknown git error"
+        raise ValueError(f"Failed to stage improve mutation paths: {stderr}")
+
+    diff_result = _run_git(
+        ["diff", "--cached", "--name-only", "--", *repo_paths], resolved_repo_root
+    )
+    if diff_result.returncode != 0:
+        stderr = diff_result.stderr.strip() or diff_result.stdout.strip() or "unknown git error"
+        _run_git(["reset", "--mixed", "--", *repo_paths], resolved_repo_root)
+        raise ValueError(f"Failed to inspect staged improve mutation paths: {stderr}")
+
+    committed_paths = [line.strip() for line in diff_result.stdout.splitlines() if line.strip()]
+    if not committed_paths:
+        _run_git(["reset", "--mixed", "--", *repo_paths], resolved_repo_root)
+        raise ValueError("No staged improve mutation paths were available to commit")
+
+    identity_env = _default_commit_identity_env(resolved_repo_root)
+    commit_result = _run_git(
+        ["commit", "-m", message_title, "-m", message_body],
+        resolved_repo_root,
+        extra_env=identity_env,
+    )
+    if commit_result.returncode != 0:
+        _run_git(["reset", "--mixed", "--", *repo_paths], resolved_repo_root)
+        stderr = commit_result.stderr.strip() or commit_result.stdout.strip() or "unknown git error"
+        raise ValueError(f"Failed to create improve commit: {stderr}")
+
+    sha_result = _run_git(["rev-parse", "HEAD"], resolved_repo_root)
+    if sha_result.returncode != 0:
+        stderr = sha_result.stderr.strip() or sha_result.stdout.strip() or "unknown git error"
+        raise ValueError(f"Failed to resolve improve commit sha: {stderr}")
+
+    branch_result = _run_git(["rev-parse", "--abbrev-ref", "HEAD"], resolved_repo_root)
+    branch = branch_result.stdout.strip() if branch_result.returncode == 0 else None
+
+    return RepoCommit(
+        repo_root=resolved_repo_root,
+        branch=branch or None,
+        commit_sha=sha_result.stdout.strip(),
+        committed_paths=committed_paths,
+        message_title=message_title,
+        message_body=message_body,
+    )
 
 
 def prepare_isolated_agent_workspace(
@@ -213,6 +320,8 @@ def import_package_from_agent_path(package_name: str, agent_path: Path | None) -
 
 __all__ = [
     "IsolatedAgentWorkspace",
+    "RepoCommit",
+    "commit_agent_changes",
     "detect_package_name",
     "detect_git_repo_root",
     "detect_agent_config_path",

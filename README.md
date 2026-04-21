@@ -49,19 +49,18 @@ See `examples/complete-eval/` for a full example demonstrating:
 - Fixture creation and resolution
 - Test file structure
 
-## Auto Research (Policy)
+## Improve Loop
 
-Run policy-focused iterative improvement for an agent:
+Use the live improvement loop via the CLI:
 
 ```bash
-./scripts/auto_research_policy.sh bolt-merlin 100 3 bolt-merlin-eval
+ash-hawk improve evals/scenarios/ --agent build --max-iterations 5
 ```
 
-Arguments:
-- `agent` (default: `bolt-merlin`)
-- `iterations` (default: `100`)
-- `promotion-threshold` (default: `3`)
-- `eval-pack` (default: `bolt-merlin-eval`)
+Notes:
+- `ash-hawk improve` is the supported entrypoint for iterative improvement in this repo.
+- The legacy `auto_research` scripts and module paths have been retired from the live source tree.
+- Pass a scenario file, glob, or directory. Directories are expanded recursively to `*.scenario.yaml` files.
 
 ## Related
 
