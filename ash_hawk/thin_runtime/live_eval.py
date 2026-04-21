@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import cast
 
 from ash_hawk.scenario.runner import ScenarioRunner
+from ash_hawk.scenario.tool_event_preview import tool_event_preview
 from ash_hawk.thin_runtime.tool_types import (
     AuditRunResult,
     AuditToolContext,
@@ -77,7 +78,11 @@ def run_live_scenario_eval(
                     tool=str(tool_call.get("name") or tool_call.get("tool") or ""),
                     success=(tool_call.get("error") is None),
                     error=(str(tool_call.get("error")) if tool_call.get("error") else None),
-                    preview=_tool_call_preview(tool_call),
+                    preview=tool_event_preview(
+                        str(tool_call.get("name") or tool_call.get("tool") or ""),
+                        tool_call.get("arguments") or tool_call.get("input") or {},
+                        tool_call,
+                    ),
                 )
                 for tool_call in trial_result.transcript.tool_calls
             ]
@@ -228,13 +233,3 @@ def _grader_detail_text(details: object) -> str:
             if first_failure.get("error"):
                 return f"{path}: {first_failure['error']}"
     return ""
-
-
-def _tool_call_preview(tool_call: dict[str, object]) -> str | None:
-    for key in ("output", "result", "stdout", "message"):
-        value = tool_call.get(key)
-        if isinstance(value, str):
-            normalized = " ".join(value.split())
-            if normalized:
-                return normalized[:140]
-    return None
