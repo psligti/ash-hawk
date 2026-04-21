@@ -19,6 +19,7 @@ from ash_hawk.scenario.models import (
     ScenarioAdapterResult,
     ScenarioTraceEvent,
 )
+from ash_hawk.scenario.tool_event_preview import tool_event_preview
 from ash_hawk.types import EvalOutcome, FailureMode
 
 
@@ -217,6 +218,35 @@ def _build_trace_events(
             )
 
     return trace_events
+
+
+def _build_live_event_payload(event: Any) -> dict[str, object] | None:
+    if type(event).__name__ != "ToolExecutionEvent":
+        return None
+    tool_name = str(getattr(event, "tool_name", "") or "")
+    if not tool_name:
+        return None
+    error = getattr(event, "error", None)
+    return {
+        "tool": tool_name,
+        "event_type": "tool_result",
+        "success": error is None,
+        "preview": tool_event_preview(
+            tool_name,
+            getattr(event, "tool_input", None),
+            _live_event_result(event),
+        ),
+        "error": str(error) if error is not None else None,
+    }
+
+
+def _live_event_result(event: Any) -> dict[str, object]:
+    payload: dict[str, object] = {}
+    for attr in ("result", "output", "response", "stdout", "message"):
+        value = getattr(event, attr, None)
+        if value is not None:
+            payload[attr] = value
+    return payload
 
 
 __all__ = ["BoltMerlinScenarioAdapter"]

@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Literal
@@ -21,6 +22,7 @@ from ash_hawk.scenario.models import (
     parse_scenario_tool_call,
 )
 from ash_hawk.scenario.registry import ScenarioAdapterRegistry, get_default_adapter_registry
+from ash_hawk.scenario.tool_event_preview import tool_event_preview
 from ash_hawk.scenario.tooling import ToolingHarness
 from ash_hawk.scenario.trace import (
     DEFAULT_TRACE_TS,
@@ -41,8 +43,13 @@ from ash_hawk.types import (
 
 
 class ToolingHarnessRecorder:
-    def __init__(self, harness: ToolingHarness) -> None:
+    def __init__(
+        self,
+        harness: ToolingHarness,
+        event_callback: Callable[[dict[str, object]], None] | None = None,
+    ) -> None:
         self._harness = harness
+        self._event_callback = event_callback
         self.events: list[dict[str, JSONValue]] = []
 
     @property
@@ -61,6 +68,17 @@ class ToolingHarnessRecorder:
             {"tool_name": tool_name, "result": result},
         )
         self.events.append(result_event.model_dump(mode="json"))
+        if self._event_callback is not None:
+            error = result.get("error")
+            self._event_callback(
+                {
+                    "tool": tool_name,
+                    "event_type": "tool_result",
+                    "success": error in (None, ""),
+                    "preview": tool_event_preview(tool_name, tool_input, result),
+                    "error": str(error) if error not in (None, "") else None,
+                }
+            )
         if isinstance(result, dict):
             return {str(key): self._to_json_value(value) for key, value in result.items()}
         return {"value": self._to_json_value(result)}
