@@ -1,11 +1,7 @@
-# type-hygiene: skip-file
 from __future__ import annotations
-
-from typing import Any
 
 import pydantic as pd
 
-from ash_hawk.thin_runtime.llm_client import call_model_structured
 from ash_hawk.thin_runtime.models import (
     AgentSpec,
     ContextSnapshot,
@@ -24,30 +20,6 @@ class ToolSelectionDecision(pd.BaseModel):
     model_config = pd.ConfigDict(extra="forbid")
 
 
-def _format_memory_context(memory: dict[str, Any]) -> str:
-    semantic_memory = memory.get("semantic", {})
-    personal_memory = memory.get("personal", {})
-    episodic_memory = memory.get("episodic", {})
-    session_memory = memory.get("session", {})
-
-    def _limited_list(raw: Any, *, limit: int) -> list[str]:
-        if not isinstance(raw, list):
-            return []
-        values = [str(item).strip() for item in raw if str(item).strip()]
-        return values[:limit]
-
-    summary = {
-        "preferences": _limited_list(personal_memory.get("preferences"), limit=5),
-        "rules": _limited_list(semantic_memory.get("rules"), limit=5),
-        "boosts": _limited_list(semantic_memory.get("boosts"), limit=5),
-        "penalties": _limited_list(semantic_memory.get("penalties"), limit=5),
-        "episodes": _limited_list(episodic_memory.get("episodes"), limit=3),
-        "recent_search_results": _limited_list(memory.get("search_results"), limit=5),
-        "recent_transcripts": _limited_list(session_memory.get("transcripts"), limit=3),
-    }
-    return str({key: value for key, value in summary.items() if value})
-
-
 def select_tool_via_policy(
     *,
     goal: RuntimeGoal,
@@ -57,6 +29,10 @@ def select_tool_via_policy(
     context: ContextSnapshot,
     tool_execution_order: list[str] | None,
 ) -> ToolSelectionDecision:
+    del goal
+    del agent
+    del active_skills
+
     eligible_names = [tool.name for tool in eligible_tools]
     if not eligible_names:
         return ToolSelectionDecision(
@@ -82,6 +58,30 @@ def select_tool_via_policy(
             considered_tools=eligible_names,
         )
 
+    if _should_force_repeat_eval(context) and "run_eval_repeated" in eligible_names:
+        return ToolSelectionDecision(
+            selected_tool="run_eval_repeated",
+            source="loop_followthrough",
+            rationale="A mutation already happened, so the next action must be loop-closing re-evaluation.",
+            considered_tools=eligible_names,
+        )
+
+    if _needs_structured_diagnosis(context) and "call_llm_structured" in eligible_names:
+        return ToolSelectionDecision(
+            selected_tool="call_llm_structured",
+            source="diagnosis_required",
+            rationale="Failure evidence exists but no ranked hypothesis does, so diagnosis must happen before mutation.",
+            considered_tools=eligible_names,
+        )
+
+    if _has_ranked_targets(context) and "mutate_agent_files" in eligible_names:
+        return ToolSelectionDecision(
+            selected_tool="mutate_agent_files",
+            source="hypothesis_to_mutation",
+            rationale="A ranked diagnosis target exists, so the next action should be one targeted mutation.",
+            considered_tools=eligible_names,
+        )
+
     preferred_tool = context.runtime.get("preferred_tool")
     if isinstance(preferred_tool, str) and preferred_tool in eligible_names:
         return ToolSelectionDecision(
@@ -91,36 +91,38 @@ def select_tool_via_policy(
             considered_tools=eligible_names,
         )
 
-    tool_descriptions = [
-        f"- {tool.name}: {tool.summary} | when_to_use={tool.when_to_use} | when_not_to_use={tool.when_not_to_use}"
-        for tool in eligible_tools
-    ]
-    model_result = call_model_structured(
-        ToolSelectionDecision,
-        system_prompt=(
-            "You are the explicit tool-selection policy for an agentic runtime. "
-            "Choose the next tool from the provided eligible tools, or decide that no tool should be selected. "
-            "Base the decision on the agent text, active skills, failure/evaluation context, and the declared when_to_use/when_not_to_use guidance."
-        ),
-        user_prompt=(
-            f"Goal: {goal.description}\n"
-            f"Agent: {agent.name}\n"
-            f"Agent text:\n{context.runtime.get('agent_text', '')}\n\n"
-            f"Active skills: {[skill.name for skill in active_skills]}\n"
-            f"Workspace context: {context.workspace}\n"
-            f"Failure context: {context.failure}\n"
-            f"Evaluation context: {context.evaluation}\n"
-            f"Memory context: {_format_memory_context(context.memory)}\n"
-            f"Eligible tools:\n{chr(10).join(tool_descriptions)}\n\n"
-            'Return JSON: {"selected_tool": "tool_name or null", "source": "model_policy", "rationale": "why", "considered_tools": ["tool1", "tool2"]}'
-        ),
-    )
-    if model_result is not None and model_result.selected_tool in eligible_names:
-        return model_result.model_copy(update={"considered_tools": eligible_names})
-
     return ToolSelectionDecision(
         selected_tool=None,
-        source="policy_unavailable",
-        rationale="No explicit policy decision was produced.",
+        source="guardrail_clear",
+        rationale="No guardrail forced a specific tool; defer to runtime ordering.",
         considered_tools=eligible_names,
     )
+
+
+def _has_active_failure(context: ContextSnapshot) -> bool:
+    failure_family = context.failure.get("failure_family")
+    if isinstance(failure_family, str) and failure_family.strip():
+        return True
+    explanations = context.failure.get("explanations")
+    return isinstance(explanations, list) and bool(explanations)
+
+
+def _needs_structured_diagnosis(context: ContextSnapshot) -> bool:
+    ranked = context.failure.get("ranked_hypotheses")
+    mutated = context.workspace.get("mutated_files")
+    return _has_active_failure(context) and not ranked and not mutated
+
+
+def _has_ranked_targets(context: ContextSnapshot) -> bool:
+    raw_hypotheses = context.failure.get("ranked_hypotheses")
+    if not isinstance(raw_hypotheses, list):
+        return False
+    for hypothesis in raw_hypotheses:
+        if isinstance(hypothesis, dict) and hypothesis.get("target_files"):
+            return True
+    return False
+
+
+def _should_force_repeat_eval(context: ContextSnapshot) -> bool:
+    mutated_files = context.workspace.get("mutated_files")
+    return isinstance(mutated_files, list) and bool(mutated_files)

@@ -58,7 +58,7 @@ This loop is explicit and should drive tool choice.
 ## Bootstrap, does not consume the iteration budget
 - Load workspace state.
 - Detect relevant config.
-- Scope the workspace once unless the target changes.
+- Do not treat workspace scoping as a mandatory step. If diagnosis can already name likely durable target files, proceed directly to diagnosis or mutation.
 - Establish a baseline if one does not already exist.
 - Read the scenario or pack intent before deciding the capability is already solved.
 
@@ -68,11 +68,13 @@ This loop is explicit and should drive tool choice.
 
 ## Loop step 2: hypothesis
 - Form one concrete hypothesis about what change could improve the score.
-- Use the pack, scenario summary, workspace evidence, and last diff to form the hypothesis directly when no structured planner is available.
+- Use the pack, scenario summary, workspace evidence, traces, and last diff to form the hypothesis.
+- The hypothesis must identify a small durable target file or a very small set of tightly coupled files.
 
 ## Loop step 3: mutation
 - Apply one targeted mutation.
 - Do not spend a whole loop on generic prep after scope is already known.
+- If no target file is obvious, diagnosis must derive one before the loop can stop.
 
 ## Loop step 4: re-evaluation
 - Use `run_eval_repeated` after a mutation to close the loop.
@@ -84,6 +86,7 @@ This loop is explicit and should drive tool choice.
 - If the score improved meaningfully, stop or continue carefully.
 - If the score stayed flat or regressed, start the next loop with that evidence.
 - If the current baseline is perfect but the pack describes a capability that is not yet encoded in the coding agent, treat the pack as a capability-building task and continue diagnosis against the pack requirements.
+- A run that only established a baseline or scoped the workspace is not a successful improvement run while `failure_family` remains active.
 
 # Decision Policy
 - Use eval evidence to justify the next loop action.
@@ -141,9 +144,10 @@ Use these to gather high-signal evidence tied to the eval target.
 - Stop immediately when the current baseline is perfect and the current run has no live failure signals.
 - Stop when the loop budget is exhausted.
 - Stop when repeated loops stop adding signal.
+- Do not stop with success before at least one mutation plus fresh re-evaluation when live failure signals remain.
 
 # Completion Rule
-Only mark the run complete when a fresh re-evaluation supports the claimed improvement or when the loop budget is honestly exhausted.
+Only mark the run complete when a fresh re-evaluation supports the claimed improvement or when the loop budget is honestly exhausted. Baseline-only runs with active failure signals are incomplete.
 
 # Reporting Rules
 - State the baseline.

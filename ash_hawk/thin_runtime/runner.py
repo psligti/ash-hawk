@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
 from uuid import uuid4
@@ -200,7 +201,41 @@ class AgenticLoopRunner:
                 tool_results=tool_results,
             )
             if tool_name is None:
-                success, error = self._handle_no_tool(agent, goal, selected_tool_names)
+                failure_family = context.failure.get("failure_family")
+                completed_loops = self._current_iteration_count(agent, selected_tool_names)
+                mutated_files = context.workspace.get("mutated_files", [])
+                if agent.iteration_budget_mode == "loop" and (
+                    isinstance(failure_family, str)
+                    and failure_family.strip()
+                    or completed_loops == 0
+                    or not isinstance(mutated_files, list)
+                    or not mutated_files
+                ):
+                    error = "No eligible tools available for a complete diagnosis-mutation-re-evaluation loop"
+                    success = False
+                    self.hooks.emit(
+                        "on_stop_condition",
+                        {"goal_id": goal.goal_id, "agent": agent.name, "reason": error},
+                    )
+                else:
+                    if selected_tool_names:
+                        success = True
+                        error = None
+                        self.hooks.emit(
+                            "on_stop_condition",
+                            {
+                                "goal_id": goal.goal_id,
+                                "agent": agent.name,
+                                "reason": "No additional eligible tools available",
+                            },
+                        )
+                    else:
+                        error = "No eligible tools available for current contexts"
+                        success = False
+                        self.hooks.emit(
+                            "on_stop_condition",
+                            {"goal_id": goal.goal_id, "agent": agent.name, "reason": error},
+                        )
                 break
 
             remaining_tools.remove(tool_name)
@@ -344,16 +379,24 @@ class AgenticLoopRunner:
         return sum(1 for tool_name in selected_tool_names if tool_name in completion_tools)
 
     def _tool_preconditions_met(self, tool_name: str, context: ContextSnapshot) -> bool:
-        if tool_name == "call_llm_structured":
-            allowed_targets = context.workspace.get("allowed_target_files", [])
-            return isinstance(allowed_targets, list) and len(allowed_targets) > 0
         if tool_name == "mutate_agent_files":
-            allowed_targets = context.workspace.get("allowed_target_files", [])
-            return isinstance(allowed_targets, list) and len(allowed_targets) > 0
+            return self._mutation_candidates_available(context)
         if tool_name == "run_eval_repeated":
             mutated_files = context.workspace.get("mutated_files", [])
             return isinstance(mutated_files, list) and len(mutated_files) > 0
         return True
+
+    def _mutation_candidates_available(self, context: ContextSnapshot) -> bool:
+        raw_hypotheses = context.failure.get("ranked_hypotheses")
+        if isinstance(raw_hypotheses, list):
+            for hypothesis in raw_hypotheses:
+                if isinstance(hypothesis, dict) and hypothesis.get("target_files"):
+                    return True
+        for key in ("scenario_required_files", "allowed_target_files", "changed_files"):
+            value = context.workspace.get(key, [])
+            if isinstance(value, list) and len(value) > 0:
+                return True
+        return False
 
     def _update_iteration_state(
         self,
@@ -366,25 +409,6 @@ class AgenticLoopRunner:
         context.runtime["iteration_budget_mode"] = agent.iteration_budget_mode
         context.runtime["completed_iterations"] = completed_iterations
         context.runtime["remaining_iterations"] = max(goal.max_iterations - completed_iterations, 0)
-
-    def _handle_no_tool(
-        self, agent: AgentSpec, goal: RuntimeGoal, selected_tool_names: list[str]
-    ) -> tuple[bool, str | None]:
-        if not selected_tool_names:
-            error = "No eligible tools available for current contexts"
-            self.hooks.emit(
-                "on_stop_condition", {"goal_id": goal.goal_id, "agent": agent.name, "reason": error}
-            )
-            return False, error
-        self.hooks.emit(
-            "on_stop_condition",
-            {
-                "goal_id": goal.goal_id,
-                "agent": agent.name,
-                "reason": "No additional eligible tools available",
-            },
-        )
-        return True, None
 
     def _should_reset_tool_cycle(
         self,
@@ -796,6 +820,20 @@ class AgenticLoopRunner:
             context=context,
             tool_execution_order=tool_execution_order,
         )
+        if (
+            decision.selected_tool is None
+            and decision.source == "guardrail_clear"
+            and eligible_tools
+        ):
+            decision = ToolSelectionDecision(
+                selected_tool=eligible_tools[0].name,
+                source="runtime_default",
+                rationale=(
+                    "No guardrail forced a specific tool, so runtime used the first eligible tool "
+                    "from skill-defined order."
+                ),
+                considered_tools=[tool.name for tool in eligible_tools],
+            )
         self._record_tool_selection_decision(goal=goal, agent=agent, decision=decision)
         return decision.selected_tool
 
@@ -883,7 +921,7 @@ class AgenticLoopRunner:
         skill: SkillSpec,
         tool_name: str,
         tool_count: int,
-        entry: dict[str, object],
+        entry: Mapping[str, object],
         scope_name: str,
     ) -> list[tuple[str, object]]:
         summary = f"{agent.name} used {skill.name} with {tool_name} at step {tool_count}."

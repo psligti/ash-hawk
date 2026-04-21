@@ -59,10 +59,12 @@ Only the completed re-evaluation step counts against the iteration budget.
 ## Hypothesis
 - Produce one hypothesis narrow enough to test in a single mutation.
 - Use `call_llm_structured` to spell out the diagnosis and multiple concrete ways to improve the result before mutating.
+- The diagnosis output must identify targetable durable files; if target files are still unknown, the loop is not ready for mutation or completion.
 
 ## Mutation
 - Use `mutate_agent_files` for the actual improvement step.
 - Prefer minimal, high-leverage changes.
+- The mutation prompt must already contain the diagnosis, what went wrong, what is needed, and the ideal condition before the coding agent starts exploring.
 
 ## Re-evaluation
 - Use `run_eval_repeated` after mutation.
@@ -75,6 +77,7 @@ Only the completed re-evaluation step counts against the iteration budget.
 
 ## Verification
 - Use the result of `run_eval_repeated` to decide whether the loop actually improved the score.
+- A loop that ends before mutation or re-evaluation is incomplete and must not be treated as success.
 
 # Procedure
 1. Establish the baseline if it does not already exist.

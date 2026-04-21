@@ -35,12 +35,18 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
 
 def _candidate_targets(call: ToolCall) -> list[str]:
     workspace = call.context.workspace
+    diagnosis_targets = [
+        path
+        for hypothesis in call.context.failure.ranked_hypotheses
+        for path in hypothesis.target_files
+        if path
+    ]
     required_files = list(workspace.scenario_required_files)
     candidates = list(workspace.changed_files)
 
     ranked = rank_workspace_targets(candidates)
     ordered: list[str] = []
-    for path in required_files + ranked:
+    for path in diagnosis_targets + required_files + ranked:
         if path not in ordered:
             ordered.append(path)
     return ordered

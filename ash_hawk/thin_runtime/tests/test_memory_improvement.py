@@ -88,23 +88,7 @@ def test_agent_text_uses_persisted_memory_after_dream_state(tmp_path: Path) -> N
     )
 
 
-def test_tool_selection_policy_prompt_includes_memory_context(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured_prompt: dict[str, str] = {}
-
-    def fake_call_model_structured(
-        model: type[object], *, system_prompt: str, user_prompt: str
-    ) -> object | None:
-        del model, system_prompt
-        captured_prompt["user_prompt"] = user_prompt
-        return None
-
-    monkeypatch.setattr(
-        "ash_hawk.thin_runtime.selection_policy.call_model_structured",
-        fake_call_model_structured,
-    )
-
+def test_tool_selection_policy_defers_to_runtime_when_no_guardrail_applies() -> None:
     harness = create_default_harness(workdir=Path.cwd())
     harness.memory.write_scope(
         "semantic_memory",
@@ -141,10 +125,9 @@ def test_tool_selection_policy_prompt_includes_memory_context(
         tool_execution_order=None,
     )
 
-    assert decision.source == "policy_unavailable"
-    assert "Memory context:" in captured_prompt["user_prompt"]
-    assert "Prefer targeted tests for fast feedback" in captured_prompt["user_prompt"]
-    assert "Use plain language for people reading the output" in captured_prompt["user_prompt"]
+    assert decision.source == "guardrail_clear"
+    assert decision.selected_tool is None
+    assert decision.considered_tools == ["run_baseline_eval", "verify_outcome"]
 
 
 def test_normal_execution_persists_canonical_memory_for_future_runs(tmp_path: Path) -> None:

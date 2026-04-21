@@ -49,11 +49,13 @@ Keep workspace work tightly focused on evidence that can improve the eval.
 # Procedure
 1. Load workspace state once.
 2. Detect the active agent/config path.
-3. Scope the workspace only to files relevant to the current hypothesis.
+3. Use diagnosis or hypothesis output to name candidate files before any optional scoping step.
 4. Read the minimum files needed to support or reject that hypothesis.
 5. Use grep only with a targeted pattern tied to the failing evidence.
 6. Use diff output to confirm what changed.
 7. Use mutate_agent_files only after the target file is justified by evidence.
+
+If `scope_workspace` returns zero targets, that is not completion. Diagnosis must derive the next file candidates from failure evidence or active agent/config files.
 
 # Available Tools
 ## load_workspace_state
@@ -63,7 +65,7 @@ Use this to bootstrap the workspace snapshot.
 Use this to find the actual agent/config location.
 
 ## scope_workspace
-Use this to narrow the mutation space.
+Use this only to materialize diagnosis-derived targets into workspace context. Do not use it as the primary way to discover what to change.
 
 ## read
 Use this for targeted file inspection.

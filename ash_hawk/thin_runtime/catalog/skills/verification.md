@@ -102,6 +102,7 @@ Prove that observed results and reported claims are consistent with evidence.
 2. Verify the outcome
 3. Audit the claims
 4. Update evaluation and audit context
+5. Refuse completion if live failure signals remain and no fresh post-mutation evaluation exists
 
 # Decision Points
 - sufficient evidence vs escalation
@@ -140,6 +141,7 @@ Prove that observed results and reported claims are consistent with evidence.
 
 # Escalation Rules
 - Escalate when claims cannot be supported
+- Do not verify completion while `failure_family` remains active and the run has not completed a mutation plus fresh re-evaluation.
 
 # Guardrails
 - Do not use this skill outside its declared scope.

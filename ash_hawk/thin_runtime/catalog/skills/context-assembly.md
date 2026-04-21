@@ -108,6 +108,7 @@ Build a complete current context across goal, runtime, workspace, evaluation, fa
 2. Assemble context
 3. Load workspace state
 4. Publish updated context sections
+5. After bootstrap, refresh only missing or stale sections rather than restarting the same context-assembly path.
 
 # Decision Points
 - whether context refresh is necessary

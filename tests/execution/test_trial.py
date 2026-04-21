@@ -4,6 +4,8 @@ import asyncio
 
 import pytest
 
+from ash_hawk.graders import GraderRegistry
+from ash_hawk.graders.base import Grader
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.scenario import TrialExecutor
 from ash_hawk.storage import StoredTrial
@@ -13,6 +15,7 @@ from ash_hawk.types import (
     EvalTask,
     EvalTranscript,
     FailureMode,
+    GraderResult,
     GraderSpec,
     RunEnvelope,
     TokenUsage,
@@ -635,3 +638,100 @@ class TestTrialExecutorGraders:
         assert result.grader_results[0].passed is True
         assert result.aggregate_passed is True
         assert result.aggregate_score == pytest.approx(0.7)
+
+    @pytest.mark.asyncio
+    async def test_retries_transient_grader_errors_before_success(
+        self, mock_storage, sample_policy, sample_run_envelope, monkeypatch
+    ):
+        task = EvalTask(
+            id="task-grade-transient-success",
+            input={"scenario_path": "/tmp/demo/scenario.yaml"},
+            grader_specs=[
+                GraderSpec(grader_type="transient", config={}, weight=1.0, required=True)
+            ],
+        )
+
+        class TransientThenPassGrader(Grader):
+            def __init__(self) -> None:
+                self.calls = 0
+
+            @property
+            def name(self) -> str:
+                return "transient"
+
+            async def grade(self, trial, transcript, spec):
+                del trial, transcript, spec
+                self.calls += 1
+                if self.calls < 3:
+                    raise RuntimeError(
+                        "Provider operation failed after 3 retries: Z.AI API error (code=500): Operation failed"
+                    )
+                return GraderResult(grader_type=self.name, score=1.0, passed=True)
+
+        registry = GraderRegistry()
+        grader = TransientThenPassGrader()
+        registry.register(grader)
+        monkeypatch.setattr(
+            "ash_hawk.scenario.trial.build_registry", lambda *_args, **_kwargs: registry
+        )
+
+        async def custom_runner(task: EvalTask, enforcer: PolicyEnforcer, config: dict):
+            del task, enforcer, config
+            return EvalTranscript(agent_response="ok"), EvalOutcome.success()
+
+        executor = TrialExecutor(mock_storage, sample_policy, agent_runner=custom_runner)
+        result = await executor.execute(
+            task=task, agent_config={}, run_envelope=sample_run_envelope
+        )
+
+        assert grader.calls == 3
+        assert result.aggregate_passed is True
+        assert result.grader_results[0].passed is True
+
+    @pytest.mark.asyncio
+    async def test_marks_exhausted_transient_grader_as_inconclusive(
+        self, mock_storage, sample_policy, sample_run_envelope, monkeypatch
+    ):
+        task = EvalTask(
+            id="task-grade-transient-inconclusive",
+            input={"scenario_path": "/tmp/demo/scenario.yaml"},
+            grader_specs=[
+                GraderSpec(grader_type="transient", config={}, weight=1.0, required=True)
+            ],
+        )
+
+        class AlwaysTransientGrader(Grader):
+            @property
+            def name(self) -> str:
+                return "transient"
+
+            async def grade(self, trial, transcript, spec):
+                del trial, transcript, spec
+                return GraderResult(
+                    grader_type=self.name,
+                    score=0.0,
+                    passed=False,
+                    error_message="Provider operation failed after 3 retries: Z.AI API error (code=1234): Network error",
+                )
+
+        registry = GraderRegistry()
+        registry.register(AlwaysTransientGrader())
+        monkeypatch.setattr(
+            "ash_hawk.scenario.trial.build_registry", lambda *_args, **_kwargs: registry
+        )
+
+        async def custom_runner(task: EvalTask, enforcer: PolicyEnforcer, config: dict):
+            del task, enforcer, config
+            return EvalTranscript(agent_response="ok"), EvalOutcome.success()
+
+        executor = TrialExecutor(mock_storage, sample_policy, agent_runner=custom_runner)
+        result = await executor.execute(
+            task=task, agent_config={}, run_envelope=sample_run_envelope
+        )
+
+        grader_result = result.grader_results[0]
+        assert grader_result.needs_review is True
+        assert grader_result.review_reason == "transient_infrastructure_error"
+        assert grader_result.details["inconclusive"] is True
+        assert grader_result.error_message is None
+        assert result.aggregate_passed is False

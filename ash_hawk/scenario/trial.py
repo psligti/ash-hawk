@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import re
 import time
 import traceback
 import uuid
@@ -12,7 +13,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
 from ash_hawk.context import set_eval_context
-from ash_hawk.graders.registry import get_default_registry
+from ash_hawk.graders.registry import build_registry
 from ash_hawk.policy import PolicyEnforcer
 from ash_hawk.scenario.fixtures import FixtureResolver
 from ash_hawk.tracing import get_telemetry
@@ -36,6 +37,17 @@ if TYPE_CHECKING:
     from ash_hawk.storage import StorageBackend
 
 logger = logging.getLogger(__name__)
+
+_TRANSIENT_GRADER_ERROR_PATTERNS = (
+    re.compile(r"provider operation failed", re.IGNORECASE),
+    re.compile(r"network error", re.IGNORECASE),
+    re.compile(r"connection reset", re.IGNORECASE),
+    re.compile(r"temporarily unavailable", re.IGNORECASE),
+    re.compile(r"api error \(code=5\d\d\)", re.IGNORECASE),
+    re.compile(r"api error \(code=1234\)", re.IGNORECASE),
+    re.compile(r"rate limit", re.IGNORECASE),
+)
+_TRANSIENT_GRADER_MAX_ATTEMPTS = 3
 
 
 @runtime_checkable
@@ -437,7 +449,7 @@ class TrialExecutor:
         transcript: EvalTranscript,
         task: EvalTask,
     ) -> list[GraderResult]:
-        registry = get_default_registry()
+        registry = build_registry(_task_project_root(task, trial))
 
         if not task.grader_specs:
             return []
@@ -500,29 +512,13 @@ class TrialExecutor:
             timeout_seconds=spec.timeout_seconds,
         )
         try:
-            if enriched_spec.timeout_seconds is not None:
-                result = await asyncio.wait_for(
-                    grader.grade(trial, transcript, enriched_spec),
-                    timeout=enriched_spec.timeout_seconds,
-                )
-            else:
-                grader_task = asyncio.create_task(grader.grade(trial, transcript, enriched_spec))
-                heartbeat_interval_seconds = 60.0
-                while True:
-                    try:
-                        result = await asyncio.wait_for(
-                            asyncio.shield(grader_task),
-                            timeout=heartbeat_interval_seconds,
-                        )
-                        break
-                    except TimeoutError:
-                        elapsed = time.time() - started
-                        logger.warning(
-                            "Trial %s grader %s still running after %.1fs",
-                            trial.id,
-                            spec.grader_type,
-                            elapsed,
-                        )
+            result = await self._run_grader_with_retries(
+                grader=grader,
+                trial=trial,
+                transcript=transcript,
+                spec=enriched_spec,
+                started=started,
+            )
             duration = time.time() - started
             logger.info(
                 "Trial %s grader %s completed in %.2fs",
@@ -558,6 +554,86 @@ class TrialExecutor:
                 error_message=str(exc),
                 execution_time_seconds=time.time() - started,
             )
+
+    async def _run_grader_with_retries(
+        self,
+        *,
+        grader: Any,
+        trial: EvalTrial,
+        transcript: EvalTranscript,
+        spec: GraderSpec,
+        started: float,
+    ) -> GraderResult:
+        last_transient_message: str | None = None
+        for attempt in range(1, _TRANSIENT_GRADER_MAX_ATTEMPTS + 1):
+            try:
+                if spec.timeout_seconds is not None:
+                    result = await asyncio.wait_for(
+                        grader.grade(trial, transcript, spec),
+                        timeout=spec.timeout_seconds,
+                    )
+                else:
+                    grader_task = asyncio.create_task(grader.grade(trial, transcript, spec))
+                    heartbeat_interval_seconds = 60.0
+                    while True:
+                        try:
+                            result = await asyncio.wait_for(
+                                asyncio.shield(grader_task),
+                                timeout=heartbeat_interval_seconds,
+                            )
+                            break
+                        except TimeoutError:
+                            elapsed = time.time() - started
+                            logger.warning(
+                                "Trial %s grader %s still running after %.1fs",
+                                trial.id,
+                                spec.grader_type,
+                                elapsed,
+                            )
+            except Exception as exc:
+                message = str(exc)
+                if _is_transient_grader_error(message) and attempt < _TRANSIENT_GRADER_MAX_ATTEMPTS:
+                    logger.warning(
+                        "Retrying transient grader failure for %s on attempt %d/%d: %s",
+                        spec.grader_type,
+                        attempt,
+                        _TRANSIENT_GRADER_MAX_ATTEMPTS,
+                        message,
+                    )
+                    last_transient_message = message
+                    continue
+                if _is_transient_grader_error(message):
+                    return _inconclusive_grader_result(
+                        spec.grader_type,
+                        message,
+                        time.time() - started,
+                    )
+                raise
+
+            if _is_transient_grader_error(result.error_message):
+                if attempt < _TRANSIENT_GRADER_MAX_ATTEMPTS:
+                    logger.warning(
+                        "Retrying transient grader result for %s on attempt %d/%d: %s",
+                        spec.grader_type,
+                        attempt,
+                        _TRANSIENT_GRADER_MAX_ATTEMPTS,
+                        result.error_message,
+                    )
+                    last_transient_message = result.error_message
+                    continue
+                return _inconclusive_grader_result(
+                    spec.grader_type,
+                    result.error_message or last_transient_message or "Transient grader failure",
+                    time.time() - started,
+                )
+
+            return cast(GraderResult, result)
+
+        return _inconclusive_grader_result(
+            spec.grader_type,
+            last_transient_message or "Transient grader failure",
+            time.time() - started,
+        )
 
     async def _run_composite_grader(
         self,
@@ -655,6 +731,8 @@ def _aggregate_grader_results(
     required_passed = True
 
     for spec, result in zip(specs, results, strict=False):
+        if _is_inconclusive_grader_result(result):
+            continue
         weighted_total += result.score * spec.weight
         total_weight += spec.weight
         if spec.required and not result.passed:
@@ -687,3 +765,47 @@ def _combine_scores(
         return 0.0, False
     score = sum(r.score * w for r, w in zip(results, weights, strict=True)) / total_weight
     return score, score >= 0.5
+
+
+def _task_project_root(task: EvalTask, trial: EvalTrial) -> str | None:
+    if isinstance(task.input, dict):
+        for key in ("scenario_path", "scenario_root"):
+            value = task.input.get(key)
+            if isinstance(value, str) and value:
+                return value
+    if isinstance(trial.input_snapshot, dict):
+        for key in ("scenario_path", "scenario_root", "workdir"):
+            value = trial.input_snapshot.get(key)
+            if isinstance(value, str) and value:
+                return value
+    return None
+
+
+def _is_transient_grader_error(message: object) -> bool:
+    if not isinstance(message, str) or not message.strip():
+        return False
+    return any(pattern.search(message) for pattern in _TRANSIENT_GRADER_ERROR_PATTERNS)
+
+
+def _inconclusive_grader_result(
+    grader_type: str,
+    error_message: str,
+    execution_time_seconds: float,
+) -> GraderResult:
+    return GraderResult(
+        grader_type=grader_type,
+        score=0.0,
+        passed=False,
+        error_message=None,
+        execution_time_seconds=execution_time_seconds,
+        needs_review=True,
+        review_reason="transient_infrastructure_error",
+        details={
+            "inconclusive": True,
+            "suppressed_error": error_message,
+        },
+    )
+
+
+def _is_inconclusive_grader_result(result: GraderResult) -> bool:
+    return result.needs_review and result.review_reason == "transient_infrastructure_error"

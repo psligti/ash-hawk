@@ -220,6 +220,9 @@ class FailureCluster(pd.BaseModel):
 class RankedHypothesis(pd.BaseModel):
     name: str
     score: float
+    rationale: str = ""
+    target_files: list[str] = pd.Field(default_factory=list)
+    ideal_outcome: str = ""
 
     model_config = pd.ConfigDict(extra="forbid")
 

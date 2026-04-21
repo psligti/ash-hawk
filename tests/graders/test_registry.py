@@ -7,6 +7,7 @@ from ash_hawk.graders import (
     Grader,
     GraderRegistry,
     PassThroughGrader,
+    build_registry,
     get_default_registry,
 )
 from ash_hawk.types import (
@@ -214,6 +215,35 @@ class TestGraderRegistry:
 
         registry.load_from_entry_points()
         assert len(registry) == 0
+
+    def test_build_registry_loads_project_entry_points(self, tmp_path):
+        project_root = tmp_path / "demo-repo"
+        package_dir = project_root / "demo_repo"
+        package_dir.mkdir(parents=True)
+        (package_dir / "__init__.py").write_text("", encoding="utf-8")
+        (package_dir / "graders.py").write_text(
+            "from ash_hawk.graders.base import Grader\n"
+            "from ash_hawk.types import GraderResult\n"
+            "class DemoProjectGrader(Grader):\n"
+            "    @property\n"
+            "    def name(self):\n"
+            "        return 'demo_project_grader'\n"
+            "    async def grade(self, trial, transcript, spec):\n"
+            "        return GraderResult(grader_type=self.name, score=1.0, passed=True)\n",
+            encoding="utf-8",
+        )
+        (project_root / "pyproject.toml").write_text(
+            "[project]\n"
+            "name = 'demo-repo'\n"
+            "version = '0.1.0'\n"
+            '[project.entry-points."ash_hawk.graders"]\n'
+            "demo_project = 'demo_repo.graders:DemoProjectGrader'\n",
+            encoding="utf-8",
+        )
+
+        registry = build_registry(project_root)
+
+        assert "demo_project_grader" in registry.list_graders()
 
 
 class TestGetDefaultRegistry:

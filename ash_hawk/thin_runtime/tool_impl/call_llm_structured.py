@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 
 import pydantic as pd
@@ -10,66 +11,103 @@ from ash_hawk.thin_runtime.models import ToolCall, ToolResult
 from ash_hawk.thin_runtime.tool_command import (
     ToolCommand,
     basic_input_schema,
-    context_input_schema,
-    delegation_input_schema,
     standard_output_schema,
 )
 from ash_hawk.thin_runtime.tool_types import (
     AuditToolContext,
     FailureToolContext,
+    RankedHypothesis,
     RuntimeToolContext,
     ToolExecutionPayload,
+    WorkspaceToolContext,
 )
 
 
+class StructuredHypothesis(pd.BaseModel):
+    name: str
+    score: float = pd.Field(ge=0.0, le=1.0)
+    rationale: str = ""
+    target_files: list[str] = pd.Field(default_factory=list)
+    ideal_outcome: str = ""
+
+
 class StructuredLLMResponse(pd.BaseModel):
-    response: str
+    diagnosis: str
+    blocker: str = ""
+    ideal_outcome: str = ""
+    hypotheses: list[StructuredHypothesis] = pd.Field(default_factory=list)
 
 
 def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]]:
     response = _structured_response(call)
     explanations, concepts = _extract_signal_lists(response)
-    allowed_targets = call.context.workspace.allowed_target_files
-    preferred_tool = "mutate_agent_files" if allowed_targets else ""
+    ranked_hypotheses = _ranked_hypotheses(response)
+    allowed_targets = _allowed_targets(response, call)
+    preferred_tool = "mutate_agent_files" if ranked_hypotheses or allowed_targets else ""
     return (
         True,
         ToolExecutionPayload(
             runtime_updates=RuntimeToolContext(preferred_tool=preferred_tool),
-            failure_updates=FailureToolContext(explanations=explanations, concepts=concepts),
-            audit_updates=AuditToolContext(llm_calls=["call_llm_structured"]),
+            workspace_updates=WorkspaceToolContext(allowed_target_files=allowed_targets),
+            failure_updates=FailureToolContext(
+                explanations=explanations,
+                concepts=concepts,
+                ranked_hypotheses=ranked_hypotheses,
+            ),
+            audit_updates=AuditToolContext(
+                llm_calls=["call_llm_structured"],
+                run_summary={
+                    "diagnosis": response.diagnosis,
+                    "blocker": response.blocker,
+                    "ideal_outcome": response.ideal_outcome,
+                    "allowed_targets": ", ".join(allowed_targets),
+                },
+            ),
         ),
-        response,
+        _render_response_message(response),
         [],
     )
 
 
-def _structured_response(call: ToolCall) -> str:
+def _structured_response(call: ToolCall) -> StructuredLLMResponse:
     model_result = call_model_structured(
         StructuredLLMResponse,
-        system_prompt="Return a concise structured response for the current runtime context.",
+        system_prompt=(
+            "You are the diagnosis and hypothesis planner for an eval-improvement loop. "
+            "Given the runtime context, return one concise diagnosis plus up to three small, "
+            "targeted hypotheses. Each hypothesis must name the primary durable files to change."
+        ),
         user_prompt=(
             f"Goal: {call.goal_id}\n"
             f"Agent text:\n{call.agent_text or ''}\n\n"
             f"Context:\n{call.context.model_dump(exclude_none=True)}\n\n"
-            'Return JSON: {"response": "text"}'
+            "Return JSON with this exact schema:\n"
+            '{"diagnosis": "text", "blocker": "text", "ideal_outcome": "text", '
+            '"hypotheses": ['
+            '{"name": "text", "score": 0.0, "rationale": "text", '
+            '"target_files": ["path/to/file"], "ideal_outcome": "text"}]}'
         ),
     )
     if model_result is not None:
-        return model_result.response
+        return model_result
 
     try:
         from bolt_merlin.agent.execute import execute
     except ImportError:
-        return "LLM unavailable"
+        return StructuredLLMResponse(diagnosis="LLM unavailable")
 
     prompt = (
-        "Provide a concise diagnosis and at least two hypotheses for the current eval improvement loop.\n\n"
+        "Provide a diagnosis-driven mutation plan for the current eval improvement loop.\n\n"
         f"Scenario summary:\n{call.context.workspace.scenario_summary or 'No scenario summary available'}\n\n"
+        f"Failure family:\n{call.context.failure.failure_family or 'No failure family'}\n\n"
         f"Failure explanations:\n{' '.join(call.context.failure.explanations) or 'No failure explanations'}\n\n"
-        f"Concepts:\n{' '.join(call.context.failure.concepts) or 'No concepts'}\n\n"
-        "Return plain text in this exact shape:\n"
-        "Diagnosis: <one paragraph>\n"
-        "Hypotheses:\n- <hypothesis 1>\n- <hypothesis 2>"
+        f"Current allowed targets:\n{', '.join(call.context.workspace.allowed_target_files) or 'None'}\n\n"
+        f"Scenario required files:\n{', '.join(call.context.workspace.scenario_required_files) or 'None'}\n\n"
+        "Return JSON with this exact shape:\n"
+        '{"diagnosis": "text", "blocker": "text", "ideal_outcome": "text", '
+        '"hypotheses": ['
+        '{"name": "text", "score": 0.0, "rationale": "text", '
+        '"target_files": ["path/to/file"], "ideal_outcome": "text"}]}'
     )
     result = asyncio.run(
         execute(
@@ -81,24 +119,77 @@ def _structured_response(call: ToolCall) -> str:
         )
     )
     if hasattr(result, "response") and isinstance(result.response, str) and result.response.strip():
-        return result.response
-    return "LLM unavailable"
+        try:
+            return StructuredLLMResponse.model_validate(json.loads(result.response))
+        except (json.JSONDecodeError, pd.ValidationError):
+            return _legacy_response_from_text(result.response)
+    return StructuredLLMResponse(diagnosis="LLM unavailable")
 
 
-def _extract_signal_lists(response: str) -> tuple[list[str], list[str]]:
-    explanations: list[str] = []
-    concepts: list[str] = []
-    for line in response.splitlines():
+def _legacy_response_from_text(response: str) -> StructuredLLMResponse:
+    diagnosis = response.strip() or "LLM unavailable"
+    hypotheses: list[StructuredHypothesis] = []
+    for index, line in enumerate(response.splitlines()):
         stripped = line.strip()
-        if stripped.startswith("Diagnosis:"):
-            diagnosis = stripped.removeprefix("Diagnosis:").strip()
-            if diagnosis:
-                explanations.append(diagnosis)
-        elif stripped.startswith("-"):
-            hypothesis = stripped.removeprefix("-").strip()
-            if hypothesis:
-                concepts.append(hypothesis)
+        if not stripped.startswith("-"):
+            continue
+        name = stripped.removeprefix("-").strip()
+        if name:
+            hypotheses.append(StructuredHypothesis(name=name, score=max(0.1, 0.8 - index * 0.1)))
+    return StructuredLLMResponse(diagnosis=diagnosis, hypotheses=hypotheses[:3])
+
+
+def _extract_signal_lists(response: StructuredLLMResponse) -> tuple[list[str], list[str]]:
+    explanations: list[str] = []
+    if response.diagnosis.strip():
+        explanations.append(response.diagnosis.strip())
+    if response.blocker.strip():
+        explanations.append(response.blocker.strip())
+    concepts = [
+        hypothesis.name.strip() for hypothesis in response.hypotheses if hypothesis.name.strip()
+    ]
     return explanations[:3], concepts[:5]
+
+
+def _ranked_hypotheses(response: StructuredLLMResponse) -> list[RankedHypothesis]:
+    return [
+        RankedHypothesis(
+            name=hypothesis.name.strip(),
+            score=hypothesis.score,
+            rationale=hypothesis.rationale.strip(),
+            target_files=[path.strip() for path in hypothesis.target_files if path.strip()],
+            ideal_outcome=hypothesis.ideal_outcome.strip(),
+        )
+        for hypothesis in response.hypotheses
+        if hypothesis.name.strip()
+    ]
+
+
+def _allowed_targets(response: StructuredLLMResponse, call: ToolCall) -> list[str]:
+    ordered: list[str] = []
+    for hypothesis in response.hypotheses:
+        for path in hypothesis.target_files:
+            cleaned = path.strip()
+            if cleaned and cleaned not in ordered:
+                ordered.append(cleaned)
+    for path in call.context.workspace.allowed_target_files:
+        if path not in ordered:
+            ordered.append(path)
+    return ordered[:8]
+
+
+def _render_response_message(response: StructuredLLMResponse) -> str:
+    lines = [f"Diagnosis: {response.diagnosis}"]
+    if response.blocker.strip():
+        lines.append(f"Blocker: {response.blocker}")
+    if response.ideal_outcome.strip():
+        lines.append(f"Ideal outcome: {response.ideal_outcome}")
+    for hypothesis in response.hypotheses[:3]:
+        lines.append(
+            f"- {hypothesis.name} (score {hypothesis.score:.2f})"
+            + (f" targets: {', '.join(hypothesis.target_files)}" if hypothesis.target_files else "")
+        )
+    return "\n".join(lines)
 
 
 COMMAND = ToolCommand(

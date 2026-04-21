@@ -22,15 +22,8 @@ from ash_hawk.thin_runtime.tool_types import (
 def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]]:
     workdir = Path(call.context.workspace.workdir or str(Path.cwd()))
     required_files = list(call.context.workspace.scenario_required_files)
-    existing_required_files = [
-        path for path in required_files if (workdir / path).exists() and (workdir / path).is_file()
-    ]
-    candidates = (
-        existing_required_files
-        or call.context.workspace.allowed_target_files
-        or call.context.workspace.changed_files
-    )
-    target_file = preferred_workspace_target(candidates)
+    target_candidates = _mutation_candidates(call)
+    target_file = preferred_workspace_target(target_candidates)
     if not target_file:
         return (
             False,
@@ -50,25 +43,8 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
 
     before_text = target_path.read_text(encoding="utf-8", errors="replace")
     required_fragment = ", ".join(required_files) if required_files else target_file
-    capability_mode_note = ""
-    if required_files and not existing_required_files:
-        capability_mode_note = (
-            "The scenario-required files are scenario-local outputs and may not exist in this repository. "
-            "Do not claim they are already complete based on repo inspection. Instead, improve the coding agent's reusable prompt/tool behavior so future scenario runs produce those files correctly.\n\n"
-        )
+    prompt = _mutation_prompt(call, target_file=target_file, required_fragment=required_fragment)
 
-    explanation = "\n".join(call.context.failure.explanations)
-    concepts = "\n".join(call.context.failure.concepts)
-    prompt = (
-        f"Improve the required workspace deliverables `{required_fragment}` for goal `{call.goal_id}`.\n\n"
-        f"Primary target file for this mutation: `{target_file}`.\n\n"
-        f"Scenario summary:\n{call.context.workspace.scenario_summary or 'No scenario summary available'}\n\n"
-        f"{capability_mode_note}"
-        f"Failure explanations:\n{explanation}\n\n"
-        f"Concepts:\n{concepts}\n\n"
-        "Use the available tools to inspect, edit, and verify the change. "
-        "Keep the change minimal and targeted. Update the scenario-required workspace files rather than only agent guidance files."
-    )
     try:
         from bolt_merlin.agent.execute import execute
     except ImportError:
@@ -135,12 +111,142 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
                 "changed": str(changed),
                 "diff_preview": diff_preview,
                 "response": response_summary,
+                "failure_family": call.context.failure.failure_family or "",
+                "baseline_score": str(call.context.evaluation.baseline_summary.score),
             },
             tool_usage=["mutate_agent_files"],
         ),
     )
     change_fragment = "changed" if changed else "reported success but produced no file diff"
     return True, payload, f"Mutated {target_file} via bolt_merlin agent ({change_fragment})", []
+
+
+def _mutation_candidates(call: ToolCall) -> list[str]:
+    workdir = Path(call.context.workspace.workdir or str(Path.cwd()))
+    required_files = list(call.context.workspace.scenario_required_files)
+    existing_required_files = _existing_file_candidates(workdir, required_files)
+    diagnosis_targets = [
+        path
+        for hypothesis in call.context.failure.ranked_hypotheses
+        for path in hypothesis.target_files
+        if path.strip()
+    ]
+    ordered: list[str] = []
+    for path in (
+        diagnosis_targets
+        + existing_required_files
+        + list(call.context.workspace.allowed_target_files)
+        + list(call.context.workspace.changed_files)
+    ):
+        if path not in ordered:
+            ordered.append(path)
+    return ordered
+
+
+def _existing_file_candidates(workdir: Path, paths: list[str]) -> list[str]:
+    return [path for path in paths if (workdir / path).exists() and (workdir / path).is_file()]
+
+
+def _mutation_prompt(call: ToolCall, *, target_file: str, required_fragment: str) -> str:
+    baseline = call.context.evaluation.baseline_summary
+    repeat_eval = call.context.evaluation.repeat_eval_summary
+    last_eval = call.context.evaluation.last_eval_summary
+    latest_score = repeat_eval.score if repeat_eval.score is not None else last_eval.score
+    failure_family = call.context.failure.failure_family or "Unknown"
+    explanation = (
+        "\n".join(call.context.failure.explanations) or "No failure explanations available"
+    )
+    concepts = "\n".join(call.context.failure.concepts) or "No concepts available"
+    ranked = call.context.failure.ranked_hypotheses[:3]
+    top_hypothesis = ranked[0] if ranked else None
+    ideal_outcome = top_hypothesis.ideal_outcome if top_hypothesis else ""
+    capability_mode_note = ""
+    if call.context.workspace.scenario_required_files and not _existing_file_candidates(
+        Path(call.context.workspace.workdir or str(Path.cwd())),
+        list(call.context.workspace.scenario_required_files),
+    ):
+        capability_mode_note = (
+            "The scenario-required files may be local outputs rather than durable repo files. "
+            "Improve reusable coding-agent behavior when the diagnosis points to a durable prompt/runtime/config surface.\n\n"
+        )
+
+    hypotheses_block = (
+        "\n".join(
+            f"- {hypothesis.name} (score {hypothesis.score:.2f})"
+            + (f"\n  Rationale: {hypothesis.rationale}" if hypothesis.rationale else "")
+            + (
+                f"\n  Target files: {', '.join(hypothesis.target_files)}"
+                if hypothesis.target_files
+                else ""
+            )
+            + (f"\n  Ideal outcome: {hypothesis.ideal_outcome}" if hypothesis.ideal_outcome else "")
+            for hypothesis in ranked
+        )
+        or "- No ranked hypotheses available"
+    )
+
+    return (
+        f"Improve the coding agent behavior for goal `{call.goal_id}` with one small, meaningful change.\n\n"
+        f"## Primary mutation target\n{target_file}\n\n"
+        f"## Current baseline\n"
+        f"Baseline score: {baseline.score}\n"
+        f"Latest re-eval score: {latest_score}\n"
+        f"Failure family: {failure_family}\n"
+        f"Regressions: {', '.join(call.context.evaluation.regressions) or 'None recorded'}\n\n"
+        f"## What went wrong\n{explanation}\n\n"
+        f"## What is needed\n"
+        f"Required workspace deliverables: {required_fragment}\n"
+        f"Ideal condition: {ideal_outcome or call.context.workspace.scenario_summary or 'Encode the missing capability durably.'}\n"
+        f"Concepts: {concepts}\n\n"
+        f"## Ranked hypotheses\n{hypotheses_block}\n\n"
+        f"## Decision trace\n{_decision_trace(call)}\n\n"
+        f"## Trace analysis\n{_trace_excerpt(call)}\n\n"
+        f"## Transcript evidence\n{_transcript_excerpt(call)}\n\n"
+        f"## Previous mutation / diff context\n{_diff_summary(call)}\n\n"
+        f"{capability_mode_note}"
+        "Use the diagnosis package above to make one targeted change. Prefer durable prompt/runtime/config/code files over workspace artifacts unless the target file itself is the graded deliverable. Read the named target directly before broadening scope."
+    )
+
+
+def _decision_trace(call: ToolCall) -> str:
+    return "\n".join(call.context.audit.decision_trace[-5:]) or "No decision trace available"
+
+
+def _trace_excerpt(call: ToolCall) -> str:
+    excerpts = []
+    for event in call.context.audit.events[-6:]:
+        parts = [event.event_type or "event"]
+        if event.tool:
+            parts.append(f"tool={event.tool}")
+        if event.rationale:
+            parts.append(f"rationale={event.rationale}")
+        if event.error:
+            parts.append(f"error={event.error}")
+        excerpts.append(" | ".join(parts))
+    return "\n".join(excerpts) or "No trace events recorded"
+
+
+def _transcript_excerpt(call: ToolCall) -> str:
+    excerpts = []
+    for record in call.context.audit.transcripts[-6:]:
+        label = record.speaker or record.type or "entry"
+        message = (record.message or "").strip()
+        if message:
+            excerpts.append(f"{label}: {message}")
+    return "\n".join(excerpts) or "No transcript entries recorded"
+
+
+def _diff_summary(call: ToolCall) -> str:
+    diff_report = call.context.audit.diff_report
+    run_summary = call.context.audit.run_summary
+    if not diff_report and not run_summary:
+        return "No prior mutation summary available"
+    lines = []
+    if diff_report:
+        lines.append(f"Diff report: {diff_report}")
+    if run_summary:
+        lines.append(f"Run summary: {run_summary}")
+    return "\n".join(lines)
 
 
 COMMAND = ToolCommand(

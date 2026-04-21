@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from ash_hawk.context import clear_eval_context, set_eval_context
-from ash_hawk.graders.registry import get_default_registry
+from ash_hawk.graders.registry import build_registry, get_default_registry
 from ash_hawk.scenario.dawn_kestrel_bridge import run_real_agent
 from ash_hawk.scenario.models import ScenarioV1
 from ash_hawk.types import (
@@ -233,7 +233,7 @@ class ThinScenarioRunner:
             },
         )
 
-        registry = get_default_registry()
+        registry = build_registry(scenario_path)
         grader_results: list[GraderResult] = []
 
         for grader_spec in scenario.graders:

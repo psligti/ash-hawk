@@ -14,6 +14,7 @@ from ash_hawk.graders.prompt_stack_optimizer import (
 from ash_hawk.graders.registry import (
     ENTRY_POINT_GROUP,
     GraderRegistry,
+    build_registry,
     get_default_registry,
 )
 
@@ -21,6 +22,7 @@ __all__ = [
     "Grader",
     "PassThroughGrader",
     "GraderRegistry",
+    "build_registry",
     "get_default_registry",
     "ENTRY_POINT_GROUP",
     "PromptStackOptimizerGrader",

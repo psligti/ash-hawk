@@ -73,6 +73,20 @@ def test_harness_dynamically_selects_initial_tool_when_no_order_provided() -> No
     assert result.selected_tool_names[0] in {"run_eval", "run_baseline_eval"}
 
 
+def test_improver_bootstraps_without_explicit_tool_order() -> None:
+    harness = create_default_harness(workdir=Path.cwd(), console_output=False)
+
+    result = harness.execute(
+        RuntimeGoal(
+            goal_id="goal-improver-bootstrap", description="Bootstrap improver without order"
+        ),
+        agent_name="improver",
+    )
+
+    assert result.selected_tool_names
+    assert result.selected_tool_names[0] == "load_workspace_state"
+
+
 def test_harness_stops_when_max_iterations_is_reached() -> None:
     harness = create_default_harness(workdir=Path.cwd())
     goal = RuntimeGoal(goal_id="goal-6", description="Plan repeatedly", max_iterations=1)

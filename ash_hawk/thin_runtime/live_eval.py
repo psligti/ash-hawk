@@ -103,13 +103,15 @@ def run_live_scenario_eval(
     passed = all(result.aggregate_passed for result in trial_results)
     outcome_success = all(result.outcome.status is EvalStatus.COMPLETED for result in trial_results)
     final_result = trial_results[-1]
+    only_inconclusive_failures = _has_only_inconclusive_failures(trial_results)
     outcome_message = (
         None
         if final_result.outcome.error_message is not None
         else "Scenario completed successfully"
     )
     evaluation_updates = EvaluationToolContext()
-    summary = ScoreSummary(score=score, status="completed", tool=tool_name)
+    summary_status = "inconclusive" if only_inconclusive_failures and not passed else "completed"
+    summary = ScoreSummary(score=score, status=summary_status, tool=tool_name)
     if summary_field == "baseline_summary":
         evaluation_updates.baseline_summary = summary
     elif summary_field == "last_eval_summary":
@@ -126,10 +128,14 @@ def run_live_scenario_eval(
         failure_updates=(
             FailureToolContext(
                 failure_buckets=[]
-                if passed
+                if passed or only_inconclusive_failures
                 else [FailureBucketCount(bucket="needs_improvement", count=1)],
-                failure_family=None if passed else "needs_improvement",
-                explanations=[] if passed else _collect_failure_explanations(trials),
+                failure_family=None
+                if passed or only_inconclusive_failures
+                else "needs_improvement",
+                explanations=[]
+                if passed or only_inconclusive_failures
+                else _collect_failure_explanations(trials),
             )
         ),
         audit_updates=AuditToolContext(
@@ -137,15 +143,30 @@ def run_live_scenario_eval(
             run_result=AuditRunResult(
                 run_id=summaries[-1].envelope.run_id,
                 success=outcome_success,
-                message=outcome_message,
-                error=final_result.outcome.error_message,
+                message=(
+                    "Evaluation inconclusive due to transient grader failures"
+                    if only_inconclusive_failures and not passed
+                    else outcome_message
+                ),
+                error=(
+                    "transient grader failures"
+                    if only_inconclusive_failures and not passed
+                    else final_result.outcome.error_message
+                ),
                 aggregate_score=score,
-                aggregate_passed=passed,
+                aggregate_passed=None if only_inconclusive_failures and not passed else passed,
             ),
             events=traces,
             transcripts=transcripts,
         ),
     )
+    if only_inconclusive_failures and not passed:
+        return (
+            False,
+            payload,
+            "Evaluation inconclusive due to transient grader failures",
+            ["transient_grader_failures"],
+        )
     return True, payload, "Executed live evaluation", []
 
 
@@ -194,6 +215,12 @@ def _collect_failure_explanations(trials: Sequence[object]) -> list[str]:
                 passed = getattr(grader_result, "passed", True)
                 if passed:
                     continue
+                if (
+                    getattr(grader_result, "needs_review", False)
+                    and getattr(grader_result, "review_reason", None)
+                    == "transient_infrastructure_error"
+                ):
+                    continue
                 grader_type = getattr(grader_result, "grader_type", "unknown_grader")
                 detail_text = _grader_detail_text(getattr(grader_result, "details", {}))
                 error_message = getattr(grader_result, "error_message", None)
@@ -208,6 +235,32 @@ def _collect_failure_explanations(trials: Sequence[object]) -> list[str]:
         if outcome_error:
             explanations.append(f"{task_id} ({trial_id}) outcome: {outcome_error}")
     return explanations or ["Scenario did not pass all graders"]
+
+
+def _has_only_inconclusive_failures(trial_results: Sequence[object]) -> bool:
+    saw_inconclusive = False
+    for result in trial_results:
+        if getattr(result, "aggregate_passed", False):
+            continue
+        grader_results = getattr(result, "grader_results", [])
+        if not isinstance(grader_results, list) or not grader_results:
+            return False
+        actionable_failure = False
+        for grader_result in grader_results:
+            if getattr(grader_result, "passed", True):
+                continue
+            if (
+                getattr(grader_result, "needs_review", False)
+                and getattr(grader_result, "review_reason", None)
+                == "transient_infrastructure_error"
+            ):
+                saw_inconclusive = True
+                continue
+            actionable_failure = True
+            break
+        if actionable_failure:
+            return False
+    return saw_inconclusive
 
 
 def _grader_detail_text(details: object) -> str:
