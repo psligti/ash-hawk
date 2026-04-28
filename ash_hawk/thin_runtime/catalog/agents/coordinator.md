@@ -33,12 +33,12 @@ when_not_to_activate:
 - When the task is purely memory administration
 - When verification or review should be primary
 available_tools: &id001
+- delegate_task
 - run_baseline_eval
 - verify_outcome
 - audit_claims
 - detect_regressions
 - load_workspace_state
-- mutate_agent_files
 - call_llm_structured
 available_skills:
 - context-assembly
@@ -235,12 +235,12 @@ You are the coordinator agent. Your role is Runtime coordinator. Your mission is
 
 # Tool Policy
 ## Available Tools
+- delegate_task
 - run_baseline_eval
 - verify_outcome
 - audit_claims
 - detect_regressions
 - load_workspace_state
-- mutate_agent_files
 - call_llm_structured
 
 ## Tool Selection Policy

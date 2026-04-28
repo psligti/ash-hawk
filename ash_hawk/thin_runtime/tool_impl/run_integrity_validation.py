@@ -15,7 +15,11 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
     if scenario_path_raw:
         scenario_path = Path(scenario_path_raw)
         if scenario_path.exists():
-            return run_live_scenario_eval("run_integrity_validation", scenario_path)
+            return run_live_scenario_eval(
+                "run_integrity_validation",
+                scenario_path,
+                summary_field="integrity_summary",
+            )
     return missing_live_eval_result(
         "run_integrity_validation",
         reason="Cannot run integrity validation without a valid scenario_path",

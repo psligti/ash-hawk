@@ -9,6 +9,11 @@ from ash_hawk.scenario.adapters.sdk_dawn_kestrel import SdkDawnKestrelAdapter
 from ash_hawk.types import EvalOutcome, EvalStatus, EvalTranscript
 
 
+def _ok_tool_call(name: str, inp: dict[str, object]) -> dict[str, object]:
+    del name, inp
+    return {"result": "ok"}
+
+
 def test_sdk_adapter_produces_policy_decision_events():
     """Test SDK adapter produces PolicyDecisionEvent in trace when tools are called."""
     adapter = SdkDawnKestrelAdapter()
@@ -204,7 +209,7 @@ def test_sdk_adapter_no_tool_calls_no_policy_events():
             "allowed_tools": [],
             "denied_tools": [],
         },
-        "call": lambda name, inp: {"result": "ok"},
+        "call": _ok_tool_call,
     }
 
     scenario = {
@@ -244,6 +249,96 @@ def test_sdk_adapter_no_tool_calls_no_policy_events():
     # Verify no RejectionEvents were created
     rejection_events = [e for e in result.trace_events if e.event_type == "RejectionEvent"]
     assert len(rejection_events) == 0
+
+
+def test_sdk_adapter_accepts_legacy_skill_config_keys():
+    adapter = SdkDawnKestrelAdapter()
+
+    mock_transcript = EvalTranscript(
+        messages=[
+            {"role": "user", "content": "Test prompt"},
+            {"role": "assistant", "content": "Done"},
+        ],
+        tool_calls=[],
+        agent_response="Done",
+    )
+    mock_outcome = EvalOutcome(status=EvalStatus.COMPLETED)
+    tooling_harness = {
+        "policy": {"allowed_tools": [], "denied_tools": []},
+        "call": _ok_tool_call,
+    }
+
+    scenario = {
+        "id": "test-sdk-legacy-skill-scenario",
+        "sut": {
+            "type": "coding_agent",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+                "provider": "test_provider",
+                "model": "test_model",
+                "skill": "python-bugfix",
+            },
+        },
+        "inputs": {"prompt": "Test prompt"},
+        "expectations": {},
+        "budgets": {},
+    }
+
+    with patch("ash_hawk.scenario.adapters.sdk_dawn_kestrel.DawnKestrelAgentRunner") as MockRunner:
+        mock_runner_instance = MagicMock()
+        mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
+        MockRunner.return_value = mock_runner_instance
+
+        result = adapter.run_scenario(scenario, Path("/tmp"), tooling_harness, {})
+
+    assert result.final_output == "Done"
+    run_config = mock_runner_instance.run.await_args.kwargs["config"]
+    assert run_config["skill_name"] == "python-bugfix"
+
+
+def test_sdk_adapter_derives_skill_name_from_legacy_skill_path():
+    adapter = SdkDawnKestrelAdapter()
+
+    mock_transcript = EvalTranscript(
+        messages=[
+            {"role": "user", "content": "Test prompt"},
+            {"role": "assistant", "content": "Done"},
+        ],
+        tool_calls=[],
+        agent_response="Done",
+    )
+    mock_outcome = EvalOutcome(status=EvalStatus.COMPLETED)
+    tooling_harness = {
+        "policy": {"allowed_tools": [], "denied_tools": []},
+        "call": _ok_tool_call,
+    }
+
+    scenario = {
+        "id": "test-sdk-skill-path-scenario",
+        "sut": {
+            "type": "coding_agent",
+            "adapter": "sdk_dawn_kestrel",
+            "config": {
+                "provider": "test_provider",
+                "model": "test_model",
+                "skill_path": ".dawn-kestrel/skills/python-bugfix/SKILL.md",
+            },
+        },
+        "inputs": {"prompt": "Test prompt"},
+        "expectations": {},
+        "budgets": {},
+    }
+
+    with patch("ash_hawk.scenario.adapters.sdk_dawn_kestrel.DawnKestrelAgentRunner") as MockRunner:
+        mock_runner_instance = MagicMock()
+        mock_runner_instance.run = AsyncMock(return_value=(mock_transcript, mock_outcome))
+        MockRunner.return_value = mock_runner_instance
+
+        result = adapter.run_scenario(scenario, Path("/tmp"), tooling_harness, {})
+
+    assert result.final_output == "Done"
+    run_config = mock_runner_instance.run.await_args.kwargs["config"]
+    assert run_config["skill_name"] == "python-bugfix"
 
 
 def test_sdk_adapter_does_not_duplicate_policy_events_from_transcript():
@@ -332,7 +427,7 @@ def test_sdk_adapter_normalizes_tool_call_alias_fields() -> None:
             "allowed_tools": ["bash"],
             "denied_tools": [],
         },
-        "call": lambda name, inp: {"ok": True},
+        "call": _ok_tool_call,
     }
 
     scenario = {
@@ -364,19 +459,19 @@ def test_sdk_adapter_normalizes_tool_call_alias_fields() -> None:
 
 class TestResolveProviderModelWithAgentPath:
     def test_reads_provider_model_from_agent_dir_config(self, tmp_path: Path) -> None:
-        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import resolve_provider_model
 
         agent_dir = tmp_path / "my_agent"
         agent_dir.mkdir()
         (agent_dir / "agent_config.yaml").write_text(
             "runtime:\n  provider: openai\n  model: gpt-4o\n"
         )
-        provider, model = _resolve_provider_model({}, agent_path=str(agent_dir))
+        provider, model = resolve_provider_model({}, agent_path=str(agent_dir))
         assert provider == "openai"
         assert model == "gpt-4o"
 
     def test_reads_from_parent_dawn_kestrel(self, tmp_path: Path) -> None:
-        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import resolve_provider_model
 
         parent = tmp_path / "project"
         parent.mkdir()
@@ -387,19 +482,19 @@ class TestResolveProviderModelWithAgentPath:
         )
         agent_dir = parent / "agent"
         agent_dir.mkdir()
-        provider, model = _resolve_provider_model({}, agent_path=str(agent_dir))
+        provider, model = resolve_provider_model({}, agent_path=str(agent_dir))
         assert provider == "anthropic"
         assert model == "claude-3-5-sonnet"
 
     def test_explicit_config_wins_over_agent_path(self, tmp_path: Path) -> None:
-        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import resolve_provider_model
 
         agent_dir = tmp_path / "my_agent"
         agent_dir.mkdir()
         (agent_dir / "agent_config.yaml").write_text(
             "runtime:\n  provider: openai\n  model: gpt-4o\n"
         )
-        provider, model = _resolve_provider_model(
+        provider, model = resolve_provider_model(
             {"provider": "explicit-provider", "model": "explicit-model"},
             agent_path=str(agent_dir),
         )
@@ -407,7 +502,7 @@ class TestResolveProviderModelWithAgentPath:
         assert model == "explicit-model"
 
     def test_agent_path_wins_over_global_default(self, tmp_path: Path) -> None:
-        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import resolve_provider_model
 
         agent_dir = tmp_path / "my_agent"
         agent_dir.mkdir()
@@ -416,26 +511,26 @@ class TestResolveProviderModelWithAgentPath:
         )
         with patch(
             "ash_hawk.scenario.adapters.sdk_dawn_kestrel._resolve_provider_model",
-            wraps=_resolve_provider_model,
+            wraps=resolve_provider_model,
         ):
-            provider, model = _resolve_provider_model({}, agent_path=str(agent_dir))
+            provider, model = resolve_provider_model({}, agent_path=str(agent_dir))
         assert provider == "google"
         assert model == "gemini-pro"
 
     def test_no_agent_path_no_config_falls_through(self) -> None:
-        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import _resolve_provider_model
+        from ash_hawk.scenario.adapters.sdk_dawn_kestrel import resolve_provider_model
 
         with patch(
-            "ash_hawk.scenario.adapters.sdk_dawn_kestrel._resolve_provider_model.__wrapped__"
-            if hasattr(_resolve_provider_model, "__wrapped__")
+            "ash_hawk.scenario.adapters.sdk_dawn_kestrel.resolve_provider_model.__wrapped__"
+            if hasattr(resolve_provider_model, "__wrapped__")
             else "dawn_kestrel.base.config.load_agent_config",
             return_value={
                 "runtime.provider": "fallback-provider",
                 "runtime.model": "fallback-model",
             },
-        ) as mock_load:
+        ):
             try:
-                provider, model = _resolve_provider_model({})
+                provider, model = resolve_provider_model({})
                 assert provider == "fallback-provider"
                 assert model == "fallback-model"
             except (ValueError, ImportError):

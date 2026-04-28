@@ -12,6 +12,3 @@ class SkillRegistry:
             return self._skills[name]
         except KeyError as exc:
             raise ValueError(f"Unknown thin runtime skill: {name}") from exc
-
-    def list_skills(self) -> list[SkillSpec]:
-        return list(self._skills.values())

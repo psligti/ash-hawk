@@ -68,7 +68,6 @@ class ScenarioRunner:
         tooling_mode: Literal["mock", "record", "replay"] = "record",
         adapter_registry: ScenarioAdapterRegistry | None = None,
         show_failure_patterns: bool = True,
-        injector: Any | None = None,
         scenario_timeout_seconds: float | None = None,
         grader_config_overrides: dict[str, Any] | None = None,
         on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
@@ -87,7 +86,6 @@ class ScenarioRunner:
         self._tooling_mode: Literal["mock", "record", "replay"] = tooling_mode
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._show_failure_patterns = show_failure_patterns
-        self._injector = injector
         self._scenario_timeout_seconds = scenario_timeout_seconds
         self._grader_config_overrides = grader_config_overrides or {}
         self._on_trial_progress = on_trial_progress
@@ -137,7 +135,6 @@ class ScenarioRunner:
             adapter_registry=self._adapter_registry,
             tooling_mode=self._tooling_mode,
             artifacts_root=self._storage_root,
-            injector=self._injector,
             scenario_timeout_seconds=self._scenario_timeout_seconds,
             on_trace_event=self._on_trace_event,
             agent_path=self._agent_path,
@@ -488,7 +485,6 @@ async def run_scenarios_async(
     tooling_mode: Literal["mock", "record", "replay"] = "record",
     adapter_registry: ScenarioAdapterRegistry | None = None,
     show_failure_patterns: bool = True,
-    injector: Any | None = None,
     scenario_timeout_seconds: float | None = None,
     grader_config_overrides: dict[str, Any] | None = None,
     on_trial_progress: Callable[[int, int, int, str], Awaitable[None]] | None = None,
@@ -501,7 +497,6 @@ async def run_scenarios_async(
         tooling_mode=tooling_mode,
         adapter_registry=adapter_registry,
         show_failure_patterns=show_failure_patterns,
-        injector=injector,
         scenario_timeout_seconds=scenario_timeout_seconds,
         grader_config_overrides=grader_config_overrides,
         on_trial_progress=on_trial_progress,

@@ -104,6 +104,29 @@ class ThinRuntimePersistence:
             "success": execution.success,
             "error": execution.error,
             "delegations": [record.model_dump() for record in execution.delegations],
+            "phase": execution.context.runtime.get("phase"),
+            "goal_intent": execution.context.runtime.get("goal_intent"),
+            "live_brief": execution.context.runtime.get("live_brief"),
+            "progress_summary": execution.context.runtime.get("progress_summary"),
+            "recent_steps": execution.context.runtime.get("recent_steps", []),
+            "latest_evidence": execution.context.runtime.get("latest_evidence", []),
+            "constraints": execution.context.runtime.get("constraints", []),
+            "next_pressure": execution.context.runtime.get("next_pressure"),
+            "active_skills": execution.context.runtime.get("active_skills", []),
+            "active_skill_summaries": execution.context.runtime.get("active_skill_summaries", []),
+            "available_tool_summaries": execution.context.tool.get("available_tool_summaries", []),
+            "recent_eval_summaries": execution.context.evaluation.get("recent_eval_summaries", []),
+            "diagnosed_issues": execution.context.failure.get("diagnosed_issues", []),
+            "top_hypothesis": execution.context.failure.get("top_hypothesis"),
+            "actionable_files": execution.context.workspace.get("actionable_files", []),
+            "reference_files": execution.context.workspace.get("reference_files", []),
+            "blocked_files": execution.context.workspace.get("blocked_files", []),
+            "file_summaries": execution.context.workspace.get("file_summaries", []),
+            "open_python_repl_sessions": execution.context.workspace.get(
+                "open_python_repl_sessions", []
+            ),
+            "artifact_index": execution.context.audit.get("artifact_index", []),
+            "progress_artifacts": execution.context.audit.get("progress_artifacts", []),
         }
         self._atomic_write_json(summary_path, summary)
         return run_dir

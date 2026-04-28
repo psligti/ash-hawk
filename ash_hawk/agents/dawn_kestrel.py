@@ -18,13 +18,21 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
+from ash_hawk.dawn_kestrel_skills import prepare_skill_runtime, resolve_skill_project_root
 from ash_hawk.policy import PolicyEnforcer
+from ash_hawk.scenario.trace import (
+    DEFAULT_TRACE_TS,
+    ModelMessageEvent,
+    ToolCallEvent,
+    ToolResultEvent,
+)
 from ash_hawk.types import (
     EvalOutcome,
     EvalTask,
     EvalTranscript,
     FailureMode,
     TokenUsage,
+    ToolPermission,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,8 +61,6 @@ def _mcp_result_to_text(result: dict[str, Any]) -> str:
     if isinstance(content, list):
         text_chunks: list[str] = []
         for item_dict in cast(list[dict[str, Any]], content):
-            if not isinstance(item_dict, dict):
-                continue
             item_type = item_dict.get("type")
             text_value = item_dict.get("text")
             if item_type == "text" and isinstance(text_value, str):
@@ -78,6 +84,105 @@ def _ensure_eval_command_allowlist() -> None:
     except ImportError:
         return
     # No ALLOWED_SHELL_COMMANDS in new SDK — function is effectively a no-op
+
+
+def _tool_allowed_by_policy(policy_enforcer: PolicyEnforcer, tool_name: str) -> bool:
+    return policy_enforcer.policy.is_tool_allowed(tool_name) is ToolPermission.ALLOW
+
+
+def _mcp_policy_aliases(tool_name: str, metadata: dict[str, Any]) -> list[str]:
+    aliases = [tool_name]
+    server = metadata.get("mcp_server")
+    mcp_tool = metadata.get("mcp_tool")
+    if (
+        isinstance(server, str)
+        and server.strip()
+        and isinstance(mcp_tool, str)
+        and mcp_tool.strip()
+    ):
+        aliases.extend([f"{server}_{mcp_tool}", f"{server}-{mcp_tool}", mcp_tool])
+    deduped: list[str] = []
+    for alias in aliases:
+        if alias not in deduped:
+            deduped.append(alias)
+    return deduped
+
+
+def _is_allowed_tool_name(
+    policy_enforcer: PolicyEnforcer,
+    tool_name: str,
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> bool:
+    permissions = [
+        policy_enforcer.policy.is_tool_allowed(alias)
+        for alias in _mcp_policy_aliases(tool_name, metadata or {})
+    ]
+    if ToolPermission.DENY in permissions or ToolPermission.ASK in permissions:
+        return False
+    return ToolPermission.ALLOW in permissions
+
+
+def _trace_ts(raw_timestamp: object) -> str:
+    if isinstance(raw_timestamp, int | float):
+        return f"{float(raw_timestamp):.6f}"
+    return DEFAULT_TRACE_TS
+
+
+def _session_trace_events(session: Any) -> list[dict[str, Any]]:
+    trace_events: list[dict[str, Any]] = []
+    for message in getattr(session, "messages", []):
+        if not isinstance(message, dict):
+            continue
+        role = message.get("role")
+        content = message.get("content")
+        if isinstance(role, str) and isinstance(content, str):
+            trace_events.append(
+                ModelMessageEvent.create(
+                    DEFAULT_TRACE_TS, {"role": role, "content": content}
+                ).model_dump()
+            )
+    for event in getattr(session, "events", []):
+        event_type = getattr(event, "event_type", "")
+        event_ts = _trace_ts(getattr(event, "timestamp", None))
+        if event_type == "llm_call":
+            trace_events.append(
+                ModelMessageEvent.create(
+                    event_ts,
+                    {
+                        "role": "assistant",
+                        "content": getattr(event, "text", ""),
+                        "provider": getattr(event, "provider", ""),
+                        "model": getattr(event, "model", ""),
+                        "finish_reason": getattr(event, "finish_reason", ""),
+                        "had_tool_calls": getattr(event, "had_tool_calls", False),
+                    },
+                ).model_dump()
+            )
+            continue
+        if event_type != "tool_call":
+            continue
+        tool_name = getattr(event, "tool_name", "")
+        tool_input = getattr(event, "tool_input", {})
+        trace_events.append(
+            ToolCallEvent.create(
+                event_ts,
+                {"name": tool_name, "arguments": tool_input},
+            ).model_dump()
+        )
+        trace_events.append(
+            ToolResultEvent.create(
+                event_ts,
+                {
+                    "tool_name": tool_name,
+                    "result": getattr(event, "tool_result", ""),
+                    "error": getattr(event, "error", None),
+                    "duration_ms": getattr(event, "duration_ms", 0.0),
+                    "output_preview": getattr(event, "output_preview", ""),
+                },
+            ).model_dump()
+        )
+    return trace_events
 
 
 class _McpStdioClient:
@@ -167,8 +272,6 @@ class _McpStdioClient:
 
             while True:
                 message = await self._read_message()
-                if not isinstance(message, dict):
-                    continue
                 if message.get("id") != request_id:
                     continue
                 if "error" in message:
@@ -231,7 +334,7 @@ class _McpToolProxy:
         self._client = client
 
     def parameters(self) -> dict[str, Any]:
-        if isinstance(self._input_schema, dict) and self._input_schema:
+        if self._input_schema:
             return self._input_schema
         return {"type": "object", "properties": {}, "additionalProperties": True}
 
@@ -269,23 +372,46 @@ class DawnKestrelAgentRunner:
         self._provider = provider
         self._model = model
         self._mcp_servers = self._parse_mcp_servers(kwargs.pop("mcp_servers", None))
+        project_root = kwargs.pop("project_root", None)
         self._kwargs = kwargs
         self._client: Any | None = None
-        self._lesson_injector: Any | None = None
         self._llm_queue: Any | None = None
         self._post_run_hook: Any | None = None
-
-    def set_lesson_injector(self, injector: Any) -> None:
-        self._lesson_injector = injector
-
-    def get_lesson_injector(self) -> Any | None:
-        return self._lesson_injector
+        self._skill_project_root = (
+            resolve_skill_project_root(project_root) if project_root else None
+        )
 
     def set_post_run_hook(self, hook: Any) -> None:
         self._post_run_hook = hook
 
     def get_post_run_hook(self) -> Any | None:
         return self._post_run_hook
+
+    def _resolve_requested_skills(self, config: dict[str, Any]) -> list[str]:
+        requested: list[str] = []
+        for key in ("skill_name", "skill"):
+            value = config.get(key)
+            if isinstance(value, str) and value.strip() and value.strip() not in requested:
+                requested.append(value.strip())
+        raw_skill_names = config.get("skill_names")
+        if isinstance(raw_skill_names, list):
+            for item in raw_skill_names:
+                if isinstance(item, str) and item.strip() and item.strip() not in requested:
+                    requested.append(item.strip())
+        skill_path = config.get("skill_path")
+        if isinstance(skill_path, str) and skill_path.strip():
+            path = Path(skill_path.strip())
+            if path.name == "SKILL.md" and path.parent.name and path.parent.name not in requested:
+                requested.append(path.parent.name)
+        return requested
+
+    def _resolve_skill_project_root(self, config: dict[str, Any]) -> Path:
+        project_root = config.get("project_root")
+        if isinstance(project_root, str) and project_root.strip():
+            return resolve_skill_project_root(project_root)
+        if self._skill_project_root is not None:
+            return self._skill_project_root
+        return resolve_skill_project_root()
 
     def _parse_mcp_servers(self, raw_servers: Any) -> list[_McpServerConfig]:
         if raw_servers is None:
@@ -359,8 +485,6 @@ class DawnKestrelAgentRunner:
                 tool_specs = await client.list_tools()
 
                 for tool_spec in tool_specs:
-                    if not isinstance(tool_spec, dict):
-                        continue
                     tool_name = tool_spec.get("name")
                     if not isinstance(tool_name, str) or not tool_name.strip():
                         continue
@@ -388,7 +512,7 @@ class DawnKestrelAgentRunner:
                     if callable(register_method):
                         result = register_method(proxy, tool_id, metadata=metadata)
                         if hasattr(result, "__await__"):
-                            await result
+                            await cast(Any, result)
                     else:
                         tools_attr = getattr(base_registry, "tools", None)
                         if isinstance(tools_attr, dict):
@@ -490,7 +614,7 @@ class DawnKestrelAgentRunner:
             else:
                 prompt = str(task_input)
 
-            agent_id = str(config.get("agent_name", "default"))
+            requested_skills = self._resolve_requested_skills(config)
             agent_path = config.get("agent_path")
             if agent_path is not None:
                 # Read agent instructions directly from the agent_path directory
@@ -500,14 +624,7 @@ class DawnKestrelAgentRunner:
                     prompt = (
                         f"<agent-instructions>\n{agent_content}\n</agent-instructions>\n\n{prompt}"
                     )
-            elif self._lesson_injector is not None:
-                skill_name = self._lesson_injector.discover_skill_name()
-                skills_to_inject = [skill_name] if skill_name else None
-                prompt = self._lesson_injector.inject_into_prompt(
-                    agent_id, prompt, skills=skills_to_inject
-                )
-
-            trial_id = str(config.get("trial_id") or f"trial-{int(time.time() * 1000)}")
+            skill_project_root = self._resolve_skill_project_root(config)
 
             available_tools_raw: Any = {}
             if hasattr(filtered_registry, "tools") and isinstance(
@@ -526,35 +643,28 @@ class DawnKestrelAgentRunner:
                 except Exception:
                     available_tools_raw = {}
 
-            _ALLOWED_TOOLS = frozenset(
-                {
-                    "read",
-                    "edit",
-                    "write",
-                    "multiedit",
-                    "todowrite",
-                    "todo_create",
-                    "todo_update",
-                    "todo_read",
-                    "question",
-                }
-            )
             tool_metadata = getattr(filtered_registry, "tool_metadata", {})
-
-            def _is_allowed_tool_name(tool_name: str) -> bool:
-                if tool_name in _ALLOWED_TOOLS:
-                    return True
-                if not isinstance(tool_metadata, dict):
-                    return False
-                metadata = tool_metadata.get(tool_name)
-                return isinstance(metadata, dict) and isinstance(metadata.get("mcp_server"), str)
 
             if isinstance(available_tools_raw, dict):
                 available_tools = {
-                    k: v for k, v in available_tools_raw.items() if _is_allowed_tool_name(k)
+                    k: v
+                    for k, v in available_tools_raw.items()
+                    if _is_allowed_tool_name(
+                        policy_enforcer,
+                        k,
+                        metadata=tool_metadata.get(k) if isinstance(tool_metadata, dict) else None,
+                    )
                 }
             else:
-                available_tools = {k: v for k, v in available_tools_raw if _is_allowed_tool_name(k)}
+                available_tools = {
+                    k: v
+                    for k, v in available_tools_raw
+                    if _is_allowed_tool_name(
+                        policy_enforcer,
+                        k,
+                        metadata=tool_metadata.get(k) if isinstance(tool_metadata, dict) else None,
+                    )
+                }
 
             max_loop_iterations = int(config.get("max_iterations", 1) or 1)
             if max_loop_iterations < 1:
@@ -562,17 +672,26 @@ class DawnKestrelAgentRunner:
 
             tools_registry_module = importlib.import_module("dawn_kestrel.tools.registry")
             tool_registry = tools_registry_module.ToolRegistry()
-            if isinstance(available_tools, dict):
-                for tool_name, tool_impl in available_tools.items():
-                    tool_registry.register(tool_impl)
+            for tool_impl in available_tools.values():
+                tool_registry.register(tool_impl)
 
             loop_config = LoopConfig(max_iterations=max_loop_iterations)
 
+            skill_runtime, preloaded_skill_messages = await prepare_skill_runtime(
+                project_root=skill_project_root,
+                preactivate=requested_skills,
+                strict_preactivate=bool(requested_skills),
+            )
+
             result = await run_agent(
                 client=client,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    *preloaded_skill_messages,
+                    {"role": "user", "content": prompt},
+                ],
                 tools=tool_registry,
                 config=loop_config,
+                skills=skill_runtime,
             )
 
             if result.session is not None:
@@ -594,14 +713,16 @@ class DawnKestrelAgentRunner:
             total_usage = result.total_usage or {}
 
             total_cost_usd = 0.0
+            trace_events: list[dict[str, Any]] = []
             if result.session is not None:
                 for evt in result.session.filter_by_type("llm_call"):
                     total_cost_usd += getattr(evt, "cost_usd", 0.0)
+                trace_events = _session_trace_events(result.session)
 
             transcript = EvalTranscript(
                 messages=conversation,
                 tool_calls=all_tool_calls,
-                trace_events=[],
+                trace_events=trace_events,
                 token_usage=TokenUsage(
                     input=int(total_usage.get("input", 0)),
                     output=int(total_usage.get("output", 0)),

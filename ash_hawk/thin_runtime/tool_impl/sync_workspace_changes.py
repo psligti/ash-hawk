@@ -1,19 +1,91 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from ash_hawk.thin_runtime.models import ToolCall, ToolResult
 from ash_hawk.thin_runtime.tool_command import (
     ToolCommand,
-    basic_input_schema,
     context_input_schema,
-    delegation_input_schema,
     standard_output_schema,
 )
-from ash_hawk.thin_runtime.tool_types import AuditToolContext, ToolExecutionPayload
+from ash_hawk.thin_runtime.tool_impl._evaluation_signals import collect_evaluation_signals
+from ash_hawk.thin_runtime.tool_impl._isolated_workspace import (
+    cleanup_isolated_workspace,
+    sync_isolated_changes,
+)
+from ash_hawk.thin_runtime.tool_types import (
+    AuditToolContext,
+    RuntimeToolContext,
+    ToolExecutionPayload,
+    WorkspaceToolContext,
+)
 
 
 def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]]:
-    payload = ToolExecutionPayload(audit_updates=AuditToolContext(sync_events=["synced"]))
-    return True, payload, "Synced workspace changes", []
+    isolated_path_raw = call.context.workspace.isolated_workspace_path
+    primary_root_raw = (
+        call.context.workspace.primary_workdir
+        or call.context.workspace.repo_root
+        or call.context.workspace.workdir
+    )
+    mutated_files = list(call.context.workspace.mutated_files)
+    signals = collect_evaluation_signals(call)
+    if not isolated_path_raw or not primary_root_raw:
+        return (
+            False,
+            ToolExecutionPayload(),
+            "No isolated workspace is available to sync",
+            ["missing_isolated_workspace"],
+        )
+    if not mutated_files:
+        return (
+            False,
+            ToolExecutionPayload(),
+            "No mutated files are available to sync",
+            ["missing_mutated_files"],
+        )
+    if signals.aggregate_passed is not True or signals.score_regressed:
+        return (
+            False,
+            ToolExecutionPayload(),
+            "Refusing to sync candidate changes before validation passes cleanly",
+            ["validation_not_clean"],
+        )
+
+    isolated_root = Path(isolated_path_raw).resolve()
+    primary_root = Path(primary_root_raw).resolve()
+    synced_files = sync_isolated_changes(
+        primary_root=primary_root,
+        isolated_root=isolated_root,
+        relative_paths=mutated_files,
+    )
+    cleanup_isolated_workspace(isolated_root)
+    payload = ToolExecutionPayload(
+        runtime_updates=RuntimeToolContext(
+            stop_reason="validated candidate synced back to primary workspace"
+        ),
+        workspace_updates=WorkspaceToolContext(
+            isolated_workspace=False,
+            isolated_workspace_path="",
+            changed_files=synced_files,
+            workdir=str(primary_root),
+            scenario_path=call.context.workspace.source_scenario_path
+            or call.context.workspace.scenario_path,
+            source_scenario_path="",
+        ),
+        audit_updates=AuditToolContext(
+            sync_events=["synced_back"],
+            run_summary={"synced_file_count": str(len(synced_files))},
+            diff_report={"files": len(synced_files)},
+        ),
+        stop=True,
+    )
+    return (
+        True,
+        payload,
+        f"Synced {len(synced_files)} validated file(s) back to the primary workspace",
+        [],
+    )
 
 
 COMMAND = ToolCommand(

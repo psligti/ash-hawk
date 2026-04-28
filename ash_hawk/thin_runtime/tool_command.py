@@ -134,10 +134,11 @@ class ToolCommand:
     completion_criteria: list[str]
     escalation_rules: list[str]
     executor: ToolExecutor
+    model_input_schema: ToolSchemaSpec | None = None
 
     @property
-    def inputs(self) -> ToolSchemaSpec:
-        return self.input_schema
+    def dk_inputs(self) -> ToolSchemaSpec:
+        return self.model_input_schema or self.input_schema
 
     @property
     def outputs(self) -> ToolSchemaSpec:
@@ -188,8 +189,8 @@ class ToolCommand:
         )
 
     def _validate_call(self, call: ToolCall) -> list[str]:
-        model = self._schema_model(self.input_schema, output=False)
-        payload = {
+        runtime_model = self._schema_model(self.input_schema, output=False)
+        runtime_payload = {
             "goal_id": call.goal_id,
             "remaining_tools": call.remaining_tools,
             "available_contexts": call.available_contexts,
@@ -199,11 +200,16 @@ class ToolCommand:
             "retry_count": call.retry_count,
             "context": call.context,
         }
-        schema_errors = self.input_schema.validate_payload(payload)
-        if schema_errors:
-            return schema_errors
-        model.model_validate(payload)
-        return []
+        errors = list(self.input_schema.validate_payload(runtime_payload))
+        if not errors:
+            runtime_model.model_validate(runtime_payload)
+        if self.model_input_schema is not None:
+            arg_model = self._schema_model(self.model_input_schema, output=False)
+            arg_payload = dict(call.tool_args)
+            errors.extend(self.model_input_schema.validate_payload(arg_payload))
+            if not errors:
+                arg_model.model_validate(arg_payload)
+        return errors
 
     def _validate_result(
         self,
@@ -245,10 +251,6 @@ class ToolCommand:
         return model
 
 
-def empty_context() -> ToolCallContext:
-    return ToolCallContext()
-
-
 def _python_type(field: ToolFieldSpec, *, output: bool) -> object:
     if field.type is SchemaFieldType.STRING:
         return str
@@ -268,12 +270,14 @@ def _python_type(field: ToolFieldSpec, *, output: bool) -> object:
             return list[float]
         if item_type is SchemaFieldType.BOOLEAN:
             return list[bool]
+        if item_type is SchemaFieldType.OBJECT:
+            return list[dict[str, Any]]
         return list[str]
     if field.name == "context":
         return ToolCallContext
     if output and field.name == "result":
         return ToolExecutionPayload
-    return dict[str, str]
+    return dict[str, Any]
 
 
 def _optional_python_type(field: ToolFieldSpec, *, output: bool) -> object:

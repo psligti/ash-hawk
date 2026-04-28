@@ -90,11 +90,6 @@ class _FunctionRunner:
         return result
 
 
-def _wire_lesson_injector(runner: AgentRunner, injector: Any) -> None:
-    if hasattr(runner, "set_lesson_injector"):
-        cast(Any, runner).set_lesson_injector(injector)
-
-
 def _wire_post_run_hook(runner: AgentRunner, hook: Any) -> None:
     if hasattr(runner, "set_post_run_hook"):
         cast(Any, runner).set_post_run_hook(hook)
@@ -145,20 +140,15 @@ class TrialExecutor:
         ],
         fixture_resolver: FixtureResolver | None = None,
         post_run_hook: Any | None = None,
-        lesson_injector: Any | None = None,
     ) -> None:
         self._storage = storage
         self._policy = policy
         self._agent_runner: AgentRunner = _wrap_runner(agent_runner)
         self._fixture_resolver = fixture_resolver
         self._post_run_hook = post_run_hook
-        self._lesson_injector = lesson_injector
 
         if self._post_run_hook is not None:
             _wire_post_run_hook(self._agent_runner, self._post_run_hook)
-
-        if self._lesson_injector is not None:
-            _wire_lesson_injector(self._agent_runner, self._lesson_injector)
 
     @property
     def policy(self) -> ToolSurfacePolicy:
@@ -173,17 +163,9 @@ class TrialExecutor:
     def post_run_hook(self) -> Any | None:
         return self._post_run_hook
 
-    @property
-    def lesson_injector(self) -> Any | None:
-        return self._lesson_injector
-
     def set_post_run_hook(self, hook: Any) -> None:
         self._post_run_hook = hook
         _wire_post_run_hook(self._agent_runner, hook)
-
-    def set_lesson_injector(self, injector: Any) -> None:
-        self._lesson_injector = injector
-        _wire_lesson_injector(self._agent_runner, injector)
 
     async def execute(
         self,

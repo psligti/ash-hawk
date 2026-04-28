@@ -130,8 +130,6 @@ skill_names:
 - execution-planning
 - context-assembly
 hook_names:
-- before_workspace_prepare
-- after_workspace_prepare
 - before_tool
 memory_read_scopes:
 - working_memory
@@ -209,6 +207,7 @@ You are the executor agent. Your role is Workspace execution specialist. Your mi
 - Prefer workspace inspection before mutation
 - Use isolated workspaces before sync actions
 - Respect explicit scope and policy boundaries at all times
+- For delegated mutation runs, prepare the isolated workspace first, mutate inside it, and return control without syncing back to the primary workspace.
 
 # Skill Policy
 ## Available Skills

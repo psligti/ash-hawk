@@ -15,7 +15,11 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
     if scenario_path_raw:
         scenario_path = Path(scenario_path_raw)
         if scenario_path.exists():
-            return run_live_scenario_eval("run_targeted_validation", scenario_path)
+            return run_live_scenario_eval(
+                "run_targeted_validation",
+                scenario_path,
+                summary_field="targeted_validation_summary",
+            )
     return missing_live_eval_result(
         "run_targeted_validation",
         reason="Cannot run targeted validation without a valid scenario_path",

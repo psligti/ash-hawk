@@ -106,9 +106,12 @@ def test_mutate_agent_files_builds_rich_diagnosis_prompt(
         {
             "tool_name": "mutate_agent_files",
             "goal_id": "goal-rich-prompt",
+            "tool_args": {"target_file": "agent.md"},
             "context": {
                 "workspace": {
                     "workdir": str(tmp_path),
+                    "isolated_workspace": True,
+                    "isolated_workspace_path": str(tmp_path),
                     "scenario_summary": "Teach direct-context-first behavior.",
                     "scenario_required_files": ["reports/out.md"],
                 },
@@ -196,7 +199,7 @@ def test_improver_fails_when_no_eligible_tool_can_start_loop() -> None:
     )
 
 
-def test_improver_can_reach_diagnosis_mutation_and_repeat_without_scoped_targets() -> None:
+def test_improver_can_reach_diagnosis_and_derive_targets_without_scoped_inputs() -> None:
     harness = create_default_harness(workdir=Path.cwd())
 
     def load_handler(_call: object) -> ToolResult:
@@ -232,7 +235,7 @@ def test_improver_can_reach_diagnosis_mutation_and_repeat_without_scoped_targets
             tool_name="call_llm_structured",
             success=True,
             payload=ToolExecutionPayload(
-                runtime_updates=RuntimeToolContext(preferred_tool="mutate_agent_files"),
+                runtime_updates=RuntimeToolContext(preferred_tool="delegate_task"),
                 workspace_updates=WorkspaceToolContext(allowed_target_files=["agent.md"]),
                 failure_updates=FailureToolContext(
                     explanations=["Mutate the durable prompt instead of searching broadly."],
@@ -249,59 +252,23 @@ def test_improver_can_reach_diagnosis_mutation_and_repeat_without_scoped_targets
             ),
         )
 
-    def mutate_handler(_call: object) -> ToolResult:
-        return ToolResult(
-            tool_name="mutate_agent_files",
-            success=True,
-            payload=ToolExecutionPayload(
-                workspace_updates=WorkspaceToolContext(mutated_files=["agent.md"]),
-            ),
-        )
-
-    def repeat_handler(_call: object) -> ToolResult:
-        return ToolResult(
-            tool_name="run_eval_repeated",
-            success=True,
-            payload=ToolExecutionPayload(
-                evaluation_updates=EvaluationToolContext(
-                    repeat_eval_summary=ScoreSummary(
-                        score=0.89,
-                        status="completed",
-                        tool="run_eval_repeated",
-                    )
-                ),
-                audit_updates=AuditToolContext(
-                    run_result=AuditRunResult(aggregate_passed=True),
-                ),
-                stop=True,
-            ),
-        )
-
     harness.tools.register_handler("load_workspace_state", load_handler)
     harness.tools.register_handler("run_baseline_eval", baseline_handler)
     harness.tools.register_handler("call_llm_structured", diagnosis_handler)
-    harness.tools.register_handler("mutate_agent_files", mutate_handler)
-    harness.tools.register_handler("run_eval_repeated", repeat_handler)
 
     result = harness.execute(
-        RuntimeGoal(goal_id="goal-full-loop", description="Reach diagnosis, mutation, and re-eval"),
+        RuntimeGoal(goal_id="goal-full-loop", description="Reach diagnosis and derive targets"),
         agent_name="improver",
         tool_execution_order=[
             "load_workspace_state",
             "run_baseline_eval",
             "call_llm_structured",
-            "mutate_agent_files",
-            "run_eval_repeated",
         ],
     )
 
-    assert result.success is True
+    assert result.success is False
     assert result.selected_tool_names == [
         "load_workspace_state",
         "run_baseline_eval",
         "call_llm_structured",
-        "mutate_agent_files",
-        "run_eval_repeated",
     ]
-    assert result.context.workspace["mutated_files"] == ["agent.md"]
-    assert result.context.evaluation["repeat_eval_summary"]["score"] == 0.89

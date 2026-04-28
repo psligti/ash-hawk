@@ -99,7 +99,6 @@ class ScenarioAgentRunner:
         adapter_registry: ScenarioAdapterRegistry | None = None,
         tooling_mode: Literal["mock", "record", "replay"] = "record",
         artifacts_root: Path | None = None,
-        injector: object | None = None,
         scenario_timeout_seconds: float | None = None,
         on_trace_event: Callable[[dict[str, object]], None] | None = None,
         agent_path: Path | None = None,
@@ -108,7 +107,6 @@ class ScenarioAgentRunner:
         self._adapter_registry = adapter_registry or get_default_adapter_registry()
         self._tooling_mode: Literal["mock", "record", "replay"] = tooling_mode
         self._artifacts_root = artifacts_root
-        self._injector = injector
         self._scenario_timeout_seconds = scenario_timeout_seconds
         self._on_trace_event = on_trace_event
         self._agent_path = agent_path
@@ -161,15 +159,14 @@ class ScenarioAgentRunner:
                 tooling_harness,
                 event_callback=self._on_trace_event,
             )
-            tooling_context = {
+            tooling_context: dict[str, object] = {
                 "call": tooling_recorder.call,
                 "harness": tooling_harness,
                 "mode": tooling_harness.mode,
                 "policy": tool_policy.model_dump(),
-                "injector": self._injector,
             }
             if self._on_trace_event is not None:
-                tooling_context["event_callback"] = self._on_trace_event
+                tooling_context["event_callback"] = cast(object, self._on_trace_event)
             if self._agent_path is not None:
                 tooling_context["agent_path"] = str(self._agent_path)
 

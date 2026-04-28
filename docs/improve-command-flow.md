@@ -10,6 +10,8 @@
 
 The `improve` command runs iterative auto-research cycles that discover agent skill/policy/tool/agent files, generate LLM-proposed improvements, evaluate them against scenario suites, and keep only changes that produce a measurable score increase.
 
+> **Skill-system note:** Ash Hawk now uses a single Dawn Kestrel-style skill root under `skills/<name>/SKILL.md`. Thin runtime internal skills are identified by `metadata.catalog_source: thin_runtime`, while other DK-discovered project skills can coexist in the same root.
+
 Two modes exist:
 - **`run`** — single-target improvement cycle
 - **`enhanced-run`** — multi-target parallel improvement with intent analysis, knowledge promotion, lever search, and skill cleanup
@@ -47,7 +49,7 @@ flowchart TD
     subgraph DISCOVER["Target Discovery"]
         direction TB
         D1["Search order:<br/>Skill → Tool → Policy → Agent"]
-        D2["_find_skill_file()<br/>.dawn-kestrel/skills/*/SKILL.md"]
+        D2["Dawn Kestrel SkillRegistry discover()<br/>skills/*/SKILL.md"]
         D3["_find_primary_tool()<br/>.dawn-kestrel/tools/*/TOOL.md"]
         D4["_find_policy_file()<br/>.dawn-kestrel/policies/*/POLICY.md"]
         D5["_find_agent_file()<br/>.dawn-kestrel/agents/*/AGENT.md"]
@@ -392,7 +394,9 @@ flowchart LR
 | Iteration artifacts | `.ash-hawk/auto-research/iterations/iter_XXX_{kept\|reverted}.md` |
 | Enhanced results | `.ash-hawk/enhanced-auto-research/` |
 | Promoted lessons | `.ash-hawk/lessons/{lesson_id}.json` |
-| Skill content | `.dawn-kestrel/skills/{name}/SKILL.md` |
+| Canonical skill content | `skills/{name}/SKILL.md` |
+| Thin runtime internal skills | `skills/{name}/SKILL.md` with `metadata.catalog_source: thin_runtime` |
+| Other project skills | `skills/{name}/SKILL.md` with a different `metadata.catalog_source` |
 | Tool content | `.dawn-kestrel/tools/{name}/TOOL.md` |
 | Policy content | `.dawn-kestrel/policies/{name}/POLICY.md` |
 | Agent content | `.dawn-kestrel/agents/{name}/AGENT.md` |

@@ -227,13 +227,6 @@ async def _run_suite_async(
 
     agent_runner = _build_agent_runner(agent_config, suite_file)
 
-    if hasattr(agent_runner, "set_lesson_injector"):
-        from ash_hawk.agents.dawn_kestrel_injector import DawnKestrelInjector
-
-        dk_injector = DawnKestrelInjector(project_root=suite_file.parent.resolve())
-        agent_runner.set_lesson_injector(dk_injector)
-        console.print("[dim]Dawn-Kestrel file injection enabled[/dim]")
-
     trial_executor = TrialExecutor(
         storage_backend, policy, agent_runner=agent_runner, fixture_resolver=fixture_resolver
     )
@@ -473,6 +466,7 @@ def _build_agent_runner(agent_config: dict[str, Any], suite_file: Path) -> Any:
         default_runner_kwargs = dict(kwargs)
         default_runner_kwargs.pop("provider", None)
         default_runner_kwargs.pop("model", None)
+        default_runner_kwargs.setdefault("project_root", suite_file.parent.resolve())
         return DawnKestrelAgentRunner(provider=provider, model=model, **default_runner_kwargs)
 
     kwargs.setdefault("provider", provider)

@@ -3,15 +3,21 @@ from __future__ import annotations
 from contextlib import nullcontext
 from pathlib import Path
 
+from ash_hawk.dawn_kestrel_skills import (
+    THIN_RUNTIME_CATALOG_SOURCE,
+    discover_project_skill_registry,
+    filter_skill_registry_by_catalog_source,
+    resolve_skill_project_root,
+)
 from ash_hawk.thin_runtime.agents import AgentRegistry
 from ash_hawk.thin_runtime.console import ThinRuntimeConsoleReporter, mute_console_logging
 from ash_hawk.thin_runtime.context import RuntimeContextAssembler
 from ash_hawk.thin_runtime.defaults import build_default_catalog
+from ash_hawk.thin_runtime.dk_runner import DkNativeLoopRunner
 from ash_hawk.thin_runtime.hooks import HookDispatcher, HookRegistry
 from ash_hawk.thin_runtime.memory import ThinRuntimeMemoryManager
 from ash_hawk.thin_runtime.models import RuntimeGoal, ThinRuntimeCatalog, ThinRuntimeExecutionResult
 from ash_hawk.thin_runtime.persistence import ThinRuntimePersistence
-from ash_hawk.thin_runtime.runner import AgenticLoopRunner
 from ash_hawk.thin_runtime.skills import SkillRegistry
 from ash_hawk.thin_runtime.tools import ToolRegistry
 from ash_hawk.types import ToolPermission, ToolSurfacePolicy
@@ -40,13 +46,18 @@ class ThinRuntimeHarness:
         self.console_reporter = (
             ThinRuntimeConsoleReporter(self.hooks) if self.console_output else None
         )
+        self.skill_project_root = resolve_skill_project_root()
+        self.dk_skill_registry = filter_skill_registry_by_catalog_source(
+            discover_project_skill_registry(self.skill_project_root),
+            THIN_RUNTIME_CATALOG_SOURCE,
+        )
         self.memory = ThinRuntimeMemoryManager(self.catalog.memory_scopes)
         self.memory.hydrate_defaults()
         self.persistence = ThinRuntimePersistence(storage_root=storage_root)
         for scope_name, values in self.persistence.load_memory_snapshot().items():
             self.memory.write_scope(scope_name, values)
         self.context = RuntimeContextAssembler()
-        self.runner = AgenticLoopRunner(
+        self.runner = DkNativeLoopRunner(
             agents=self.agents,
             skills=self.skills,
             tools=self.tools,
@@ -56,6 +67,7 @@ class ThinRuntimeHarness:
             context=self.context,
             workdir=self.workdir,
             policy=self.policy,
+            dk_skill_registry=self.dk_skill_registry,
         )
 
     def execute(

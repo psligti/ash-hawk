@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 
 from ash_hawk.thin_runtime.models import ToolCall, ToolResult
@@ -9,39 +8,77 @@ from ash_hawk.thin_runtime.tool_command import (
     context_input_schema,
     standard_output_schema,
 )
-from ash_hawk.thin_runtime.tool_types import AuditToolContext, ToolExecutionPayload
+from ash_hawk.thin_runtime.tool_impl._native_tooling import (
+    check_workspace_path_error,
+    detect_test_command,
+    format_error,
+    format_test_output,
+    resolve_path,
+    run_shell_command,
+)
+from ash_hawk.thin_runtime.tool_types import (
+    AuditToolContext,
+    SchemaFieldType,
+    ToolExecutionPayload,
+    ToolFieldSpec,
+    ToolSchemaSpec,
+)
 
 
 def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]]:
-    try:
-        from bolt_merlin.agent.tools.test import TestTool
-        from dawn_kestrel.tools.framework import ToolContext as DKToolContext
-    except ImportError:
+    workdir = Path(call.context.workspace.workdir or str(Path.cwd()))
+    path_arg = call.tool_args.get("path")
+    cwd = (
+        resolve_path(path_arg, workdir)
+        if isinstance(path_arg, str) and path_arg.strip()
+        else workdir
+    )
+    resolved_cwd, workspace_err = check_workspace_path_error(cwd, workdir, "test")
+    payload = ToolExecutionPayload(audit_updates=AuditToolContext(tool_usage=["test"]))
+    if workspace_err or resolved_cwd is None:
+        detail = (workspace_err or "❌ Access denied: path validation failed.").removeprefix("❌ ")
+        msg = format_error("test", detail)
+        return False, payload, msg, [msg]
+    cwd = resolved_cwd
+    command = call.tool_args.get("command")
+    resolved_command = (
+        command if isinstance(command, str) and command.strip() else detect_test_command(cwd)
+    )
+    exit_code, output, exec_error = run_shell_command(resolved_command, cwd=cwd, timeout=300)
+    if exec_error is not None:
+        msg = format_error("test", f"Test failed: {exec_error}")
+        return False, payload, msg, [msg]
+    if exit_code != 0:
         return (
             False,
-            ToolExecutionPayload(),
-            "bolt_merlin test tool is not available",
-            [
-                "bolt_merlin_unavailable",
-            ],
+            payload,
+            format_test_output(output, passed=False),
+            [f"Tests failed with exit code {exit_code}"],
         )
-
-    tool = TestTool()
-    workdir = Path(call.context.workspace.workdir or str(Path.cwd()))
-    ctx = DKToolContext(session_id=call.goal_id, working_dir=workdir)
-    result = asyncio.run(tool.execute({}, ctx))
-    success = result.error is None
-    payload = ToolExecutionPayload(audit_updates=AuditToolContext(tool_usage=["test"]))
-    errors = [result.error] if result.error else []
-    return success, payload, result.output, errors
+    return True, payload, format_test_output(output, passed=True), []
 
 
 COMMAND = ToolCommand(
     name="test",
-    summary="Run tests using the Dawn Kestrel tool surface.",
+    summary="Run project tests.",
     when_to_use=["When verification should be delegated to the environment test runner"],
     when_not_to_use=["When no testable state change exists"],
     input_schema=context_input_schema(),
+    model_input_schema=ToolSchemaSpec(
+        properties=[
+            ToolFieldSpec(
+                name="command",
+                type=SchemaFieldType.STRING,
+                description="Optional test command override",
+            ),
+            ToolFieldSpec(
+                name="path",
+                type=SchemaFieldType.STRING,
+                description="Optional directory to run tests in",
+            ),
+        ],
+        required=[],
+    ),
     output_schema=standard_output_schema(),
     side_effects=["subprocess"],
     risk_level="medium",

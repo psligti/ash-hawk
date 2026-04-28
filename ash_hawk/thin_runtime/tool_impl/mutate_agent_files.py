@@ -10,17 +10,28 @@ from ash_hawk.thin_runtime.tool_command import (
     context_input_schema,
     standard_output_schema,
 )
+from ash_hawk.thin_runtime.tool_impl._native_tooling import check_workspace_path_error
 from ash_hawk.thin_runtime.tool_impl._workspace_targets import preferred_workspace_target
 from ash_hawk.thin_runtime.tool_types import (
     AuditToolContext,
     RuntimeToolContext,
+    SchemaFieldType,
     ToolExecutionPayload,
+    ToolFieldSpec,
+    ToolSchemaSpec,
     WorkspaceToolContext,
 )
 
 
 def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]]:
     workdir = Path(call.context.workspace.workdir or str(Path.cwd()))
+    if not call.context.workspace.isolated_workspace_path:
+        return (
+            False,
+            ToolExecutionPayload(),
+            "Mutation requires an isolated workspace first",
+            ["missing_isolated_workspace"],
+        )
     required_files = list(call.context.workspace.scenario_required_files)
     target_candidates = _mutation_candidates(call)
     target_file = preferred_workspace_target(target_candidates)
@@ -33,6 +44,13 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
         )
 
     target_path = workdir / target_file
+    resolved_target_path, workspace_err = check_workspace_path_error(
+        target_path, workdir, "mutate_agent_files"
+    )
+    if workspace_err or resolved_target_path is None:
+        message = workspace_err or "❌ Access denied: path validation failed."
+        return False, ToolExecutionPayload(), message, [message]
+    target_path = resolved_target_path
     if not target_path.exists() or not target_path.is_file():
         return (
             False,
@@ -98,13 +116,23 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
         response_text if isinstance(response_text, str) and response_text.strip() else ""
     )
     payload = ToolExecutionPayload(
-        runtime_updates=RuntimeToolContext(preferred_tool="run_eval_repeated"),
+        runtime_updates=RuntimeToolContext(
+            preferred_tool=(
+                "" if call.context.runtime.active_agent == "executor" else "run_eval_repeated"
+            ),
+            stop_reason=(
+                "candidate mutation completed in isolated workspace"
+                if call.context.runtime.active_agent == "executor"
+                else None
+            ),
+        ),
         workspace_updates=WorkspaceToolContext(mutated_files=[target_file]),
         audit_updates=AuditToolContext(
             diff_report={
                 "files": 1,
                 "diff_line_count": len(diff_lines),
             },
+            sync_events=["candidate_mutated"],
             run_summary={
                 "mutation_session_id": str(getattr(result, "session_id", "")),
                 "target_file": target_file,
@@ -116,31 +144,17 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
             },
             tool_usage=["mutate_agent_files"],
         ),
+        stop=(call.context.runtime.active_agent == "executor"),
     )
     change_fragment = "changed" if changed else "reported success but produced no file diff"
     return True, payload, f"Mutated {target_file} via bolt_merlin agent ({change_fragment})", []
 
 
 def _mutation_candidates(call: ToolCall) -> list[str]:
-    workdir = Path(call.context.workspace.workdir or str(Path.cwd()))
-    required_files = list(call.context.workspace.scenario_required_files)
-    existing_required_files = _existing_file_candidates(workdir, required_files)
-    diagnosis_targets = [
-        path
-        for hypothesis in call.context.failure.ranked_hypotheses
-        for path in hypothesis.target_files
-        if path.strip()
-    ]
-    ordered: list[str] = []
-    for path in (
-        diagnosis_targets
-        + existing_required_files
-        + list(call.context.workspace.allowed_target_files)
-        + list(call.context.workspace.changed_files)
-    ):
-        if path not in ordered:
-            ordered.append(path)
-    return ordered
+    requested_target = call.tool_args.get("target_file")
+    if isinstance(requested_target, str) and requested_target.strip():
+        return [requested_target.strip()]
+    return []
 
 
 def _existing_file_candidates(workdir: Path, paths: list[str]) -> list[str]:
@@ -252,9 +266,20 @@ def _diff_summary(call: ToolCall) -> str:
 COMMAND = ToolCommand(
     name="mutate_agent_files",
     summary="Mutate agent files.",
-    when_to_use=["When workspace state must be inspected or updated"],
-    when_not_to_use=["When no workspace context exists"],
+    when_to_use=["When a specific durable file has already been chosen for mutation"],
+    when_not_to_use=["When you have not yet identified an exact target file"],
     input_schema=context_input_schema(),
+    model_input_schema=ToolSchemaSpec(
+        properties=[
+            ToolFieldSpec(
+                name="target_file",
+                type=SchemaFieldType.STRING,
+                description="Primary file path to mutate",
+                required=True,
+            )
+        ],
+        required=["target_file"],
+    ),
     output_schema=standard_output_schema(),
     side_effects=["filesystem"],
     risk_level="medium",

@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import os
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from ash_hawk.agents import DawnKestrelAgentRunner
 from ash_hawk.policy import PolicyEnforcer
@@ -102,6 +102,24 @@ def _normalize_tool_input(value: Any) -> dict[str, Any]:
     return {"value": value}
 
 
+def _resolve_skill_name(config: dict[str, Any]) -> str | None:
+    for key in ("skill_name", "skill"):
+        value = config.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    skill_path = config.get("skill_path")
+    if not isinstance(skill_path, str) or not skill_path.strip():
+        return None
+
+    path = Path(skill_path.strip())
+    if path.name == "SKILL.md" and path.parent.name:
+        return path.parent.name
+    if path.suffix == ".md" and path.stem:
+        return path.stem
+    return None
+
+
 class SdkDawnKestrelAdapter:
     name: str = "sdk_dawn_kestrel"
 
@@ -160,19 +178,11 @@ class SdkDawnKestrelAdapter:
         provider, model = _resolve_provider_model(sut_config, agent_path=agent_path_value)
         runner_kwargs_raw = sut_config.get("runner_kwargs", {})
         runner_kwargs = dict(runner_kwargs_raw) if isinstance(runner_kwargs_raw, dict) else {}
+        runner_kwargs.setdefault("project_root", str(Path(__file__).resolve().parents[3]))
 
         runner = DawnKestrelAgentRunner(provider=provider, model=model, **runner_kwargs)
 
-        injector = None
-        if isinstance(tooling_harness, dict):
-            injector = tooling_harness.get("injector")
-
-        skill_name = sut_config.get("skill_name")
-        if injector is not None and skill_name is not None:
-            injector.current_skill_name = skill_name
-
-        if injector is not None and hasattr(runner, "set_lesson_injector"):
-            runner.set_lesson_injector(injector)
+        skill_name = _resolve_skill_name(sut_config)
 
         run_config_raw = sut_config.get("run_config", {})
         run_config = dict(run_config_raw) if isinstance(run_config_raw, dict) else {}
@@ -181,7 +191,7 @@ class SdkDawnKestrelAdapter:
             run_config["temperature"] = sut_config.get("temperature")
         if "max_tokens" in sut_config and "max_tokens" not in run_config:
             run_config["max_tokens"] = sut_config.get("max_tokens")
-        if "max_tokens" not in run_config and isinstance(budgets, dict):
+        if "max_tokens" not in run_config:
             budget_tokens = budgets.get("max_tokens")
             if isinstance(budget_tokens, int):
                 run_config["max_tokens"] = budget_tokens
@@ -194,6 +204,9 @@ class SdkDawnKestrelAdapter:
 
         if agent_path_value is not None:
             run_config["agent_path"] = agent_path_value
+        if skill_name is not None:
+            run_config["skill_name"] = skill_name
+        run_config.setdefault("project_root", runner_kwargs["project_root"])
 
         policy_payload: dict[str, Any] = {}
         tooling_call: Callable[[str, Any], dict[str, Any]] | None = None
@@ -203,7 +216,7 @@ class SdkDawnKestrelAdapter:
                 policy_payload = policy_raw
             tooling_call_value = tooling_harness.get("call")
             if callable(tooling_call_value):
-                tooling_call = tooling_call_value
+                tooling_call = cast(Callable[[str, Any], dict[str, Any]], tooling_call_value)
 
         workdir_str = str(workdir.resolve())
         if "allowed_roots" not in policy_payload:
@@ -231,8 +244,6 @@ class SdkDawnKestrelAdapter:
             trace_events.append(event.model_dump())
 
         for tool_call in transcript.tool_calls:
-            if not isinstance(tool_call, dict):
-                continue
             tool_name = tool_call.get("name") or tool_call.get("tool")
             if not isinstance(tool_name, str) or not tool_name.strip():
                 continue
@@ -306,4 +317,7 @@ class SdkDawnKestrelAdapter:
         )
 
 
-__all__ = ["SdkDawnKestrelAdapter"]
+resolve_provider_model = _resolve_provider_model
+
+
+__all__ = ["SdkDawnKestrelAdapter", "resolve_provider_model"]

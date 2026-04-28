@@ -1,9 +1,7 @@
-# type-hygiene: skip-file
 from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Any
 
 import pydantic as pd
 
@@ -78,7 +76,7 @@ def _matches_schema_type(
     if field_type is SchemaFieldType.BOOLEAN:
         return isinstance(value, bool)
     if field_type is SchemaFieldType.OBJECT:
-        return isinstance(value, pd.BaseModel)
+        return isinstance(value, pd.BaseModel | Mapping)
     if field_type is SchemaFieldType.ARRAY:
         if not isinstance(value, list):
             return False
@@ -228,6 +226,7 @@ class RankedHypothesis(pd.BaseModel):
 
 
 class TraceRecord(pd.BaseModel):
+    run_id: str | None = None
     goal_id: str | None = None
     agent: str | None = None
     tool: str | None = None
@@ -243,6 +242,8 @@ class TraceRecord(pd.BaseModel):
 
 
 class TranscriptRecord(pd.BaseModel):
+    run_id: str | None = None
+    goal_id: str | None = None
     speaker: str | None = None
     type: str | None = None
     tool: str | None = None
@@ -253,18 +254,15 @@ class TranscriptRecord(pd.BaseModel):
     model_config = pd.ConfigDict(extra="forbid")
 
 
-class DreamQueueEntry(pd.BaseModel):
-    scope: str
-    key: str
-    value: Any | None = None
-    value_json: str | None = None
-
-    model_config = pd.ConfigDict(extra="forbid")
-
-
 class RuntimeToolContext(pd.BaseModel):
+    run_id: str | None = None
     lead_agent: str | None = None
     active_skills: list[str] = pd.Field(default_factory=list)
+    active_skill_summaries: list[str] = pd.Field(default_factory=list)
+    phase: str | None = None
+    recent_steps: list[str] = pd.Field(default_factory=list)
+    latest_evidence: list[str] = pd.Field(default_factory=list)
+    constraints: list[str] = pd.Field(default_factory=list)
     max_iterations: int | None = None
     iteration_budget_mode: str | None = None
     completed_iterations: int | None = None
@@ -272,6 +270,10 @@ class RuntimeToolContext(pd.BaseModel):
     active_agent: str | None = None
     available_contexts: list[str] = pd.Field(default_factory=list)
     agent_text: str | None = None
+    live_brief: str | None = None
+    goal_intent: str | None = None
+    progress_summary: str | None = None
+    next_pressure: str | None = None
     last_decision: str | None = None
     preferred_tool: str | None = None
     stop_checked: bool | None = None
@@ -282,12 +284,14 @@ class RuntimeToolContext(pd.BaseModel):
     retry_count: int | None = None
     executed_action_plan: bool | None = None
     delegated_to: str | None = None
+    last_delegation_summary: str | None = None
 
     model_config = pd.ConfigDict(extra="forbid")
 
 
 class WorkspaceToolContext(pd.BaseModel):
     workdir: str | None = None
+    primary_workdir: str | None = None
     repo_root: str | None = None
     source_root: str | None = None
     package_name: str | None = None
@@ -295,12 +299,18 @@ class WorkspaceToolContext(pd.BaseModel):
     changed_files: list[str] = pd.Field(default_factory=list)
     isolated_workspace: bool | None = None
     isolated_workspace_path: str | None = None
+    source_scenario_path: str | None = None
     mutated_files: list[str] = pd.Field(default_factory=list)
     agent_config: str | None = None
     scenario_path: str | None = None
     scenario_targets: list[str] = pd.Field(default_factory=list)
     scenario_required_files: list[str] = pd.Field(default_factory=list)
     scenario_summary: str | None = None
+    actionable_files: list[str] = pd.Field(default_factory=list)
+    reference_files: list[str] = pd.Field(default_factory=list)
+    blocked_files: list[str] = pd.Field(default_factory=list)
+    file_summaries: list[str] = pd.Field(default_factory=list)
+    open_python_repl_sessions: list[str] = pd.Field(default_factory=list)
 
     model_config = pd.ConfigDict(extra="forbid")
 
@@ -311,6 +321,7 @@ class EvaluationToolContext(pd.BaseModel):
     integrity_summary: ScoreSummary = pd.Field(default_factory=ScoreSummary)
     last_eval_summary: ScoreSummary = pd.Field(default_factory=ScoreSummary)
     repeat_eval_summary: ScoreSummary = pd.Field(default_factory=ScoreSummary)
+    recent_eval_summaries: list[str] = pd.Field(default_factory=list)
     regressions: list[str] = pd.Field(default_factory=list)
     aggregated_score: float | None = None
     acceptance: AcceptanceStatus = pd.Field(default_factory=AcceptanceStatus)
@@ -318,6 +329,8 @@ class EvaluationToolContext(pd.BaseModel):
     claim_audit: ClaimAuditStatus = pd.Field(default_factory=ClaimAuditStatus)
     phase2_metrics: Phase2Metrics = pd.Field(default_factory=Phase2Metrics)
     phase2_gate: Phase2GateStatus = pd.Field(default_factory=Phase2GateStatus)
+    eval_manifest_path: str | None = None
+    eval_manifest_hash: str | None = None
 
     model_config = pd.ConfigDict(extra="forbid")
 
@@ -326,7 +339,9 @@ class FailureToolContext(pd.BaseModel):
     suspicious_reviews: list[str] = pd.Field(default_factory=list)
     failure_buckets: list[FailureBucketCount] = pd.Field(default_factory=list)
     explanations: list[str] = pd.Field(default_factory=list)
+    diagnosed_issues: list[str] = pd.Field(default_factory=list)
     failure_family: str | None = None
+    top_hypothesis: str | None = None
     clustered_failures: list[FailureCluster] = pd.Field(default_factory=list)
     ranked_hypotheses: list[RankedHypothesis] = pd.Field(default_factory=list)
     concepts: list[str] = pd.Field(default_factory=list)
@@ -339,11 +354,11 @@ class MemoryToolContext(pd.BaseModel):
     run_state: RuntimeToolContext = pd.Field(default_factory=RuntimeToolContext)
     snapshot_state: dict[str, bool] = pd.Field(default_factory=dict)
     resumed_state: dict[str, bool] = pd.Field(default_factory=dict)
-    working_memory: dict[str, Any] = pd.Field(default_factory=dict)
-    session_memory: dict[str, Any] = pd.Field(default_factory=dict)
-    episodic_memory: dict[str, Any] = pd.Field(default_factory=dict)
-    semantic_memory: dict[str, Any] = pd.Field(default_factory=dict)
-    personal_memory: dict[str, Any] = pd.Field(default_factory=dict)
+    working_memory: dict[str, object] = pd.Field(default_factory=dict)
+    session_memory: dict[str, object] = pd.Field(default_factory=dict)
+    episodic_memory: dict[str, object] = pd.Field(default_factory=dict)
+    semantic_memory: dict[str, object] = pd.Field(default_factory=dict)
+    personal_memory: dict[str, object] = pd.Field(default_factory=dict)
     working_snapshot_loaded: bool | None = None
     session_loaded: bool | None = None
     episodic_loaded: bool | None = None
@@ -365,6 +380,7 @@ class MemoryToolContext(pd.BaseModel):
 
 class ToolStateContext(pd.BaseModel):
     active_tools: list[str] = pd.Field(default_factory=list)
+    available_tool_summaries: list[str] = pd.Field(default_factory=list)
     tool_contracts: list[ToolContractView] = pd.Field(default_factory=list)
     policy_decisions: list[str] = pd.Field(default_factory=list)
     registered_mcp_tools: list[str] = pd.Field(default_factory=list)
@@ -393,6 +409,8 @@ class AuditToolContext(pd.BaseModel):
     events: list[TraceRecord] = pd.Field(default_factory=list)
     artifacts: list[str] = pd.Field(default_factory=list)
     transcripts: list[TranscriptRecord] = pd.Field(default_factory=list)
+    progress_artifacts: list[str] = pd.Field(default_factory=list)
+    artifact_index: list[str] = pd.Field(default_factory=list)
     validation_tools: list[str] = pd.Field(default_factory=list)
     iteration_logs: list[str] = pd.Field(default_factory=list)
     decision_trace: list[str] = pd.Field(default_factory=list)
@@ -425,6 +443,7 @@ class ToolCallContext(pd.BaseModel):
 class DelegationRequest(pd.BaseModel):
     agent_name: str
     requested_skills: list[str] = pd.Field(default_factory=list)
+    requested_tools: list[str] = pd.Field(default_factory=list)
     goal_id: str
     description: str
 

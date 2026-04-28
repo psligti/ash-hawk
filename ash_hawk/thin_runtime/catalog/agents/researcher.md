@@ -34,6 +34,8 @@ when_not_to_activate:
 - When no failure or investigation context exists
 available_tools: &id001
 - call_llm_structured
+- read
+- grep
 available_skills:
 - triage
 - phase1-review
@@ -135,7 +137,6 @@ skill_names:
 hook_names:
 - before_agent
 - after_agent
-- on_suspicious_run
 memory_read_scopes:
 - episodic_memory
 - semantic_memory

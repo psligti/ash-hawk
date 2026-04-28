@@ -5,7 +5,7 @@ sut:
   type: coding_agent
   adapter: sdk_dawn_kestrel
   config:
-    skill: python-bugfix
+    skill_name: python-bugfix
 inputs:
   prompt: 'Working directory: {scenario_root}
 

@@ -72,7 +72,10 @@ This loop is explicit and should drive tool choice.
 - The hypothesis must identify a small durable target file or a very small set of tightly coupled files.
 
 ## Loop step 3: mutation
-- Apply one targeted mutation.
+- Delegate one targeted mutation to `executor` using `delegate_task`.
+- Only set `requested_tools` when you are certain those tool names exist on the delegated agent.
+- If uncertain, omit `requested_tools` so the delegated agent can use its default allowed tool surface.
+- Prefer `requested_skills` to shape behavior; use narrow `requested_tools` only for proven tool names.
 - Do not spend a whole loop on generic prep after scope is already known.
 - If no target file is obvious, diagnosis must derive one before the loop can stop.
 
@@ -80,6 +83,10 @@ This loop is explicit and should drive tool choice.
 - Use `run_eval_repeated` after a mutation to close the loop.
 - `run_eval_repeated` is not the initial baseline step.
 - Each completed `run_eval_repeated` consumes one iteration from the loop budget.
+
+## Loop step 4.5: promotion
+- If a delegated mutation passes re-evaluation inside the isolated candidate workspace, use `sync_workspace_changes` once to promote the validated candidate back to the primary workspace.
+- Never sync candidate changes back before validation passes.
 
 ## Loop step 5: verify and decide
 - Use verification and regression checks after a promising change.
@@ -92,6 +99,8 @@ This loop is explicit and should drive tool choice.
 - Use eval evidence to justify the next loop action.
 - Prefer one concrete mutation over more diagnosis once the blocker is clear.
 - Treat `run_eval_repeated` as the loop-closing verification step.
+- Read delegation outcomes from runtime/audit context (`last_delegation_summary`, `delegation_summaries`) and adapt.
+- Do not repeat the same failed delegation pattern (same delegated agent + same requested tool set) twice.
 - Stop when the score improved enough or the loop budget is exhausted.
 
 # Available Skills
@@ -114,13 +123,14 @@ Single evaluation pass when one fresh measurement is enough.
 ## run_eval_repeated
 Loop-closing re-evaluation after a mutation.
 
-## mutate_agent_files
-The actual improvement step.
+## delegate_task
+Use this to delegate bounded workspace investigation and mutation.
+Do not request tools that are not known to exist on the delegated agent.
 
 ## run_eval_repeated
 Use this to determine whether the latest mutation improved the eval enough to stop or continue.
 
-## load_workspace_state, detect_agent_config, scope_workspace, read, grep, diff_workspace_changes
+## load_workspace_state, detect_agent_config, scope_workspace, diff_workspace_changes
 Use these to gather high-signal evidence tied to the eval target.
 
 ## High-Quality Signal
@@ -133,6 +143,7 @@ Use these to gather high-signal evidence tied to the eval target.
 - Broad file listings without a clear question.
 - Generic shell commands that do not inspect the failing evidence.
 - Re-reading the same broad context without producing a hypothesis.
+- Repeating identical failed delegations without changing tool constraints or hypothesis.
 
 ## Mutation Rule
 - Do not mutate documentation, changelogs, or architecture notes unless the eval is explicitly grading those files.

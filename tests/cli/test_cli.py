@@ -699,7 +699,8 @@ class TestCliRun:
                     "args": [],
                     "env": {},
                 }
-            ]
+            ],
+            "project_root": suite_path.parent.resolve(),
         }
 
     @pytest.mark.unit

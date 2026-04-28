@@ -12,9 +12,6 @@ class ThinRuntimeMemoryManager:
         self._scopes = {scope.name: scope for scope in scopes}
         self._memory: dict[str, dict[str, Any]] = {scope.name: {} for scope in scopes}
 
-    def scope_names(self) -> list[str]:
-        return list(self._scopes.keys())
-
     def read_scope(self, name: str) -> dict[str, Any]:
         self._require_scope(name)
         return deepcopy(self._memory[name])

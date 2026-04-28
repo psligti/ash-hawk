@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
-from ash_hawk.thin_runtime.agent_text import build_agent_text
+from ash_hawk.thin_runtime.agent_text import build_agent_text, build_live_brief
 from ash_hawk.thin_runtime.agents import AgentRegistry
 from ash_hawk.thin_runtime.context import RuntimeContextAssembler
 from ash_hawk.thin_runtime.dream_state import DEFERRED_SCOPES, DreamStateConsolidator
@@ -24,7 +24,7 @@ from ash_hawk.thin_runtime.models import (
     ToolSpec,
 )
 from ash_hawk.thin_runtime.persistence import ThinRuntimePersistence
-from ash_hawk.thin_runtime.selection_policy import ToolSelectionDecision, select_tool_via_policy
+from ash_hawk.thin_runtime.planner import PlannerDecision, build_tool_contract_view, plan_next_tool
 from ash_hawk.thin_runtime.skills import SkillRegistry
 from ash_hawk.thin_runtime.tool_types import (
     AcceptanceStatus,
@@ -80,13 +80,53 @@ class AgenticLoopRunner:
         self.policy = policy
         self._decision_trace_buffer: list[str] = []
 
+    def _refresh_runtime_view(
+        self,
+        *,
+        goal: RuntimeGoal,
+        agent: AgentSpec,
+        skills: list[SkillSpec],
+        tools: list[ToolSpec],
+        context: ContextSnapshot,
+        available_skills: list[SkillSpec] | None = None,
+        include_skill_instructions: bool = True,
+    ) -> None:
+        memory_snapshot = self.memory.snapshot()
+        current_workdir_raw = context.workspace.get("workdir")
+        current_workdir = (
+            Path(str(current_workdir_raw)).resolve()
+            if isinstance(current_workdir_raw, str) and current_workdir_raw.strip()
+            else self.workdir
+        )
+        self.context.refresh(
+            snapshot=context,
+            goal=goal,
+            agent=agent,
+            skills=skills,
+            tools=tools,
+            memory_snapshot=memory_snapshot,
+            workdir=current_workdir,
+            available_skills=available_skills,
+        )
+        context.runtime["live_brief"] = build_live_brief(context)
+        context.runtime["agent_text"] = build_agent_text(
+            goal,
+            agent,
+            skills,
+            tools=tools,
+            context_snapshot=context,
+            memory_snapshot=memory_snapshot,
+            include_skill_instructions=include_skill_instructions,
+        )
+
     def run(
         self,
         goal: RuntimeGoal,
         *,
         agent_name: str,
         requested_skills: list[str] | None,
-        tool_execution_order: list[str] | None,
+        requested_tools: list[str] | None = None,
+        tool_execution_order: list[str] | None = None,
         scenario_path: str | None = None,
         seed_context: ContextSnapshot | None = None,
         depth: int = 0,
@@ -94,7 +134,13 @@ class AgenticLoopRunner:
         run_id = f"{goal.goal_id}-{uuid4().hex[:8]}"
         agent = self.agents.get(agent_name)
         active_skills = self._resolve_active_skills(agent, requested_skills)
-        active_tools = self._resolve_active_tools(active_skills)
+        candidate_skills = self._resolve_candidate_skills(agent, requested_skills)
+        active_tools = self._resolve_active_tools(
+            agent,
+            active_skills,
+            candidate_skills,
+            requested_tools=requested_tools,
+        )
         context = self.context.assemble(
             goal=goal,
             agent=agent,
@@ -102,28 +148,35 @@ class AgenticLoopRunner:
             tools=active_tools,
             memory_snapshot=self.memory.snapshot(),
             workdir=self.workdir,
+            available_skills=candidate_skills,
         )
         if scenario_path is not None:
             context.workspace["scenario_path"] = scenario_path
+        if tool_execution_order is not None:
+            context.runtime["explicit_order_override"] = True
         if seed_context is not None:
             self._merge_seed_context(context, seed_context)
             context.runtime["available_contexts"] = sorted(
                 self._available_contexts_from_snapshot(context)
             )
-        context.runtime["agent_text"] = build_agent_text(
-            goal,
-            agent,
-            active_skills,
-            memory_snapshot=self.memory.snapshot(),
+        self._refresh_runtime_view(
+            goal=goal,
+            agent=agent,
+            skills=active_skills,
+            tools=active_tools,
+            context=context,
+            available_skills=candidate_skills,
         )
         return self._run_loop(
             run_id=run_id,
             goal=goal,
             agent=agent,
             active_skills=active_skills,
+            candidate_skills=candidate_skills,
             active_tools=active_tools,
             context=context,
             tool_execution_order=tool_execution_order,
+            requested_tools=requested_tools,
             depth=depth,
         )
 
@@ -134,9 +187,11 @@ class AgenticLoopRunner:
         goal: RuntimeGoal,
         agent: AgentSpec,
         active_skills: list[SkillSpec],
+        candidate_skills: list[SkillSpec],
         active_tools: list[ToolSpec],
         context: ContextSnapshot,
         tool_execution_order: list[str] | None,
+        requested_tools: list[str] | None,
         depth: int,
     ) -> ThinRuntimeExecutionResult:
         tool_results: list[ToolResult] = []
@@ -149,6 +204,7 @@ class AgenticLoopRunner:
             available_contexts = self._available_contexts_from_snapshot(context)
         success = True
         error: str | None = None
+        self._decision_trace_buffer = []
 
         self.hooks.emit(
             "before_run",
@@ -161,23 +217,32 @@ class AgenticLoopRunner:
             },
         )
         self.hooks.emit("before_agent", {"goal_id": goal.goal_id, "agent": agent.name})
-        self._record_agent_event(goal=goal, agent=agent, event_type="enter", success=True)
+        context.runtime["run_id"] = run_id
+        self._record_agent_event(
+            goal=goal,
+            agent=agent,
+            event_type="enter",
+            success=True,
+            run_id=run_id,
+        )
         self._read_agent_memory(agent)
-        self._refresh_context_from_memory(context)
+        self._refresh_context_from_memory(context, goal_id=goal.goal_id, run_id=run_id)
         self._update_iteration_state(context, goal, agent, selected_tool_names)
-        context.runtime["agent_text"] = build_agent_text(
-            goal,
-            agent,
-            active_skills,
-            memory_snapshot=self.memory.snapshot(),
+        self._refresh_runtime_view(
+            goal=goal,
+            agent=agent,
+            skills=active_skills,
+            tools=active_tools,
+            context=context,
+            available_skills=candidate_skills,
         )
         context.runtime["available_contexts"] = sorted(available_contexts)
 
         touched_skill_reads: set[str] = set()
-        remaining_tools = [tool.name for tool in active_tools]
+        remaining_tools = list(tool_execution_order or [])
         completion_tools = set(agent.iteration_completion_tools)
 
-        while remaining_tools:
+        while True:
             tool_budget_error = self._check_tool_budget(goal, agent, selected_tool_names)
             if tool_budget_error is not None:
                 success = False
@@ -190,16 +255,48 @@ class AgenticLoopRunner:
                 error = stop_error
                 break
 
-            tool_name = self._select_next_tool(
+            active_tools = self._resolve_active_tools(
+                agent,
+                active_skills,
+                candidate_skills,
+                requested_tools=requested_tools,
+            )
+            context.tool["active_tools"] = [tool.name for tool in active_tools]
+            context.tool["available_tools_snapshot"] = [tool.name for tool in active_tools]
+            context.tool["resolved_toolset"] = [tool.name for tool in active_tools]
+            context.tool["tool_contracts"] = [
+                build_tool_contract_view(tool).model_dump(exclude_none=True)
+                for tool in active_tools
+            ]
+            self._refresh_runtime_view(
+                goal=goal,
+                agent=agent,
+                skills=active_skills,
+                tools=active_tools,
+                context=context,
+                available_skills=candidate_skills,
+            )
+
+            decision = self._select_next_tool(
                 goal=goal,
                 agent=agent,
                 active_skills=active_skills,
+                candidate_skills=candidate_skills,
+                active_tools=active_tools,
                 remaining_tools=remaining_tools,
                 tool_execution_order=tool_execution_order,
                 context=context,
                 available_contexts=available_contexts,
                 tool_results=tool_results,
             )
+            tool_name = decision.selected_tool
+            if decision.activate_skills:
+                active_skills = self._activate_skills(
+                    active_skills=active_skills,
+                    candidate_skills=candidate_skills,
+                    requested_skill_names=decision.activate_skills,
+                )
+                context.runtime["active_skills"] = [skill.name for skill in active_skills]
             if tool_name is None:
                 failure_family = context.failure.get("failure_family")
                 completed_loops = self._current_iteration_count(agent, selected_tool_names)
@@ -238,13 +335,18 @@ class AgenticLoopRunner:
                         )
                 break
 
-            remaining_tools.remove(tool_name)
+            if tool_execution_order is not None and tool_name in remaining_tools:
+                remaining_tools.remove(tool_name)
             selected_tool_names.append(tool_name)
             matching_skills = self._matching_skills(active_skills, tool_name, available_contexts)
-            if not matching_skills:
-                continue
 
-            self._read_matching_skill_memory(agent, matching_skills, touched_skill_reads)
+            self._read_matching_skill_memory(
+                goal,
+                agent,
+                matching_skills,
+                touched_skill_reads,
+                run_id=run_id,
+            )
             result = self._invoke_tool(
                 goal=goal,
                 agent=agent,
@@ -305,8 +407,20 @@ class AgenticLoopRunner:
                 completion_tools=completion_tools,
                 selected_tool_names=selected_tool_names,
             ):
-                remaining_tools = [tool.name for tool in active_tools]
+                remaining_tools = list(tool_execution_order or [])
 
+        if (
+            success
+            and agent.iteration_budget_mode == "loop"
+            and any(skill.name == "improvement-loop" for skill in active_skills)
+            and self._current_iteration_count(agent, selected_tool_names) == 0
+        ):
+            success = False
+            error = "No completed improvement loops recorded"
+            self.hooks.emit(
+                "on_stop_condition",
+                {"goal_id": goal.goal_id, "agent": agent.name, "reason": error},
+            )
         self.hooks.emit(
             "after_agent", {"goal_id": goal.goal_id, "agent": agent.name, "success": success}
         )
@@ -316,10 +430,22 @@ class AgenticLoopRunner:
             event_type="exit",
             success=success,
             error=error,
+            run_id=run_id,
         )
         self.hooks.emit(
             "after_run",
             {"goal_id": goal.goal_id, "agent": agent.name, "tool_count": len(tool_results)},
+        )
+
+        self.context.refresh(
+            snapshot=context,
+            goal=goal,
+            agent=agent,
+            skills=active_skills,
+            tools=active_tools,
+            memory_snapshot=self.memory.snapshot(),
+            workdir=self.workdir,
+            available_skills=candidate_skills,
         )
 
         execution = ThinRuntimeExecutionResult(
@@ -379,12 +505,112 @@ class AgenticLoopRunner:
         return sum(1 for tool_name in selected_tool_names if tool_name in completion_tools)
 
     def _tool_preconditions_met(self, tool_name: str, context: ContextSnapshot) -> bool:
+        if not self._phase_allows_tool(tool_name, context):
+            return False
+        if tool_name == "run_baseline_eval":
+            return not self._baseline_ready(context)
+        if tool_name == "detect_agent_config":
+            return not self._agent_config_ready(context)
         if tool_name == "mutate_agent_files":
             return self._mutation_candidates_available(context)
         if tool_name == "run_eval_repeated":
             mutated_files = context.workspace.get("mutated_files", [])
             return isinstance(mutated_files, list) and len(mutated_files) > 0
+        if tool_name == "delegate_task":
+            return self._delegation_ready(context)
         return True
+
+    def _phase_allows_tool(self, tool_name: str, context: ContextSnapshot) -> bool:
+        if context.runtime.get("explicit_order_override") is True:
+            return True
+        active_agent = context.runtime.get("active_agent") or context.runtime.get("lead_agent")
+        active_skills = context.runtime.get("active_skills", [])
+        if (
+            active_agent == "improver"
+            and isinstance(active_skills, list)
+            and "improvement-loop" in active_skills
+        ):
+            return self._improver_phase_allows_tool(tool_name, context)
+        if active_agent == "executor":
+            return self._executor_phase_allows_tool(tool_name, context)
+        return True
+
+    def _improver_phase_allows_tool(self, tool_name: str, context: ContextSnapshot) -> bool:
+        if not self._has_executed_tool(context, "load_workspace_state"):
+            return tool_name == "load_workspace_state"
+        if not self._agent_config_ready(context):
+            return tool_name == "detect_agent_config"
+        if not self._baseline_ready(context):
+            return tool_name == "run_baseline_eval"
+        if self._sync_back_pending(context):
+            return tool_name == "sync_workspace_changes"
+        if self._candidate_validation_pending(context):
+            return tool_name == "run_eval_repeated"
+        if self._candidate_rejected(context) or not self._mutation_candidates_available(context):
+            return tool_name == "call_llm_structured"
+        return tool_name == "delegate_task"
+
+    def _executor_phase_allows_tool(self, tool_name: str, context: ContextSnapshot) -> bool:
+        if not self._mutation_candidates_available(context):
+            return True
+        isolated_workspace_path = context.workspace.get("isolated_workspace_path")
+        if not isinstance(isolated_workspace_path, str) or not isolated_workspace_path.strip():
+            return tool_name == "prepare_isolated_workspace"
+        mutated_files = context.workspace.get("mutated_files", [])
+        if not isinstance(mutated_files, list) or not mutated_files:
+            return tool_name == "mutate_agent_files"
+        return False
+
+    def _candidate_validation_pending(self, context: ContextSnapshot) -> bool:
+        mutated_files = context.workspace.get("mutated_files", [])
+        isolated_workspace_path = context.workspace.get("isolated_workspace_path")
+        if not isinstance(mutated_files, list) or not mutated_files:
+            return False
+        if not isinstance(isolated_workspace_path, str) or not isolated_workspace_path.strip():
+            return False
+        sync_events = set(self._sync_events(context))
+        return "candidate_validated" not in sync_events and "candidate_rejected" not in sync_events
+
+    def _sync_back_pending(self, context: ContextSnapshot) -> bool:
+        sync_events = set(self._sync_events(context))
+        return "candidate_validated" in sync_events and "synced_back" not in sync_events
+
+    def _candidate_rejected(self, context: ContextSnapshot) -> bool:
+        sync_events = set(self._sync_events(context))
+        mutated_files = context.workspace.get("mutated_files", [])
+        return "candidate_rejected" in sync_events and (
+            not isinstance(mutated_files, list) or not mutated_files
+        )
+
+    def _sync_events(self, context: ContextSnapshot) -> list[str]:
+        raw = context.audit.get("sync_events", [])
+        if not isinstance(raw, list):
+            return []
+        return [item for item in raw if isinstance(item, str)]
+
+    def _has_executed_tool(self, context: ContextSnapshot, tool_name: str) -> bool:
+        raw_tool_results = context.audit.get("tool_results", [])
+        if not isinstance(raw_tool_results, list):
+            return False
+        for item in raw_tool_results:
+            if isinstance(item, dict) and item.get("tool") == tool_name:
+                return True
+        return False
+
+    def _baseline_ready(self, context: ContextSnapshot) -> bool:
+        baseline_summary = context.evaluation.get("baseline_summary")
+        if not isinstance(baseline_summary, dict):
+            return False
+        status = baseline_summary.get("status")
+        score = baseline_summary.get("score")
+        return status == "completed" or score is not None
+
+    def _agent_config_ready(self, context: ContextSnapshot) -> bool:
+        required_keys = ("agent_config", "source_root", "package_name")
+        return all(
+            isinstance(context.workspace.get(key), str) and str(context.workspace.get(key)).strip()
+            for key in required_keys
+        )
 
     def _mutation_candidates_available(self, context: ContextSnapshot) -> bool:
         raw_hypotheses = context.failure.get("ranked_hypotheses")
@@ -392,11 +618,19 @@ class AgenticLoopRunner:
             for hypothesis in raw_hypotheses:
                 if isinstance(hypothesis, dict) and hypothesis.get("target_files"):
                     return True
-        for key in ("scenario_required_files", "allowed_target_files", "changed_files"):
+        for key in ("scenario_required_files", "allowed_target_files", "actionable_files"):
             value = context.workspace.get(key, [])
             if isinstance(value, list) and len(value) > 0:
                 return True
         return False
+
+    def _delegation_ready(self, context: ContextSnapshot) -> bool:
+        active_skills = context.runtime.get("active_skills", [])
+        if not isinstance(active_skills, list) or "improvement-loop" not in active_skills:
+            return True
+        if not self._baseline_ready(context):
+            return False
+        return self._mutation_candidates_available(context)
 
     def _update_iteration_state(
         self,
@@ -437,15 +671,25 @@ class AgenticLoopRunner:
 
     def _read_matching_skill_memory(
         self,
+        goal: RuntimeGoal,
         agent: AgentSpec,
         matching_skills: list[SkillSpec],
         touched_skill_reads: set[str],
+        *,
+        run_id: str | None = None,
     ) -> None:
         for skill in matching_skills:
             if skill.name in touched_skill_reads:
                 continue
             self.hooks.emit("before_skill", {"agent": agent.name, "skill": skill.name})
-            self._record_skill_event(agent=agent, skill=skill, event_type="enter", success=True)
+            self._record_skill_event(
+                goal=goal,
+                agent=agent,
+                skill=skill,
+                event_type="enter",
+                success=True,
+                run_id=run_id,
+            )
             self._read_skill_memory(agent, skill)
             touched_skill_reads.add(skill.name)
 
@@ -460,7 +704,9 @@ class AgenticLoopRunner:
         available_contexts: set[str],
         remaining_tools: list[str],
         selected_tool_names: list[str],
+        tool_args: dict[str, object] | None = None,
     ) -> ToolResult:
+        completed_iterations = self._current_iteration_count(agent, selected_tool_names)
         self.hooks.emit(
             "before_tool",
             {
@@ -468,6 +714,11 @@ class AgenticLoopRunner:
                 "agent": agent.name,
                 "tool": tool_name,
                 "skills": [skill.name for skill in matching_skills],
+                "tool_args": tool_args or {},
+                "iterations": completed_iterations,
+                "tool_call_count": len(selected_tool_names),
+                "max_iterations": goal.max_iterations,
+                "remaining_tools": list(remaining_tools),
             },
         )
         self._record_tool_event(
@@ -478,6 +729,7 @@ class AgenticLoopRunner:
             success=True,
             error=None,
             skills=matching_skills,
+            run_id=(value if isinstance((value := context.runtime.get("run_id")), str) else None),
         )
 
         def _emit_observed_event(payload: dict[str, object]) -> None:
@@ -491,14 +743,14 @@ class AgenticLoopRunner:
                 },
             )
 
-        completed_iterations = self._current_iteration_count(agent, selected_tool_names)
         with stream_observed_events(_emit_observed_event):
             return self.tools.invoke(
                 ToolCall(
                     tool_name=tool_name,
                     goal_id=goal.goal_id,
+                    tool_args=tool_args or {},
                     caller_agent=agent.name,
-                    caller_skill=matching_skills[0].name,
+                    caller_skill=matching_skills[0].name if matching_skills else None,
                     agent_text=str(context.runtime.get("agent_text", "")) or None,
                     skills=[skill.name for skill in matching_skills],
                     remaining_tools=remaining_tools,
@@ -529,7 +781,27 @@ class AgenticLoopRunner:
         self._update_available_contexts(
             available_contexts, self.tools.get(tool_name), matching_skills
         )
-        self._refresh_context_from_memory(context)
+        current_run_id = context.runtime.get("run_id")
+        self._refresh_context_from_memory(
+            context,
+            goal_id=goal.goal_id,
+            run_id=current_run_id if isinstance(current_run_id, str) else None,
+        )
+        active_skill_names = context.runtime.get("active_skills", [])
+        active_skill_specs = [
+            self.skills.get(name)
+            for name in active_skill_names
+            if isinstance(name, str) and name.strip()
+        ]
+        active_tools = self._resolve_active_tools(agent, active_skill_specs, active_skill_specs)
+        self._refresh_runtime_view(
+            goal=goal,
+            agent=agent,
+            skills=active_skill_specs,
+            tools=active_tools,
+            context=context,
+            available_skills=active_skill_specs,
+        )
         context.runtime["available_contexts"] = sorted(available_contexts)
         self.memory.append(
             "artifact_memory",
@@ -571,6 +843,7 @@ class AgenticLoopRunner:
             success=result.success,
             error=result.error,
             skills=matching_skills,
+            run_id=(value if isinstance((value := context.runtime.get("run_id")), str) else None),
         )
         for skill in matching_skills:
             self.hooks.emit(
@@ -578,16 +851,21 @@ class AgenticLoopRunner:
                 {"agent": agent.name, "skill": skill.name, "success": result.success},
             )
             self._record_skill_event(
+                goal=goal,
                 agent=agent,
                 skill=skill,
                 event_type="exit",
                 success=result.success,
                 error=result.error,
+                run_id=(
+                    value if isinstance((value := context.runtime.get("run_id")), str) else None
+                ),
             )
         self.memory.append(
             "session_memory",
             "traces",
             {
+                "run_id": context.runtime.get("run_id"),
                 "goal_id": goal.goal_id,
                 "agent": agent.name,
                 "tool": tool_name,
@@ -600,6 +878,8 @@ class AgenticLoopRunner:
             "session_memory",
             "transcripts",
             {
+                "run_id": context.runtime.get("run_id"),
+                "goal_id": goal.goal_id,
                 "speaker": agent.name,
                 "type": "tool_call",
                 "tool": tool_name,
@@ -638,7 +918,8 @@ class AgenticLoopRunner:
         *,
         goal: RuntimeGoal,
         agent: AgentSpec,
-        decision: ToolSelectionDecision,
+        decision: PlannerDecision,
+        run_id: str | None = None,
     ) -> None:
         payload: dict[str, object] = {
             "goal_id": goal.goal_id,
@@ -647,9 +928,15 @@ class AgenticLoopRunner:
             "reason": decision.rationale,
             "source": decision.source,
             "considered_tools": decision.considered_tools,
+            "confidence": decision.confidence,
+            "activate_skills": decision.activate_skills,
+            "reason_model_authored": decision.reason_model_authored,
         }
         self.hooks.emit("on_policy_decision", payload)
-        context_message = f"policy selected {decision.selected_tool or 'none'} via {decision.source}: {decision.rationale}"
+        context_message = (
+            f"selected {decision.selected_tool or 'none'} via {decision.source}: "
+            f"{decision.rationale}"
+        )
         existing_decisions = getattr(self, "_decision_trace_buffer", None)
         if not isinstance(existing_decisions, list):
             self._decision_trace_buffer = []
@@ -659,6 +946,7 @@ class AgenticLoopRunner:
             "session_memory",
             "traces",
             {
+                "run_id": run_id,
                 "goal_id": goal.goal_id,
                 "agent": agent.name,
                 "tool": decision.selected_tool,
@@ -673,6 +961,8 @@ class AgenticLoopRunner:
             "session_memory",
             "transcripts",
             {
+                "run_id": run_id,
+                "goal_id": goal.goal_id,
                 "speaker": agent.name,
                 "type": "policy_decision",
                 "tool": decision.selected_tool,
@@ -690,11 +980,13 @@ class AgenticLoopRunner:
         event_type: str,
         success: bool,
         error: str | None = None,
+        run_id: str | None = None,
     ) -> None:
         self.memory.append(
             "session_memory",
             "traces",
             {
+                "run_id": run_id,
                 "goal_id": goal.goal_id,
                 "agent": agent.name,
                 "event_type": f"agent_{event_type}",
@@ -707,6 +999,8 @@ class AgenticLoopRunner:
             "session_memory",
             "transcripts",
             {
+                "run_id": run_id,
+                "goal_id": goal.goal_id,
                 "speaker": agent.name,
                 "type": f"agent_{event_type}",
                 "message": f"{agent.name} {event_type}",
@@ -718,16 +1012,20 @@ class AgenticLoopRunner:
     def _record_skill_event(
         self,
         *,
+        goal: RuntimeGoal,
         agent: AgentSpec,
         skill: SkillSpec,
         event_type: str,
         success: bool,
         error: str | None = None,
+        run_id: str | None = None,
     ) -> None:
         self.memory.append(
             "session_memory",
             "traces",
             {
+                "run_id": run_id,
+                "goal_id": goal.goal_id,
                 "agent": agent.name,
                 "skill": skill.name,
                 "event_type": f"skill_{event_type}",
@@ -740,6 +1038,8 @@ class AgenticLoopRunner:
             "session_memory",
             "transcripts",
             {
+                "run_id": run_id,
+                "goal_id": goal.goal_id,
                 "speaker": agent.name,
                 "type": f"skill_{event_type}",
                 "skill": skill.name,
@@ -759,11 +1059,13 @@ class AgenticLoopRunner:
         success: bool,
         error: str | None,
         skills: list[SkillSpec],
+        run_id: str | None = None,
     ) -> None:
         self.memory.append(
             "session_memory",
             "traces",
             {
+                "run_id": run_id,
                 "goal_id": goal.goal_id,
                 "agent": agent.name,
                 "tool": tool_name,
@@ -778,6 +1080,8 @@ class AgenticLoopRunner:
             "session_memory",
             "transcripts",
             {
+                "run_id": run_id,
+                "goal_id": goal.goal_id,
                 "speaker": agent.name,
                 "type": f"tool_{event_type}",
                 "tool": tool_name,
@@ -794,48 +1098,122 @@ class AgenticLoopRunner:
         goal: RuntimeGoal,
         agent: AgentSpec,
         active_skills: list[SkillSpec],
+        candidate_skills: list[SkillSpec],
+        active_tools: list[ToolSpec],
         remaining_tools: list[str],
         tool_execution_order: list[str] | None,
         context: ContextSnapshot,
         available_contexts: set[str],
         tool_results: list[ToolResult],
-    ) -> str | None:
-        if not remaining_tools:
-            return None
-        eligible_tools = [
-            self.tools.get(tool_name)
-            for tool_name in remaining_tools
-            if any(
-                tool_name in skill.tool_names
-                and set(skill.input_contexts).issubset(available_contexts)
-                for skill in active_skills
-            )
-            and self._tool_preconditions_met(tool_name, context)
+    ) -> PlannerDecision:
+        del available_contexts
+
+        context.tool["recent_tool_history"] = self._planner_tool_history(tool_results)
+        context.tool["last_tool"] = tool_results[-1].tool_name if tool_results else None
+
+        tool_surface = active_tools
+        if tool_execution_order is not None:
+            tool_surface = [tool for tool in active_tools if tool.name in remaining_tools]
+        candidate_tools = [
+            tool for tool in tool_surface if self._tool_preconditions_met(tool.name, context)
         ]
-        decision = select_tool_via_policy(
+        decision = plan_next_tool(
             goal=goal,
             agent=agent,
             active_skills=active_skills,
-            eligible_tools=eligible_tools,
+            candidate_skills=candidate_skills,
+            candidate_tools=candidate_tools,
             context=context,
             tool_execution_order=tool_execution_order,
         )
-        if (
-            decision.selected_tool is None
-            and decision.source == "guardrail_clear"
-            and eligible_tools
-        ):
-            decision = ToolSelectionDecision(
-                selected_tool=eligible_tools[0].name,
-                source="runtime_default",
-                rationale=(
-                    "No guardrail forced a specific tool, so runtime used the first eligible tool "
-                    "from skill-defined order."
-                ),
-                considered_tools=[tool.name for tool in eligible_tools],
+        if decision.selected_tool is None and decision.source.startswith("invalid_model"):
+            decision = plan_next_tool(
+                goal=goal,
+                agent=agent,
+                active_skills=active_skills,
+                candidate_skills=candidate_skills,
+                candidate_tools=candidate_tools,
+                context=context,
+                tool_execution_order=tool_execution_order,
+                feedback=decision.rationale,
             )
-        self._record_tool_selection_decision(goal=goal, agent=agent, decision=decision)
-        return decision.selected_tool
+        if decision.selected_tool is None and tool_execution_order is None and candidate_tools:
+            decision = plan_next_tool(
+                goal=goal,
+                agent=agent,
+                active_skills=active_skills,
+                candidate_skills=candidate_skills,
+                candidate_tools=candidate_tools,
+                context=context,
+                tool_execution_order=tool_execution_order,
+                feedback=(
+                    "Choose exactly one next tool from the allowed tool surface. Return null only "
+                    "if no safe tool exists."
+                ),
+            )
+        context.tool["policy_decisions"] = list(context.tool.get("policy_decisions", [])) + [
+            f"{decision.source}: {decision.rationale}"
+        ]
+        context.tool["context_sections"] = [
+            "goal",
+            "runtime",
+            "workspace",
+            "evaluation",
+            "failure",
+            "memory",
+            "tool",
+            "audit",
+        ]
+        context.tool["policy_checked"] = True
+        context.tool["context_assembled"] = True
+        context.runtime["last_decision"] = decision.rationale
+        if decision.selected_tool is not None:
+            context.runtime["preferred_tool"] = decision.selected_tool
+        self._record_tool_selection_decision(
+            goal=goal,
+            agent=agent,
+            decision=decision,
+            run_id=(value if isinstance((value := context.runtime.get("run_id")), str) else None),
+        )
+        return decision
+
+    def _planner_tool_history(self, tool_results: list[ToolResult]) -> list[dict[str, object]]:
+        history: list[dict[str, object]] = []
+        for result in tool_results[-5:]:
+            payload = result.payload
+            history.append(
+                {
+                    "tool": result.tool_name,
+                    "success": result.success,
+                    "error": result.error,
+                    "message": payload.message,
+                    "workspace_updates": sorted(
+                        payload.workspace_updates.model_dump(
+                            exclude_none=True,
+                            exclude_defaults=True,
+                        ).keys()
+                    ),
+                    "evaluation_updates": sorted(
+                        payload.evaluation_updates.model_dump(
+                            exclude_none=True,
+                            exclude_defaults=True,
+                        ).keys()
+                    ),
+                    "failure_updates": sorted(
+                        payload.failure_updates.model_dump(
+                            exclude_none=True,
+                            exclude_defaults=True,
+                        ).keys()
+                    ),
+                    "runtime_updates": sorted(
+                        payload.runtime_updates.model_dump(
+                            exclude_none=True,
+                            exclude_defaults=True,
+                        ).keys()
+                    ),
+                }
+            )
+        return history
 
     def _resolve_active_skills(
         self, agent: AgentSpec, requested_skills: list[str] | None
@@ -843,13 +1221,56 @@ class AgenticLoopRunner:
         skill_names = requested_skills or agent.skill_names
         return [self.skills.get(name) for name in skill_names]
 
-    def _resolve_active_tools(self, active_skills: list[SkillSpec]) -> list[ToolSpec]:
+    def _resolve_candidate_skills(
+        self, agent: AgentSpec, requested_skills: list[str] | None
+    ) -> list[SkillSpec]:
+        candidate_names: list[str] = []
+        for name in (requested_skills or []) + agent.skill_names + agent.available_skills:
+            if name not in candidate_names:
+                candidate_names.append(name)
+        return [self.skills.get(name) for name in candidate_names]
+
+    def _resolve_active_tools(
+        self,
+        agent: AgentSpec,
+        active_skills: list[SkillSpec],
+        candidate_skills: list[SkillSpec] | None = None,
+        requested_tools: list[str] | None = None,
+    ) -> list[ToolSpec]:
         tool_names: list[str] = []
-        for skill in active_skills:
+        for tool_name in agent.available_tools:
+            if tool_name not in tool_names:
+                tool_names.append(tool_name)
+        skill_source = candidate_skills or active_skills
+        for skill in skill_source:
             for tool_name in skill.tool_names:
                 if tool_name not in tool_names:
                     tool_names.append(tool_name)
-        return self.tools.resolve_allowed(tool_names, self.policy)
+        resolved = self.tools.resolve_allowed(tool_names, self.policy)
+        if not requested_tools:
+            return resolved
+        requested = {name for name in requested_tools if name}
+        if not requested:
+            return resolved
+        filtered = [tool for tool in resolved if tool.name in requested]
+        if filtered:
+            return filtered
+        return resolved
+
+    def _activate_skills(
+        self,
+        *,
+        active_skills: list[SkillSpec],
+        candidate_skills: list[SkillSpec],
+        requested_skill_names: list[str],
+    ) -> list[SkillSpec]:
+        active_names = {skill.name for skill in active_skills}
+        ordered = list(active_skills)
+        for skill in candidate_skills:
+            if skill.name in requested_skill_names and skill.name not in active_names:
+                ordered.append(skill)
+                active_names.add(skill.name)
+        return ordered
 
     def _read_agent_memory(self, agent: AgentSpec) -> None:
         for scope_name in agent.memory_read_scopes:
@@ -949,24 +1370,12 @@ class AgenticLoopRunner:
                     "skills": [skill.name for skill in matching_skills],
                     "tool": result.tool_name,
                     "success": result.success,
-                    "payload": result.payload.model_dump(exclude_none=True),
+                    "error": result.error,
+                    "payload": result.payload.model_dump(exclude_none=True, exclude_defaults=True),
                 }
             )
         context.runtime["active_agent"] = agent.name
         context.tool["last_tool"] = result.tool_name
-        if result.tool_name == "classify_failure_family":
-            self.hooks.emit(
-                "on_failure_bucketed",
-                {"agent": agent.name, "skills": [skill.name for skill in matching_skills]},
-            )
-        if result.tool_name in {
-            "record_artifacts",
-            "write_iteration_log",
-            "write_run_summary",
-            "record_event",
-            "build_diff_report",
-        }:
-            self.hooks.emit("on_artifact_written", {"agent": agent.name, "tool": result.tool_name})
         self._merge_context_updates(context, result.payload)
 
     def _execute_delegation(
@@ -975,6 +1384,17 @@ class AgenticLoopRunner:
         delegation = result.payload.delegation
         if delegation is None:
             return None, None
+        if not self._delegation_ready(context):
+            return (
+                DelegationRecord(
+                    agent_name=delegation.agent_name,
+                    goal_id=delegation.goal_id,
+                    selected_tool_names=[],
+                    success=False,
+                    error="Delegation requires a completed baseline and mutation-ready targets",
+                ),
+                None,
+            )
         self.hooks.emit(
             "before_delegation",
             {
@@ -987,6 +1407,7 @@ class AgenticLoopRunner:
             "session_memory",
             "traces",
             {
+                "run_id": context.runtime.get("run_id"),
                 "goal_id": delegation.goal_id,
                 "agent": context.runtime.get("active_agent"),
                 "event_type": "delegation_enter",
@@ -999,6 +1420,8 @@ class AgenticLoopRunner:
             "session_memory",
             "transcripts",
             {
+                "run_id": context.runtime.get("run_id"),
+                "goal_id": delegation.goal_id,
                 "speaker": str(context.runtime.get("active_agent") or "coordinator"),
                 "type": "delegation_enter",
                 "message": delegation.description,
@@ -1022,18 +1445,35 @@ class AgenticLoopRunner:
         goal_id = delegation.goal_id
         description = delegation.description
         requested_skills = delegation.requested_skills
+        requested_tools = delegation.requested_tools
+        delegated_agent = self.agents.get(agent_name)
         delegated_result = self.run(
             RuntimeGoal(
                 goal_id=goal_id,
                 description=description,
-                max_iterations=5 if agent_name == "researcher" else 3,
+                max_iterations=self._delegated_goal_max_iterations(
+                    delegated_agent=delegated_agent,
+                    parent_context=context,
+                ),
             ),
             agent_name=agent_name,
             requested_skills=requested_skills or None,
+            requested_tools=requested_tools or None,
             tool_execution_order=None,
             scenario_path=context.workspace.get("scenario_path"),
-            seed_context=context,
+            seed_context=self._delegation_seed_context(context),
             depth=depth + 1,
+        )
+        summary = self._delegation_result_summary(delegated_result)
+        context.runtime["last_delegation_summary"] = summary
+        context.audit.setdefault("delegation_summaries", []).append(
+            {
+                "agent_name": delegated_result.agent.name,
+                "goal_id": goal_id,
+                "success": delegated_result.success,
+                "error": delegated_result.error,
+                "summary": summary,
+            }
         )
         self.hooks.emit(
             "after_delegation",
@@ -1048,6 +1488,7 @@ class AgenticLoopRunner:
             "session_memory",
             "traces",
             {
+                "run_id": context.runtime.get("run_id"),
                 "goal_id": goal_id,
                 "agent": context.runtime.get("active_agent"),
                 "event_type": "delegation_exit",
@@ -1060,6 +1501,8 @@ class AgenticLoopRunner:
             "session_memory",
             "transcripts",
             {
+                "run_id": context.runtime.get("run_id"),
+                "goal_id": goal_id,
                 "speaker": str(context.runtime.get("active_agent") or "coordinator"),
                 "type": "delegation_exit",
                 "message": f"delegation to {delegated_result.agent.name} completed",
@@ -1074,9 +1517,67 @@ class AgenticLoopRunner:
                 selected_tool_names=delegated_result.selected_tool_names,
                 success=delegated_result.success,
                 error=delegated_result.error,
+                summary=summary,
             ),
             delegated_result.context,
         )
+
+    def _delegation_seed_context(self, context: ContextSnapshot) -> ContextSnapshot:
+        seed = context.model_copy(deep=True)
+        seed.workspace["mutated_files"] = []
+        seed.workspace["isolated_workspace"] = False
+        seed.workspace["isolated_workspace_path"] = ""
+        seed.workspace["scenario_path"] = context.workspace.get(
+            "source_scenario_path"
+        ) or context.workspace.get("scenario_path")
+        seed.workspace["source_scenario_path"] = ""
+        seed.audit["sync_events"] = []
+        return seed
+
+    def _delegation_result_summary(self, delegated_result: ThinRuntimeExecutionResult) -> str:
+        if not delegated_result.tool_results:
+            if delegated_result.error:
+                return f"{delegated_result.agent.name}: failed ({delegated_result.error})"
+            status = "succeeded" if delegated_result.success else "failed"
+            return f"{delegated_result.agent.name}: {status}"
+        previews: list[str] = []
+        for tool_result in delegated_result.tool_results[:3]:
+            status = "ok" if tool_result.success else "failed"
+            detail = (tool_result.payload.message or tool_result.error or "").strip()
+            if detail:
+                detail = detail.replace("\n", " ")
+                if len(detail) > 80:
+                    detail = f"{detail[:77]}..."
+                previews.append(f"{tool_result.tool_name}:{status} ({detail})")
+            else:
+                previews.append(f"{tool_result.tool_name}:{status}")
+        if len(delegated_result.tool_results) > 3:
+            previews.append(f"+{len(delegated_result.tool_results) - 3} more")
+        status_text = "succeeded" if delegated_result.success else "failed"
+        base = f"{delegated_result.agent.name} {status_text}; " + "; ".join(previews)
+        if len(base) > 320:
+            return f"{base[:317]}..."
+        return base
+
+    def _delegated_goal_max_iterations(
+        self,
+        *,
+        delegated_agent: AgentSpec,
+        parent_context: ContextSnapshot,
+    ) -> int:
+        configured_budget = delegated_agent.budgets.get("max_iterations")
+        if isinstance(configured_budget, int) and configured_budget >= 1:
+            return configured_budget
+
+        parent_goal_budget = parent_context.goal.get("max_iterations")
+        if isinstance(parent_goal_budget, int) and parent_goal_budget >= 1:
+            return parent_goal_budget
+
+        runtime_budget = parent_context.runtime.get("max_iterations")
+        if isinstance(runtime_budget, int) and runtime_budget >= 1:
+            return runtime_budget
+
+        return 1
 
     def _initialize_available_contexts(self) -> set[str]:
         return {
@@ -1108,19 +1609,39 @@ class AgenticLoopRunner:
                 return True
         return False
 
-    def _refresh_context_from_memory(self, context: ContextSnapshot) -> None:
+    def _refresh_context_from_memory(
+        self,
+        context: ContextSnapshot,
+        *,
+        goal_id: str | None = None,
+        run_id: str | None = None,
+    ) -> None:
         snapshot = self.memory.snapshot()
         context.memory["working_snapshot"] = snapshot.get("working_memory", {})
-        context.memory["session"] = snapshot.get("session_memory", {})
         context.memory["episodic"] = snapshot.get("episodic_memory", {})
         context.memory["semantic"] = snapshot.get("semantic_memory", {})
         context.memory["personal"] = snapshot.get("personal_memory", {})
         artifact_memory = snapshot.get("artifact_memory", {})
         session_memory = snapshot.get("session_memory", {})
-        context.audit["events"] = session_memory.get("traces", [])
+        traces = session_memory.get("traces", [])
+        transcripts = session_memory.get("transcripts", [])
+        filtered_traces = _filter_records_for_run(traces, goal_id=goal_id, run_id=run_id)
+        filtered_transcripts = _filter_records_for_run(
+            transcripts,
+            goal_id=goal_id,
+            run_id=run_id,
+        )
+        context.memory["session"] = _scoped_session_memory(
+            session_memory,
+            goal_id=goal_id,
+            run_id=run_id,
+            traces=filtered_traces,
+            transcripts=filtered_transcripts,
+        )
+        context.audit["events"] = filtered_traces[-25:]
         context.audit["artifacts"] = artifact_memory.get("artifacts", [])
-        context.audit["transcripts"] = session_memory.get("transcripts", [])
-        context.audit["decision_trace"] = list(getattr(self, "_decision_trace_buffer", []))
+        context.audit["transcripts"] = filtered_transcripts[-12:]
+        context.audit["decision_trace"] = list(getattr(self, "_decision_trace_buffer", []))[-5:]
 
     def _merge_context_updates(
         self, context: ContextSnapshot, payload: ToolExecutionPayload
@@ -1148,27 +1669,38 @@ class AgenticLoopRunner:
         )
 
     def _merge_seed_context(self, context: ContextSnapshot, seed: ContextSnapshot) -> None:
-        runtime_seed = {
+        workspace_seed = {
             key: value
-            for key, value in seed.runtime.items()
+            for key, value in seed.workspace.items()
             if key
-            not in {
-                "agent_text",
-                "active_agent",
-                "lead_agent",
-                "active_skills",
-                "available_contexts",
-                "max_iterations",
+            in {
+                "allowed_target_files",
+                "changed_files",
+                "mutated_files",
+                "isolated_workspace",
+                "isolated_workspace_path",
+                "primary_workdir",
+                "scenario_path",
+                "source_scenario_path",
+                "open_python_repl_sessions",
             }
         }
+        audit_seed = {
+            key: value
+            for key, value in seed.audit.items()
+            if key in {"artifacts", "diff_report", "run_summary", "validation_tools", "sync_events"}
+        }
+        evaluation_seed = dict(seed.evaluation)
+        parent_baseline = context.evaluation.get("baseline_summary", {})
+        if isinstance(parent_baseline, dict) and any(
+            parent_baseline.get(key) not in (None, "") for key in ("score", "status", "tool")
+        ):
+            evaluation_seed.pop("baseline_summary", None)
         for target, source in (
-            (context.runtime, runtime_seed),
-            (context.workspace, seed.workspace),
-            (context.evaluation, seed.evaluation),
+            (context.workspace, workspace_seed),
+            (context.evaluation, evaluation_seed),
             (context.failure, seed.failure),
-            (context.memory, seed.memory),
-            (context.tool, seed.tool),
-            (context.audit, seed.audit),
+            (context.audit, audit_seed),
         ):
             target.update(
                 {key: value for key, value in source.items() if value not in (None, {}, [], "")}
@@ -1222,11 +1754,28 @@ class AgenticLoopRunner:
                 repeat_eval_summary=ScoreSummary.model_validate(
                     context.evaluation.get("repeat_eval_summary", {})
                 ),
+                recent_eval_summaries=[
+                    item
+                    for item in context.evaluation.get("recent_eval_summaries", [])
+                    if isinstance(item, str)
+                ],
                 regressions=[
                     item
                     for item in context.evaluation.get("regressions", [])
                     if isinstance(item, str)
                 ],
+                eval_manifest_path=(
+                    value
+                    if isinstance((value := context.evaluation.get("eval_manifest_path")), str)
+                    and value.strip()
+                    else None
+                ),
+                eval_manifest_hash=(
+                    value
+                    if isinstance((value := context.evaluation.get("eval_manifest_hash")), str)
+                    and value.strip()
+                    else None
+                ),
                 aggregated_score=(
                     float(value)
                     if isinstance(
@@ -1277,6 +1826,16 @@ class AgenticLoopRunner:
                     if isinstance((value := context.failure.get("diagnosis_mode")), str)
                     else None
                 ),
+                top_hypothesis=(
+                    value
+                    if isinstance((value := context.failure.get("top_hypothesis")), str)
+                    else None
+                ),
+                diagnosed_issues=[
+                    item
+                    for item in context.failure.get("diagnosed_issues", [])
+                    if isinstance(item, str)
+                ],
             ),
             memory=MemoryToolContext(
                 run_state=RuntimeToolContext.model_validate(context.memory.get("run_state", {})),
@@ -1341,6 +1900,11 @@ class AgenticLoopRunner:
             ),
             tool=ToolStateContext(
                 active_tools=active_tools,
+                available_tool_summaries=[
+                    item
+                    for item in context.tool.get("available_tool_summaries", [])
+                    if isinstance(item, str)
+                ],
                 tool_contracts=[
                     ToolContractView.model_validate(item)
                     for item in context.tool.get("tool_contracts", [])
@@ -1398,6 +1962,16 @@ class AgenticLoopRunner:
                     TranscriptRecord.model_validate(item)
                     for item in context.audit.get("transcripts", [])
                     if isinstance(item, dict)
+                ],
+                progress_artifacts=[
+                    item
+                    for item in context.audit.get("progress_artifacts", [])
+                    if isinstance(item, str)
+                ],
+                artifact_index=[
+                    item
+                    for item in context.audit.get("artifact_index", [])
+                    if isinstance(item, str)
                 ],
                 validation_tools=[
                     item
@@ -1548,3 +2122,50 @@ class AgenticLoopRunner:
         if entry in queue:
             return
         self.memory.append("session_memory", "dream_queue", entry)
+
+
+def _filter_records_for_run(
+    records: object,
+    *,
+    goal_id: str | None,
+    run_id: str | None,
+) -> list[dict[str, object]]:
+    if not isinstance(records, list):
+        return []
+    filtered: list[dict[str, object]] = []
+    for item in records:
+        if not isinstance(item, dict):
+            continue
+        if run_id is not None:
+            if item.get("run_id") == run_id:
+                filtered.append(item)
+            continue
+        if goal_id is not None and item.get("goal_id") == goal_id:
+            filtered.append(item)
+    return filtered
+
+
+def _scoped_session_memory(
+    session_memory: object,
+    *,
+    goal_id: str | None,
+    run_id: str | None,
+    traces: list[dict[str, object]],
+    transcripts: list[dict[str, object]],
+) -> dict[str, object]:
+    if not isinstance(session_memory, dict):
+        return {"traces": traces[-25:], "transcripts": transcripts[-12:]}
+    scoped = {
+        key: value
+        for key, value in session_memory.items()
+        if key not in {"traces", "transcripts", "delegations", "retries", "validations"}
+    }
+    scoped["traces"] = traces[-25:]
+    scoped["transcripts"] = transcripts[-12:]
+    for key in ("delegations", "retries", "validations"):
+        scoped[key] = _filter_records_for_run(
+            session_memory.get(key, []),
+            goal_id=goal_id,
+            run_id=run_id,
+        )
+    return scoped

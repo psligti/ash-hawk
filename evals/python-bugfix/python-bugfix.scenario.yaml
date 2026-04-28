@@ -6,7 +6,7 @@ sut:
   type: "agentic_sdk"
   adapter: "sdk_dawn_kestrel"
   config:
-    skill_path: ".dawn-kestrel/skills/python-bugfix.md"
+    skill_name: "python-bugfix"
     max_tokens: 2000
     max_time_seconds: 120
 

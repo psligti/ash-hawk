@@ -482,6 +482,84 @@ class TestDawnKestrelAgentRunnerRun:
         assert transcript.duration_seconds > 0
 
     @pytest.mark.asyncio
+    async def test_run_projects_raw_session_event_timestamps(self, sample_task, policy_enforcer):
+        runner = DawnKestrelAgentRunner(provider="anthropic", model="claude-3-5-sonnet")
+
+        tool_event = MagicMock(
+            event_type="tool_call",
+            timestamp=123.456,
+            tool_name="read",
+            tool_input={"file_path": "src/app.py"},
+            tool_result="ok",
+            error=None,
+            duration_ms=12.3,
+            output_preview="src/app.py",
+        )
+        llm_event = MagicMock(
+            event_type="llm_call",
+            timestamp=111.222,
+            text="Need to inspect the file.",
+            provider="anthropic",
+            model="claude-sonnet",
+            finish_reason="tool_use",
+            had_tool_calls=True,
+            cost_usd=0.12,
+        )
+        session = MagicMock()
+        session.messages = [
+            {"role": "user", "content": "Inspect the file"},
+            {"role": "assistant", "content": "Calling read"},
+            {"role": "tool", "name": "read", "content": "src/app.py"},
+        ]
+        session.events = [llm_event, tool_event]
+        session.filter_by_type.side_effect = lambda event_type: {
+            "tool_call": [tool_event],
+            "llm_call": [llm_event],
+        }.get(event_type, [])
+
+        async def mock_run_agent(*args: Any, **kwargs: Any) -> Any:
+            return MagicMock(
+                response=MagicMock(text="Done"),
+                error=None,
+                iterations=1,
+                total_usage={"input": 10, "output": 5, "reasoning": 0},
+                session=session,
+            )
+
+        mock_agent_module = MagicMock(run_agent=mock_run_agent)
+        mock_types_module = MagicMock(LoopConfig=MagicMock(return_value=MagicMock()))
+
+        with patch.object(runner, "_get_client", return_value=MagicMock()):
+            with patch.object(
+                runner,
+                "_create_filtered_registry",
+                return_value=MagicMock(tools={}, get_all=AsyncMock(return_value={})),
+            ):
+                with patch(
+                    "ash_hawk.agents.dawn_kestrel.importlib.import_module",
+                    side_effect=_make_import_mock(
+                        agent_loop=mock_agent_module, agent_types=mock_types_module
+                    ),
+                ):
+                    transcript, outcome = await runner.run(
+                        task=sample_task,
+                        policy_enforcer=policy_enforcer,
+                        config={},
+                    )
+
+        assert outcome.status == EvalStatus.COMPLETED
+        tool_call_events = [
+            e for e in transcript.trace_events if e.get("event_type") == "ToolCallEvent"
+        ]
+        tool_result_events = [
+            e for e in transcript.trace_events if e.get("event_type") == "ToolResultEvent"
+        ]
+        assert tool_call_events
+        assert tool_result_events
+        assert tool_call_events[0]["ts"] == "123.456000"
+        assert tool_result_events[0]["ts"] == "123.456000"
+
+    @pytest.mark.asyncio
     async def test_run_calls_run_agent(self, sample_task, policy_enforcer):
         runner = DawnKestrelAgentRunner(
             provider="anthropic",
@@ -855,3 +933,99 @@ class TestDawnKestrelAgentRunnerMCPIntegration:
         assert len(FakeMcpClient.instances) == 1
         assert FakeMcpClient.instances[0].started is True
         assert FakeMcpClient.instances[0].closed is True
+
+    @pytest.mark.asyncio
+    async def test_run_does_not_register_denied_mcp_tools(self, sample_task):
+        runner = DawnKestrelAgentRunner(
+            provider="anthropic",
+            model="claude-3-5-sonnet",
+            mcp_servers=[{"name": "note-lark", "command": "note-lark-mcp-stdio"}],
+        )
+
+        policy = ToolSurfacePolicy(denied_tools=["note-lark_*"], timeout_seconds=60.0)
+        enforcer = PolicyEnforcer(policy)
+
+        class FakeMcpClient:
+            async def start(self) -> None:
+                return None
+
+            async def list_tools(self) -> list[dict[str, Any]]:
+                return [
+                    {
+                        "name": "notes_search",
+                        "description": "Search notes",
+                        "inputSchema": {"type": "object", "properties": {}, "required": []},
+                    }
+                ]
+
+            async def close(self) -> None:
+                return None
+
+            def __init__(self, config: Any) -> None:
+                self.config = config
+
+        class CapturingRegistry:
+            def __init__(self) -> None:
+                self.registered: list[str] = []
+                self.tools: dict[str, Any] = {}
+                self.tool_metadata: dict[str, dict[str, Any]] = {}
+
+            def register(
+                self, tool: Any, name: str | None = None, *, metadata: dict[str, Any] | None = None
+            ) -> None:
+                tool_id = name or getattr(tool, "id", "")
+                self.registered.append(tool_id)
+                self.tools[tool_id] = tool
+                if metadata is not None:
+                    self.tool_metadata[tool_id] = dict(metadata)
+
+            def get_all(self) -> dict[str, Any]:
+                return dict(self.tools)
+
+        captured_registry: CapturingRegistry | None = None
+
+        async def mock_run_agent(*args: Any, **kwargs: Any) -> Any:
+            nonlocal captured_registry
+            captured_registry = kwargs.get("tools")
+            return MagicMock(
+                response=MagicMock(text="Done"),
+                error=None,
+                iterations=1,
+                total_usage={},
+                session=None,
+            )
+
+        mock_agent_module = MagicMock(run_agent=mock_run_agent)
+        mock_types_module = MagicMock(LoopConfig=MagicMock(return_value=MagicMock()))
+
+        def _import_module(name: str) -> Any:
+            if name == "dawn_kestrel.agent.loop":
+                return mock_agent_module
+            if name == "dawn_kestrel.agent.types":
+                return mock_types_module
+            if name == "dawn_kestrel.tools.registry":
+                return MagicMock(ToolRegistry=CapturingRegistry)
+            if name == "dawn_kestrel.provider.llm_client":
+                return MagicMock(LLMClient=MagicMock)
+            if name == "dawn_kestrel.base.config":
+                return MagicMock()
+            if name == "dawn_kestrel.tools.framework":
+                return MagicMock()
+            raise AssertionError(f"Unexpected module import: {name}")
+
+        with patch.object(runner, "_get_client", return_value=MagicMock()):
+            with patch("ash_hawk.agents.dawn_kestrel._McpStdioClient", FakeMcpClient):
+                with patch(
+                    "ash_hawk.agents.dawn_kestrel.importlib.import_module",
+                    side_effect=_import_module,
+                ):
+                    transcript, outcome = await runner.run(
+                        task=sample_task,
+                        policy_enforcer=enforcer,
+                        config={},
+                    )
+
+        assert outcome.status == EvalStatus.COMPLETED
+        assert isinstance(captured_registry, CapturingRegistry)
+        assert captured_registry.registered == []
+        assert transcript.tool_calls == []

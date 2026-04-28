@@ -136,11 +136,7 @@ skill_names:
 - acceptance-decision
 - regression-detection
 - score-aggregation
-hook_names:
-- before_baseline_eval
-- after_baseline_eval
-- before_integrity_validation
-- after_integrity_validation
+hook_names: []
 memory_read_scopes:
 - working_memory
 - session_memory

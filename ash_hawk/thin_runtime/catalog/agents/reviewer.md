@@ -123,10 +123,7 @@ skill_names:
 - report-generation
 - phase2-analysis
 - phase2-gate
-hook_names:
-- after_acceptance
-- on_failure_bucketed
-- on_artifact_written
+hook_names: []
 memory_read_scopes:
 - episodic_memory
 - semantic_memory

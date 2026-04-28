@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import logging
 import sys
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
+from dawn_kestrel.provider.llm_client import LLMResponse
+from dawn_kestrel.provider.provider_types import TokenUsage
 
 from ash_hawk.thin_runtime import RuntimeGoal, create_default_harness
 from ash_hawk.thin_runtime.live_eval import emit_observed_event
@@ -102,21 +105,19 @@ def test_harness_prints_human_readable_progress_and_suppresses_console_logs(
     assert "Agent: coordinator" in output
     assert "Skills: workspace-governance" in output
     assert "Console: human-readable steps only. Logger output is muted for this run." in output
-    assert "Thinking frame" in output
-    assert "Selected tool: load_workspace_state" in output
-    assert "Selected by: explicit_order" in output
+    assert "Decision: load_workspace_state via explicit_order." in output
     assert "Selected from explicit tool execution order override." in output
-    assert "Step 1: running load_workspace_state" in output
-    assert output.index("Thinking frame") < output.index("Step 1: running load_workspace_state")
-    assert "  Agent: coordinator" in output
-    assert "  Skills: workspace-governance" in output
-    assert "Working: load_workspace_state" in output
+    assert "Step 1/10: load_workspace_state()" in output
+    assert output.index("Decision: load_workspace_state via explicit_order.") < output.index(
+        "Step 1/10: load_workspace_state()"
+    )
     assert "  Observed events:" in output
     assert "    - event_tool_0 | ok | matched alpha.py, beta.py" in output
     assert "    - event_tool_1 | failed | permission denied while reading config" in output
-    assert "Step 1 result: load_workspace_state finished successfully." in output
+    assert "Step 1 result: ✓ load_workspace_state()" in output
+    assert "→ Loaded workspace state" in output
     assert output.index("    - event_tool_0 | ok | matched alpha.py, beta.py") < output.index(
-        "Step 1 result: load_workspace_state finished successfully."
+        "Step 1 result: ✓ load_workspace_state()"
     )
     assert "Result snippet:" in output
     assert "    Summary: Loaded workspace state" in output
@@ -250,7 +251,115 @@ def test_harness_prints_live_error_snippet_for_failed_tool(
 
     output = capsys.readouterr().out
     assert result.success is False
-    assert "Step 1 result: load_workspace_state failed." in output
+    assert "Step 1 result: ✗ load_workspace_state()" in output
+    assert "→ Tests failed with exit code 1" in output
     assert "Result snippet:" in output
     assert "Summary: Tests failed" in output
     assert "Error: Tests failed with exit code 1" in output
+
+
+def test_harness_prints_model_authored_thinking_line(capsys: pytest.CaptureFixture[str]) -> None:
+    class FakeClient:
+        provider_id = "test"
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def complete(
+            self,
+            messages: list[dict[str, object]],
+            tools: list[dict[str, object]] | None = None,
+            options: object = None,
+        ) -> LLMResponse:
+            del messages
+            del tools
+            del options
+            self.calls += 1
+            if self.calls == 1:
+                return LLMResponse(
+                    text="I will read workspace context first to ground the next action.",
+                    usage=TokenUsage(input=0, output=0, reasoning=0),
+                    finish_reason="tool_use",
+                    cost=Decimal("0"),
+                    tool_calls=[
+                        {
+                            "id": "call-1",
+                            "type": "function",
+                            "function": {"name": "load_workspace_state", "arguments": "{}"},
+                            "tool": "load_workspace_state",
+                            "input": {},
+                        }
+                    ],
+                )
+            return LLMResponse(
+                text="done",
+                usage=TokenUsage(input=0, output=0, reasoning=0),
+                finish_reason="stop",
+                cost=Decimal("0"),
+                tool_calls=None,
+            )
+
+    harness = create_default_harness(workdir=Path.cwd())
+    harness.runner.set_client_factory(lambda: FakeClient())
+    result = harness.execute(
+        RuntimeGoal(goal_id="goal-console-thinking", description="Show model-authored thinking"),
+    )
+
+    output = capsys.readouterr().out
+    assert result.success is True
+    assert "Thinking: I will read workspace context first to ground the next action." in output
+    assert "Decision: load_workspace_state via dk_tool_calls." not in output
+
+
+def test_harness_labels_fallback_rationale_as_decision(capsys: pytest.CaptureFixture[str]) -> None:
+    class FakeClient:
+        provider_id = "test"
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def complete(
+            self,
+            messages: list[dict[str, object]],
+            tools: list[dict[str, object]] | None = None,
+            options: object = None,
+        ) -> LLMResponse:
+            del messages
+            del tools
+            del options
+            self.calls += 1
+            if self.calls == 1:
+                return LLMResponse(
+                    text="",
+                    usage=TokenUsage(input=0, output=0, reasoning=0),
+                    finish_reason="tool_use",
+                    cost=Decimal("0"),
+                    tool_calls=[
+                        {
+                            "id": "call-1",
+                            "type": "function",
+                            "function": {"name": "load_workspace_state", "arguments": "{}"},
+                            "tool": "load_workspace_state",
+                            "input": {},
+                        }
+                    ],
+                )
+            return LLMResponse(
+                text="done",
+                usage=TokenUsage(input=0, output=0, reasoning=0),
+                finish_reason="stop",
+                cost=Decimal("0"),
+                tool_calls=None,
+            )
+
+    harness = create_default_harness(workdir=Path.cwd())
+    harness.runner.set_client_factory(lambda: FakeClient())
+    result = harness.execute(
+        RuntimeGoal(goal_id="goal-console-fallback", description="No model-authored rationale"),
+    )
+
+    output = capsys.readouterr().out
+    assert result.success is True
+    assert "Decision: load_workspace_state via dk_tool_calls." in output
+    assert "Model emitted tool call(s): load_workspace_state" in output
+    assert "Thinking:" not in output

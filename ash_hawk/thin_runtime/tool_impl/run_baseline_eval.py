@@ -7,7 +7,12 @@ from ash_hawk.thin_runtime.tool_command import (
     context_input_schema,
     standard_output_schema,
 )
-from ash_hawk.thin_runtime.tool_types import ToolExecutionPayload
+from ash_hawk.thin_runtime.tool_impl._eval_manifest import write_eval_manifest
+from ash_hawk.thin_runtime.tool_types import (
+    AuditToolContext,
+    EvaluationToolContext,
+    ToolExecutionPayload,
+)
 
 
 def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]]:
@@ -15,7 +20,35 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
     if scenario_path_raw:
         scenario_path = Path(scenario_path_raw)
         if scenario_path.exists():
-            return run_live_scenario_eval("run_baseline_eval", scenario_path)
+            success, payload, message, errors = run_live_scenario_eval(
+                "run_baseline_eval", scenario_path
+            )
+            manifest_path, manifest_hash = write_eval_manifest(
+                workdir=Path(call.context.workspace.workdir or str(Path.cwd())).resolve(),
+                run_id=call.context.runtime.run_id or call.goal_id,
+                scenario_path=scenario_path_raw,
+                scenario_required_files=list(call.context.workspace.scenario_required_files),
+                repetitions=2,
+            )
+            if manifest_path is not None and manifest_hash is not None:
+                payload.evaluation_updates = payload.evaluation_updates.model_copy(
+                    update={
+                        "eval_manifest_path": str(manifest_path),
+                        "eval_manifest_hash": manifest_hash,
+                    }
+                )
+                payload.audit_updates = payload.audit_updates.model_copy(
+                    update={
+                        "artifacts": list(payload.audit_updates.artifacts)
+                        + [f"eval-manifest:{manifest_hash}:{manifest_path}"],
+                        "run_summary": {
+                            **payload.audit_updates.run_summary,
+                            "eval_manifest_path": str(manifest_path),
+                            "eval_manifest_hash": manifest_hash,
+                        },
+                    }
+                )
+            return success, payload, message, errors
     return missing_live_eval_result(
         "run_baseline_eval",
         reason="Cannot run baseline evaluation without a valid scenario_path",

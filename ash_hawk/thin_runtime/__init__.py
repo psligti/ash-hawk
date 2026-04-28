@@ -2,6 +2,7 @@ from ash_hawk.thin_runtime.agent_text import build_agent_text
 from ash_hawk.thin_runtime.agents import AgentRegistry
 from ash_hawk.thin_runtime.context import RuntimeContextAssembler
 from ash_hawk.thin_runtime.defaults import build_default_catalog
+from ash_hawk.thin_runtime.dk_runner import DkNativeLoopRunner
 from ash_hawk.thin_runtime.harness import ThinRuntimeHarness, create_default_harness
 from ash_hawk.thin_runtime.hooks import HookDispatcher, HookRegistry
 from ash_hawk.thin_runtime.memory import ThinRuntimeMemoryManager
@@ -15,7 +16,6 @@ from ash_hawk.thin_runtime.models import (
     HookStage,
     MemoryScopeKind,
     MemoryScopeSpec,
-    RegistrySummary,
     RuntimeGoal,
     SkillSpec,
     ThinRuntimeCatalog,
@@ -36,6 +36,7 @@ __all__ = [
     "build_agent_text",
     "ContextFieldSpec",
     "ContextSnapshot",
+    "DkNativeLoopRunner",
     "DelegationRecord",
     "HookDispatcher",
     "HookEvent",
@@ -44,7 +45,6 @@ __all__ = [
     "HookStage",
     "MemoryScopeKind",
     "MemoryScopeSpec",
-    "RegistrySummary",
     "RuntimeContextAssembler",
     "RuntimeGoal",
     "SkillRegistry",

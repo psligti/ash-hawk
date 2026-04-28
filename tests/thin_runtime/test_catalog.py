@@ -6,7 +6,11 @@ from pathlib import Path
 import yaml
 
 from ash_hawk.thin_runtime import build_default_catalog
-from ash_hawk.thin_runtime.catalog_loader import REQUIRED_AGENT_FIELDS, REQUIRED_SKILL_FIELDS
+from ash_hawk.thin_runtime.catalog_loader import (
+    REQUIRED_AGENT_FIELDS,
+    REQUIRED_SKILL_FIELDS,
+    REQUIRED_SKILL_FRONTMATTER_FIELDS,
+)
 from ash_hawk.thin_runtime.tool_types import ToolSchemaSpec
 
 
@@ -33,7 +37,10 @@ def test_default_catalog_contains_agentic_runtime_objects() -> None:
     assert "improvement-loop" in skill_names
     assert "signal-driven-workspace" in skill_names
     assert "hypothesis-ranking" in skill_names
+    assert "python-bugfix" not in skill_names
+    assert "transcript-tool-gap" not in skill_names
     assert "call_llm_structured" in tool_names
+    assert "delegate_task" in tool_names
     assert "run_integrity_validation" in tool_names
     assert "commit_workspace_changes" in tool_names
     assert "before_run" in hook_names
@@ -76,16 +83,15 @@ def test_default_catalog_contains_agentic_runtime_objects() -> None:
         "load_workspace_state",
         "detect_agent_config",
         "scope_workspace",
-        "read",
-        "grep",
         "diff_workspace_changes",
-        "mutate_agent_files",
+        "delegate_task",
     ]
     improvement_loop = next(skill for skill in catalog.skills if skill.name == "improvement-loop")
     assert improvement_loop.tool_names == [
         "run_baseline_eval",
         "run_eval_repeated",
-        "mutate_agent_files",
+        "sync_workspace_changes",
+        "delegate_task",
         "diff_workspace_changes",
         "call_llm_structured",
     ]
@@ -147,6 +153,7 @@ def test_catalog_cross_references_and_tool_entrypoints_are_valid() -> None:
 
 def test_raw_markdown_catalog_files_include_required_front_matter_fields() -> None:
     root = Path("/Users/parkersligting/develop/pt/ash-hawk/ash_hawk/thin_runtime/catalog")
+    skills_root = Path("/Users/parkersligting/develop/pt/ash-hawk/skills")
 
     for path in sorted((root / "agents").glob("*.md")):
         raw = _read_frontmatter(path)
@@ -158,15 +165,24 @@ def test_raw_markdown_catalog_files_include_required_front_matter_fields() -> No
         assert "# Decision Policy" in body
         assert "# Completion Rule" in body
 
-    for path in sorted((root / "skills").glob("*.md")):
+    for path in sorted(skills_root.glob("*/SKILL.md")):
         raw = _read_frontmatter(path)
-        missing = sorted(REQUIRED_SKILL_FIELDS - set(raw))
-        assert not missing, f"{path} missing skill fields: {missing}"
+        missing = sorted(REQUIRED_SKILL_FRONTMATTER_FIELDS - set(raw))
+        assert not missing, f"{path} missing skill front matter fields: {missing}"
+        metadata = raw.get("metadata")
+        assert isinstance(metadata, dict)
+        catalog_source = metadata.get("catalog_source")
+        if catalog_source == "thin_runtime":
+            missing_metadata = sorted(REQUIRED_SKILL_FIELDS - set(metadata))
+            assert not missing_metadata, (
+                f"{path} missing thin runtime metadata fields: {missing_metadata}"
+            )
         body = _read_body(path)
         assert body
-        assert "# Purpose" in body
-        assert "# Procedure" in body
-        assert "# Output Contract" in body
+        if catalog_source == "thin_runtime":
+            assert "# Purpose" in body
+            assert "# Procedure" in body
+            assert "# Output Contract" in body
 
 
 def _read_frontmatter(path: Path) -> dict[str, object]:

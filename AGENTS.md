@@ -46,6 +46,19 @@ ash-hawk report --run <run-id>            # Generate report
 ash-hawk validate <suite.yaml>            # Validate suite YAML
 ```
 
+### Utility Scripts
+```bash
+uv run python scripts/analyze_latest_transcript.py            # Diagnose latest thin_runtime tool gap
+uv run python scripts/analyze_latest_transcript.py --run-id <run-id>  # Diagnose specific run
+uv run python scripts/check_type_hygiene.py [files...]        # Type hygiene checker
+```
+
+### Skill Systems
+- **Canonical skills** now live in `skills/<name>/SKILL.md`
+- Thin runtime internal skills are DK-discovered `SKILL.md` files with `metadata.catalog_source: thin_runtime`
+- Evaluation or utility skills may also live in `skills/`, but should use a different `metadata.catalog_source`
+- Do not add new skill content to `ash_hawk/thin_runtime/catalog/skills/`, `.dawn-kestrel/skills/`, or `.opencode/skills/`
+
 ---
 
 ## Code Style Guidelines

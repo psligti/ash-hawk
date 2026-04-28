@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Callable
 
-from ash_hawk.thin_runtime.models import HookEvent, HookSpec, HookStage
+from ash_hawk.thin_runtime.models import HookEvent, HookSpec
 
 HookHandler = Callable[[HookEvent], None]
 
@@ -17,9 +17,6 @@ class HookRegistry:
             return self._hooks[name]
         except KeyError as exc:
             raise ValueError(f"Unknown thin runtime hook: {name}") from exc
-
-    def list_hooks(self) -> list[HookSpec]:
-        return list(self._hooks.values())
 
 
 class HookDispatcher:
@@ -42,6 +39,3 @@ class HookDispatcher:
 
     def emitted(self) -> list[HookEvent]:
         return list(self._emitted)
-
-    def stages(self) -> list[HookStage]:
-        return [event.stage for event in self._emitted]

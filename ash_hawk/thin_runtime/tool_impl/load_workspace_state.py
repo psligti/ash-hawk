@@ -21,7 +21,7 @@ from ash_hawk.thin_runtime.tool_types import (
 
 def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]]:
     workdir = Path(call.context.workspace.workdir or str(Path.cwd()))
-    changed_files = (
+    workspace_files = (
         sorted(
             str(path.relative_to(workdir))
             for path in workdir.iterdir()
@@ -30,7 +30,7 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
         if workdir.exists()
         else []
     )
-    preview = changed_files[:5]
+    preview = workspace_files[:5]
     scenario_targets, scenario_required_files, scenario_summary = load_scenario_brief(
         call.context.workspace.scenario_path,
         workdir,
@@ -39,7 +39,7 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
         workspace_updates=WorkspaceToolContext(
             workdir=str(workdir.resolve()) if workdir.exists() else str(workdir),
             repo_root=str(workdir.resolve()) if workdir.exists() else str(workdir),
-            changed_files=changed_files,
+            changed_files=[],
             scenario_path=call.context.workspace.scenario_path,
             agent_config=call.context.workspace.agent_config,
             scenario_targets=scenario_targets,
@@ -48,7 +48,8 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
         ),
         audit_updates=AuditToolContext(
             run_summary={
-                "changed_file_count": str(len(changed_files)),
+                "changed_file_count": str(len(workspace_files)),
+                "workspace_file_count": str(len(workspace_files)),
                 "changed_files_preview": ", ".join(preview),
                 "scenario_path": call.context.workspace.scenario_path or "",
                 "agent_config": call.context.workspace.agent_config or "",
@@ -61,7 +62,12 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
         ),
     )
     preview_text = ", ".join(preview) if preview else "no top-level files"
-    return True, payload, f"Loaded workspace state ({len(changed_files)} files: {preview_text})", []
+    return (
+        True,
+        payload,
+        f"Loaded workspace state ({len(workspace_files)} files: {preview_text})",
+        [],
+    )
 
 
 def load_scenario_brief(

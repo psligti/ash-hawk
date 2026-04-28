@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from typing import Iterator
 
 from rich.console import Console
-from rich.panel import Panel
 from rich.status import Status
 
 from ash_hawk.thin_runtime.hooks import HookDispatcher
@@ -62,8 +61,10 @@ class ThinRuntimeConsoleReporter:
         self._console = Console(highlight=False, soft_wrap=True)
         self._active_status: Status | None = None
         self._active_status_text: str | None = None
+        self._active_tool_signature = "unknown-tool()"
         self._streamed_event_count = 0
         hooks.register("before_run", self._before_run)
+        hooks.register("before_skill", self._before_skill)
         hooks.register("on_policy_decision", self._on_policy_decision)
         hooks.register("before_tool", self._before_tool)
         hooks.register("after_tool", self._after_tool)
@@ -96,24 +97,38 @@ class ThinRuntimeConsoleReporter:
         )
         self._console.print()
 
+    def _before_skill(self, event: HookEvent) -> None:
+        skill = self._text(event.payload.get("skill"), fallback="unknown-skill") or "unknown-skill"
+        source = self._text(event.payload.get("source"))
+        message = self._text(event.payload.get("message"))
+        available = event.payload.get("available")
+        current_status = self._active_status_text
+        self._stop_spinner()
+        status_label = "Skill activated"
+        if isinstance(available, bool) and not available:
+            status_label = "Skill activation failed"
+        line = f"[bold green]{status_label}:[/bold green] {skill}"
+        if source:
+            line = f"{line} [dim]({source})[/dim]"
+        self._console.print(line)
+        if message and message not in {"skill activated", "skill activation failed"}:
+            self._console.print(f"  [dim]{self._truncate(message, limit=180)}[/dim]")
+        if current_status is not None:
+            self._start_spinner(current_status)
+
     def _before_tool(self, event: HookEvent) -> None:
         self._stop_spinner()
         self._step_index += 1
         self._streamed_event_count = 0
-        tool_name = self._text(event.payload.get("tool"), fallback="unknown-tool")
-        agent = self._text(event.payload.get("agent"), fallback="unknown-agent")
-        skills = self._list_text(event.payload.get("skills"))
-
-        self._console.print(
-            f"[bold cyan]Step {self._step_index}:[/bold cyan] running [cyan]{tool_name}[/cyan]"
-        )
-        self._console.print(f"  [bold cyan]Agent:[/bold cyan] {agent}")
-        if skills:
-            self._console.print(f"  [bold cyan]Skills:[/bold cyan] {skills}")
-        self._console.print(f"  [bold yellow]Working:[/bold yellow] {tool_name}")
-        status_text = f"[bold yellow]Working:[/bold yellow] {tool_name}"
-        if skills:
-            status_text = f"{status_text} [dim]({skills})[/dim]"
+        tool_name = self._text(event.payload.get("tool"), fallback="unknown-tool") or "unknown-tool"
+        tool_args = self._value(event.payload, "tool_args")
+        self._active_tool_signature = self._tool_signature(tool_name, tool_args)
+        step_total = self._value(event.payload, "max_iterations")
+        step_label = f"Step {self._step_index}"
+        if isinstance(step_total, int):
+            step_label = f"{step_label}/{step_total}"
+        self._console.print(f"[bold cyan]{step_label}:[/bold cyan] {self._active_tool_signature}")
+        status_text = f"[bold yellow]Running:[/bold yellow] {self._active_tool_signature}"
         self._start_spinner(status_text)
 
     def _on_policy_decision(self, event: HookEvent) -> None:
@@ -122,40 +137,47 @@ class ThinRuntimeConsoleReporter:
             return
         selected_tool = self._text(event.payload.get("tool"), fallback="none")
         source = self._text(event.payload.get("source"), fallback="unknown")
+        confidence = self._value(event.payload, "confidence")
+        is_model_reasoning = bool(self._value(event.payload, "reason_model_authored"))
         considered_tools = event.payload.get("considered_tools")
         considered_text = self._list_text(considered_tools)
-        lines = [
-            f"[bold cyan]Selected tool:[/bold cyan] {selected_tool}",
-            f"[bold cyan]Selected by:[/bold cyan] {source}",
-        ]
-        if considered_text:
-            lines.append(f"[bold cyan]Considered:[/bold cyan] {considered_text}")
-        lines.append(f"[bold cyan]Why:[/bold cyan] {reason}")
-        self._console.print(
-            Panel(
-                "\n".join(lines),
-                title="Thinking frame",
-                title_align="left",
-                border_style="magenta",
-                expand=True,
+        if is_model_reasoning:
+            confidence_suffix = ""
+            if isinstance(confidence, int | float):
+                confidence_suffix = f" [dim](confidence {float(confidence):.2f})[/dim]"
+            self._console.print(
+                f"[bold magenta]Thinking:[/bold magenta] {self._truncate(reason, limit=220)}"
+                f"{confidence_suffix}"
             )
-        )
+            return
+        self._console.print(f"[bold magenta]Decision:[/bold magenta] {selected_tool} via {source}.")
+        self._console.print(f"  [dim]{self._truncate(reason, limit=220)}[/dim]")
+        if considered_text:
+            self._console.print(f"  [dim]Considered: {considered_text}[/dim]")
 
     def _after_tool(self, event: HookEvent) -> None:
         self._stop_spinner()
         success = bool(event.payload.get("success"))
-        tool_name = self._text(event.payload.get("tool"), fallback="unknown-tool")
-        status_text = "finished successfully" if success else "failed"
+        summary = self._text(event.payload.get("message"))
+        error = self._text(event.payload.get("error"))
         status_color = "green" if success else "red"
+        status_icon = "✓" if success else "✗"
+        preview = summary if success else error
         self._console.print(
-            f"[bold cyan]Step {self._step_index} result:[/bold cyan] {tool_name} "
-            f"[{status_color}]{status_text}[/{status_color}]."
+            f"[bold cyan]Step {self._step_index} result:[/bold cyan] "
+            f"[{status_color}]{status_icon}[/{status_color}] {self._active_tool_signature}"
         )
+        if preview is not None:
+            self._console.print(f"  [dim]→ {self._truncate(preview, limit=180)}[/dim]")
         self._print_live_tool_result(event.payload)
         self._console.print()
         self._active_status_text = None
 
     def _on_observed_event(self, event: HookEvent) -> None:
+        event_type = self._value_text(event.payload, "event_type")
+        if event_type == "skill_activation":
+            self._before_skill(event)
+            return
         formatted = self._format_event_line(event.payload)
         if formatted is None:
             return
@@ -414,6 +436,44 @@ class ThinRuntimeConsoleReporter:
         if len(value) <= limit:
             return value
         return f"{value[: limit - 3].rstrip()}..."
+
+    def _tool_signature(self, tool_name: str, raw_args: object) -> str:
+        if not isinstance(raw_args, dict) or not raw_args:
+            return f"{tool_name}()"
+        parts: list[str] = []
+        for key, value in raw_args.items():
+            if not isinstance(key, str):
+                continue
+            if self._is_sensitive_arg_key(key):
+                parts.append(f"{key}=***")
+                continue
+            formatted = self._format_arg_value(value)
+            parts.append(f"{key}={formatted}")
+        joined = ", ".join(parts)
+        return self._truncate(f"{tool_name}({joined})", limit=180)
+
+    def _format_arg_value(self, value: object) -> str:
+        if isinstance(value, str):
+            return self._truncate(repr(value), limit=80)
+        if isinstance(value, bool):
+            return str(value).lower()
+        if isinstance(value, int | float):
+            return str(value)
+        if isinstance(value, list):
+            listed = ", ".join(self._format_arg_value(item) for item in value[:3])
+            suffix = "" if len(value) <= 3 else ", ..."
+            return f"[{listed}{suffix}]"
+        if isinstance(value, dict):
+            keys = [item for item in value.keys() if isinstance(item, str)]
+            preview = ", ".join(keys[:3])
+            suffix = "" if len(keys) <= 3 else ", ..."
+            return f"dict({preview}{suffix})"
+        return self._truncate(repr(value), limit=40)
+
+    def _is_sensitive_arg_key(self, key: str) -> bool:
+        lowered = key.lower()
+        sensitive_markers = ("token", "secret", "password", "api_key", "apikey", "auth")
+        return any(marker in lowered for marker in sensitive_markers)
 
     def _start_spinner(self, status_text: str) -> None:
         self._active_status_text = status_text

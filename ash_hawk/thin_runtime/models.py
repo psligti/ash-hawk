@@ -34,32 +34,12 @@ class HookStage(StrEnum):
     AFTER_TOOL = "after_tool"
     BEFORE_DELEGATION = "before_delegation"
     AFTER_DELEGATION = "after_delegation"
-    BEFORE_BASELINE_EVAL = "before_baseline_eval"
-    AFTER_BASELINE_EVAL = "after_baseline_eval"
-    BEFORE_TARGETED_VALIDATION = "before_targeted_validation"
-    AFTER_TARGETED_VALIDATION = "after_targeted_validation"
-    BEFORE_INTEGRITY_VALIDATION = "before_integrity_validation"
-    AFTER_INTEGRITY_VALIDATION = "after_integrity_validation"
-    BEFORE_ACCEPTANCE = "before_acceptance"
-    AFTER_ACCEPTANCE = "after_acceptance"
     BEFORE_MEMORY_READ = "before_memory_read"
     AFTER_MEMORY_READ = "after_memory_read"
     BEFORE_MEMORY_WRITE = "before_memory_write"
     AFTER_MEMORY_WRITE = "after_memory_write"
-    BEFORE_MEMORY_CONSOLIDATION = "before_memory_consolidation"
-    AFTER_MEMORY_CONSOLIDATION = "after_memory_consolidation"
-    BEFORE_WORKSPACE_PREPARE = "before_workspace_prepare"
-    AFTER_WORKSPACE_PREPARE = "after_workspace_prepare"
-    BEFORE_SYNC_BACK = "before_sync_back"
-    AFTER_SYNC_BACK = "after_sync_back"
-    BEFORE_COMMIT = "before_commit"
-    AFTER_COMMIT = "after_commit"
     ON_POLICY_DECISION = "on_policy_decision"
-    ON_RETRY = "on_retry"
     ON_STOP_CONDITION = "on_stop_condition"
-    ON_SUSPICIOUS_RUN = "on_suspicious_run"
-    ON_FAILURE_BUCKETED = "on_failure_bucketed"
-    ON_ARTIFACT_WRITTEN = "on_artifact_written"
     ON_OBSERVED_EVENT = "on_observed_event"
     AFTER_DREAM_STATE = "after_dream_state"
 
@@ -250,6 +230,9 @@ class ContextFieldSpec(pd.BaseModel):
 class ToolCall(pd.BaseModel):
     tool_name: str = pd.Field(description="Tool name")
     goal_id: str = pd.Field(description="Goal id")
+    tool_args: dict[str, Any] = pd.Field(
+        default_factory=dict, description="Model-supplied tool args"
+    )
     caller_agent: str | None = pd.Field(default=None)
     caller_skill: str | None = pd.Field(default=None)
     agent_text: str | None = pd.Field(default=None)
@@ -288,6 +271,7 @@ class DelegationRecord(pd.BaseModel):
     selected_tool_names: list[str] = pd.Field(default_factory=list)
     success: bool = pd.Field(description="Whether delegated execution succeeded")
     error: str | None = pd.Field(default=None)
+    summary: str | None = pd.Field(default=None)
 
     model_config = pd.ConfigDict(extra="forbid")
 
@@ -419,13 +403,3 @@ class ThinRuntimeExecutionResult(pd.BaseModel):
     error: str | None = pd.Field(default=None)
 
     model_config = pd.ConfigDict(extra="forbid")
-
-
-@dataclass(frozen=True)
-class RegistrySummary:
-    agents: int
-    skills: int
-    tools: int
-    hooks: int
-    memory_scopes: int
-    context_fields: int

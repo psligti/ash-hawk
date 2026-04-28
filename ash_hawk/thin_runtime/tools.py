@@ -5,6 +5,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import cast
 
+from ash_hawk.thin_runtime.error_signatures import (
+    missing_contexts_error,
+    no_handler_error,
+    tool_denied_error,
+)
 from ash_hawk.thin_runtime.models import ToolCall, ToolResult, ToolSpec
 from ash_hawk.types import ToolPermission, ToolSurfacePolicy
 
@@ -15,7 +20,7 @@ def default_tool_handler(call: ToolCall) -> ToolResult:
     return ToolResult(
         tool_name=call.tool_name,
         success=False,
-        error=f"No handler registered for tool: {call.tool_name}",
+        error=no_handler_error(call.tool_name),
     )
 
 
@@ -64,7 +69,7 @@ class ToolRegistry:
             return ToolResult(
                 tool_name=call.tool_name,
                 success=False,
-                error=f"Tool denied by policy: {call.tool_name}",
+                error=tool_denied_error(call.tool_name),
             )
         spec = self._tools[call.tool_name].spec
         missing_contexts = sorted(
@@ -76,7 +81,7 @@ class ToolRegistry:
             return ToolResult(
                 tool_name=call.tool_name,
                 success=False,
-                error=f"Missing required contexts: {', '.join(missing_contexts)}",
+                error=missing_contexts_error(missing_contexts),
             )
         return self._tools[call.tool_name].handler(call)
 

@@ -7,7 +7,7 @@ import pytest
 from ash_hawk.thin_runtime import RuntimeGoal, create_default_harness
 from ash_hawk.thin_runtime.context import RuntimeContextAssembler
 from ash_hawk.thin_runtime.models import ToolCall
-from ash_hawk.thin_runtime.selection_policy import select_tool_via_policy
+from ash_hawk.thin_runtime.planner import PlannerDecision, plan_next_tool
 from ash_hawk.thin_runtime.tool_impl.search_knowledge import run as search_knowledge_run
 
 
@@ -88,7 +88,9 @@ def test_agent_text_uses_persisted_memory_after_dream_state(tmp_path: Path) -> N
     )
 
 
-def test_tool_selection_policy_defers_to_runtime_when_no_guardrail_applies() -> None:
+def test_model_planner_selects_valid_tool_from_allowed_surface(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     harness = create_default_harness(workdir=Path.cwd())
     harness.memory.write_scope(
         "semantic_memory",
@@ -116,17 +118,34 @@ def test_tool_selection_policy_defers_to_runtime_when_no_guardrail_applies() -> 
         "- Use plain language for people reading the output"
     )
 
-    decision = select_tool_via_policy(
+    def fake_call_model_structured(*_args: object, **_kwargs: object) -> PlannerDecision:
+        return PlannerDecision(
+            selected_tool="verify_outcome",
+            activate_skills=["verification"],
+            source="model_planner",
+            rationale="Verification is the best next action for this run.",
+            considered_tools=["run_baseline_eval", "verify_outcome"],
+            confidence=0.83,
+        )
+
+    monkeypatch.setattr(
+        "ash_hawk.thin_runtime.planner.call_model_structured",
+        fake_call_model_structured,
+    )
+
+    decision = plan_next_tool(
         goal=goal,
         agent=agent,
         active_skills=active_skills,
-        eligible_tools=active_tools,
+        candidate_skills=active_skills,
+        candidate_tools=active_tools,
         context=context,
         tool_execution_order=None,
     )
 
-    assert decision.source == "guardrail_clear"
-    assert decision.selected_tool is None
+    assert decision.source == "model_planner"
+    assert decision.selected_tool == "verify_outcome"
+    assert decision.activate_skills == ["verification"]
     assert decision.considered_tools == ["run_baseline_eval", "verify_outcome"]
 
 
