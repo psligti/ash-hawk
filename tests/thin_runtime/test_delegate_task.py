@@ -3,6 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
 from dawn_kestrel.provider.llm_client import LLMResponse
 from dawn_kestrel.provider.provider_types import TokenUsage
 
@@ -86,6 +87,7 @@ def test_delegate_task_emits_delegation_payload() -> None:
     assert delegation.goal_id == "goal-123:executor"
 
 
+@pytest.mark.e2e
 def test_requested_tools_constrain_runtime_tool_surface() -> None:
     harness = create_default_harness(workdir=Path.cwd(), console_output=False)
     harness.runner.set_client_factory(_ChooseToolClient)
@@ -106,6 +108,7 @@ def test_requested_tools_constrain_runtime_tool_surface() -> None:
     assert result.selected_tool_names[0] == "load_workspace_state"
 
 
+@pytest.mark.e2e
 def test_requested_tools_fallback_when_requested_set_has_no_matches() -> None:
     harness = create_default_harness(workdir=Path.cwd(), console_output=False)
     harness.runner.set_client_factory(_ChooseToolClient)
@@ -129,6 +132,7 @@ def test_requested_tools_fallback_when_requested_set_has_no_matches() -> None:
     assert "load_workspace_state" in active_tools
 
 
+@pytest.mark.e2e
 def test_delegation_result_summary_includes_child_tool_outcomes() -> None:
     harness = create_default_harness(workdir=Path.cwd(), console_output=False)
     harness.runner.set_client_factory(_ChooseToolClient)

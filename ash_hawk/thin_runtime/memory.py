@@ -19,7 +19,7 @@ class ThinRuntimeMemoryManager:
     def write_scope(self, name: str, values: dict[str, Any], *, actor: str | None = None) -> None:
         self._require_scope(name)
         self._require_writable(name, actor)
-        self._memory[name].update(deepcopy(values))
+        self._memory[name].update(values)
 
     def append(self, name: str, key: str, value: Any, *, actor: str | None = None) -> None:
         self._require_scope(name)
@@ -28,7 +28,7 @@ class ThinRuntimeMemoryManager:
         if not isinstance(existing_any, list):
             raise ValueError(f"Memory key '{key}' in scope '{name}' is not appendable")
         typed_existing = cast(list[object], existing_any)
-        typed_existing.append(deepcopy(value))
+        typed_existing.append(value)
 
     def snapshot(self) -> dict[str, dict[str, Any]]:
         return deepcopy(self._memory)

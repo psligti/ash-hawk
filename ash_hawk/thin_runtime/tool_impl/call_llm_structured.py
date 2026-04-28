@@ -13,6 +13,7 @@ from ash_hawk.thin_runtime.tool_command import (
     basic_input_schema,
     standard_output_schema,
 )
+from ash_hawk.thin_runtime.tool_impl._native_tooling import workspace_relative_string
 from ash_hawk.thin_runtime.tool_types import (
     AuditToolContext,
     FailureToolContext,
@@ -92,12 +93,15 @@ def _structured_response(call: ToolCall) -> StructuredLLMResponse:
         system_prompt=(
             "You are the diagnosis and hypothesis planner for an eval-improvement loop. "
             "Given the runtime context, return one concise diagnosis plus up to three small, "
-            "targeted hypotheses. Each hypothesis must name the primary durable files to change."
+            "targeted hypotheses. Each hypothesis must name the primary durable files to change. "
+            "Treat prior successful mutation patterns as survivor genes to preserve or extend. "
+            "Treat recent flat or regressive mutations as dead ends to avoid repeating."
         ),
         user_prompt=(
             f"Goal: {call.goal_id}\n"
             f"Agent text:\n{call.agent_text or ''}\n\n"
             f"Focus files:\n{', '.join(focus_files) or 'None provided'}\n\n"
+            f"Prior mutation memory:\n{_recent_learning(call)}\n\n"
             f"Context:\n{call.context.model_dump(exclude_none=True)}\n\n"
             "Return JSON with this exact schema:\n"
             '{"diagnosis": "text", "blocker": "text", "ideal_outcome": "text", '
@@ -123,6 +127,7 @@ def _structured_response(call: ToolCall) -> StructuredLLMResponse:
         f"Failure explanations:\n{' '.join(call.context.failure.explanations) or 'No failure explanations'}\n\n"
         f"Current allowed targets:\n{', '.join(call.context.workspace.allowed_target_files) or 'None'}\n\n"
         f"Scenario required files:\n{', '.join(call.context.workspace.scenario_required_files) or 'None'}\n\n"
+        f"Prior mutation memory:\n{_recent_learning(call)}\n\n"
         "Return JSON with this exact shape:\n"
         '{"diagnosis": "text", "blocker": "text", "ideal_outcome": "text", '
         '"hypotheses": ['
@@ -173,18 +178,21 @@ def _ranked_hypotheses(response: StructuredLLMResponse) -> list[RankedHypothesis
 
 
 def _allowed_targets(response: StructuredLLMResponse, call: ToolCall) -> list[str]:
+    workspace_root = Path(call.context.workspace.repo_root or call.context.workspace.workdir or ".")
     ordered: list[str] = []
     for hypothesis in response.hypotheses:
         for path in hypothesis.target_files:
-            cleaned = path.strip()
+            cleaned = workspace_relative_string(path, workspace_root)
             if cleaned and cleaned not in ordered:
                 ordered.append(cleaned)
     for path in call.context.workspace.allowed_target_files:
-        if path not in ordered:
-            ordered.append(path)
+        normalized = workspace_relative_string(path, workspace_root)
+        if normalized and normalized not in ordered:
+            ordered.append(normalized)
     for path in _focus_files(call):
-        if path not in ordered:
-            ordered.append(path)
+        normalized = workspace_relative_string(path, workspace_root)
+        if normalized and normalized not in ordered:
+            ordered.append(normalized)
     return ordered[:8]
 
 
@@ -211,6 +219,63 @@ def _render_response_message(response: StructuredLLMResponse) -> str:
             + (f" targets: {', '.join(hypothesis.target_files)}" if hypothesis.target_files else "")
         )
     return "\n".join(lines)
+
+
+def _recent_learning(call: ToolCall) -> str:
+    lines: list[str] = []
+    working_memory = call.context.memory.working_memory
+    active_hypotheses = working_memory.get("active_hypotheses")
+    if isinstance(active_hypotheses, list) and active_hypotheses:
+        lines.append("- Active survivor candidates:")
+        for item in active_hypotheses[:3]:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name", "")).strip() or "unnamed"
+            score = item.get("score")
+            targets = item.get("target_files")
+            target_text = ", ".join(targets[:3]) if isinstance(targets, list) else ""
+            score_text = f" score={float(score):.2f}" if isinstance(score, int | float) else ""
+            target_fragment = f" targets={target_text}" if target_text else ""
+            lines.append(f"  - {name}{score_text}{target_fragment}")
+    last_result = working_memory.get("last_result")
+    if isinstance(last_result, dict):
+        status = str(last_result.get("status", "")).strip() or "unknown"
+        delta = last_result.get("score_delta")
+        target_files = last_result.get("target_files")
+        target_text = ", ".join(target_files[:3]) if isinstance(target_files, list) else ""
+        delta_text = f" delta={float(delta):+.4f}" if isinstance(delta, int | float) else ""
+        target_fragment = f" targets={target_text}" if target_text else ""
+        lines.append(f"- Last validation outcome: {status}{delta_text}{target_fragment}")
+
+    session_memory = call.context.memory.session_memory
+    validations = session_memory.get("validations")
+    if isinstance(validations, list) and validations:
+        lines.append("- Recent validation history:")
+        for item in validations[-3:]:
+            if not isinstance(item, dict):
+                continue
+            status = str(item.get("status", "")).strip() or "unknown"
+            delta = item.get("score_delta")
+            hypothesis_name = str(item.get("hypothesis", "")).strip() or "unnamed"
+            delta_text = f" delta={float(delta):+.4f}" if isinstance(delta, int | float) else ""
+            lines.append(f"  - {hypothesis_name}: {status}{delta_text}")
+
+    semantic_memory = call.context.memory.semantic_memory
+    rules = semantic_memory.get("rules")
+    if isinstance(rules, list) and rules:
+        structured_rules = [item for item in rules if isinstance(item, dict)]
+        if structured_rules:
+            lines.append("- Durable survivor rules:")
+            for item in structured_rules[-3:]:
+                if item.get("entry_type") not in {"survivor_gene", "rejected_gene"}:
+                    continue
+                status = str(item.get("status", "")).strip() or "unknown"
+                hypothesis_name = str(item.get("hypothesis", "")).strip() or "unnamed"
+                delta = item.get("score_delta")
+                delta_text = f" delta={float(delta):+.4f}" if isinstance(delta, int | float) else ""
+                lines.append(f"  - {hypothesis_name}: {status}{delta_text}")
+
+    return "\n".join(lines) or "No prior mutation memory recorded yet."
 
 
 COMMAND = ToolCommand(

@@ -130,7 +130,7 @@ def _build_tool_spec(name: str, description: str) -> ToolSpec:
         ],
         completion_criteria=command.completion_criteria,
         escalation_rules=command.escalation_rules,
-        deterministic=True,
+        deterministic=_tool_deterministic(name),
         required_contexts=_tool_contexts(name),
         produces_contexts=_tool_output_contexts(name),
     )
@@ -180,6 +180,19 @@ def _tool_idempotent(name: str) -> bool:
 
 def _tool_supports_dry_run(name: str) -> bool:
     return name in {"commit_workspace_changes", "sync_workspace_changes", "mutate_agent_files"}
+
+
+def _tool_deterministic(name: str) -> bool:
+    return name not in {
+        "call_llm_structured",
+        "delegate_task",
+        "mutate_agent_files",
+        "run_eval",
+        "run_eval_repeated",
+        "run_baseline_eval",
+        "run_targeted_validation",
+        "run_integrity_validation",
+    }
 
 
 def _tool_contexts(name: str) -> list[str]:

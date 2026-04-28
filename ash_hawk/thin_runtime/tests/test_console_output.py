@@ -20,6 +20,8 @@ from ash_hawk.thin_runtime.tool_types import (
     TraceRecord,
 )
 
+pytestmark = pytest.mark.e2e
+
 
 def test_harness_prints_human_readable_progress_and_suppresses_console_logs(
     capsys: pytest.CaptureFixture[str],

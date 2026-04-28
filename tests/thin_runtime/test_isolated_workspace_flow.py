@@ -8,6 +8,7 @@ from ash_hawk.thin_runtime.models import ToolCall
 from ash_hawk.thin_runtime.tool_impl import (
     run_baseline_eval,
     run_eval_repeated,
+    scope_workspace,
     sync_workspace_changes,
 )
 from ash_hawk.thin_runtime.tool_impl.prepare_isolated_workspace import (
@@ -54,6 +55,25 @@ def test_prepare_isolated_workspace_copies_target_and_scenario(tmp_path: Path) -
     isolated_scenario = Path(result.payload.workspace_updates.scenario_path or "")
     assert isolated_scenario.exists()
     assert isolated_scenario.read_text(encoding="utf-8") == "description: test\n"
+
+
+def test_scope_workspace_normalizes_absolute_targets_to_relative_paths(tmp_path: Path) -> None:
+    target = tmp_path / "agent.md"
+    target.write_text("# Agent\n", encoding="utf-8")
+
+    result = scope_workspace.run(
+        ToolCall(
+            tool_name="scope_workspace",
+            goal_id="goal-scope-normalize",
+            tool_args={"target_files": [str(target)]},
+            context=ToolCallContext(
+                workspace=WorkspaceToolContext(workdir=str(tmp_path), repo_root=str(tmp_path)),
+            ),
+        )
+    )
+
+    assert result.success is True
+    assert result.payload.workspace_updates.allowed_target_files == ["agent.md"]
 
 
 def test_sync_workspace_changes_requires_clean_validation_and_syncs_back(tmp_path: Path) -> None:

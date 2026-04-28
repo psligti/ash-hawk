@@ -30,6 +30,8 @@ from ash_hawk.thin_runtime.tool_types import (
     WorkspaceToolContext,
 )
 
+pytestmark = pytest.mark.e2e
+
 
 class _FakeDkClient:
     provider_id = "test"
@@ -531,15 +533,15 @@ def test_harness_builds_richer_context_and_agent_text(tmp_path: Path) -> None:
     )
 
     assert isinstance(result.context.runtime.get("goal_intent"), str)
-    assert result.context.runtime.get("phase") == "bootstrap"
+    assert result.context.runtime.get("phase") == "completed"
     assert isinstance(result.context.runtime.get("progress_summary"), str)
     assert result.context.runtime.get("active_skill_summaries")
     assert result.context.runtime.get("recent_steps")
     assert result.context.runtime.get("latest_evidence")
     assert result.context.runtime.get("next_pressure")
     assert result.context.evaluation.get("recent_eval_summaries")
-    assert result.context.failure.get("diagnosed_issues") == []
-    assert result.context.failure.get("top_hypothesis") is None
+    assert result.context.failure.get("diagnosed_issues")
+    assert result.context.failure.get("top_hypothesis") == "publish runtime checkpoint (0.92)"
     assert result.context.workspace.get("actionable_files")
     assert result.context.workspace.get("reference_files")
     assert result.context.workspace.get("blocked_files")
@@ -568,6 +570,7 @@ def test_harness_builds_richer_context_and_agent_text(tmp_path: Path) -> None:
         "load_workspace_state",
         "detect_agent_config",
         "run_baseline_eval",
+        "call_llm_structured",
     ]
 
 

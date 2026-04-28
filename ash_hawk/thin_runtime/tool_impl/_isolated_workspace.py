@@ -5,7 +5,10 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from ash_hawk.thin_runtime.tool_impl._native_tooling import ensure_workspace_contained
+from ash_hawk.thin_runtime.tool_impl._native_tooling import (
+    ensure_workspace_contained,
+    workspace_relative_string,
+)
 
 
 @dataclass(frozen=True)
@@ -30,13 +33,14 @@ def create_isolated_workspace(
     isolated_root = Path(tempfile.mkdtemp(prefix="ash-hawk-thin-runtime-"))
     copied_files: list[str] = []
 
-    file_candidates = _unique_paths(
+    file_candidates = _workspace_relative_candidates(
+        resolved_root,
         [
             *target_files,
             *scenario_targets,
             *scenario_required_files,
             *([agent_config] if agent_config else []),
-        ]
+        ],
     )
     for relative_path in file_candidates:
         copied = _copy_workspace_path(
@@ -146,4 +150,13 @@ def _unique_paths(paths: list[str]) -> list[str]:
         cleaned = path.strip()
         if cleaned and cleaned not in ordered:
             ordered.append(cleaned)
+    return ordered
+
+
+def _workspace_relative_candidates(primary_root: Path, paths: list[str]) -> list[str]:
+    ordered: list[str] = []
+    for path in paths:
+        normalized = workspace_relative_string(path, primary_root)
+        if normalized and normalized not in ordered:
+            ordered.append(normalized)
     return ordered

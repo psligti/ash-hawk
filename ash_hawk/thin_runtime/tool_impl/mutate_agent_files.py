@@ -10,7 +10,10 @@ from ash_hawk.thin_runtime.tool_command import (
     context_input_schema,
     standard_output_schema,
 )
-from ash_hawk.thin_runtime.tool_impl._native_tooling import check_workspace_path_error
+from ash_hawk.thin_runtime.tool_impl._native_tooling import (
+    check_workspace_path_error,
+    workspace_relative_string,
+)
 from ash_hawk.thin_runtime.tool_impl._workspace_targets import preferred_workspace_target
 from ash_hawk.thin_runtime.tool_types import (
     AuditToolContext,
@@ -25,13 +28,6 @@ from ash_hawk.thin_runtime.tool_types import (
 
 def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]]:
     workdir = Path(call.context.workspace.workdir or str(Path.cwd()))
-    if not call.context.workspace.isolated_workspace_path:
-        return (
-            False,
-            ToolExecutionPayload(),
-            "Mutation requires an isolated workspace first",
-            ["missing_isolated_workspace"],
-        )
     required_files = list(call.context.workspace.scenario_required_files)
     target_candidates = _mutation_candidates(call)
     target_file = preferred_workspace_target(target_candidates)
@@ -41,6 +37,25 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
             ToolExecutionPayload(),
             "No target files available for mutation",
             ["no_target_files"],
+        )
+
+    normalized_target = workspace_relative_string(target_file, workdir)
+    if normalized_target is None:
+        error_message = f"Target file is outside the workspace root: {target_file}"
+        return (
+            False,
+            ToolExecutionPayload(),
+            error_message,
+            [error_message],
+        )
+    target_file = normalized_target
+
+    if not call.context.workspace.isolated_workspace_path:
+        return (
+            False,
+            ToolExecutionPayload(),
+            "Mutation requires an isolated workspace first",
+            ["missing_isolated_workspace"],
         )
 
     target_path = workdir / target_file

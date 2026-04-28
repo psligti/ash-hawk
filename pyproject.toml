@@ -103,10 +103,11 @@ exclude_dirs = ["tests"]
 skips = ["B101"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "--cov=ash_hawk --cov-report=term-missing"
+testpaths = ["tests", "ash_hawk/thin_runtime/tests"]
+addopts = "--cov=ash_hawk --cov-report=term-missing -m 'not integration and not e2e'"
 asyncio_mode = "auto"
 markers = [
   "unit: Fast unit tests (no suite execution, mocked agents)",
   "integration: Slow integration tests (actual suite runs)",
+  "e2e: Long-running end-to-end orchestration tests",
 ]

@@ -323,6 +323,8 @@ def _compact_context_for_planner(context: ContextSnapshot) -> dict[str, object]:
         },
         "audit": {
             "artifact_count": _count_value(context.audit.get("artifacts")),
+            "event_count": _count_value(context.audit.get("events")),
+            "transcript_count": _count_value(context.audit.get("transcripts")),
             "artifact_index": _summarize_value(context.audit.get("artifact_index", [])),
             "decision_trace": _summarize_value(context.audit.get("decision_trace", [])),
         },

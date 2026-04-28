@@ -11,6 +11,7 @@ from ash_hawk.thin_runtime.tool_command import (
 from ash_hawk.thin_runtime.tool_impl._native_tooling import (
     is_forbidden_path,
     resolve_path,
+    workspace_relative_string,
 )
 from ash_hawk.thin_runtime.tool_impl._workspace_targets import rank_workspace_targets
 from ash_hawk.thin_runtime.tool_types import (
@@ -39,7 +40,9 @@ def _execute(call: ToolCall) -> tuple[bool, ToolExecutionPayload, str, list[str]
         if not isinstance(item, str) or not item.strip():
             continue
         resolved = resolve_path(item, workspace_root)
-        normalized = str(resolved)
+        normalized = workspace_relative_string(resolved, workspace_root)
+        if normalized is None:
+            continue
         if normalized in seen:
             continue
         if is_forbidden_path(resolved):

@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
-from uuid import uuid4
 
 from ash_hawk.thin_runtime.agent_text import build_agent_text, build_live_brief
 from ash_hawk.thin_runtime.agents import AgentRegistry
@@ -24,7 +23,7 @@ from ash_hawk.thin_runtime.models import (
     ToolSpec,
 )
 from ash_hawk.thin_runtime.persistence import ThinRuntimePersistence
-from ash_hawk.thin_runtime.planner import PlannerDecision, build_tool_contract_view, plan_next_tool
+from ash_hawk.thin_runtime.planner import PlannerDecision
 from ash_hawk.thin_runtime.skills import SkillRegistry
 from ash_hawk.thin_runtime.tool_types import (
     AcceptanceStatus,
@@ -80,6 +79,30 @@ class AgenticLoopRunner:
         self.policy = policy
         self._decision_trace_buffer: list[str] = []
 
+    def run(
+        self,
+        goal: RuntimeGoal,
+        *,
+        agent_name: str,
+        requested_skills: list[str] | None,
+        requested_tools: list[str] | None = None,
+        tool_execution_order: list[str] | None = None,
+        scenario_path: str | None = None,
+        seed_context: ContextSnapshot | None = None,
+        depth: int = 0,
+    ) -> ThinRuntimeExecutionResult:
+        del (
+            goal,
+            agent_name,
+            requested_skills,
+            requested_tools,
+            tool_execution_order,
+            scenario_path,
+            seed_context,
+            depth,
+        )
+        raise NotImplementedError("Thin-runtime runners must implement run()")
+
     def _refresh_runtime_view(
         self,
         *,
@@ -118,356 +141,6 @@ class AgenticLoopRunner:
             memory_snapshot=memory_snapshot,
             include_skill_instructions=include_skill_instructions,
         )
-
-    def run(
-        self,
-        goal: RuntimeGoal,
-        *,
-        agent_name: str,
-        requested_skills: list[str] | None,
-        requested_tools: list[str] | None = None,
-        tool_execution_order: list[str] | None = None,
-        scenario_path: str | None = None,
-        seed_context: ContextSnapshot | None = None,
-        depth: int = 0,
-    ) -> ThinRuntimeExecutionResult:
-        run_id = f"{goal.goal_id}-{uuid4().hex[:8]}"
-        agent = self.agents.get(agent_name)
-        active_skills = self._resolve_active_skills(agent, requested_skills)
-        candidate_skills = self._resolve_candidate_skills(agent, requested_skills)
-        active_tools = self._resolve_active_tools(
-            agent,
-            active_skills,
-            candidate_skills,
-            requested_tools=requested_tools,
-        )
-        context = self.context.assemble(
-            goal=goal,
-            agent=agent,
-            skills=active_skills,
-            tools=active_tools,
-            memory_snapshot=self.memory.snapshot(),
-            workdir=self.workdir,
-            available_skills=candidate_skills,
-        )
-        if scenario_path is not None:
-            context.workspace["scenario_path"] = scenario_path
-        if tool_execution_order is not None:
-            context.runtime["explicit_order_override"] = True
-        if seed_context is not None:
-            self._merge_seed_context(context, seed_context)
-            context.runtime["available_contexts"] = sorted(
-                self._available_contexts_from_snapshot(context)
-            )
-        self._refresh_runtime_view(
-            goal=goal,
-            agent=agent,
-            skills=active_skills,
-            tools=active_tools,
-            context=context,
-            available_skills=candidate_skills,
-        )
-        return self._run_loop(
-            run_id=run_id,
-            goal=goal,
-            agent=agent,
-            active_skills=active_skills,
-            candidate_skills=candidate_skills,
-            active_tools=active_tools,
-            context=context,
-            tool_execution_order=tool_execution_order,
-            requested_tools=requested_tools,
-            depth=depth,
-        )
-
-    def _run_loop(
-        self,
-        *,
-        run_id: str,
-        goal: RuntimeGoal,
-        agent: AgentSpec,
-        active_skills: list[SkillSpec],
-        candidate_skills: list[SkillSpec],
-        active_tools: list[ToolSpec],
-        context: ContextSnapshot,
-        tool_execution_order: list[str] | None,
-        requested_tools: list[str] | None,
-        depth: int,
-    ) -> ThinRuntimeExecutionResult:
-        tool_results: list[ToolResult] = []
-        delegations: list[DelegationRecord] = []
-        selected_tool_names: list[str] = []
-        available_contexts_raw = context.runtime.get("available_contexts")
-        if isinstance(available_contexts_raw, list) and available_contexts_raw:
-            available_contexts = {item for item in available_contexts_raw if isinstance(item, str)}
-        else:
-            available_contexts = self._available_contexts_from_snapshot(context)
-        success = True
-        error: str | None = None
-        self._decision_trace_buffer = []
-
-        self.hooks.emit(
-            "before_run",
-            {
-                "goal_id": goal.goal_id,
-                "description": goal.description,
-                "agent": agent.name,
-                "skills": [skill.name for skill in active_skills],
-                "max_iterations": goal.max_iterations,
-            },
-        )
-        self.hooks.emit("before_agent", {"goal_id": goal.goal_id, "agent": agent.name})
-        context.runtime["run_id"] = run_id
-        self._record_agent_event(
-            goal=goal,
-            agent=agent,
-            event_type="enter",
-            success=True,
-            run_id=run_id,
-        )
-        self._read_agent_memory(agent)
-        self._refresh_context_from_memory(context, goal_id=goal.goal_id, run_id=run_id)
-        self._update_iteration_state(context, goal, agent, selected_tool_names)
-        self._refresh_runtime_view(
-            goal=goal,
-            agent=agent,
-            skills=active_skills,
-            tools=active_tools,
-            context=context,
-            available_skills=candidate_skills,
-        )
-        context.runtime["available_contexts"] = sorted(available_contexts)
-
-        touched_skill_reads: set[str] = set()
-        remaining_tools = list(tool_execution_order or [])
-        completion_tools = set(agent.iteration_completion_tools)
-
-        while True:
-            tool_budget_error = self._check_tool_budget(goal, agent, selected_tool_names)
-            if tool_budget_error is not None:
-                success = False
-                error = tool_budget_error
-                break
-
-            stop_error = self._check_iteration_stop(goal, agent, selected_tool_names)
-            if stop_error is not None:
-                success = False
-                error = stop_error
-                break
-
-            active_tools = self._resolve_active_tools(
-                agent,
-                active_skills,
-                candidate_skills,
-                requested_tools=requested_tools,
-            )
-            context.tool["active_tools"] = [tool.name for tool in active_tools]
-            context.tool["available_tools_snapshot"] = [tool.name for tool in active_tools]
-            context.tool["resolved_toolset"] = [tool.name for tool in active_tools]
-            context.tool["tool_contracts"] = [
-                build_tool_contract_view(tool).model_dump(exclude_none=True)
-                for tool in active_tools
-            ]
-            self._refresh_runtime_view(
-                goal=goal,
-                agent=agent,
-                skills=active_skills,
-                tools=active_tools,
-                context=context,
-                available_skills=candidate_skills,
-            )
-
-            decision = self._select_next_tool(
-                goal=goal,
-                agent=agent,
-                active_skills=active_skills,
-                candidate_skills=candidate_skills,
-                active_tools=active_tools,
-                remaining_tools=remaining_tools,
-                tool_execution_order=tool_execution_order,
-                context=context,
-                available_contexts=available_contexts,
-                tool_results=tool_results,
-            )
-            tool_name = decision.selected_tool
-            if decision.activate_skills:
-                active_skills = self._activate_skills(
-                    active_skills=active_skills,
-                    candidate_skills=candidate_skills,
-                    requested_skill_names=decision.activate_skills,
-                )
-                context.runtime["active_skills"] = [skill.name for skill in active_skills]
-            if tool_name is None:
-                failure_family = context.failure.get("failure_family")
-                completed_loops = self._current_iteration_count(agent, selected_tool_names)
-                mutated_files = context.workspace.get("mutated_files", [])
-                if agent.iteration_budget_mode == "loop" and (
-                    isinstance(failure_family, str)
-                    and failure_family.strip()
-                    or completed_loops == 0
-                    or not isinstance(mutated_files, list)
-                    or not mutated_files
-                ):
-                    error = "No eligible tools available for a complete diagnosis-mutation-re-evaluation loop"
-                    success = False
-                    self.hooks.emit(
-                        "on_stop_condition",
-                        {"goal_id": goal.goal_id, "agent": agent.name, "reason": error},
-                    )
-                else:
-                    if selected_tool_names:
-                        success = True
-                        error = None
-                        self.hooks.emit(
-                            "on_stop_condition",
-                            {
-                                "goal_id": goal.goal_id,
-                                "agent": agent.name,
-                                "reason": "No additional eligible tools available",
-                            },
-                        )
-                    else:
-                        error = "No eligible tools available for current contexts"
-                        success = False
-                        self.hooks.emit(
-                            "on_stop_condition",
-                            {"goal_id": goal.goal_id, "agent": agent.name, "reason": error},
-                        )
-                break
-
-            if tool_execution_order is not None and tool_name in remaining_tools:
-                remaining_tools.remove(tool_name)
-            selected_tool_names.append(tool_name)
-            matching_skills = self._matching_skills(active_skills, tool_name, available_contexts)
-
-            self._read_matching_skill_memory(
-                goal,
-                agent,
-                matching_skills,
-                touched_skill_reads,
-                run_id=run_id,
-            )
-            result = self._invoke_tool(
-                goal=goal,
-                agent=agent,
-                tool_name=tool_name,
-                matching_skills=matching_skills,
-                context=context,
-                available_contexts=available_contexts,
-                remaining_tools=remaining_tools,
-                selected_tool_names=selected_tool_names,
-            )
-            tool_results.append(result)
-            self._after_tool(
-                goal=goal,
-                agent=agent,
-                tool_name=tool_name,
-                matching_skills=matching_skills,
-                result=result,
-                context=context,
-                available_contexts=available_contexts,
-            )
-
-            if not result.success:
-                success = False
-                error = result.error
-                break
-
-            delegation_record, delegated_context = self._execute_delegation(
-                result, context=context, depth=depth
-            )
-            if delegation_record is not None:
-                delegations.append(delegation_record)
-                context.audit.setdefault("delegations", []).append(delegation_record.model_dump())
-            if delegated_context is not None:
-                self._merge_seed_context(context, delegated_context)
-            available_contexts = self._available_contexts_from_snapshot(context)
-            context.runtime["available_contexts"] = sorted(available_contexts)
-            self._update_iteration_state(context, goal, agent, selected_tool_names)
-
-            if result.payload.stop:
-                stop_reason = result.payload.runtime_updates.stop_reason
-                self.hooks.emit(
-                    "on_stop_condition",
-                    {"goal_id": goal.goal_id, "agent": agent.name, "reason": stop_reason},
-                )
-                break
-
-            error = self._write_matching_skill_memory(
-                agent, matching_skills, tool_name, len(tool_results)
-            )
-            if error is not None:
-                success = False
-                break
-
-            if self._should_reset_tool_cycle(
-                goal=goal,
-                agent=agent,
-                tool_name=tool_name,
-                completion_tools=completion_tools,
-                selected_tool_names=selected_tool_names,
-            ):
-                remaining_tools = list(tool_execution_order or [])
-
-        if (
-            success
-            and agent.iteration_budget_mode == "loop"
-            and any(skill.name == "improvement-loop" for skill in active_skills)
-            and self._current_iteration_count(agent, selected_tool_names) == 0
-        ):
-            success = False
-            error = "No completed improvement loops recorded"
-            self.hooks.emit(
-                "on_stop_condition",
-                {"goal_id": goal.goal_id, "agent": agent.name, "reason": error},
-            )
-        self.hooks.emit(
-            "after_agent", {"goal_id": goal.goal_id, "agent": agent.name, "success": success}
-        )
-        self._record_agent_event(
-            goal=goal,
-            agent=agent,
-            event_type="exit",
-            success=success,
-            error=error,
-            run_id=run_id,
-        )
-        self.hooks.emit(
-            "after_run",
-            {"goal_id": goal.goal_id, "agent": agent.name, "tool_count": len(tool_results)},
-        )
-
-        self.context.refresh(
-            snapshot=context,
-            goal=goal,
-            agent=agent,
-            skills=active_skills,
-            tools=active_tools,
-            memory_snapshot=self.memory.snapshot(),
-            workdir=self.workdir,
-            available_skills=candidate_skills,
-        )
-
-        execution = ThinRuntimeExecutionResult(
-            run_id=run_id,
-            goal=goal,
-            agent=agent,
-            active_skills=active_skills,
-            tools=active_tools,
-            context=context,
-            tool_results=tool_results,
-            emitted_hooks=self.hooks.emitted(),
-            delegations=delegations,
-            memory_snapshot=self.memory.snapshot(),
-            artifact_dir=str(self.persistence.run_dir(run_id)),
-            available_contexts=sorted(available_contexts),
-            selected_tool_names=selected_tool_names,
-            success=success,
-            error=error,
-        )
-        self._persist_and_dream(execution)
-        self.persistence.persist_execution(execution)
-        return execution
 
     def _check_iteration_stop(
         self, goal: RuntimeGoal, agent: AgentSpec, selected_tool_names: list[str]
@@ -524,42 +197,66 @@ class AgenticLoopRunner:
         if context.runtime.get("explicit_order_override") is True:
             return True
         active_agent = context.runtime.get("active_agent") or context.runtime.get("lead_agent")
-        active_skills = context.runtime.get("active_skills", [])
-        if (
-            active_agent == "improver"
-            and isinstance(active_skills, list)
-            and "improvement-loop" in active_skills
-        ):
+        if active_agent == "improver":
             return self._improver_phase_allows_tool(tool_name, context)
         if active_agent == "executor":
             return self._executor_phase_allows_tool(tool_name, context)
         return True
 
+    def phase_allows_tool(self, tool_name: str, context: ContextSnapshot) -> bool:
+        return self._phase_allows_tool(tool_name, context)
+
     def _improver_phase_allows_tool(self, tool_name: str, context: ContextSnapshot) -> bool:
         if not self._has_executed_tool(context, "load_workspace_state"):
             return tool_name == "load_workspace_state"
         if not self._agent_config_ready(context):
-            return tool_name == "detect_agent_config"
+            return tool_name in {"detect_agent_config", "read", "glob", "grep", "search_knowledge"}
         if not self._baseline_ready(context):
-            return tool_name == "run_baseline_eval"
+            return tool_name in {
+                "run_baseline_eval",
+                "read",
+                "glob",
+                "grep",
+                "search_knowledge",
+            }
+        if tool_name in {"load_workspace_state", "detect_agent_config", "run_baseline_eval"}:
+            return False
         if self._sync_back_pending(context):
             return tool_name == "sync_workspace_changes"
         if self._candidate_validation_pending(context):
-            return tool_name == "run_eval_repeated"
-        if self._candidate_rejected(context) or not self._mutation_candidates_available(context):
-            return tool_name == "call_llm_structured"
-        return tool_name == "delegate_task"
+            return tool_name in {
+                "run_eval_repeated",
+                "detect_regressions",
+                "verify_outcome",
+                "audit_claims",
+                "aggregate_scores",
+            }
+        if tool_name == "sync_workspace_changes":
+            return False
+        if tool_name == "delegate_task":
+            return self._delegation_ready(context)
+        if tool_name in {"prepare_isolated_workspace", "mutate_agent_files"}:
+            return False
+        return True
 
     def _executor_phase_allows_tool(self, tool_name: str, context: ContextSnapshot) -> bool:
-        if not self._mutation_candidates_available(context):
-            return True
         isolated_workspace_path = context.workspace.get("isolated_workspace_path")
-        if not isinstance(isolated_workspace_path, str) or not isolated_workspace_path.strip():
-            return tool_name == "prepare_isolated_workspace"
+        has_isolated_workspace = isinstance(isolated_workspace_path, str) and bool(
+            isolated_workspace_path.strip()
+        )
         mutated_files = context.workspace.get("mutated_files", [])
-        if not isinstance(mutated_files, list) or not mutated_files:
-            return tool_name == "mutate_agent_files"
-        return False
+        has_mutated_files = isinstance(mutated_files, list) and bool(mutated_files)
+        if tool_name == "prepare_isolated_workspace":
+            return self._mutation_candidates_available(context) and not has_isolated_workspace
+        if tool_name == "mutate_agent_files":
+            return (
+                self._mutation_candidates_available(context)
+                and has_isolated_workspace
+                and not has_mutated_files
+            )
+        if tool_name in {"run_eval_repeated", "sync_workspace_changes"}:
+            return False
+        return True
 
     def _candidate_validation_pending(self, context: ContextSnapshot) -> bool:
         mutated_files = context.workspace.get("mutated_files", [])
@@ -616,7 +313,7 @@ class AgenticLoopRunner:
         raw_hypotheses = context.failure.get("ranked_hypotheses")
         if isinstance(raw_hypotheses, list):
             for hypothesis in raw_hypotheses:
-                if isinstance(hypothesis, dict) and hypothesis.get("target_files"):
+                if self._hypothesis_target_files(hypothesis):
                     return True
         for key in ("scenario_required_files", "allowed_target_files", "actionable_files"):
             value = context.workspace.get(key, [])
@@ -778,6 +475,9 @@ class AgenticLoopRunner:
         available_contexts: set[str],
     ) -> None:
         self._record_tool_side_effects(context, agent, matching_skills, result)
+        self.record_improver_learning(
+            agent=agent, tool_name=tool_name, context=context, result=result
+        )
         self._update_available_contexts(
             available_contexts, self.tools.get(tool_name), matching_skills
         )
@@ -911,6 +611,199 @@ class AgenticLoopRunner:
                 self._write_skill_memory(agent, skill, tool_name, tool_count)
             except ValueError as exc:
                 return str(exc)
+        return None
+
+    def record_improver_learning(
+        self,
+        *,
+        agent: AgentSpec,
+        tool_name: str,
+        context: ContextSnapshot,
+        result: ToolResult,
+    ) -> None:
+        if agent.name != "improver" or not result.success:
+            return
+        if tool_name == "call_llm_structured":
+            self._update_improver_working_hypotheses(agent=agent, context=context)
+            return
+        if tool_name == "run_eval_repeated":
+            self._record_improver_validation_result(agent=agent, context=context)
+            return
+        if tool_name == "sync_workspace_changes":
+            self._record_improver_survivor_gene(context=context)
+
+    def _update_improver_working_hypotheses(
+        self, *, agent: AgentSpec, context: ContextSnapshot
+    ) -> None:
+        ranked = self._ranked_hypothesis_candidates(context)
+        if not ranked:
+            return
+        phase_status = {
+            "failure_family": context.failure.get("failure_family"),
+            "top_hypothesis": ranked[0].get("name"),
+            "diagnosis": self._first_string(context.failure.get("explanations")),
+            "allowed_target_files": self._memory_target_files(context),
+        }
+        self.memory.write_scope(
+            "working_memory",
+            {"active_hypotheses": ranked[:4], "phase_status": phase_status},
+            actor=agent.name,
+        )
+
+    def _record_improver_validation_result(
+        self, *, agent: AgentSpec, context: ContextSnapshot
+    ) -> None:
+        baseline_score = self._score_value(context.evaluation.get("baseline_summary"))
+        repeat_score = self._score_value(context.evaluation.get("repeat_eval_summary"))
+        delta = None
+        status = "unknown"
+        if baseline_score is not None and repeat_score is not None:
+            delta = repeat_score - baseline_score
+            if delta > 0.01:
+                status = "improved"
+            elif delta < -0.01:
+                status = "regressed"
+            else:
+                status = "flat"
+        validation_entry = {
+            "entry_type": "validation_result",
+            "status": status,
+            "score_delta": delta,
+            "baseline_score": baseline_score,
+            "repeat_score": repeat_score,
+            "failure_family": context.failure.get("failure_family"),
+            "hypothesis": self._top_hypothesis_name(context),
+            "target_files": self._memory_target_files(context),
+            "delegation_summary": context.runtime.get("last_delegation_summary"),
+        }
+        self.memory.append("session_memory", "validations", validation_entry, actor=agent.name)
+        self.memory.write_scope(
+            "working_memory",
+            {
+                "last_result": validation_entry,
+                "phase_status": {
+                    "validation_status": status,
+                    "failure_family": context.failure.get("failure_family"),
+                    "target_files": self._memory_target_files(context),
+                },
+            },
+            actor=agent.name,
+        )
+        self._append_unique_deferred_memory(
+            scope_name="episodic_memory",
+            key="episodes",
+            value=validation_entry,
+        )
+
+    def _record_improver_survivor_gene(self, *, context: ContextSnapshot) -> None:
+        working_memory = self.memory.read_scope("working_memory")
+        last_result = working_memory.get("last_result")
+        if not isinstance(last_result, dict):
+            return
+        status = last_result.get("status")
+        score_delta = last_result.get("score_delta")
+        if status != "improved":
+            return
+        if not isinstance(score_delta, int | float) or float(score_delta) <= 0.01:
+            return
+        survivor_gene = {
+            "entry_type": "survivor_gene",
+            "status": status,
+            "score_delta": float(score_delta),
+            "failure_family": last_result.get("failure_family"),
+            "hypothesis": last_result.get("hypothesis"),
+            "target_files": last_result.get("target_files"),
+            "delegation_summary": context.runtime.get("last_delegation_summary"),
+        }
+        self._append_unique_deferred_memory(
+            scope_name="semantic_memory",
+            key="rules",
+            value=survivor_gene,
+        )
+
+    def _ranked_hypothesis_candidates(self, context: ContextSnapshot) -> list[dict[str, object]]:
+        candidates: list[dict[str, object]] = []
+        raw_hypotheses = context.failure.get("ranked_hypotheses", [])
+        if not isinstance(raw_hypotheses, list):
+            return candidates
+        for item in raw_hypotheses:
+            payload = self._hypothesis_payload(item)
+            if payload is None:
+                continue
+            name = str(payload.get("name", "")).strip()
+            if not name:
+                continue
+            targets = payload.get("target_files")
+            candidates.append(
+                {
+                    "name": name,
+                    "score": payload.get("score"),
+                    "rationale": str(payload.get("rationale", "")).strip(),
+                    "target_files": [target for target in targets if isinstance(target, str)]
+                    if isinstance(targets, list)
+                    else [],
+                    "ideal_outcome": str(payload.get("ideal_outcome", "")).strip(),
+                }
+            )
+        return candidates
+
+    def _hypothesis_payload(self, hypothesis: object) -> dict[str, object] | None:
+        if isinstance(hypothesis, dict):
+            return hypothesis
+        model_dump = getattr(hypothesis, "model_dump", None)
+        if callable(model_dump):
+            dumped = model_dump()
+            if isinstance(dumped, dict):
+                return dumped
+        return None
+
+    def _hypothesis_target_files(self, hypothesis: object) -> list[str]:
+        payload = self._hypothesis_payload(hypothesis)
+        if payload is None:
+            return []
+        raw_targets = payload.get("target_files")
+        if not isinstance(raw_targets, list):
+            return []
+        return [item for item in raw_targets if isinstance(item, str) and item.strip()]
+
+    def _top_hypothesis_name(self, context: ContextSnapshot) -> str | None:
+        candidates = self._ranked_hypothesis_candidates(context)
+        if candidates:
+            return str(candidates[0].get("name", "")).strip() or None
+        top_hypothesis = context.failure.get("top_hypothesis")
+        if isinstance(top_hypothesis, str) and top_hypothesis.strip():
+            return top_hypothesis.strip()
+        return None
+
+    def _memory_target_files(self, context: ContextSnapshot) -> list[str]:
+        for key in (
+            "mutated_files",
+            "allowed_target_files",
+            "scenario_required_files",
+            "actionable_files",
+        ):
+            raw_value = context.workspace.get(key, [])
+            if isinstance(raw_value, list) and raw_value:
+                return [item for item in raw_value if isinstance(item, str)][:4]
+        candidates = self._ranked_hypothesis_candidates(context)
+        if candidates:
+            targets = candidates[0].get("target_files")
+            if isinstance(targets, list):
+                return [item for item in targets if isinstance(item, str)][:4]
+        return []
+
+    def _score_value(self, raw_summary: object) -> float | None:
+        if not isinstance(raw_summary, dict):
+            return None
+        score = raw_summary.get("score")
+        return float(score) if isinstance(score, int | float) else None
+
+    def _first_string(self, raw_values: object) -> str | None:
+        if not isinstance(raw_values, list):
+            return None
+        for item in raw_values:
+            if isinstance(item, str) and item.strip():
+                return item.strip()
         return None
 
     def _record_tool_selection_decision(
@@ -1091,129 +984,6 @@ class AgenticLoopRunner:
             },
             actor=agent.name,
         )
-
-    def _select_next_tool(
-        self,
-        *,
-        goal: RuntimeGoal,
-        agent: AgentSpec,
-        active_skills: list[SkillSpec],
-        candidate_skills: list[SkillSpec],
-        active_tools: list[ToolSpec],
-        remaining_tools: list[str],
-        tool_execution_order: list[str] | None,
-        context: ContextSnapshot,
-        available_contexts: set[str],
-        tool_results: list[ToolResult],
-    ) -> PlannerDecision:
-        del available_contexts
-
-        context.tool["recent_tool_history"] = self._planner_tool_history(tool_results)
-        context.tool["last_tool"] = tool_results[-1].tool_name if tool_results else None
-
-        tool_surface = active_tools
-        if tool_execution_order is not None:
-            tool_surface = [tool for tool in active_tools if tool.name in remaining_tools]
-        candidate_tools = [
-            tool for tool in tool_surface if self._tool_preconditions_met(tool.name, context)
-        ]
-        decision = plan_next_tool(
-            goal=goal,
-            agent=agent,
-            active_skills=active_skills,
-            candidate_skills=candidate_skills,
-            candidate_tools=candidate_tools,
-            context=context,
-            tool_execution_order=tool_execution_order,
-        )
-        if decision.selected_tool is None and decision.source.startswith("invalid_model"):
-            decision = plan_next_tool(
-                goal=goal,
-                agent=agent,
-                active_skills=active_skills,
-                candidate_skills=candidate_skills,
-                candidate_tools=candidate_tools,
-                context=context,
-                tool_execution_order=tool_execution_order,
-                feedback=decision.rationale,
-            )
-        if decision.selected_tool is None and tool_execution_order is None and candidate_tools:
-            decision = plan_next_tool(
-                goal=goal,
-                agent=agent,
-                active_skills=active_skills,
-                candidate_skills=candidate_skills,
-                candidate_tools=candidate_tools,
-                context=context,
-                tool_execution_order=tool_execution_order,
-                feedback=(
-                    "Choose exactly one next tool from the allowed tool surface. Return null only "
-                    "if no safe tool exists."
-                ),
-            )
-        context.tool["policy_decisions"] = list(context.tool.get("policy_decisions", [])) + [
-            f"{decision.source}: {decision.rationale}"
-        ]
-        context.tool["context_sections"] = [
-            "goal",
-            "runtime",
-            "workspace",
-            "evaluation",
-            "failure",
-            "memory",
-            "tool",
-            "audit",
-        ]
-        context.tool["policy_checked"] = True
-        context.tool["context_assembled"] = True
-        context.runtime["last_decision"] = decision.rationale
-        if decision.selected_tool is not None:
-            context.runtime["preferred_tool"] = decision.selected_tool
-        self._record_tool_selection_decision(
-            goal=goal,
-            agent=agent,
-            decision=decision,
-            run_id=(value if isinstance((value := context.runtime.get("run_id")), str) else None),
-        )
-        return decision
-
-    def _planner_tool_history(self, tool_results: list[ToolResult]) -> list[dict[str, object]]:
-        history: list[dict[str, object]] = []
-        for result in tool_results[-5:]:
-            payload = result.payload
-            history.append(
-                {
-                    "tool": result.tool_name,
-                    "success": result.success,
-                    "error": result.error,
-                    "message": payload.message,
-                    "workspace_updates": sorted(
-                        payload.workspace_updates.model_dump(
-                            exclude_none=True,
-                            exclude_defaults=True,
-                        ).keys()
-                    ),
-                    "evaluation_updates": sorted(
-                        payload.evaluation_updates.model_dump(
-                            exclude_none=True,
-                            exclude_defaults=True,
-                        ).keys()
-                    ),
-                    "failure_updates": sorted(
-                        payload.failure_updates.model_dump(
-                            exclude_none=True,
-                            exclude_defaults=True,
-                        ).keys()
-                    ),
-                    "runtime_updates": sorted(
-                        payload.runtime_updates.model_dump(
-                            exclude_none=True,
-                            exclude_defaults=True,
-                        ).keys()
-                    ),
-                }
-            )
-        return history
 
     def _resolve_active_skills(
         self, agent: AgentSpec, requested_skills: list[str] | None

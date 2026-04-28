@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from collections.abc import Sequence
 
 # type-hygiene: skip-file  # dynamic DK/native bridge types are intentionally structural
 from dataclasses import dataclass, field
@@ -40,7 +41,6 @@ from ash_hawk.thin_runtime.models import (
 )
 from ash_hawk.thin_runtime.planner import PlannerDecision, build_tool_contract_view
 from ash_hawk.thin_runtime.runner import AgenticLoopRunner
-from ash_hawk.thin_runtime.state_adapter import ThinRuntimeStateAdapter
 
 _RUNTIME_MANAGED_INPUTS = {
     "goal_id",
@@ -217,11 +217,6 @@ class _ThinRuntimeDkTool:
         self._runner = runner
         self._state = state
         self._registry = registry
-        self._state_adapter = ThinRuntimeStateAdapter(
-            runner=runner,
-            state=state,
-            to_dk_result=_dk_tool_result_from_thin_result,
-        )
 
     def parameters(self) -> dict[str, object]:
         properties: dict[str, object] = {}
@@ -238,7 +233,7 @@ class _ThinRuntimeDkTool:
             properties[input_field.name] = property_schema
             if input_field.required:
                 required.append(input_field.name)
-        schema = {
+        schema: dict[str, object] = {
             "type": "object",
             "properties": properties,
             "required": required,
@@ -271,13 +266,13 @@ class _ThinRuntimeDkTool:
             self._state.remaining_tools.remove(tool_name)
         self._state.selected_tool_names.append(tool_name)
 
-        matching_skills = self._runner.native_matching_skills(
+        matching_skills = self._runner.matching_skills(
             self._state.candidate_skills,
             tool_name,
             self._state.available_contexts,
         )
         if matching_skills:
-            self._state.active_skills = self._runner.native_activate_skills(
+            self._state.active_skills = self._runner.activate_skills(
                 active_skills=self._state.active_skills,
                 candidate_skills=self._state.candidate_skills,
                 requested_skill_names=[skill.name for skill in matching_skills],
@@ -285,14 +280,14 @@ class _ThinRuntimeDkTool:
             self._state.context.runtime["active_skills"] = [
                 skill.name for skill in self._state.active_skills
             ]
-        self._runner.native_read_matching_skill_memory(
+        self._runner.read_matching_skill_memory(
             self._state.goal,
             self._state.agent,
             matching_skills,
             self._state.touched_skill_reads,
         )
 
-        result = self._runner.native_invoke_tool(
+        result = self._runner.invoke_tool(
             goal=self._state.goal,
             agent=self._state.agent,
             tool_name=tool_name,
@@ -304,7 +299,8 @@ class _ThinRuntimeDkTool:
             tool_args=args,
         )
         self._state.tool_results.append(result)
-        return self._state_adapter.apply_tool_result(
+        return self._runner.apply_dk_tool_result(
+            state=self._state,
             tool_name=tool_name,
             matching_skills=matching_skills,
             result=result,
@@ -333,7 +329,7 @@ class _DynamicThinRuntimeToolRegistry:
         if self._state.terminated:
             return []
 
-        tool_budget_error = self._runner.native_check_tool_budget(
+        tool_budget_error = self._runner.check_tool_budget(
             self._state.goal,
             self._state.agent,
             self._state.selected_tool_names,
@@ -342,7 +338,7 @@ class _DynamicThinRuntimeToolRegistry:
             self._terminate(tool_budget_error, success=False)
             return []
 
-        stop_error = self._runner.native_check_iteration_stop(
+        stop_error = self._runner.check_iteration_stop(
             self._state.goal,
             self._state.agent,
             self._state.selected_tool_names,
@@ -351,7 +347,7 @@ class _DynamicThinRuntimeToolRegistry:
             self._terminate(stop_error, success=False)
             return []
 
-        active_tools = self._runner.native_resolve_active_tools(
+        active_tools = self._runner.resolve_active_tools_for_runtime(
             self._state.agent,
             self._state.active_skills,
             self._state.candidate_skills,
@@ -378,7 +374,7 @@ class _DynamicThinRuntimeToolRegistry:
         candidate_tools = [
             tool
             for tool in tool_surface
-            if self._runner.native_tool_preconditions_met(tool.name, self._state.context)
+            if self._runner.tool_preconditions_met(tool.name, self._state.context)
         ]
         if candidate_tools:
             return candidate_tools
@@ -433,7 +429,7 @@ class _DynamicThinRuntimeToolRegistry:
 
     def _no_candidate_outcome(self) -> tuple[str, bool]:
         failure_family = self._state.context.failure.get("failure_family")
-        completed_loops = self._runner.native_current_iteration_count(
+        completed_loops = self._runner.current_iteration_count(
             self._state.agent,
             self._state.selected_tool_names,
         )
@@ -559,7 +555,7 @@ class DkNativeLoopRunner(AgenticLoopRunner):
             goal=goal,
             agent=agent,
             skills=active_skills,
-            tools=self.native_resolve_active_tools(agent, active_skills, candidate_skills),
+            tools=self._resolve_active_tools(agent, active_skills, candidate_skills),
             context=context,
             available_skills=candidate_skills,
             include_skill_instructions=False,
@@ -712,7 +708,7 @@ class DkNativeLoopRunner(AgenticLoopRunner):
             ),
         )
 
-    def native_matching_skills(
+    def matching_skills(
         self,
         active_skills: list[SkillSpec],
         tool_name: str,
@@ -720,7 +716,7 @@ class DkNativeLoopRunner(AgenticLoopRunner):
     ) -> list[SkillSpec]:
         return self._matching_skills(active_skills, tool_name, available_contexts)
 
-    def native_activate_skills(
+    def activate_skills(
         self,
         *,
         active_skills: list[SkillSpec],
@@ -733,7 +729,7 @@ class DkNativeLoopRunner(AgenticLoopRunner):
             requested_skill_names=requested_skill_names,
         )
 
-    def native_read_matching_skill_memory(
+    def read_matching_skill_memory(
         self,
         goal: RuntimeGoal,
         agent: AgentSpec,
@@ -745,14 +741,10 @@ class DkNativeLoopRunner(AgenticLoopRunner):
             agent,
             matching_skills,
             touched_skill_reads,
-            run_id=(
-                value
-                if isinstance((value := getattr(self, "_current_native_run_id", None)), str)
-                else None
-            ),
+            run_id=self._current_run_id(),
         )
 
-    def native_invoke_tool(
+    def invoke_tool(
         self,
         *,
         goal: RuntimeGoal,
@@ -777,82 +769,101 @@ class DkNativeLoopRunner(AgenticLoopRunner):
             tool_args=tool_args,
         )
 
-    def native_after_tool(
+    def apply_dk_tool_result(
         self,
         *,
-        goal: RuntimeGoal,
-        agent: AgentSpec,
+        state: _NativeRunState,
         tool_name: str,
         matching_skills: list[SkillSpec],
         result: ToolResult,
-        context: ContextSnapshot,
-        available_contexts: set[str],
-    ) -> None:
+    ) -> DkToolResult:
         self._after_tool(
-            goal=goal,
-            agent=agent,
+            goal=state.goal,
+            agent=state.agent,
             tool_name=tool_name,
             matching_skills=matching_skills,
             result=result,
-            context=context,
-            available_contexts=available_contexts,
+            context=state.context,
+            available_contexts=state.available_contexts,
         )
 
-    def native_execute_delegation(
-        self,
-        result: ToolResult,
-        *,
-        context: ContextSnapshot,
-        depth: int,
-    ) -> tuple[DelegationRecord | None, ContextSnapshot | None]:
-        return self._execute_delegation(result, context=context, depth=depth)
+        def checkpoint_result() -> DkToolResult:
+            return DkToolResult(
+                output=self._checkpoint_output(
+                    tool_name=tool_name,
+                    result=result,
+                    context=state.context,
+                ),
+                error=result.error,
+                metadata={"tool_name": result.tool_name, "success": result.success},
+            )
 
-    def native_merge_seed_context(
-        self,
-        context: ContextSnapshot,
-        seed: ContextSnapshot,
-    ) -> None:
-        self._merge_seed_context(context, seed)
+        if not result.success:
+            state.terminated = True
+            state.terminal_success = False
+            state.terminal_reason = result.error
+            self._refresh_native_runtime_view(state)
+            return checkpoint_result()
 
-    def native_available_contexts_from_snapshot(self, context: ContextSnapshot) -> set[str]:
-        return self._available_contexts_from_snapshot(context)
+        delegation_record, delegated_context = self._execute_delegation(
+            result,
+            context=state.context,
+            depth=state.depth,
+        )
+        if delegation_record is not None:
+            state.delegations.append(delegation_record)
+            state.context.audit.setdefault("delegations", []).append(delegation_record.model_dump())
+        if delegated_context is not None:
+            self._merge_seed_context(state.context, delegated_context)
+        state.available_contexts = self._available_contexts_from_snapshot(state.context)
+        state.context.runtime["available_contexts"] = sorted(state.available_contexts)
+        self._update_iteration_state(
+            state.context,
+            state.goal,
+            state.agent,
+            state.selected_tool_names,
+        )
+        self._refresh_native_runtime_view(state)
 
-    def native_update_iteration_state(
-        self,
-        context: ContextSnapshot,
-        goal: RuntimeGoal,
-        agent: AgentSpec,
-        selected_tool_names: list[str],
-    ) -> None:
-        self._update_iteration_state(context, goal, agent, selected_tool_names)
+        if result.payload.stop:
+            stop_reason = result.payload.runtime_updates.stop_reason or "Tool requested stop"
+            state.terminated = True
+            state.terminal_success = True
+            state.terminal_reason = stop_reason
+            self.hooks.emit(
+                "on_stop_condition",
+                {
+                    "goal_id": state.goal.goal_id,
+                    "agent": state.agent.name,
+                    "reason": stop_reason,
+                },
+            )
+            return checkpoint_result()
 
-    def native_write_matching_skill_memory(
-        self,
-        agent: AgentSpec,
-        matching_skills: list[SkillSpec],
-        tool_name: str,
-        tool_count: int,
-    ) -> str | None:
-        return self._write_matching_skill_memory(agent, matching_skills, tool_name, tool_count)
+        write_error = self._write_matching_skill_memory(
+            state.agent,
+            matching_skills,
+            tool_name,
+            len(state.tool_results),
+        )
+        if write_error is not None:
+            state.terminated = True
+            state.terminal_success = False
+            state.terminal_reason = write_error
+            return DkToolResult(output=write_error, error=write_error)
 
-    def native_should_reset_tool_cycle(
-        self,
-        *,
-        goal: RuntimeGoal,
-        agent: AgentSpec,
-        tool_name: str,
-        completion_tools: set[str],
-        selected_tool_names: list[str],
-    ) -> bool:
-        return self._should_reset_tool_cycle(
-            goal=goal,
-            agent=agent,
+        if self._should_reset_tool_cycle(
+            goal=state.goal,
+            agent=state.agent,
             tool_name=tool_name,
-            completion_tools=completion_tools,
-            selected_tool_names=selected_tool_names,
-        )
+            completion_tools=set(state.agent.iteration_completion_tools),
+            selected_tool_names=state.selected_tool_names,
+        ):
+            state.remaining_tools = list(state.tool_execution_order or [])
 
-    def native_check_tool_budget(
+        return checkpoint_result()
+
+    def check_tool_budget(
         self,
         goal: RuntimeGoal,
         agent: AgentSpec,
@@ -860,7 +871,7 @@ class DkNativeLoopRunner(AgenticLoopRunner):
     ) -> str | None:
         return self._check_tool_budget(goal, agent, selected_tool_names)
 
-    def native_check_iteration_stop(
+    def check_iteration_stop(
         self,
         goal: RuntimeGoal,
         agent: AgentSpec,
@@ -868,7 +879,7 @@ class DkNativeLoopRunner(AgenticLoopRunner):
     ) -> str | None:
         return self._check_iteration_stop(goal, agent, selected_tool_names)
 
-    def native_resolve_active_tools(
+    def resolve_active_tools_for_runtime(
         self,
         agent: AgentSpec,
         active_skills: list[SkillSpec],
@@ -882,42 +893,47 @@ class DkNativeLoopRunner(AgenticLoopRunner):
             requested_tools=requested_tools,
         )
 
-    def native_tool_preconditions_met(self, tool_name: str, context: ContextSnapshot) -> bool:
+    def tool_preconditions_met(self, tool_name: str, context: ContextSnapshot) -> bool:
         return self._tool_preconditions_met(tool_name, context)
 
-    def native_refresh_runtime_view(
-        self,
-        *,
-        goal: RuntimeGoal,
-        agent: AgentSpec,
-        active_skills: list[SkillSpec],
-        candidate_skills: list[SkillSpec],
-        context: ContextSnapshot,
-    ) -> None:
-        tools = self.native_resolve_active_tools(agent, active_skills, candidate_skills)
-        self._refresh_runtime_view(
-            goal=goal,
-            agent=agent,
-            skills=active_skills,
-            tools=tools,
-            context=context,
-            available_skills=candidate_skills,
-            include_skill_instructions=False,
-        )
-
-    def native_checkpoint_output(
-        self, *, tool_name: str, result: ToolResult, context: ContextSnapshot
-    ) -> str:
-        primary_output = result.payload.message.strip() or result.error or f"{tool_name} completed"
-        checkpoint = build_live_checkpoint(tool_name, context)
-        return f"{primary_output}\n\n{checkpoint}".strip()
-
-    def native_current_iteration_count(
+    def current_iteration_count(
         self,
         agent: AgentSpec,
         selected_tool_names: list[str],
     ) -> int:
         return self._current_iteration_count(agent, selected_tool_names)
+
+    def _refresh_native_runtime_view(self, state: _NativeRunState) -> None:
+        tools = self._resolve_active_tools(
+            state.agent,
+            state.active_skills,
+            state.candidate_skills,
+            requested_tools=state.requested_tools,
+        )
+        self._refresh_runtime_view(
+            goal=state.goal,
+            agent=state.agent,
+            skills=state.active_skills,
+            tools=tools,
+            context=state.context,
+            available_skills=state.candidate_skills,
+            include_skill_instructions=False,
+        )
+
+    def _checkpoint_output(
+        self,
+        *,
+        tool_name: str,
+        result: ToolResult,
+        context: ContextSnapshot,
+    ) -> str:
+        primary_output = result.payload.message.strip() or result.error or f"{tool_name} completed"
+        checkpoint = build_live_checkpoint(tool_name, context)
+        return f"{primary_output}\n\n{checkpoint}".strip()
+
+    def _current_run_id(self) -> str | None:
+        value = getattr(self, "_current_native_run_id", None)
+        return value if isinstance(value, str) else None
 
     def _initial_messages(
         self,
@@ -984,7 +1000,7 @@ class DkNativeLoopRunner(AgenticLoopRunner):
         elif (
             state.agent.iteration_budget_mode == "loop"
             and "improvement-loop" in [skill.name for skill in state.active_skills]
-            and self.native_current_iteration_count(state.agent, state.selected_tool_names) == 0
+            and self._current_iteration_count(state.agent, state.selected_tool_names) == 0
         ):
             success = False
             error = "No completed improvement loops recorded"
@@ -1043,7 +1059,7 @@ class DkNativeLoopRunner(AgenticLoopRunner):
             error=error,
         )
 
-    def _dk_trace_events(self, messages: ToolDefList, events: list[object]) -> list[TraceEvent]:
+    def _dk_trace_events(self, messages: ToolDefList, events: Sequence[object]) -> list[TraceEvent]:
         trace_events: list[TraceEvent] = []
         for message in messages:
             role = message.get("role")

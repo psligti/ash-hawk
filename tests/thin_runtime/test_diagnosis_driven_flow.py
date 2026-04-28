@@ -82,6 +82,89 @@ def test_call_llm_structured_derives_ranked_targets(monkeypatch: pytest.MonkeyPa
     ]
 
 
+def test_call_llm_structured_includes_prior_mutation_memory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def fake_call_model_structured(*_args: object, **kwargs: object) -> StructuredLLMResponse:
+        user_prompt = kwargs.get("user_prompt")
+        assert isinstance(user_prompt, str)
+        captured["user_prompt"] = user_prompt
+        return StructuredLLMResponse(
+            diagnosis="Build on the last survivor gene.",
+            hypotheses=[
+                StructuredHypothesis(
+                    name="Extend direct-context prompt",
+                    score=0.88,
+                    target_files=["agent.md"],
+                )
+            ],
+        )
+
+    monkeypatch.setattr(
+        "ash_hawk.thin_runtime.tool_impl.call_llm_structured.call_model_structured",
+        fake_call_model_structured,
+    )
+
+    call = ToolCall.model_validate(
+        {
+            "tool_name": "call_llm_structured",
+            "goal_id": "goal-prior-memory",
+            "context": {
+                "workspace": {"workdir": "/repo", "repo_root": "/repo"},
+                "failure": {
+                    "failure_family": "needs_improvement",
+                    "explanations": ["The agent keeps searching broadly."],
+                },
+                "memory": {
+                    "working_memory": {
+                        "active_hypotheses": [
+                            {
+                                "name": "Teach direct-context priority",
+                                "score": 0.91,
+                                "target_files": ["agent.md"],
+                            }
+                        ],
+                        "last_result": {
+                            "status": "improved",
+                            "score_delta": 0.14,
+                            "target_files": ["agent.md"],
+                        },
+                    },
+                    "session_memory": {
+                        "validations": [
+                            {
+                                "hypothesis": "Teach direct-context priority",
+                                "status": "improved",
+                                "score_delta": 0.14,
+                            }
+                        ]
+                    },
+                    "semantic_memory": {
+                        "rules": [
+                            {
+                                "entry_type": "survivor_gene",
+                                "hypothesis": "Teach direct-context priority",
+                                "status": "improved",
+                                "score_delta": 0.14,
+                            }
+                        ]
+                    },
+                },
+            },
+        }
+    )
+
+    result = call_llm_structured_run(call)
+
+    assert result.success is True
+    prompt = captured["user_prompt"]
+    assert "Prior mutation memory" in prompt
+    assert "Teach direct-context priority" in prompt
+    assert "Last validation outcome: improved delta=+0.1400 targets=agent.md" in prompt
+
+
 def test_mutate_agent_files_builds_rich_diagnosis_prompt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -180,6 +263,7 @@ def test_mutate_agent_files_builds_rich_diagnosis_prompt(
     assert "agent.md" in prompt
 
 
+@pytest.mark.e2e
 def test_improver_fails_when_no_eligible_tool_can_start_loop() -> None:
     harness = create_default_harness(workdir=Path.cwd())
 
@@ -199,6 +283,7 @@ def test_improver_fails_when_no_eligible_tool_can_start_loop() -> None:
     )
 
 
+@pytest.mark.e2e
 def test_improver_can_reach_diagnosis_and_derive_targets_without_scoped_inputs() -> None:
     harness = create_default_harness(workdir=Path.cwd())
 

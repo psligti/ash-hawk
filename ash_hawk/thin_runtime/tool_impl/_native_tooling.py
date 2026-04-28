@@ -68,6 +68,16 @@ def resolve_path(raw_path: str | Path, base: Path) -> Path:
     return normalize_workspace_relative_path(path, base)
 
 
+def workspace_relative_string(raw_path: str | Path, base: Path) -> str | None:
+    resolved = resolve_path(raw_path, base)
+    try:
+        contained = ensure_workspace_contained(resolved, base)
+    except ValueError:
+        return None
+    relative = contained.relative_to(base.resolve())
+    return relative.as_posix()
+
+
 def ensure_workspace_contained(path: Path, workspace_root: Path) -> Path:
     resolved_root = workspace_root.resolve()
     resolved_path = path.resolve(strict=False)
